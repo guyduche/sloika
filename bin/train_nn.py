@@ -9,9 +9,9 @@ import theano.tensor as T
 
 from dragonet.bio import seq_tools
 
-from tang import numpty as np
+import numpy as np
 from tang.fast5 import iterate_fast5, fast5
-from tang.nn import layers, networks, updates
+from sloika import layers, networks, updates
 from tang.util.cmdargs import (AutoBool, display_version_and_exit, FileExist,
                                NonNegative, ParseToNamedTuple, Positive,
                                probability, TypeOrNone)

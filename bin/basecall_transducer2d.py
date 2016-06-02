@@ -6,9 +6,9 @@ import time
 
 from dragonet.bio import seq_tools
 
-from tang import numpty as np
+import numpy as np
 from tang.fast5 import iterate_fast5, fast5
-from tang.nn import features, transducer
+from sloika import features, transducer
 from tang.util.cmdargs import (AutoBool, display_version_and_exit, FileExist,
                                probability, Positive, TypeOrNone, Vector)
 from tang.util.tang_iter import tang_imap

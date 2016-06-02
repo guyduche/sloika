@@ -1,4 +1,4 @@
-import tang.numpty as np
+import numpy as np
 from sloika import layers
 from sloika.maths import studentise
 

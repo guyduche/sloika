@@ -3,7 +3,7 @@ import argparse
 from six.moves import cPickle
 import sys
 
-from tang.nn import layers
+from sloika import layers
 from tang.util.cmdargs import FileExist
 
 parser = argparse.ArgumentParser(
