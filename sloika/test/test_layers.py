@@ -10,7 +10,7 @@ import numpy as np
 class ANNTest(unittest.TestCase):
     @classmethod
     def setUpClass(self):
-        print '* ANN Theano'
+        print '* Layers'
         np.random.seed(0xdeadbeef)
         self._NSTEP = 100
         self._NFEATURES = 3

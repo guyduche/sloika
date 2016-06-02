@@ -2,7 +2,6 @@ import abc
 import theano as th
 import theano.tensor as T
 import numpy as np
-from math import sqrt
 
 """  Convention: inMat row major (C ordering) as (time, batch, state)
 """
@@ -145,7 +144,7 @@ class Softmax(Layer):
     def __init__(self, insize, size, init=zeros, has_bias=False):
         self.has_bias = has_bias
         self.b = th.shared(has_bias * init(size))
-        self.W = th.shared(init((size, insize)) / sqrt(insize))
+        self.W = th.shared(init((size, insize)) / np.sqrt(insize))
         self.insize = insize
         self.size = size
 
@@ -177,7 +176,7 @@ class SoftmaxOld(Layer):
     def __init__(self, insize, size, init=zeros, has_bias=False):
         self.has_bias = has_bias
         self.b = th.shared(has_bias * init(size))
-        self.W = th.shared(init((size, insize)) / sqrt(insize))
+        self.W = th.shared(init((size, insize)) / np.sqrt(insize))
         self.insize = insize
         self.size = size
 
@@ -231,8 +230,8 @@ class Recurrent(RNN):
     def __init__(self, insize, size, init=zeros, has_bias=False, fun=T.tanh):
         self.has_bias = has_bias
         self.b = th.shared(has_bias * np.ones(size, dtype=dtype))
-        self.iW = th.shared(init((size, insize)) / sqrt(insize))
-        self.sW = th.shared(init((size, size)) / sqrt(size))
+        self.iW = th.shared(init((size, insize)) / np.sqrt(insize))
+        self.sW = th.shared(init((size, size)) / np.sqrt(size))
         self.f = fun
         self.insize = insize
         self.size = size
@@ -287,9 +286,9 @@ class Lstm(RNN):
         self.fun = fun
 
         self.b = th.shared(has_bias * np.ones(4 * size, dtype=dtype))
-        self.p = th.shared(has_peep * init((3, size)) / sqrt(size))
-        self.iW = th.shared(init((4 * size, insize)) / sqrt(insize))
-        self.sW = th.shared(init((4 * size, size)) / sqrt(size))
+        self.p = th.shared(has_peep * init((3, size)) / np.sqrt(size))
+        self.iW = th.shared(init((4 * size, insize)) / np.sqrt(insize))
+        self.sW = th.shared(init((4 * size, size)) / np.sqrt(size))
 
     def params(self):
         params =  [self.iW, self.sW]
@@ -358,9 +357,9 @@ class LstmO(RNN):
         self.fun = fun
 
         self.b = th.shared(has_bias * np.ones(3 * size, dtype=dtype))
-        self.p = th.shared(has_peep * init((3, size))/ sqrt(size))
-        self.iW = th.shared(init((3 * size, insize)) / sqrt(insize))
-        self.sW = th.shared(init((3 * size, size)) / sqrt(size))
+        self.p = th.shared(has_peep * init((3, size))/ np.sqrt(size))
+        self.iW = th.shared(init((3 * size, insize)) / np.sqrt(insize))
+        self.sW = th.shared(init((3 * size, size)) / np.sqrt(size))
 
     def params(self):
         params =  [self.iW, self.sW]
@@ -411,8 +410,8 @@ class Forget(RNN):
         self.fun = fun
 
         self.b = th.shared(has_bias * np.ones(2 * size, dtype=dtype))
-        self.iW = th.shared(init((2 * size, insize)) / sqrt(insize))
-        self.sW = th.shared(init((2 * size, size)) / sqrt(size))
+        self.iW = th.shared(init((2 * size, insize)) / np.sqrt(insize))
+        self.sW = th.shared(init((2 * size, size)) / np.sqrt(size))
 
     def params(self):
         params =  [self.iW, self.sW]
@@ -455,9 +454,9 @@ class Gru(RNN):
         self.fun = fun
 
         self.b = th.shared(has_bias * np.ones(3 * size, dtype=dtype))
-        self.iW = th.shared(init((3 * size, insize)) / sqrt(insize))
-        self.sW = th.shared(init((2 * size, size)) / sqrt(size))
-        self.sW2 = th.shared(init((size, size)) / sqrt(size))
+        self.iW = th.shared(init((3 * size, insize)) / np.sqrt(insize))
+        self.sW = th.shared(init((2 * size, size)) / np.sqrt(size))
+        self.sW2 = th.shared(init((size, size)) / np.sqrt(size))
 
     def params(self):
         params =  [self.iW, self.sW, self.sW2]
@@ -507,9 +506,9 @@ class Mut1(RNN):
 
         self.b = th.shared(has_bias * np.ones(2 * size, dtype=dtype))
         self.b2 = th.shared(has_bias * np.ones(size, dtype=dtype))
-        self.iW = th.shared(init((2 * size, insize)) / sqrt(insize))
-        self.sW = th.shared(init((size, size)) / sqrt(size))
-        self.sW2 = th.shared(init((size, size)) / sqrt(size))
+        self.iW = th.shared(init((2 * size, insize)) / np.sqrt(insize))
+        self.sW = th.shared(init((size, size)) / np.sqrt(size))
+        self.sW2 = th.shared(init((size, size)) / np.sqrt(size))
 
     def params(self):
         params =  [self.iW, self.sW, self.sW2]
