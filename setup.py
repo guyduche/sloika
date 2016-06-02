@@ -27,7 +27,7 @@ setup(
     name='sloika',
     version=verstr,
     description='Theano RNN library',
-    maintainer='tmassingham',
+    maintainer='Tim Massingham',
     maintainer_email='tim.massingham@nanoporetech.com',
     url='http://www.nanoporetech.com',
     long_description="""Something to do with sheep""",
