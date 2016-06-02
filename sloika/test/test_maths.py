@@ -8,7 +8,7 @@ class MathsTest(unittest.TestCase):
         print '* Maths routines'
         np.random.seed(0xdeadbeef)
 
-   def test_001_studentise(self):
+    def test_001_studentise(self):
         sh = (7, 4)
         x = np.random.normal(size=sh)
         x2 = maths.studentise(x)
