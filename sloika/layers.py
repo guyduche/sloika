@@ -319,12 +319,12 @@ class Lstm(RNN):
         sumW = sumW.reshape((-1, self.size, 4))
 
         #  Forget gate activation
-        state *= sigmoid(sumW[:,:,2] + state * self.p[1])
+        out_state = sigmoid(sumW[:,:,2] + state * self.p[1])
         #  Update state with input
-        state += self.fun(sumW[:,:,0]) * sigmoid(sumW[:,:,1] + state * self.p[0])
+        out_state += self.fun(sumW[:,:,0]) * sigmoid(sumW[:,:,1] + state * self.p[0])
         #  Output gate activation
-        out = self.fun(state) * sigmoid(sumW[:,:,3]  + state * self.p[2])
-        return T.concatenate((out, state), axis=1)
+        out = self.fun(state) * sigmoid(sumW[:,:,3]  + out_state * self.p[2])
+        return T.concatenate((out, out_state), axis=1)
 
     def run(self, inMat):
         nbatch = T.shape(inMat)[1]
