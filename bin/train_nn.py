@@ -18,7 +18,7 @@ from tang.util.cmdargs import (AutoBool, display_version_and_exit, FileExist,
 
 # This is here, not in main to allow documentation to be built
 parser = argparse.ArgumentParser(
-    description='Mock basecaller for Tang NN library',
+    description='Train Nanonet neural network',
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('--bad', default=False, action=AutoBool, help='Label bad emissions')
 parser.add_argument('--batch', default=1000, metavar='size', type=Positive(int),

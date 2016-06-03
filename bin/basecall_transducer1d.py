@@ -15,7 +15,7 @@ from tang.util.tang_iter import tang_imap
 
 # This is here, not in main to allow documentation to be built
 parser = argparse.ArgumentParser(
-    description='1D and 2D basecaller for Tang NN library',
+    description='1D basecaller for simple transducers',
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 #parser.add_argument('--jobs', default=1, type=int, action=CheckCPU,
 #    help='Number of jobs to run in parallel.')
