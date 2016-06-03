@@ -1,4 +1,5 @@
 import numpy as np
+from sloika import viterbi_helpers
 
 _NEG_LARGE = -50000.0
 _STAY = 4
@@ -269,6 +270,11 @@ def map_to_sequence(trans, sequence, slip=None, prior_initial=None, prior_final=
         vmat[i][move + 1] = move
         # Slip
         if slip is not None:
+            from_score, from_pos = viterbi_helpers.slip_update(pscore, slip)
+            from_score += ctrans[sequence]
+            vmat[i] = np.where(from_score <= cscore, vmat[i], from_pos)
+            cscore = np.where(from_score <= cscore, cscore, from_score)
+            """
             from_pos = 0
             from_score = pscore[0]
             for j in xrange(2, npos):
@@ -279,6 +285,7 @@ def map_to_sequence(trans, sequence, slip=None, prior_initial=None, prior_final=
                 if from_score < pscore[j - 1]:
                     from_pos = j - 1
                     from_score = pscore[j - 1]
+            """
 
         pscore, cscore = cscore, pscore
 
