@@ -228,17 +228,19 @@ def decode_full_transducer(ltrans):
 
     return score, path
 
-def map_to_sequence(trans, sequence, prior_initial=None, prior_final=None, log=True):
+def map_to_sequence(trans, sequence, slip=None, prior_initial=None, prior_final=None, log=True):
     """  Find Viterbi path through sequence for transducer
 
     :param trans: A 2D :class:`nd.array` Transducer to be mapped
     :param sequence: A 1D :class:`nd.array` Sequence of bases to be mapped against
+    :param slip: slip penalty (in log-space)
     :param prior_initial: A 1D :class:`nd.array` containing prior over initial position
     :param prior_final: A 1D :class:`nd.array` containing prior over final position
     :param log: Transducer is log-scaled
 
     :returns: Tuple containing score for path and array containing path
     """
+    assert slip is None or slip >= 0.0, 'Slip penalty should be non-negative'
     nev = len(trans)
     npos = len(sequence)
     ltrans = trans if log else np.log(trans)
@@ -265,6 +267,18 @@ def map_to_sequence(trans, sequence, prior_initial=None, prior_final=None, log=T
         move = np.where(step_score > cscore[1:])[0]
         cscore[move + 1] = step_score[move]
         vmat[i][move + 1] = move
+        # Slip
+        if slip is not None:
+            from_pos = 0
+            from_score = pscore[0]
+            for j in xrange(2, npos):
+                from_score -= slip
+                if from_score + ctrans[sequence[j]] > cscore[j]:
+                    cscore[j] = from_score + ctrans[sequence[j]]
+                    vmat[i,j] = from_pos
+                if from_score < pscore[j - 1]:
+                    from_pos = j - 1
+                    from_score = pscore[j - 1]
 
         pscore, cscore = cscore, pscore
 

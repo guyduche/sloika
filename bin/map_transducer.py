@@ -12,7 +12,8 @@ import tang.util.io as tangio
 from tang.fast5 import iterate_fast5, fast5
 from sloika import features, transducer
 from tang.util.cmdargs import (AutoBool, display_version_and_exit, FileExist,
-                               probability, Positive, TypeOrNone, Vector)
+                               NonNegative, probability, Positive, TypeOrNone,
+                               Vector)
 from tang.util.tang_iter import tang_imap
 
 # This is here, not in main to allow documentation to be built
@@ -23,6 +24,8 @@ parser.add_argument('--limit', default=None, type=TypeOrNone(Positive(int)),
     help='Limit number of reads to process.')
 parser.add_argument('--section', default='template', choices=['template', 'complement'],
     help='Section to call')
+parser.add_argument('--slip', default=None, type=TypeOrNone(NonNegative(float)),
+    help='Slip penalty')
 parser.add_argument('--strand_list', default=None, action=FileExist,
     help='strand summary file containing subset.')
 parser.add_argument('--trim', default=(500, 50), nargs=2, type=Positive(int),
@@ -52,7 +55,7 @@ def map_transducer(args, fn):
 
     trans = np.squeeze(calc_post(inMat))
     seq = np.array(map(lambda k: kmer_to_state[k], seq))
-    score, path = transducer.map_to_sequence(trans, seq, log=False)
+    score, path = transducer.map_to_sequence(trans, seq, slip=args.slip, log=False)
 
     lb = args.trim[0] + 1
     ub = args.trim[1] + 1
