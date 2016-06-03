@@ -19,8 +19,6 @@ from tang.util.tang_iter import tang_imap
 parser = argparse.ArgumentParser(
     description='Map transducer to reference sequence',
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-parser.add_argument('--jobs', default=1, type=int, action=CheckCPU,
-    help='Number of jobs to run in parallel.')
 parser.add_argument('--limit', default=None, type=TypeOrNone(Positive(int)),
     help='Limit number of reads to process.')
 parser.add_argument('--section', default='template', choices=['template', 'complement'],
@@ -66,7 +64,7 @@ if __name__ == '__main__':
     files = iterate_fast5(args.input_folder, paths=True, limit=args.limit, strand_list=args.strand_list)
     nbases = nevents = 0
     t0 = time.time()
-    for res in tang_imap(map_transducer, files, threads=args,jobs, fix_args=[args], unordered=True):
+    for res in tang_imap(map_transducer, files, threads=1, fix_args=[args], unordered=True):
         if res is None:
             continue
         read, score, path, ev = res
