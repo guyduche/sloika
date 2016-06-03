@@ -19,7 +19,7 @@ if __name__ == '__main__':
     with open(args.input, 'r') as fh:
         network = cPickle.load(fh)
     if not isinstance(network, layers.Layer):
-        sys.stderr.write("Model file does not contained a network description. Was it already compiled\n")
+        sys.stderr.write("Model file is not a network description. Is it already compiled?\n")
         exit(1)
 
     compiled_network = network.compile()
