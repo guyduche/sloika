@@ -1,6 +1,7 @@
 import numpy as np
 
 _NEG_LARGE = -50000.0
+_STAY = 4
 
 def argmax(*args):
     res = max(enumerate(args), key=lambda x: x[1])
@@ -227,3 +228,54 @@ def decode_full_transducer(ltrans):
 
     return score, path
 
+def map_to_sequence(trans, sequence, prior_initial=None, prior_final=None, log=True):
+    """  Find Viterbi path through sequence for transducer
+
+    :param trans: A 2D :class:`nd.array` Transducer to be mapped
+    :param sequence: A 1D :class:`nd.array` Sequence of bases to be mapped against
+    :param prior_initial: A 1D :class:`nd.array` containing prior over initial position
+    :param prior_final: A 1D :class:`nd.array` containing prior over final position
+    :param log: Transducer is log-scaled
+
+    :returns: Tuple containing score for path and array containing path
+    """
+    nev = len(trans)
+    npos = len(sequence)
+    ltrans = trans if log else np.log(trans)
+
+    # Matrix for Viterbi traceback of path
+    vmat = np.zeros((nev, npos), dtype=np.int16)
+    # Vectors for current and previous score
+    pscore = np.zeros(npos, dtype=np.float64)
+    cscore = np.zeros(npos, dtype=np.float64)
+
+    # Initialisation
+    pscore = ltrans[0][sequence]
+    if prior_initial is not None:
+        pscore += prior_initial
+
+    # Main loop
+    for i in xrange(1, nev):
+        ctrans = ltrans[i]
+        # Stay
+        vmat[i] = np.arange(0, npos)
+        cscore = pscore + ctrans[_STAY]
+        # Step
+        step_score = pscore[:-1] + ctrans[sequence[1:]]
+        move = np.where(step_score > cscore[1:])[0]
+        cscore[move + 1] = step_score[move]
+        vmat[i][move + 1] = move
+
+        pscore, cscore = cscore, pscore
+
+    if prior_final is not None:
+        pscore += prior_final
+   
+    # Viterbi traceback
+    path = np.empty(nev, dtype=np.int16)
+    path[0] = np.argmax(pscore)
+    max_score = pscore[path[0]]
+    for i in xrange(1, nev):
+        path[i] = vmat[nev - i][path[i - 1]]
+
+    return max_score, path[::-1]
