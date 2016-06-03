@@ -98,7 +98,7 @@ def basecall(args, fn):
 
 class SeqPrinter(object):
     def __init__(self, kmerlen, fh=None):
-        self.kmers = seq_tools.all_kmers(length=1)
+        self.kmers = seq_tools.all_kmers(length=kmerlen)
         self.close_fh = False
 
         if fh is None:
@@ -124,7 +124,7 @@ class SeqPrinter(object):
 
 if __name__ == '__main__':
     args = parser.parse_args()
-    seq_printer = SeqPrinter(3)
+    seq_printer = SeqPrinter(1)
 
     files = iterate_fast5(args.input_folder, paths=True, limit=args.limit, strand_list=args.strand_list)
     nbases = nevents = 0
