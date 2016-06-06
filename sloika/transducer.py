@@ -274,18 +274,6 @@ def map_to_sequence(trans, sequence, slip=None, prior_initial=None, prior_final=
             from_score += ctrans[sequence]
             vmat[i] = np.where(from_score <= cscore, vmat[i], from_pos)
             cscore = np.where(from_score <= cscore, cscore, from_score)
-            """
-            from_pos = 0
-            from_score = pscore[0]
-            for j in xrange(2, npos):
-                from_score -= slip
-                if from_score + ctrans[sequence[j]] > cscore[j]:
-                    cscore[j] = from_score + ctrans[sequence[j]]
-                    vmat[i,j] = from_pos
-                if from_score < pscore[j - 1]:
-                    from_pos = j - 1
-                    from_score = pscore[j - 1]
-            """
 
         pscore, cscore = cscore, pscore
 
