@@ -470,7 +470,7 @@ class Gru(RNN):
             self.b = th.shared(values['b'].reshape(-1))
         assert values['iW'].shape == (self.size, 3, self.insize)
         self.iW = th.shared(values['iW'].reshape((3 * self.size, self.insize)))
-        assert values['sW'].shape == (2 * self.size, self.size)
+        assert values['sW'].shape == (2, self.size, self.size)
         self.sW = th.shared(values['sW'].reshape((2 * self.size, self.size)))
         assert values['sW2'].shape == (self.size,  self.size)
         self.sW2 = th.shared(values['sW2'])
@@ -478,13 +478,13 @@ class Gru(RNN):
     def step(self, in_vec, in_state):
         vI = T.tensordot(in_vec, self.iW, axes=(1,1)) + self.b
         vS = T.tensordot(in_state, self.sW, axes=(1,1))
-        vT = vI[:,:2] + vS
+        vT = vI[:, :2 * self.size] + vS
         vT = vT.reshape((-1, 2, self.size))
 
         z = sigmoid(vT[:,0])
         r = sigmoid(vT[:,1])
         y = T.tensordot(r * in_state, self.sW2, axes=(1,1))
-        hbar = self.fun(vI[:,2] + y)
+        hbar = self.fun(vI[:, 2 * self.size:] + y)
         state = z * in_state + (1 - z) * hbar
         return state
 
