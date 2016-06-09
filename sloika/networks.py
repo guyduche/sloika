@@ -125,14 +125,14 @@ def transducer(winlen=3, size=64, bad_state=True, sd=0.1, fun=layers.tanh):
 
     inlayer = layers.Window(winlen)
 
-    fwd1 = layers.Lstm(winlen * _NFEATURE, size, init=_prn, has_bias=True, has_peep=True, fun=fun)
-    bwd1 = layers.Lstm(winlen * _NFEATURE, size, init=_prn, has_bias=True, has_peep=True, fun=fun)
+    fwd1 = layers.Gru(winlen * _NFEATURE, size, init=_prn, has_bias=True, fun=fun)
+    bwd1 = layers.Gru(winlen * _NFEATURE, size, init=_prn, has_bias=True, fun=fun)
     layer1 = layers.birnn(fwd1, bwd1)
 
     layer2 = layers.FeedForward(2 * size, size, has_bias=True, fun=fun)
 
-    fwd3 = layers.Lstm(size, size, init=_prn, has_bias=True, has_peep=True, fun=fun)
-    bwd3 = layers.Lstm(size, size, init=_prn, has_bias=True, has_peep=True, fun=fun)
+    fwd3 = layers.Gru(size, size, init=_prn, has_bias=True, fun=fun)
+    bwd3 = layers.Gru(size, size, init=_prn, has_bias=True, fun=fun)
     layer3 = layers.birnn(fwd3, bwd3)
 
     layer4 = layers.FeedForward(2 * size, size, init=_prn, has_bias=True, fun=fun)
@@ -160,7 +160,7 @@ def lagged_transducer(winlen=3, size=64, bad_state=True, sd=0.1, fun=layers.tanh
 
     layer1 = layers.Lstm(winlen * _NFEATURE, lsize, init=_prn, has_bias=True, has_peep=True, fun=fun)
     layer2 = layers.FeedForward(lsize, size, init=_prn, has_bias=True, fun=fun)
-    layer3 = layers.Lstm(size, lsize, init=_prn, has_bias=True, has_peep=True, fun=fun)
+    layer3 = layers.Gru(size, lsize, init=_prn, has_bias=True, fun=fun)
     layer4 = layers.FeedForward(lsize, size, init=_prn, has_bias=True, fun=fun)
 
     outlayer = layers.Softmax(size, nstate, init=_prn, has_bias=True)
