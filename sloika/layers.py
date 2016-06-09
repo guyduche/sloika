@@ -3,9 +3,10 @@ import theano as th
 import theano.tensor as T
 import numpy as np
 
+from sloika import sloika_dtype
+
 """  Convention: inMat row major (C ordering) as (time, batch, state)
 """
-dtype = th.config.floatX
 _NBASE = 4
 _NSTEP = _NBASE
 _NSKIP = _NBASE * _NBASE
@@ -26,7 +27,7 @@ def relu(x):
     return T.nnet.relu(x)
 
 def zeros(size):
-    return np.zeros(size, dtype=dtype)
+    return np.zeros(size, dtype=sloika_dtype)
 
 class Layer(object):
     __metaclass__ = abc.ABCMeta
@@ -229,7 +230,7 @@ class Recurrent(RNN):
     """
     def __init__(self, insize, size, init=zeros, has_bias=False, fun=T.tanh):
         self.has_bias = has_bias
-        self.b = th.shared(has_bias * np.ones(size, dtype=dtype))
+        self.b = th.shared(has_bias * np.ones(size, dtype=sloika_dtype))
         self.iW = th.shared(init((size, insize)) / np.sqrt(insize))
         self.sW = th.shared(init((size, size)) / np.sqrt(size))
         self.f = fun
@@ -285,7 +286,7 @@ class Lstm(RNN):
         self.has_peep = has_peep
         self.fun = fun
 
-        self.b = th.shared(has_bias * np.ones(4 * size, dtype=dtype))
+        self.b = th.shared(has_bias * np.ones(4 * size, dtype=sloika_dtype))
         self.p = th.shared(has_peep * init((3, size)) / np.sqrt(size))
         self.iW = th.shared(init((4 * size, insize)) / np.sqrt(insize))
         self.sW = th.shared(init((4 * size, size)) / np.sqrt(size))
@@ -356,7 +357,7 @@ class LstmO(RNN):
         self.has_peep = has_peep
         self.fun = fun
 
-        self.b = th.shared(has_bias * np.ones(3 * size, dtype=dtype))
+        self.b = th.shared(has_bias * np.ones(3 * size, dtype=sloika_dtype))
         self.p = th.shared(has_peep * init((3, size))/ np.sqrt(size))
         self.iW = th.shared(init((3 * size, insize)) / np.sqrt(insize))
         self.sW = th.shared(init((3 * size, size)) / np.sqrt(size))
@@ -409,7 +410,7 @@ class Forget(RNN):
         self.has_bias = has_bias
         self.fun = fun
 
-        self.b = th.shared(has_bias * np.ones(2 * size, dtype=dtype))
+        self.b = th.shared(has_bias * np.ones(2 * size, dtype=sloika_dtype))
         self.iW = th.shared(init((2 * size, insize)) / np.sqrt(insize))
         self.sW = th.shared(init((2 * size, size)) / np.sqrt(size))
 
@@ -453,7 +454,7 @@ class Gru(RNN):
         self.has_bias = has_bias
         self.fun = fun
 
-        self.b = th.shared(has_bias * np.ones(3 * size, dtype=dtype))
+        self.b = th.shared(has_bias * np.ones(3 * size, dtype=sloika_dtype))
         self.iW = th.shared(init((3 * size, insize)) / np.sqrt(insize))
         self.sW = th.shared(init((2 * size, size)) / np.sqrt(size))
         self.sW2 = th.shared(init((size, size)) / np.sqrt(size))
@@ -504,8 +505,8 @@ class Mut1(RNN):
         self.has_bias = has_bias
         self.fun = fun
 
-        self.b = th.shared(has_bias * np.ones(2 * size, dtype=dtype))
-        self.b2 = th.shared(has_bias * np.ones(size, dtype=dtype))
+        self.b = th.shared(has_bias * np.ones(2 * size, dtype=sloika_dtype))
+        self.b2 = th.shared(has_bias * np.ones(size, dtype=sloika_dtype))
         self.iW = th.shared(init((2 * size, insize)) / np.sqrt(insize))
         self.sW = th.shared(init((size, size)) / np.sqrt(size))
         self.sW2 = th.shared(init((size, size)) / np.sqrt(size))
@@ -612,7 +613,7 @@ class Decode(RNN):
         # Step
         pscore = pscore.reshape((-1, _NSTEP, self.rstep))
         score2 = T.repeat(T.max(pscore, axis=1), _NSTEP)
-        iscore2 = T.repeat(self.rstep * T.argmax(pscore, axis=1) + T.arange(0, stop=self.rstep, dtype=dtype), _NSTEP)
+        iscore2 = T.repeat(self.rstep * T.argmax(pscore, axis=1) + T.arange(0, stop=self.rstep, dtype=sloika_dtype), _NSTEP)
         iscore2 = iscore2.reshape((-1, self.size))
         score2 = score2.reshape((-1, self.size))
         iscore = T.switch(T.gt(score, score2), iscore, iscore2)

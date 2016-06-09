@@ -1,5 +1,5 @@
 import numpy as np
-from sloika import viterbi_helpers
+from sloika import viterbi_helpers, sloika_dtype
 
 _NEG_LARGE = -50000.0
 _STAY = 4
@@ -41,7 +41,7 @@ def align(trans1, trans2, gapin, gap, gapout, rev=True):
         #  Reverse complement first transducer if required
         trans1 = trans1[::-1, [3, 2, 1, 0, 4]]
 
-    vmat = np.empty((nev1 + 1, nev2 + 1, 5), dtype=np.float32)
+    vmat = np.empty((nev1 + 1, nev2 + 1, 5), dtype=sloika_dtype)
     vmat.fill(_NEG_LARGE)
     imat = np.empty((nev1 + 1, nev2 + 1, 5), dtype=np.int8)
     imat.fill(-1)
@@ -249,8 +249,8 @@ def map_to_sequence(trans, sequence, slip=None, prior_initial=None, prior_final=
     # Matrix for Viterbi traceback of path
     vmat = np.zeros((nev, npos), dtype=np.int16)
     # Vectors for current and previous score
-    pscore = np.zeros(npos, dtype=np.float64)
-    cscore = np.zeros(npos, dtype=np.float64)
+    pscore = np.zeros(npos, dtype=sloika_dtype)
+    cscore = np.zeros(npos, dtype=sloika_dtype)
 
     # Initialisation
     pscore = ltrans[0][sequence]
