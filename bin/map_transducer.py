@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 import argparse
+import cPickle
 import h5py
 import numpy as np
 import numpy.lib.recfunctions as nprf
-from six.moves import cPickle
 import sys
 import time
 

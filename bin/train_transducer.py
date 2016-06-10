@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import argparse
+import cPickle
 import numpy as np
-from six.moves import cPickle
 import sys
 import time
 import warnings

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import argparse
-from six.moves import cPickle
+import cPickle
 import sys
 
 from sloika import layers
