@@ -1,17 +1,17 @@
 #!/usr/bin/env python
 import argparse
-from six.moves import cPickle
+import cPickle
+import numpy as np
 import sys
 import time
 
-from dragonet.bio import seq_tools
+from tangible from bio
+from tangible.cmdargs import (AutoBool, display_version_and_exit, FileExist,
+                              probability, Positive, TypeOrNone, Vector)
+from tangible import fast5
+from tangible.iterators import imap_mp
 
-import numpy as np
-from tang.fast5 import iterate_fast5, fast5
 from sloika import features
-from tang.util.cmdargs import (AutoBool, display_version_and_exit, FileExist,
-                               probability, Positive, TypeOrNone, Vector)
-from tang.util.tang_iter import tang_imap
 
 # This is here, not in main to allow documentation to be built
 parser = argparse.ArgumentParser(
@@ -54,7 +54,7 @@ def prepare_post(post, min_prob=1e-5, init_trans=None):
     return min_prob + (1.0 - min_prob) * post
 
 def basecall(args, fn):
-    with fast5(fn) as f5:
+    with fast5.Reader(fn) as f5:
         ev = f5.get_section_events(args.section)
         sn = f5.filename_short
     if len(ev) <= sum(args.trim):
@@ -77,7 +77,7 @@ def basecall(args, fn):
 
 class SeqPrinter(object):
     def __init__(self, kmerlen, fh=None):
-        self.kmers = seq_tools.all_kmers(length=kmerlen)
+        self.kmers = bio.all_kmers(kmerlen)
         self.close_fh = False
 
         if fh is None:
@@ -105,10 +105,10 @@ if __name__ == '__main__':
     args = parser.parse_args()
     seq_printer = SeqPrinter(1)
 
-    files = iterate_fast5(args.input_folder, paths=True, limit=args.limit, strand_list=args.strand_list)
+    files = fast5.iterate_fast5(args.input_folder, paths=True, limit=args.limit, strand_list=args.strand_list)
     nbases = nevents = 0
     t0 = time.time()
-    for res in tang_imap(basecall, files, threads=1, fix_args=[args], unordered=True):
+    for res in imap_mp(basecall, files, threads=1, fix_args=[args], unordered=True):
         if res is None:
             continue
         read, score, call, nev = res

@@ -21,8 +21,7 @@ else:
 #    .gitlab-ci.yml should contain package versions of these.
 requires=[
     'numpy',
-    'six',
-    'tang', 
+    'tangible', 
     'Theano'
 ]
 

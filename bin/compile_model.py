@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 import argparse
-from six.moves import cPickle
+import cPickle
 import sys
 
 from sloika import layers
-from tang.util.cmdargs import FileExist
+from tangible.cmdargs import FileExist
 
 parser = argparse.ArgumentParser(
     description='Compile a pickled model file for basecalling',

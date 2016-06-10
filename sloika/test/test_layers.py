@@ -1,11 +1,13 @@
-from six.moves import cPickle
+import cPickle
+import numpy as np
 import tempfile
 import unittest
 
 import theano as th
 import theano.tensor as T
+
+from sloika import sloika_dtype
 import sloika.layers as nn
-import numpy as np
 
 class ANNTest(unittest.TestCase):
     @classmethod
@@ -17,9 +19,9 @@ class ANNTest(unittest.TestCase):
         self._SIZE = 64
         self._NBATCH = 2
 
-        self.W = np.random.normal(size=(self._SIZE, self._NFEATURES)).astype(nn.dtype)
-        self.b = np.random.normal(size=self._SIZE).astype(nn.dtype)
-        self.x = np.random.normal(size=(self._NSTEP, self._NBATCH, self._NFEATURES)).astype(nn.dtype)
+        self.W = np.random.normal(size=(self._SIZE, self._NFEATURES)).astype(sloika_dtype)
+        self.b = np.random.normal(size=self._SIZE).astype(sloika_dtype)
+        self.x = np.random.normal(size=(self._NSTEP, self._NBATCH, self._NFEATURES)).astype(sloika_dtype)
         self.res = self.x.dot(self.W.transpose()) + self.b
 
     def test_000_single_layer_linear(self):
@@ -46,7 +48,7 @@ class ANNTest(unittest.TestCase):
         np.testing.assert_almost_equal(res[:,:,:self._SIZE], res[:,:,self._SIZE:])
 
     def test_003_simple_serial(self):
-        W2 = np.random.normal(size=(self._SIZE, self._SIZE)).astype(nn.dtype)
+        W2 = np.random.normal(size=(self._SIZE, self._SIZE)).astype(sloika_dtype)
         res = self.res.dot(W2.transpose())
 
         l1 = nn.FeedForward(self._NFEATURES, self._SIZE, has_bias=True, fun=nn.linear)
@@ -90,7 +92,7 @@ class ANNTest(unittest.TestCase):
         self.assertTrue(np.allclose(res_sum, 1.0))
 
     def test_007_rnn_no_state(self):
-        sW = np.zeros((self._SIZE, self._SIZE), dtype=nn.dtype)
+        sW = np.zeros((self._SIZE, self._SIZE), dtype=sloika_dtype)
         network = nn.Recurrent(self._NFEATURES, self._SIZE, has_bias=True, fun=nn.linear)
         network.set_params({ 'iW': self.W, 'sW': sW, 'b': self.b})
         f = network.compile()
@@ -99,8 +101,8 @@ class ANNTest(unittest.TestCase):
         np.testing.assert_almost_equal(res, self.res, decimal=5)
 
     def test_008_rnn_no_input(self):
-        iW = np.zeros((self._SIZE, self._NFEATURES), dtype=nn.dtype)
-        sW = np.random.normal(size=(self._SIZE, self._SIZE)).astype(nn.dtype)
+        iW = np.zeros((self._SIZE, self._NFEATURES), dtype=sloika_dtype)
+        sW = np.random.normal(size=(self._SIZE, self._SIZE)).astype(sloika_dtype)
         network = nn.Recurrent(self._NFEATURES, self._SIZE)
         network.set_params({ 'iW': iW, 'sW': sW})
         f = network.compile()
@@ -109,8 +111,8 @@ class ANNTest(unittest.TestCase):
         np.testing.assert_almost_equal(res, 0.0)
 
     def test_009_rnn_no_input_with_bias(self):
-        iW = np.zeros((self._SIZE, self._NFEATURES), dtype=nn.dtype)
-        sW = np.random.normal(size=(self._SIZE, self._SIZE)).astype(nn.dtype)
+        iW = np.zeros((self._SIZE, self._NFEATURES), dtype=sloika_dtype)
+        sW = np.random.normal(size=(self._SIZE, self._SIZE)).astype(sloika_dtype)
         network = nn.Recurrent(self._NFEATURES, self._SIZE, has_bias=True, fun=nn.linear)
         network.set_params({ 'iW': iW, 'sW': sW, 'b': self.b})
         f = network.compile()
@@ -122,8 +124,8 @@ class ANNTest(unittest.TestCase):
             np.testing.assert_almost_equal(res[i], res2)
 
     def test_010_birnn_no_input_with_bias(self):
-        iW = np.zeros((self._SIZE, self._NFEATURES), dtype=nn.dtype)
-        sW = np.random.normal(size=(self._SIZE, self._SIZE)).astype(nn.dtype)
+        iW = np.zeros((self._SIZE, self._NFEATURES), dtype=sloika_dtype)
+        sW = np.random.normal(size=(self._SIZE, self._SIZE)).astype(sloika_dtype)
         layer1 = nn.Recurrent(self._NFEATURES, self._SIZE, has_bias=True, fun=nn.linear)
         layer1.set_params({ 'iW': iW, 'sW': sW, 'b': self.b})
         layer2 = nn.Recurrent(self._NFEATURES, self._SIZE, has_bias=True, fun=nn.linear)
@@ -168,10 +170,10 @@ class ANNTest(unittest.TestCase):
             np.testing.assert_almost_equal(theano_grad[1][i], self._NBATCH * self._NSTEP)
 
     def test_014_complex_derivative(self):
-        iW = np.random.normal(size=(self._SIZE, 4, self._NFEATURES)).astype(nn.dtype)
-        sW = np.random.normal(size=(self._SIZE, 4, self._SIZE)).astype(nn.dtype)
-        b = np.random.normal(size=(4, self._SIZE)).astype(nn.dtype)
-        p = np.random.normal(size=(3, self._SIZE)).astype(nn.dtype)
+        iW = np.random.normal(size=(self._SIZE, 4, self._NFEATURES)).astype(sloika_dtype)
+        sW = np.random.normal(size=(self._SIZE, 4, self._SIZE)).astype(sloika_dtype)
+        b = np.random.normal(size=(4, self._SIZE)).astype(sloika_dtype)
+        p = np.random.normal(size=(3, self._SIZE)).astype(sloika_dtype)
         network = nn.Lstm(self._NFEATURES, self._SIZE, has_bias=True, has_peep=True)
         network.set_params({'iW': iW, 'sW': sW, 'b': b, 'p': p})
 

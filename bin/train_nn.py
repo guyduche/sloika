@@ -1,20 +1,19 @@
 #!/usr/bin/env python
 import argparse
-from six.moves import cPickle
+import cPickle
+import numpy as np
 import sys
 import time
 
 import theano as th
 import theano.tensor as T
 
-from dragonet.bio import seq_tools
+from tangible import bio, fast5
+from tangible.cmdargs import (AutoBool, display_version_and_exit, FileExist,
+                              NonNegative, ParseToNamedTuple, Positive,
+                              probability, TypeOrNone)
 
-import numpy as np
-from tang.fast5 import iterate_fast5, fast5
 from sloika import layers, networks, updates
-from tang.util.cmdargs import (AutoBool, display_version_and_exit, FileExist,
-                               NonNegative, ParseToNamedTuple, Positive,
-                               probability, TypeOrNone)
 
 # This is here, not in main to allow documentation to be built
 parser = argparse.ArgumentParser(
@@ -83,7 +82,7 @@ def max_rle(x):
     return np.amax(np.diff(np.append(pos, len(x)))[x[pos]])
 
 def chunk_events(files, max_len, permute=True):
-    _, kmer_to_state = seq_tools.all_kmers(length=args.kmer, rev_map=True)
+    _, kmer_to_state = bio.all_kmers(args.kmer, rev_map=True)
     black_list = set()
 
     pfiles = list(files)
@@ -93,7 +92,7 @@ def chunk_events(files, max_len, permute=True):
     in_mat = labels = None
     for fn in pfiles:
         try:
-            with fast5(fn) as f5:
+            with fast5.Reader(fn) as f5:
                 ev, _ = f5.get_any_mapping_data(args.section)
         except:
             black_list.add(fn)
@@ -137,7 +136,7 @@ def chunk_events(files, max_len, permute=True):
 
 if __name__ == '__main__':
     args = parser.parse_args()
-    kmers = seq_tools.all_kmers(length=args.kmer)
+    kmers = bio.all_kmers(args.kmer)
 
     if args.model is not None:
         with open(args.model, 'r') as fh:
@@ -146,7 +145,7 @@ if __name__ == '__main__':
         network = networks.nanonet(kmer=args.kmer, winlen=args.window, sd=args.sd, bad_state=args.bad)
     fg, fv = wrap_network(network)
 
-    train_files = set(iterate_fast5(args.input_folder, paths=True, limit=args.limit, strand_list=args.strand_list))
+    train_files = set(fast5.terate_fast5(args.input_folder, paths=True, limit=args.limit, strand_list=args.strand_list))
     if args.validation is not None:
         nval = int(args.validation * len(train_files))
         val_files = set(np.random.choice(list(train_files), size=nval, replace=False))
