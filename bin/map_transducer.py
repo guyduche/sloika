@@ -1,20 +1,19 @@
 #!/usr/bin/env python
 import argparse
 import h5py
+import numpy as np
+import numpy.lib.recfunctions as nprf
 from six.moves import cPickle
 import sys
 import time
 
-from dragonet.bio import seq_tools
-
-import numpy as np
-import numpy.lib.recfunctions as nprf
-from tang.fast5 import iterate_fast5, fast5
-from sloika import features, transducer
-from tang.util.cmdargs import (AutoBool, display_version_and_exit, FileExist,
+from tangible import bio, fast5
+from tangible.cmdargs import (AutoBool, display_version_and_exit, FileExist,
                                NonNegative, probability, Positive, TypeOrNone,
                                Vector)
-from tang.util.tang_iter import tang_imap
+from tangible.iterators import imap_mp
+
+from sloika import features, transducer
 
 # This is here, not in main to allow documentation to be built
 parser = argparse.ArgumentParser(
@@ -40,9 +39,9 @@ parser.add_argument('input_folder', action=FileExist,
     help='Directory containing single-read fast5 files.')
 
 def map_transducer(args, fn):
-    _, kmer_to_state = seq_tools.all_kmers(length=1, rev_map=True)
+    _, kmer_to_state = bio.all_kmers(1, rev_map=True)
     try:
-        with fast5(fn) as f5:
+        with fast5.Reader(fn) as f5:
             ev, _ = f5.get_any_mapping_data(args.section)
             name, seq = f5.get_reference_fasta(section=args.section).split()
             sn = f5.filename_short
@@ -73,12 +72,12 @@ def map_transducer(args, fn):
 if __name__ == '__main__':
     args = parser.parse_args()
 
-    files = iterate_fast5(args.input_folder, paths=True, limit=args.limit, strand_list=args.strand_list)
+    files = fast5.iterate_fast5(args.input_folder, paths=True, limit=args.limit, strand_list=args.strand_list)
     nbases = nevents = 0
     t0 = time.time()
     print 'Read\tOldAcc\tNewAcc\tDelta'
     with h5py.File(args.output, 'w') as h5:
-        for res in tang_imap(map_transducer, files, threads=1, fix_args=[args], unordered=True):
+        for res in imap_mp(map_transducer, files, threads=1, fix_args=[args], unordered=True):
             if res is None:
                 continue
             read, score, path, ev, lbls, rnn_mp, seq = res

@@ -1,21 +1,20 @@
 #!/usr/bin/env python
 import argparse
 import h5py
+import numpy as np
 from six.moves import cPickle
 import sys
 import time
+import warnings
 
 import theano as th
 import theano.tensor as T
 
-from dragonet.bio import seq_tools
+from tangible.cmdargs import (AutoBool, display_version_and_exit, FileExist,
+                              NonNegative, ParseToNamedTuple, Positive,
+                              probability, TypeOrNone)
 
-import numpy as np
-from tang.fast5 import iterate_fast5, fast5
 from sloika import layers, networks, updates, features
-from tang.util.cmdargs import (AutoBool, display_version_and_exit, FileExist,
-                               NonNegative, ParseToNamedTuple, Positive,
-                               probability, TypeOrNone)
 
 # This is here, not in main to allow documentation to be built
 parser = argparse.ArgumentParser(
@@ -75,46 +74,51 @@ def wrap_network(network):
 
 
 def chunk_events(infile, files, max_len, permute=True):
-    _, kmer_to_state = seq_tools.all_kmers(length=1, rev_map=True)
+    _, kmer_to_state = bio.all_kmers(1, rev_map=True)
 
     with h5py.File(infile, 'r') as h5:
         pfiles = list(files & set(h5.keys()))
-        if permute:
-            pfiles = np.random.permutation(pfiles)
+    if permute:
+        pfiles = np.random.permutation(pfiles)
 
-        in_mat = labels = None
-        for fn in pfiles:
-            ev = h5[fn][:]
-            if len(ev) <= args.chunk:
-                continue
+    in_mat = labels = None
+    for fn in pfiles:
+        with h5py.File(infile, 'r') as h5:
+	    ev = h5[fn][:]
+        if len(ev) <= args.chunk:
+	    continue
 
-            new_inMat = features.from_events(ev).astype(np.float32)
-            ml = len(new_inMat) // args.chunk
-            new_inMat = new_inMat[:ml * args.chunk].reshape((ml, args.chunk, -1))
+        new_inMat = features.from_events(ev).astype(np.float32)
+        ml = len(new_inMat) // args.chunk
+        new_inMat = new_inMat[:ml * args.chunk].reshape((ml, args.chunk, -1))
 
-            ub = args.chunk * ml
-            new_labels = ev['rnn_call'][:ub]
-            new_labels = new_labels.reshape((ml, args.chunk))
-            new_labels = new_labels[:, (args.window // 2) : -(args.window // 2)]
+        ub = args.chunk * ml
+        new_labels = ev['rnn_call'][:ub].astype(np.int32)
+        new_labels = new_labels.reshape((ml, args.chunk))
+        new_labels = new_labels[:, (args.window // 2) : -(args.window // 2)]
 
-            accept = np.apply_along_axis(max_rle, 1, new_labels == _NBASE) < args.drop_runs
-            new_inMat = new_inMat[accept]
-            new_labels = new_labels[accept]
+        """
+        accept = np.apply_along_axis(max_rle, 1, new_labels == _NBASE) < args.drop_runs
+        new_inMat = new_inMat[accept]
+        new_labels = new_labels[accept]
+        """
 
-            in_mat = np.vstack((in_mat, new_inMat)) if in_mat is not None else new_inMat
-            labels = np.vstack((labels, new_labels)) if labels is not None else new_labels
-            if len(in_mat) > max_len:
-                yield np.ascontiguousarray(in_mat.transpose((1,0,2))), np.ascontiguousarray(labels.transpose())
-                in_mat = None
-                labels = None
+        in_mat = np.vstack((in_mat, new_inMat)) if in_mat is not None else new_inMat
+        labels = np.vstack((labels, new_labels)) if labels is not None else new_labels
+        if len(in_mat) > max_len:
+	    yield np.ascontiguousarray(in_mat.transpose((1,0,2))), np.ascontiguousarray(labels.transpose())
+	    in_mat = None
+	    labels = None
 
-        if in_mat is not None:
-            yield np.ascontiguousarray(in_mat.transpose((1,0,2))), np.ascontiguousarray(labels.transpose())
+    if in_mat is not None:
+        yield np.ascontiguousarray(in_mat.transpose((1,0,2))), np.ascontiguousarray(labels.transpose())
 
 
 if __name__ == '__main__':
+    warnings.simplefilter("always", DeprecationWarning)
+
     args = parser.parse_args()
-    kmers = seq_tools.all_kmers(length=1)
+    kmers = bio.all_kmers(1)
 
     if args.model is not None:
         with open(args.model, 'r') as fh:
@@ -141,6 +145,7 @@ if __name__ == '__main__':
         total_ev = 0
         dt = 0.0
         for i, in_data in enumerate(chunk_events(args.input, train_files, args.batch)):
+            sys.stdout.write('.')
             t0 = time.time()
             fval, ncorr = fg(in_data[0], in_data[1], learning_rate)
             fval = float(fval)
@@ -152,12 +157,14 @@ if __name__ == '__main__':
             wscore = 1.0 + SMOOTH * wscore
             wacc = 1.0 + SMOOTH * wacc
             dt += time.time() - t0
+        sys.stdout.write('\n')
         print '  training   {:5.3f}   {:5.2f}% ... {:6.1f}s ({:.2f} kev/s)'.format(score / wscore, 100.0 * acc / wacc, dt, 0.001 * total_ev / dt)
 
         #  Validation
         dt = 0.0
         vscore = vnev = vncorr = 0
         for i, in_data in enumerate(chunk_events(args.input, val_files, args.batch)):
+            sys.stdout.write('.')
             t0 = time.time()
             fval, ncorr = fv(in_data[0], in_data[1])
             fval = float(fval)
@@ -167,6 +174,7 @@ if __name__ == '__main__':
             vncorr += ncorr
             vnev += nev
             dt += time.time() - t0
+        sys.stdout.write('\n')
         print '  validation {:5.3f}   {:5.2f}% ... {:6.1f}s ({:.2f} kev/s)'.format(vscore / vnev, 100.0 * vncorr / vnev, dt, 0.001 * vnev / dt)
 
         # Save model

@@ -1,20 +1,20 @@
 #!/usr/bin/env python
 import argparse
+import numpy as np
 from six.moves import cPickle
 import sys
 import time
+import warnings
 
 import theano as th
 import theano.tensor as T
 
-from dragonet.bio import seq_tools
+from tangible import bio, fast5
+from tangible.cmdargs import (AutoBool, display_version_and_exit, FileExist,
+                              NonNegative, ParseToNamedTuple, Positive,
+                              probability, TypeOrNone)
 
-import numpy as np
-from tang.fast5 import iterate_fast5, fast5
 from sloika import layers, networks, updates, features
-from tang.util.cmdargs import (AutoBool, display_version_and_exit, FileExist,
-                               NonNegative, ParseToNamedTuple, Positive,
-                               probability, TypeOrNone)
 
 # This is here, not in main to allow documentation to be built
 parser = argparse.ArgumentParser(
@@ -84,7 +84,7 @@ def wrap_network(network):
 
 
 def chunk_events(files, max_len, permute=True):
-    _, kmer_to_state = seq_tools.all_kmers(length=1, rev_map=True)
+    _, kmer_to_state = bio.all_kmers(1, rev_map=True)
     black_list = set()
 
     pfiles = list(files)
@@ -94,7 +94,7 @@ def chunk_events(files, max_len, permute=True):
     in_mat = labels = None
     for fn in pfiles:
         try:
-            with fast5(fn) as f5:
+            with fast5.Reader(fn) as f5:
                 ev, _ = f5.get_any_mapping_data(args.section)
         except:
             black_list.add(fn)
@@ -121,9 +121,11 @@ def chunk_events(files, max_len, permute=True):
         new_labels = new_labels.reshape((ml, args.chunk))
         new_labels = new_labels[:, (args.window // 2) : -(args.window // 2)]
 
+        """
         accept = np.apply_along_axis(max_rle, 1, new_labels == _NBASE) < args.drop_runs
         new_inMat = new_inMat[accept]
         new_labels = new_labels[accept]
+        """
 
         in_mat = np.vstack((in_mat, new_inMat)) if in_mat is not None else new_inMat
         labels = np.vstack((labels, new_labels)) if labels is not None else new_labels
@@ -139,8 +141,10 @@ def chunk_events(files, max_len, permute=True):
 
 
 if __name__ == '__main__':
+    warnings.simplefilter("always", DeprecationWarning)
+
     args = parser.parse_args()
-    kmers = seq_tools.all_kmers(length=1)
+    kmers = bio.all_kmers(1)
 
     if args.model is not None:
         with open(args.model, 'r') as fh:
@@ -149,7 +153,7 @@ if __name__ == '__main__':
         network = networks.transducer(winlen=args.window, sd=args.sd, bad_state=args.bad, size=args.size)
     fg, fv = wrap_network(network)
 
-    train_files = set(iterate_fast5(args.input_folder, paths=True, limit=args.limit, strand_list=args.strand_list))
+    train_files = set(fast5.iterate_fast5(args.input_folder, paths=True, limit=args.limit, strand_list=args.strand_list))
     if args.validation is not None:
         nval = int(args.validation * len(train_files))
         val_files = set(np.random.choice(list(train_files), size=nval, replace=False))
