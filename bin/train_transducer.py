@@ -14,7 +14,7 @@ from tangible.cmdargs import (AutoBool, display_version_and_exit, FileExist,
                               NonNegative, ParseToNamedTuple, Positive,
                               probability, TypeOrNone)
 
-from sloika import layers, networks, updates, features
+from sloika import layers, networks, updates, features, __version__
 
 # This is here, not in main to allow documentation to be built
 parser = argparse.ArgumentParser(
@@ -52,7 +52,7 @@ parser.add_argument('--trim', default=(500, 50), nargs=2, type=Positive(int),
     metavar=('beginning', 'end'), help='Number of events to trim off start and end')
 parser.add_argument('--validation', default=None, type=probability,
     help='Proportion of reads to use for validation')
-parser.add_argument('--version', nargs=0, action=display_version_and_exit,
+parser.add_argument('--version', nargs=0, action=display_version_and_exit, metavar=__version__,
     help='Display version information.')
 parser.add_argument('--window', default=3, type=Positive(int), metavar='length',
     help='Window length for input features')

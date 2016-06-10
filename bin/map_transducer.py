@@ -13,7 +13,7 @@ from tangible.cmdargs import (AutoBool, display_version_and_exit, FileExist,
                                Vector)
 from tangible.iterators import imap_mp
 
-from sloika import features, transducer
+from sloika import features, transducer, __version__
 
 # This is here, not in main to allow documentation to be built
 parser = argparse.ArgumentParser(
@@ -29,7 +29,7 @@ parser.add_argument('--strand_list', default=None, action=FileExist,
     help='strand summary file containing subset.')
 parser.add_argument('--trim', default=(500, 50), nargs=2, type=Positive(int),
     metavar=('beginning', 'end'), help='Number of events to trim off start and end')
-parser.add_argument('--version', nargs=0, action=display_version_and_exit,
+parser.add_argument('--version', nargs=0, action=display_version_and_exit, metavar=__version__,
     help='Display version information.')
 parser.add_argument('--window', default=3, type=Positive(int), metavar='length',
     help='Window length for input features')
