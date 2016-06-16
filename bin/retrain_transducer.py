@@ -131,7 +131,7 @@ if __name__ == '__main__':
     with h5py.File(args.input, 'r') as f5:
         train_files = set(f5.keys())
     if args.validation is not None:
-        nval = int(args.validation * len(train_files))
+        nval = 1 + int(args.validation * len(train_files))
         val_files = set(np.random.choice(list(train_files), size=nval, replace=False))
         train_files -= val_files
 
@@ -162,21 +162,22 @@ if __name__ == '__main__':
         print '  training   {:5.3f}   {:5.2f}% ... {:6.1f}s ({:.2f} kev/s)'.format(score / wscore, 100.0 * acc / wacc, dt, 0.001 * total_ev / dt)
 
         #  Validation
-        dt = 0.0
-        vscore = vnev = vncorr = 0
-        for i, in_data in enumerate(chunk_events(args.input, val_files, args.batch)):
-            sys.stdout.write('.')
-            t0 = time.time()
-            fval, ncorr = fv(in_data[0], in_data[1])
-            fval = float(fval)
-            ncorr = float(ncorr)
-            nev = in_data[1].shape[0] * in_data[1].shape[1]
-            vscore += fval * nev
-            vncorr += ncorr
-            vnev += nev
-            dt += time.time() - t0
-        sys.stdout.write('\n')
-        print '  validation {:5.3f}   {:5.2f}% ... {:6.1f}s ({:.2f} kev/s)'.format(vscore / vnev, 100.0 * vncorr / vnev, dt, 0.001 * vnev / dt)
+        if args.validation is not None:
+            dt = 0.0
+            vscore = vnev = vncorr = 0
+            for i, in_data in enumerate(chunk_events(args.input, val_files, args.batch)):
+                sys.stdout.write('.')
+                t0 = time.time()
+                fval, ncorr = fv(in_data[0], in_data[1])
+                fval = float(fval)
+                ncorr = float(ncorr)
+                nev = in_data[1].shape[0] * in_data[1].shape[1]
+                vscore += fval * nev
+                vncorr += ncorr
+                vnev += nev
+                dt += time.time() - t0
+            sys.stdout.write('\n')
+            print '  validation {:5.3f}   {:5.2f}% ... {:6.1f}s ({:.2f} kev/s)'.format(vscore / vnev, 100.0 * vncorr / vnev, dt, 0.001 * vnev / dt)
 
         # Save model
         if (it % args.save_every) == 0:
