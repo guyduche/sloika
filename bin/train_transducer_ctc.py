@@ -174,7 +174,7 @@ if __name__ == '__main__':
 
     train_files = set(fast5.iterate_fast5(args.input_folder, paths=True, limit=args.limit, strand_list=args.strand_list))
     if args.validation is not None:
-        nval = int(args.validation * len(train_files))
+        nval = 1 + int(args.validation * len(train_files))
         val_files = set(np.random.choice(list(train_files), size=nval, replace=False))
         train_files -= val_files
 
@@ -202,16 +202,17 @@ if __name__ == '__main__':
         print '  training   {:5.3f} ... {:6.1f}s ({:.2f} kev/s)'.format(score / wscore, dt, 0.001 * total_ev / dt)
 
         #  Validation
-        dt = 0.0
-        vscore = vnev = vncorr = 0
-        for i, in_data in enumerate(chunk_events_ctc(val_files, args.batch)):
-            t0 = time.time()
-            lens = np.repeat(in_data[0].shape[0] - 2 * wh, in_data[0].shape[1]).astype(np.int32)
-            fval = float(fv(in_data[0], lens, in_data[1], in_data[2]))
-            nev = in_data[0].shape[0] * in_data[0].shape[1]
-            vscore += fval * nev
-            dt += time.time() - t0
-        print '  validation {:5.3f} ... {:6.1f}s ({:.2f} kev/s)'.format(vscore / vnev, dt, 0.001 * vnev / dt)
+        if args.validation is not None:
+            dt = 0.0
+            vscore = vnev = vncorr = 0
+            for i, in_data in enumerate(chunk_events_ctc(val_files, args.batch)):
+                t0 = time.time()
+                lens = np.repeat(in_data[0].shape[0] - 2 * wh, in_data[0].shape[1]).astype(np.int32)
+                fval = float(fv(in_data[0], lens, in_data[1], in_data[2]))
+                nev = in_data[0].shape[0] * in_data[0].shape[1]
+                vscore += fval * nev
+                dt += time.time() - t0
+            print '  validation {:5.3f} ... {:6.1f}s ({:.2f} kev/s)'.format(vscore / vnev, dt, 0.001 * vnev / dt)
 
         # Save model
         if (it % args.save_every) == 0:
