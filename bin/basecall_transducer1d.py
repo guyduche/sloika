@@ -5,11 +5,11 @@ import numpy as np
 import sys
 import time
 
-from tangible from bio
-from tangible.cmdargs import (AutoBool, display_version_and_exit, FileExist,
+from untangled from bio
+from untangled.cmdargs import (AutoBool, display_version_and_exit, FileExist,
                               probability, Positive, TypeOrNone, Vector)
-from tangible import fast5
-from tangible.iterators import imap_mp
+from untangled import fast5
+from untangled.iterators import imap_mp
 
 from sloika import features, __version__
 

@@ -21,8 +21,8 @@ else:
 #    .gitlab-ci.yml should contain package versions of these.
 requires=[
     'numpy',
-    'tangible', 
-    'Theano'
+    'Theano',
+    'untangled'
 ]
 
 setup(

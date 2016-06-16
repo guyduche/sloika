@@ -3,7 +3,7 @@ import argparse
 import h5py
 import numpy as np
 
-from tangible.cmdargs import AutoBool, FileExist, Positive
+from untangled.cmdargs import AutoBool, FileExist, Positive
 
 parser = argparse.ArgumentParser(description='Sample from simple HDF5 file')
 parser.add_argument('--size', default=None, type=Positive(int), help='Number of entries to sample')

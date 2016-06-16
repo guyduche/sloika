@@ -7,11 +7,11 @@ import numpy.lib.recfunctions as nprf
 import sys
 import time
 
-from tangible import bio, fast5
-from tangible.cmdargs import (AutoBool, display_version_and_exit, FileExist,
+from untangled import bio, fast5
+from untangled.cmdargs import (AutoBool, display_version_and_exit, FileExist,
                                NonNegative, probability, Positive, TypeOrNone,
                                Vector)
-from tangible.iterators import imap_mp
+from untangled.iterators import imap_mp
 
 from sloika import features, transducer, __version__
 

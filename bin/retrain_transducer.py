@@ -10,8 +10,8 @@ import warnings
 import theano as th
 import theano.tensor as T
 
-from tangible import bio
-from tangible.cmdargs import (AutoBool, display_version_and_exit, FileExist,
+from untangled import bio
+from untangled.cmdargs import (AutoBool, display_version_and_exit, FileExist,
                               NonNegative, ParseToNamedTuple, Positive,
                               probability, TypeOrNone)
 
