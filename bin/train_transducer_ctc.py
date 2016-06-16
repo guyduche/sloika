@@ -198,6 +198,7 @@ if __name__ == '__main__':
             nev = in_data[0].shape[0] * in_data[0].shape[1]
             total_ev += nev
             score = fval + SMOOTH * score
+            wscore = 1.0 + SMOOTH * wscore
             dt += time.time() - t0
         print '  training   {:5.3f} ... {:6.1f}s ({:.2f} kev/s)'.format(score / wscore, dt, 0.001 * total_ev / dt)
 
@@ -211,6 +212,7 @@ if __name__ == '__main__':
                 fval = float(fv(in_data[0], lens, in_data[1], in_data[2]))
                 nev = in_data[0].shape[0] * in_data[0].shape[1]
                 vscore += fval * nev
+                vnev += nev
                 dt += time.time() - t0
             print '  validation {:5.3f} ... {:6.1f}s ({:.2f} kev/s)'.format(vscore / vnev, dt, 0.001 * vnev / dt)
 
