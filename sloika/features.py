@@ -1,6 +1,6 @@
 import numpy as np
 from sloika import sloika_dtype, layers
-from sloika.maths import studentise
+from untangled.maths import studentise
 
 def from_events(ev):
     """  Create a matrix of features from
