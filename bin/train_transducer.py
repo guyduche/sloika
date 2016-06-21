@@ -81,7 +81,6 @@ def wrap_network(network):
     return fg, fv
 
 
-
 if __name__ == '__main__':
     args = parser.parse_args()
     kmers = bio.all_kmers(1)

@@ -125,11 +125,11 @@ def chunk_events_ctc(files, max_len, permute=True):
             kmers = ev['kmer'][offset : offset + args.chunk]
             moves = np.abs(np.ediff1d(ev['seq_pos'][offset : offset + args.chunk], to_begin=0))
             seq = collapse_kmers(kmers, moves)
-            if len(seq) == 0 or len(seq) > args.chunk:
+            if len(seq) < 2 * kh or len(seq) > args.chunk:
                 new_label_len[i] = -1 # Canary
                 valid_labels[i] = False
                 continue
-            seq = seq[kh : -kh]
+            seq = seq[kh : -(1 + kh)]
             states = 1 + np.array(map(lambda k: kmer_to_state[k], bio.seq_to_kmers(seq, klen)), dtype=np.int32)
             new_labels = np.concatenate((new_labels, states))
             new_label_len[i] = len(states)
@@ -143,7 +143,7 @@ def chunk_events_ctc(files, max_len, permute=True):
 
         while len(in_mat) > max_len:
             sumlab = np.sum(label_len[:max_len])
-            yield (np.ascontiguousarray(in_mat[:max_len].transpose((1,0,2))), 
+            yield (np.ascontiguousarray(in_mat[:max_len].transpose((1,0,2))),
                    np.ascontiguousarray(labels[:sumlab]),
                    np.ascontiguousarray(label_len[:max_len]))
             in_mat = in_mat[max_len:]
@@ -151,7 +151,7 @@ def chunk_events_ctc(files, max_len, permute=True):
             label_len = label_len[max_len:]
 
     if in_mat is not None:
-        yield (np.ascontiguousarray(in_mat.transpose((1,0,2))), 
+        yield (np.ascontiguousarray(in_mat.transpose((1,0,2))),
                np.ascontiguousarray(labels),
                np.ascontiguousarray(label_len))
 
@@ -199,6 +199,7 @@ if __name__ == '__main__':
             total_ev += nev
             score = fval + SMOOTH * score
             wscore = 1.0 + SMOOTH * wscore
+            #  print '{:5d} {} {}'.format(i + 1, fval, score / wscore)
             dt += time.time() - t0
         print '  training   {:5.3f} ... {:6.1f}s ({:.2f} kev/s)'.format(score / wscore, dt, 0.001 * total_ev / dt)
 
