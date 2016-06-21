@@ -115,7 +115,6 @@ if __name__ == '__main__':
             wscore = 1.0 + SMOOTH * wscore
             wacc = 1.0 + SMOOTH * wacc
             dt += time.time() - t0
-            print i + 1, fval, score / wscore
         print '  training   {:5.3f}   {:5.2f}% ... {:6.1f}s ({:.2f} kev/s)'.format(score / wscore, 100.0 * acc / wacc, dt, 0.001 * total_ev / dt)
 
         #  Validation
