@@ -2,18 +2,17 @@
 import argparse
 import cPickle
 import numpy as np
-import sys
 import time
 
 import theano as th
 import theano.tensor as T
 
 from untangled import bio, fast5
-from untangled.cmdargs import (AutoBool, display_version_and_exit, FileExist,
+from untangled.cmdargs import (display_version_and_exit, FileExist,
                                NonNegative, ParseToNamedTuple, Positive,
                                probability, TypeOrNone)
 
-from sloika import batch, layers, networks, updates, __version__
+from sloika import batch, networks, updates, __version__
 
 # This is here, not in main to allow documentation to be built
 parser = argparse.ArgumentParser(
@@ -23,8 +22,6 @@ parser.add_argument('--batch', default=1000, metavar='size', type=Positive(int),
     help='Batch size (number of chunks to run in parallel)')
 parser.add_argument('--chunk', default=100, metavar='events', type=Positive(int),
     help='Length of each read chunk')
-parser.add_argument('--drop_runs', metavar='length', type=Positive(int), default=10,
-    help='Drop chunks with runs longer than length')
 parser.add_argument('--edam', nargs=3, metavar=('rate', 'decay1', 'decay2'),
     default=(0.1, 0.9, 0.99), type=(NonNegative(float), NonNegative(float), NonNegative(float)),
     action=ParseToNamedTuple, help='Parameters for Exponential Decay Adaptive Momementum')
@@ -61,10 +58,6 @@ parser.add_argument('input_folder', action=FileExist,
 _ETA = 1e-300
 _NBASE = 4
 
-
-def max_rle(x):
-    pos, = np.where(np.ediff1d(x, to_begin=1) != 0)
-    return np.amax(np.diff(np.append(pos, len(x)))[x[pos]])
 
 def wrap_network(network):
     x = T.tensor3()

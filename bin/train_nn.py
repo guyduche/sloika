@@ -2,7 +2,6 @@
 import argparse
 import cPickle
 import numpy as np
-import sys
 import time
 
 import theano as th
@@ -13,7 +12,7 @@ from untangled.cmdargs import (AutoBool, display_version_and_exit, FileExist,
                               NonNegative, ParseToNamedTuple, Positive,
                               probability, TypeOrNone)
 
-from sloika import layers, networks, updates, __version__
+from sloika import batch, networks, updates, __version__
 
 # This is here, not in main to allow documentation to be built
 parser = argparse.ArgumentParser(
