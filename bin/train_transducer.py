@@ -4,23 +4,21 @@ import cPickle
 import numpy as np
 import sys
 import time
-import warnings
 
 import theano as th
 import theano.tensor as T
 
 from untangled import bio, fast5
 from untangled.cmdargs import (AutoBool, display_version_and_exit, FileExist,
-                              NonNegative, ParseToNamedTuple, Positive,
-                              probability, TypeOrNone)
+                               NonNegative, ParseToNamedTuple, Positive,
+                               probability, TypeOrNone)
 
-from sloika import layers, networks, updates, features, __version__
+from sloika import batch, layers, networks, updates, __version__
 
 # This is here, not in main to allow documentation to be built
 parser = argparse.ArgumentParser(
     description='Train a simple transducer neural network',
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-parser.add_argument('--bad', default=False, action=AutoBool, help='Label bad emissions')
 parser.add_argument('--batch', default=1000, metavar='size', type=Positive(int),
     help='Batch size (number of chunks to run in parallel)')
 parser.add_argument('--chunk', default=100, metavar='events', type=Positive(int),
@@ -83,66 +81,8 @@ def wrap_network(network):
     return fg, fv
 
 
-def chunk_events(files, max_len, permute=True):
-    _, kmer_to_state = bio.all_kmers(1, rev_map=True)
-    black_list = set()
-
-    pfiles = list(files)
-    if permute:
-        pfiles = np.random.permutation(pfiles)
-
-    in_mat = labels = None
-    for fn in pfiles:
-        try:
-            with fast5.Reader(fn) as f5:
-                ev, _ = f5.get_any_mapping_data(args.section)
-        except:
-            black_list.add(fn)
-            sys.stderr.write('Failed to read from {}.\n'.format(fn))
-            continue
-        if len(ev) <= sum(args.trim) + args.chunk:
-            continue
-
-        new_inMat = features.from_events(ev)[args.trim[0] : -args.trim[1]]
-        ml = len(new_inMat) // args.chunk
-        new_inMat = new_inMat[:ml * args.chunk].reshape((ml, args.chunk, -1))
-
-
-        model_kmer = len(ev['kmer'][0])
-        l = args.trim[0]
-        u = l + args.chunk * ml
-        kl = (model_kmer - 1) // 2
-        ku = kl + 1
-        new_labels = np.array(map(lambda k: kmer_to_state[k[kl:ku]], ev['kmer'][l:u]), dtype=np.int32)
-        new_labels[np.ediff1d(ev['seq_pos'][l:u], to_begin=1) == 0] = _NBASE
-        if args.bad:
-            new_labels[np.logical_not(ev['good_emission'][l:u])] = _NBASE + 1
-
-        new_labels = new_labels.reshape((ml, args.chunk))
-        new_labels = new_labels[:, (args.window // 2) : -(args.window // 2)]
-
-        """
-        accept = np.apply_along_axis(max_rle, 1, new_labels == _NBASE) < args.drop_runs
-        new_inMat = new_inMat[accept]
-        new_labels = new_labels[accept]
-        """
-
-        in_mat = np.vstack((in_mat, new_inMat)) if in_mat is not None else new_inMat
-        labels = np.vstack((labels, new_labels)) if labels is not None else new_labels
-        if len(in_mat) > max_len:
-            yield np.ascontiguousarray(in_mat.transpose((1,0,2))), np.ascontiguousarray(labels.transpose())
-            in_mat = None
-            labels = None
-
-    if in_mat is not None:
-        yield np.ascontiguousarray(in_mat.transpose((1,0,2))), np.ascontiguousarray(labels.transpose())
-
-    files -= black_list
-
 
 if __name__ == '__main__':
-    warnings.simplefilter("always", DeprecationWarning)
-
     args = parser.parse_args()
     kmers = bio.all_kmers(1)
 
@@ -150,7 +90,7 @@ if __name__ == '__main__':
         with open(args.model, 'r') as fh:
             network = cPickle.load(fh)
     else:
-        network = networks.transducer(winlen=args.window, sd=args.sd, bad_state=args.bad, size=args.size)
+        network = networks.transducer(winlen=args.window, sd=args.sd, bad_state=False, size=args.size)
     fg, fv = wrap_network(network)
 
     train_files = set(fast5.iterate_fast5(args.input_folder, paths=True, limit=args.limit, strand_list=args.strand_list))
@@ -169,7 +109,9 @@ if __name__ == '__main__':
         #  Training
         total_ev = 0
         dt = 0.0
-        for i, in_data in enumerate(chunk_events(train_files, args.batch)):
+        for i, in_data in enumerate(batch.transducer(train_files, args.section,
+                                                     args.batch, args.chunk,
+                                                     args.window, trim=args.trim)):
             t0 = time.time()
             fval, ncorr = fg(in_data[0], in_data[1], learning_rate)
             fval = float(fval)
@@ -181,13 +123,16 @@ if __name__ == '__main__':
             wscore = 1.0 + SMOOTH * wscore
             wacc = 1.0 + SMOOTH * wacc
             dt += time.time() - t0
+            print i + 1, fval, score / wscore
         print '  training   {:5.3f}   {:5.2f}% ... {:6.1f}s ({:.2f} kev/s)'.format(score / wscore, 100.0 * acc / wacc, dt, 0.001 * total_ev / dt)
 
         #  Validation
         if args.validation is not None:
             dt = 0.0
             vscore = vnev = vncorr = 0
-            for i, in_data in enumerate(chunk_events(val_files, args.batch)):
+            for i, in_data in enumerate(batch.transducer(val_files, args.section,
+                                                         args.batch, args.chunk,
+                                                         args.window, trim=args.trim)):
                 t0 = time.time()
                 fval, ncorr = fv(in_data[0], in_data[1])
                 fval = float(fval)

@@ -24,8 +24,6 @@ parser.add_argument('--batch', default=1000, metavar='size', type=Positive(int),
     help='Batch size (number of chunks to run in parallel)')
 parser.add_argument('--chunk', default=100, metavar='events', type=Positive(int),
     help='Length of each read chunk')
-parser.add_argument('--drop_runs', metavar='length', type=Positive(int), default=10,
-    help='Drop chunks with runs longer than length')
 parser.add_argument('--edam', nargs=3, metavar=('rate', 'decay1', 'decay2'),
     default=(0.1, 0.9, 0.99), type=(NonNegative(float), NonNegative(float), NonNegative(float)),
     action=ParseToNamedTuple, help='Parameters for Exponential Decay Adaptive Momementum')
@@ -77,62 +75,6 @@ def wrap_network(network):
     fv = th.function([x, labels], [loss, ncorrect])
     return fg, fv
 
-def max_rle(x):
-    pos, = np.where(np.ediff1d(x, to_begin=1) != 0)
-    return np.amax(np.diff(np.append(pos, len(x)))[x[pos]])
-
-def chunk_events(files, max_len, permute=True):
-    _, kmer_to_state = bio.all_kmers(args.kmer, rev_map=True)
-    black_list = set()
-
-    pfiles = list(files)
-    if permute:
-        pfiles = np.random.permutation(pfiles)
-
-    in_mat = labels = None
-    for fn in pfiles:
-        try:
-            with fast5.Reader(fn) as f5:
-                ev, _ = f5.get_any_mapping_data(args.section)
-        except:
-            black_list.add(fn)
-            sys.stderr.write('Failed to read from {}.\n'.format(fn))
-            continue
-        if len(ev) <= sum(args.trim) + args.chunk:
-            continue
-
-        new_inMat = features.from_events(ev)[args.trim[0] : -args.trim[1]]
-        ml = len(new_inMat) // args.chunk
-        new_inMat = new_inMat[:ml * args.chunk].reshape((ml, args.chunk, -1))
-
-
-        model_kmer = len(ev['kmer'][0])
-        l = args.trim[0]
-        u = l + args.chunk * ml
-        kl = (model_kmer - args.kmer) // 2
-        ku = kl + args.kmer
-        new_labels = np.array(map(lambda k: kmer_to_state[k[kl:ku]], ev['kmer'][l:u]), dtype=np.int32)
-        if args.bad:
-            new_labels[np.logical_not(ev['good_emission'][l:u])] = _NBASE * args.kmer
-        new_labels = new_labels.reshape((ml, args.chunk))
-        new_labels = new_labels[:, (args.window // 2) : -(args.window // 2)]
-
-        accept = np.apply_along_axis(max_rle, 1, new_labels == _NBASE) < args.drop_runs
-        new_inMat = new_inMat[accept]
-        new_labels = new_labels[accept]
-
-        in_mat = np.vstack((in_mat, new_inMat)) if in_mat is not None else new_inMat
-        labels = np.vstack((labels, new_labels)) if labels is not None else new_labels
-        if len(in_mat) > max_len:
-            yield np.ascontiguousarray(in_mat.transpose((1,0,2))), np.ascontiguousarray(labels.transpose())
-            in_mat = None
-            labels = None
-
-    if in_mat is not None:
-        yield np.ascontiguousarray(in_mat.transpose((1,0,2))), np.ascontiguousarray(labels.transpose())
-
-    files -= black_list
-
 
 if __name__ == '__main__':
     args = parser.parse_args()
@@ -161,7 +103,10 @@ if __name__ == '__main__':
         #  Training
         total_ev = 0
         t0 = time.time()
-        for i, in_data in enumerate(chunk_events(train_files, args.batch)):
+        for i, in_data in enumerate(batch.kmers(train_files, args.section,
+                                                     args.batch, args.chunk,
+                                                     args.window, args.kmer,
+                                                     trim=args.trim, bad=args.bad)):
             fval, ncorr = fg(in_data[0], in_data[1], learning_rate)
             fval = float(fval)
             ncorr = float(ncorr)
@@ -178,7 +123,10 @@ if __name__ == '__main__':
         if args.validation is not None:
             t0 = time.time()
             vscore = vnev = vncorr = 0
-            for i, in_data in enumerate(chunk_events(val_files, args.batch)):
+            for i, in_data in enumerate(batch.kmers(train_files, args.section,
+                                                     args.batch, args.chunk,
+                                                     args.window, args.kmer,
+                                                     trim=args.trim, bad=args.bad)):
                 fval, ncorr = fv(in_data[0], in_data[1])
                 fval = float(fval)
                 ncorr = float(ncorr)
