@@ -23,7 +23,7 @@ requires=[
     'ctc',
     'numpy',
     'Theano',
-    'untangled'
+    'untangled >= 0.2.0'
 ]
 
 setup(

@@ -5,7 +5,7 @@ import numpy as np
 import sys
 import time
 
-from untangled from bio
+from untangled import bio
 from untangled.cmdargs import (AutoBool, display_version_and_exit, FileExist,
                               probability, Positive, TypeOrNone, Vector)
 from untangled import fast5
@@ -17,8 +17,6 @@ from sloika import features, __version__
 parser = argparse.ArgumentParser(
     description='1D basecaller for simple transducers',
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-#parser.add_argument('--jobs', default=1, type=int, action=CheckCPU,
-#    help='Number of jobs to run in parallel.')
 parser.add_argument('--individual', default=False, type=AutoBool,
     help='Return individual basecalls for each section')
 parser.add_argument('--limit', default=None, type=TypeOrNone(Positive(int)),
