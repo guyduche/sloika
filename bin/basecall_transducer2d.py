@@ -6,7 +6,7 @@ import sys
 import time
 
 
-from untangled import bio, fast5 
+from untangled import bio, fast5
 from untangled.cmdargs import (AutoBool, display_version_and_exit, FileExist,
                               probability, Positive, TypeOrNone, Vector)
 from untangled.iterators import imap_mp

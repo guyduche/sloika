@@ -75,7 +75,7 @@ def wrap_network(network):
 
 
 def chunk_events(infile, files, max_len, permute=True):
-    _, kmer_to_state = bio.all_kmers(1, rev_map=True)
+    kmer_to_state = bio.kmer_mapping(1)
 
     with h5py.File(infile, 'r') as h5:
         pfiles = list(files & set(h5.keys()))
@@ -85,9 +85,9 @@ def chunk_events(infile, files, max_len, permute=True):
     in_mat = labels = None
     for fn in pfiles:
         with h5py.File(infile, 'r') as h5:
-	    ev = h5[fn][:]
+            ev = h5[fn][:]
         if len(ev) <= args.chunk:
-	    continue
+            continue
 
         new_inMat = features.from_events(ev).astype(np.float32)
         ml = len(new_inMat) // args.chunk
@@ -107,9 +107,9 @@ def chunk_events(infile, files, max_len, permute=True):
         in_mat = np.vstack((in_mat, new_inMat)) if in_mat is not None else new_inMat
         labels = np.vstack((labels, new_labels)) if labels is not None else new_labels
         if len(in_mat) > max_len:
-	    yield np.ascontiguousarray(in_mat.transpose((1,0,2))), np.ascontiguousarray(labels.transpose())
-	    in_mat = None
-	    labels = None
+            yield np.ascontiguousarray(in_mat.transpose((1,0,2))), np.ascontiguousarray(labels.transpose())
+            in_mat = None
+            labels = None
 
     if in_mat is not None:
         yield np.ascontiguousarray(in_mat.transpose((1,0,2))), np.ascontiguousarray(labels.transpose())

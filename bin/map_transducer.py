@@ -39,7 +39,7 @@ parser.add_argument('input_folder', action=FileExist,
     help='Directory containing single-read fast5 files.')
 
 def map_transducer(args, fn):
-    _, kmer_to_state = bio.all_kmers(1, rev_map=True)
+    kmer_to_state = bio.kmer_mapping(1)
     try:
         with fast5.Reader(fn) as f5:
             ev, _ = f5.get_any_mapping_data(args.section)
