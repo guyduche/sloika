@@ -40,7 +40,7 @@ def kmers(files, section, batch_size, chunk_len, window, kmer_len, bad=False,
         if len(ev) <= trim_len + chunk_len + window:
             continue
 
-        new_inMat = features.from_events(ev)[begin : end]
+        new_inMat = features.from_events(ev[begin : end])
         ml = len(new_inMat) // chunk_len
         new_inMat = new_inMat[:ml * chunk_len].reshape((ml, chunk_len, -1))
 
@@ -100,7 +100,7 @@ def transducer(files, section, batch_size, chunk_len, window,
         if len(ev) <= trim_len + chunk_len + window:
             continue
 
-        new_inMat = features.from_events(ev)[begin : end]
+        new_inMat = features.from_events(ev[begin : end])
         ml = len(new_inMat) // chunk_len
         new_inMat = new_inMat[:ml * chunk_len].reshape((ml, chunk_len, -1))
 
