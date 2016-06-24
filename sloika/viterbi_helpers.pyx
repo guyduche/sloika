@@ -2,8 +2,8 @@ import  numpy as np
 cimport numpy as np
 cimport cython
 
-DTYPE = np.float64
-ctypedef np.float64_t DTYPE_t
+DTYPE = np.float32
+ctypedef np.float32_t DTYPE_t
 ITYPE = np.int
 ctypedef np.int_t ITYPE_t
 
@@ -31,5 +31,5 @@ def slip_update(np.ndarray[DTYPE_t, ndim=1] x, DTYPE_t slip):
             from_pos[j] = j - 2
             from_score[j] = x[j - 2]
         from_score[j] -= slip
-    
+
     return from_score, from_pos
