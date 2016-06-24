@@ -104,11 +104,14 @@ if __name__ == '__main__':
         for i, in_data in enumerate(batch.transducer(train_files, args.section,
                                                      args.batch, args.chunk,
                                                      args.window, trim=args.trim)):
+            labels = in_data[1]
+            labels += 1
+            labels %= _NBASE + 1
             t0 = time.time()
-            fval, ncorr = fg(in_data[0], in_data[1], learning_rate)
+            fval, ncorr = fg(in_data[0], labels, learning_rate)
             fval = float(fval)
             ncorr = float(ncorr)
-            nev = in_data[1].shape[0] * in_data[1].shape[1]
+            nev = labels.shape[0] * labels.shape[1]
             total_ev += nev
             score = fval + SMOOTH * score
             acc = (ncorr / nev) + SMOOTH * acc
@@ -124,11 +127,14 @@ if __name__ == '__main__':
             for i, in_data in enumerate(batch.transducer(val_files, args.section,
                                                          args.batch, args.chunk,
                                                          args.window, trim=args.trim)):
+                labels = in_data[1]
+                labels += 1
+                labels %= _NBASE + 1
                 t0 = time.time()
-                fval, ncorr = fv(in_data[0], in_data[1])
+                fval, ncorr = fv(in_data[0], labels)
                 fval = float(fval)
                 ncorr = float(ncorr)
-                nev = in_data[1].shape[0] * in_data[1].shape[1]
+                nev = labels.shape[0] * labels.shape[1]
                 vscore += fval * nev
                 vncorr += ncorr
                 vnev += nev

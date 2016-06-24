@@ -11,11 +11,11 @@ import theano.tensor as T
 from ctc import cpu_ctc_th
 
 from untangled import bio, fast5
-from untangled.cmdargs import (AutoBool, display_version_and_exit, FileExist,
+from untangled.cmdargs import (display_version_and_exit, FileExist,
                               NonNegative, ParseToNamedTuple, Positive,
                               probability, TypeOrNone)
 
-from sloika import layers, networks, updates, features, __version__
+from sloika import networks, updates, features, __version__
 
 # This is here, not in main to allow documentation to be built
 parser = argparse.ArgumentParser(
@@ -25,8 +25,6 @@ parser.add_argument('--batch', default=1000, metavar='size', type=Positive(int),
     help='Batch size (number of chunks to run in parallel)')
 parser.add_argument('--chunk', default=100, metavar='events', type=Positive(int),
     help='Length of each read chunk')
-parser.add_argument('--drop_runs', metavar='length', type=Positive(int), default=10,
-    help='Drop chunks with runs longer than length')
 parser.add_argument('--edam', nargs=3, metavar=('rate', 'decay1', 'decay2'),
     default=(0.1, 0.9, 0.99), type=(NonNegative(float), NonNegative(float), NonNegative(float)),
     action=ParseToNamedTuple, help='Parameters for Exponential Decay Adaptive Momementum')
@@ -64,10 +62,6 @@ _ETA = 1e-300
 _NBASE = 4
 
 
-def max_rle(x):
-    pos, = np.where(np.ediff1d(x, to_begin=1) != 0)
-    return np.amax(np.diff(np.append(pos, len(x)))[x[pos]])
-
 def wrap_network(network):
     x = T.tensor3()
     labels = T.ivector()
@@ -84,15 +78,9 @@ def wrap_network(network):
     fv = th.function([x, post_len, labels, label_len], loss)
     return fg, fv
 
-def collapse_kmers(kmers, moves):
-    start = kmers[0][:-moves[0]] if moves[0] > 0 else kmers[0]
-    rest = map(lambda k, m: k[-m:] if m > 0 else '', kmers, moves)
-    return start + reduce(lambda x, y: x + y, rest, '')
-
-
 def chunk_events_ctc(files, max_len, permute=True):
     klen = 1
-    _, kmer_to_state = bio.all_kmers(klen, rev_map=True)
+    kmer_to_state = bio.kmer_mapping(klen)
     black_list = set()
 
     pfiles = list(files)
@@ -119,17 +107,20 @@ def chunk_events_ctc(files, max_len, permute=True):
         new_labels = np.array([], dtype=np.int32)
         new_label_len = np.zeros(len(new_inMat), dtype=np.int32)
         kh = len(ev['kmer'][0]) // 2
+        wh = args.window // 2
         valid_labels = np.ones(len(new_inMat), dtype=np.bool)
         for i in xrange(len(new_inMat)):
             offset = args.trim[0] + i * args.chunk + (args.window // 2)
             kmers = ev['kmer'][offset : offset + args.chunk]
-            moves = np.abs(np.ediff1d(ev['seq_pos'][offset : offset + args.chunk], to_begin=0))
-            seq = collapse_kmers(kmers, moves)
-            if len(seq) < 2 * kh or len(seq) > args.chunk:
+            moves = np.abs(np.ediff1d(ev['seq_pos'][offset : offset + args.chunk]))
+            seq = bio.reduce_kmers(kmers, moves)
+
+            if len(seq) < 4 * kh or len(seq) > args.chunk:
                 new_label_len[i] = -1 # Canary
                 valid_labels[i] = False
                 continue
-            seq = seq[kh : -(1 + kh)]
+
+            seq = seq[kh + kh : -(kh + kh)]
             states = 1 + np.array(map(lambda k: kmer_to_state[k], bio.seq_to_kmers(seq, klen)), dtype=np.int32)
             new_labels = np.concatenate((new_labels, states))
             new_label_len[i] = len(states)
