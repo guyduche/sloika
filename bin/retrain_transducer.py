@@ -55,10 +55,6 @@ _ETA = 1e-300
 _NBASE = 4
 
 
-def max_rle(x):
-    pos, = np.where(np.ediff1d(x, to_begin=1) != 0)
-    return np.amax(np.diff(np.append(pos, len(x)))[x[pos]])
-
 def wrap_network(network):
     x = T.tensor3(dtype=sloika_dtype)
     labels = T.imatrix()
@@ -98,21 +94,14 @@ def chunk_events(infile, files, max_len, permute=True):
         new_labels = new_labels.reshape((ml, args.chunk))
         new_labels = new_labels[:, (args.window // 2) : -(args.window // 2)]
 
-        """
-        accept = np.apply_along_axis(max_rle, 1, new_labels == _NBASE) < args.drop_runs
-        new_inMat = new_inMat[accept]
-        new_labels = new_labels[accept]
-        """
-
         in_mat = np.vstack((in_mat, new_inMat)) if in_mat is not None else new_inMat
         labels = np.vstack((labels, new_labels)) if labels is not None else new_labels
-        if len(in_mat) > max_len:
-            yield np.ascontiguousarray(in_mat.transpose((1,0,2))), np.ascontiguousarray(labels.transpose())
-            in_mat = None
-            labels = None
+        while len(in_mat) > max_len:
+            yield (np.ascontiguousarray(in_mat[:max_len].transpose((1,0,2))),
+                   np.ascontiguousarray(labels[:max_len].transpose()))
+            in_mat = in_mat[max_len:]
+            labels = labels[max_len:]
 
-    if in_mat is not None:
-        yield np.ascontiguousarray(in_mat.transpose((1,0,2))), np.ascontiguousarray(labels.transpose())
 
 
 if __name__ == '__main__':

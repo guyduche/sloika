@@ -81,7 +81,7 @@ def transducer(files, section, batch_size, chunk_len, window,
     and a 2D :class`ndarray` of size (X, chunk_len) containing the
     associated labels.  1 <= X <= batch_size.
     """
-    kmer_to_state = bio.kmers_mapping(1)
+    kmer_to_state = bio.kmer_mapping(1)
     trim_len = sum(trim)
     begin, end = trim
     end = None if end is 0 else -end
