@@ -39,19 +39,19 @@ def kmers(files, section, batch_size, chunk_len, window, kmer_len, bad=False,
             continue
         if len(ev) <= trim_len + chunk_len + window:
             continue
+        ev = ev[begin : end]
 
-        new_inMat = features.from_events(ev[begin : end])
+        new_inMat = features.from_events(ev)
         ml = len(new_inMat) // chunk_len
         new_inMat = new_inMat[:ml * chunk_len].reshape((ml, chunk_len, -1))
 
         model_kmer_len = len(ev['kmer'][0])
-        l = begin
-        u = l + chunk_len * ml
+        ub = chunk_len * ml
         kl = model_kmer_len // 2
         ku = kl + kmer_len
-        new_labels = np.array(map(lambda k: kmer_to_state[k[kl : ku]], ev['kmer'][l:u]), dtype=np.int32)
+        new_labels = np.array(map(lambda k: kmer_to_state[k[kl : ku]], ev['kmer'][:ub]), dtype=np.int32)
         if bad:
-            new_labels[np.logical_not(ev['good_emission'][l:u])] = _NBASE ** kmer_len
+            new_labels[np.logical_not(ev['good_emission'][:ub])] = _NBASE ** kmer_len
         new_labels = new_labels.reshape((ml, chunk_len))
         new_labels = new_labels[:, (window // 2) : -(window // 2)]
 
@@ -100,16 +100,17 @@ def transducer(files, section, batch_size, chunk_len, window,
         if len(ev) <= trim_len + chunk_len + window:
             continue
 
-        new_inMat = features.from_events(ev[begin : end])
+        ev = ev[begin : end]
+
+        new_inMat = features.from_events(ev)
         ml = len(new_inMat) // chunk_len
         new_inMat = new_inMat[:ml * chunk_len].reshape((ml, chunk_len, -1))
 
         kmer_len = len(ev['kmer'][0])
-        l = begin
-        u = l + chunk_len * ml
+        ub = chunk_len * ml
         kp = kmer_len // 2
-        new_labels = np.array(map(lambda k: kmer_to_state[k[kp]], ev['kmer'][l:u]), dtype=np.int32)
-        new_labels[np.ediff1d(ev['seq_pos'][l:u], to_begin=1) == 0] = _NBASE
+        new_labels = np.array(map(lambda k: kmer_to_state[k[kp]], ev['kmer'][:ub]), dtype=np.int32)
+        new_labels[np.ediff1d(ev['seq_pos'][:ub], to_begin=1) == 0] = _NBASE
         new_labels = new_labels.reshape((ml, chunk_len))
         new_labels = new_labels[:, (window // 2) : -(window // 2)]
 
