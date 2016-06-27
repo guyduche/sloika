@@ -3,6 +3,7 @@ import argparse
 import cPickle
 import h5py
 import numpy as np
+import os
 import sys
 import time
 import warnings
@@ -10,10 +11,9 @@ import warnings
 import theano as th
 import theano.tensor as T
 
-from untangled import bio
-from untangled.cmdargs import (AutoBool, display_version_and_exit, FileExist,
-                              NonNegative, ParseToNamedTuple, Positive,
-                              probability)
+from untangled import bio, fileio
+from untangled.cmdargs import (display_version_and_exit, FileExist, NonNegative,
+                               ParseToNamedTuple, Positive, probability)
 
 from sloika import networks, updates, features, sloika_dtype, __version__
 
@@ -42,6 +42,8 @@ parser.add_argument('--sd', default=0.1, metavar='value', type=Positive(float),
     help='Standard deviation to initialise with')
 parser.add_argument('--size', default=64, type=Positive(int), metavar='n',
     help='Hidden layers of network to have size n')
+parser.add_argument('--strand_list', default=None, action=FileExist,
+    help='Strand list')
 parser.add_argument('--validation', default=None, type=probability,
     help='Proportion of reads to use for validation')
 parser.add_argument('--version', nargs=0, action=display_version_and_exit, metavar=__version__,
@@ -118,6 +120,9 @@ if __name__ == '__main__':
 
     with h5py.File(args.input, 'r') as f5:
         train_files = set(f5.keys())
+    if args.strand_list is not None:
+        allowed_strands = fileio.readtsv(args.strand_list, fields=['filename'])
+        train_files -= set([os.path.splitext(fn)[1] for fn in allowed_strands['filename'] ])
     if args.validation is not None:
         nval = 1 + int(args.validation * len(train_files))
         val_files = set(np.random.choice(list(train_files), size=nval, replace=False))
@@ -146,7 +151,6 @@ if __name__ == '__main__':
             wscore = 1.0 + SMOOTH * wscore
             wacc = 1.0 + SMOOTH * wacc
             dt += time.time() - t0
-            print i, ncorr / nev
         sys.stdout.write('\n')
         print '  training   {:5.3f}   {:5.2f}% ... {:6.1f}s ({:.2f} kev/s)'.format(score / wscore, 100.0 * acc / wacc, dt, 0.001 * total_ev / dt)
 
