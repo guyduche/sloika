@@ -97,7 +97,7 @@ if __name__ == '__main__':
     SMOOTH = 0.8
     learning_rate = args.edam.rate
     learning_factor = 0.5 ** (1.0 / args.lrdecay) if args.lrdecay is not None else 1.0
-    for it in xrange(1, args.niteration):
+    for it in xrange(args.niteration):
         print '* Epoch {}: learning rate {:6.2e}'.format(it, learning_rate)
         #  Training
         total_ev = 0
