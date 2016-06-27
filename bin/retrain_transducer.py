@@ -13,9 +13,9 @@ import theano.tensor as T
 from untangled import bio
 from untangled.cmdargs import (AutoBool, display_version_and_exit, FileExist,
                               NonNegative, ParseToNamedTuple, Positive,
-                              probability, TypeOrNone)
+                              probability)
 
-from sloika import layers, networks, updates, features, sloika_dtype, __version__
+from sloika import networks, updates, features, sloika_dtype, __version__
 
 # This is here, not in main to allow documentation to be built
 parser = argparse.ArgumentParser(
@@ -71,7 +71,6 @@ def wrap_network(network):
 
 
 def chunk_events(infile, files, max_len, permute=True):
-    kmer_to_state = bio.kmer_mapping(1)
 
     with h5py.File(infile, 'r') as h5:
         pfiles = list(files & set(h5.keys()))
@@ -147,6 +146,7 @@ if __name__ == '__main__':
             wscore = 1.0 + SMOOTH * wscore
             wacc = 1.0 + SMOOTH * wacc
             dt += time.time() - t0
+            print i, ncorr / nev
         sys.stdout.write('\n')
         print '  training   {:5.3f}   {:5.2f}% ... {:6.1f}s ({:.2f} kev/s)'.format(score / wscore, 100.0 * acc / wacc, dt, 0.001 * total_ev / dt)
 
