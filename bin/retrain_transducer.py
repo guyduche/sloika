@@ -12,8 +12,9 @@ import theano as th
 import theano.tensor as T
 
 from untangled import bio, fileio
-from untangled.cmdargs import (display_version_and_exit, FileExist, NonNegative,
-                               ParseToNamedTuple, Positive, probability)
+from untangled.cmdargs import (AutoBool, display_version_and_exit, FileExist,
+                               NonNegative, ParseToNamedTuple, Positive,
+                               probability)
 
 from sloika import networks, updates, features, sloika_dtype, __version__
 
@@ -44,6 +45,8 @@ parser.add_argument('--size', default=64, type=Positive(int), metavar='n',
     help='Hidden layers of network to have size n')
 parser.add_argument('--strand_list', default=None, action=FileExist,
     help='Strand list')
+parser.add_argument('--use_scaled', default=False, action=AutoBool,
+    help='Train from scaled event statistics')
 parser.add_argument('--validation', default=None, type=probability,
     help='Proportion of reads to use for validation')
 parser.add_argument('--version', nargs=0, action=display_version_and_exit, metavar=__version__,
@@ -86,7 +89,7 @@ def chunk_events(infile, files, max_len, permute=True):
         if len(ev) <= args.chunk:
             continue
 
-        new_inMat = features.from_events(ev).astype(np.float32)
+        new_inMat = features.from_events(ev, tag='' if args.use_scaled else 'scaled_').astype(np.float32)
         ml = len(new_inMat) // args.chunk
         new_inMat = new_inMat[:ml * args.chunk].reshape((ml, args.chunk, -1))
 

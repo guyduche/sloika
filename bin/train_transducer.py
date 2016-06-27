@@ -8,7 +8,7 @@ import theano as th
 import theano.tensor as T
 
 from untangled import bio, fast5
-from untangled.cmdargs import (display_version_and_exit, FileExist,
+from untangled.cmdargs import (AutoBool, display_version_and_exit, FileExist,
                                NonNegative, ParseToNamedTuple, Positive,
                                probability, TypeOrNone)
 
@@ -45,6 +45,8 @@ parser.add_argument('--strand_list', default=None, action=FileExist,
     help='strand summary file containing subset.')
 parser.add_argument('--trim', default=(500, 50), nargs=2, type=Positive(int),
     metavar=('beginning', 'end'), help='Number of events to trim off start and end')
+parser.add_argument('--use_scaled', default=False, action=AutoBool,
+    help='Train from scaled event statistics')
 parser.add_argument('--validation', default=None, type=probability,
     help='Proportion of reads to use for validation')
 parser.add_argument('--version', nargs=0, action=display_version_and_exit, metavar=__version__,
@@ -104,7 +106,8 @@ if __name__ == '__main__':
         dt = 0.0
         for i, in_data in enumerate(batch.transducer(train_files, args.section,
                                                      args.batch, args.chunk,
-                                                     args.window, trim=args.trim)):
+                                                     args.window, trim=args.trim,
+                                                     use_scaled=args.use_scaled)):
             t0 = time.time()
             fval, ncorr = fg(in_data[0], in_data[1], learning_rate)
             fval = float(fval)
@@ -124,7 +127,8 @@ if __name__ == '__main__':
             vscore = vnev = vncorr = 0
             for i, in_data in enumerate(batch.transducer(val_files, args.section,
                                                          args.batch, args.chunk,
-                                                         args.window, trim=args.trim)):
+                                                         args.window, trim=args.trim,
+                                                         use_scaled=args.use_scaled)):
                 t0 = time.time()
                 fval, ncorr = fv(in_data[0], in_data[1])
                 fval = float(fval)

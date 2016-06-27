@@ -5,7 +5,7 @@ from untangled import bio, fast5
 _NBASE = 4
 
 def kmers(files, section, batch_size, chunk_len, window, kmer_len, bad=False,
-          trim=(0, 0), shuffle=True):
+          trim=(0, 0), shuffle=True, use_scaled=False):
     """ Batch data together for kmer training
 
     :param files: A `set` of files to read
@@ -15,6 +15,7 @@ def kmers(files, section, batch_size, chunk_len, window, kmer_len, bad=False,
     :param window: Length of window for features
     :param kmer_len: Kmer length for training
     :param shuffle: Shuffle order of files
+    :param use_scaled: Use prescaled event statistics
 
     :yields: A tuple containing a 3D :class:`ndarray` of size
     (X, chunk_len, nfeatures) containing the features for the batch
@@ -41,7 +42,7 @@ def kmers(files, section, batch_size, chunk_len, window, kmer_len, bad=False,
             continue
         ev = ev[begin : end]
 
-        new_inMat = features.from_events(ev)
+        new_inMat = features.from_events(ev, tag='' if use_scaled else 'scaled_')
         ml = len(new_inMat) // chunk_len
         new_inMat = new_inMat[:ml * chunk_len].reshape((ml, chunk_len, -1))
 
@@ -65,7 +66,7 @@ def kmers(files, section, batch_size, chunk_len, window, kmer_len, bad=False,
 
 
 def transducer(files, section, batch_size, chunk_len, window,
-               trim=(0, 0), shuffle=True):
+               trim=(0, 0), shuffle=True, use_scaled=False):
     """ Batch dat together for transducer
 
     :param files: A `set` of files to read
@@ -75,6 +76,7 @@ def transducer(files, section, batch_size, chunk_len, window,
     :param window: Length of window for features
     :param trim: A tuple with number of events to trim off beginning and end
     :param shuffle: Shuffle order of files
+    :param use_scaled: Use prescaled event statistics
 
     :yields: A tuple containing a 3D :class:`ndarray` of size
     (X, chunk_len, nfeatures) containing the features for the batch
@@ -102,7 +104,7 @@ def transducer(files, section, batch_size, chunk_len, window,
 
         ev = ev[begin : end]
 
-        new_inMat = features.from_events(ev)
+        new_inMat = features.from_events(ev, tag='' if use_scaled else 'scaled_')
         ml = len(new_inMat) // chunk_len
         new_inMat = new_inMat[:ml * chunk_len].reshape((ml, chunk_len, -1))
 

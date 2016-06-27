@@ -4,13 +4,11 @@ import cPickle
 import h5py
 import numpy as np
 import numpy.lib.recfunctions as nprf
-import sys
 import time
 
 from untangled import bio, fast5
 from untangled.cmdargs import (AutoBool, display_version_and_exit, FileExist,
-                               NonNegative, probability, Positive, TypeOrNone,
-                               Vector)
+                               NonNegative, Positive, TypeOrNone)
 from untangled.iterators import imap_mp
 
 from sloika import features, transducer, __version__
@@ -29,6 +27,8 @@ parser.add_argument('--strand_list', default=None, action=FileExist,
     help='strand summary file containing subset.')
 parser.add_argument('--trim', default=(500, 50), nargs=2, type=Positive(int),
     metavar=('beginning', 'end'), help='Number of events to trim off start and end')
+parser.add_argument('--use_scaled', default=False, action=AutoBool,
+    help='Train from scaled event statistics')
 parser.add_argument('--version', nargs=0, action=display_version_and_exit, metavar=__version__,
     help='Display version information.')
 parser.add_argument('--window', default=3, type=Positive(int), metavar='length',
@@ -50,7 +50,9 @@ def map_transducer(args, fn):
     if len(ev) <= sum(args.trim):
         return None
 
-    inMat = features.from_events(ev)[args.trim[0] : -args.trim[1]]
+    ev = ev[args.trim[0] : -args.trim[1]]
+
+    inMat = features.from_events(ev, tag='' if args.use_scaled else 'scaled_')
     inMat = np.expand_dims(inMat, axis=1)
 
     with open(args.model, 'r') as fh:
@@ -61,10 +63,10 @@ def map_transducer(args, fn):
     score, path = transducer.map_to_sequence(trans, seq, slip=args.slip, log=False)
     mp_rnn = np.argmax(trans, axis=1)
 
-    lb = args.trim[0] + 1
-    ub = args.trim[1] + 1
-    ev = ev[lb:-ub]
-    lbls = np.array(map(lambda k: kmer_to_state[k[2]], ev['kmer']))
+    wh = args.window // 2
+    ev = ev[wh:-wh]
+    kl = len(ev['kmer'][0])
+    lbls = np.array(map(lambda k: kmer_to_state[k[kl // 2]], ev['kmer']))
     lbls[np.ediff1d(ev['seq_pos'], to_begin=1) == 0] = 4
 
     return sn, score, path, ev, lbls, mp_rnn, seq
