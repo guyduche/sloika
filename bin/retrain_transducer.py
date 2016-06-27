@@ -3,6 +3,7 @@ import argparse
 import cPickle
 import h5py
 import numpy as np
+import os
 import sys
 import time
 import warnings
@@ -10,12 +11,11 @@ import warnings
 import theano as th
 import theano.tensor as T
 
-from untangled import bio
-from untangled.cmdargs import (AutoBool, display_version_and_exit, FileExist,
-                              NonNegative, ParseToNamedTuple, Positive,
-                              probability, TypeOrNone)
+from untangled import bio, fileio
+from untangled.cmdargs import (display_version_and_exit, FileExist, NonNegative,
+                               ParseToNamedTuple, Positive, probability)
 
-from sloika import layers, networks, updates, features, sloika_dtype, __version__
+from sloika import networks, updates, features, sloika_dtype, __version__
 
 # This is here, not in main to allow documentation to be built
 parser = argparse.ArgumentParser(
@@ -42,6 +42,8 @@ parser.add_argument('--sd', default=0.1, metavar='value', type=Positive(float),
     help='Standard deviation to initialise with')
 parser.add_argument('--size', default=64, type=Positive(int), metavar='n',
     help='Hidden layers of network to have size n')
+parser.add_argument('--strand_list', default=None, action=FileExist,
+    help='Strand list')
 parser.add_argument('--validation', default=None, type=probability,
     help='Proportion of reads to use for validation')
 parser.add_argument('--version', nargs=0, action=display_version_and_exit, metavar=__version__,
@@ -71,7 +73,6 @@ def wrap_network(network):
 
 
 def chunk_events(infile, files, max_len, permute=True):
-    kmer_to_state = bio.kmer_mapping(1)
 
     with h5py.File(infile, 'r') as h5:
         pfiles = list(files & set(h5.keys()))
@@ -119,6 +120,9 @@ if __name__ == '__main__':
 
     with h5py.File(args.input, 'r') as f5:
         train_files = set(f5.keys())
+    if args.strand_list is not None:
+        allowed_strands = fileio.readtsv(args.strand_list, fields=['filename'])
+        train_files -= set([os.path.splitext(fn)[1] for fn in allowed_strands['filename'] ])
     if args.validation is not None:
         nval = 1 + int(args.validation * len(train_files))
         val_files = set(np.random.choice(list(train_files), size=nval, replace=False))
@@ -129,8 +133,8 @@ if __name__ == '__main__':
     SMOOTH = 0.8
     learning_rate = args.edam.rate
     learning_factor = 0.5 ** (1.0 / args.lrdecay) if args.lrdecay is not None else 1.0
-    for it in xrange(1, args.niteration):
-        print '* Epoch {}: learning rate {:6.2e}'.format(it, learning_rate)
+    for it in xrange(args.niteration):
+        print '* Epoch {}: learning rate {:6.2e}'.format(it + 1, learning_rate)
         #  Training
         total_ev = 0
         dt = 0.0
