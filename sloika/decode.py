@@ -50,11 +50,13 @@ def forwards(post, seq, full=False):
     fwd = np.ones(seq_len + 1)
     fprev = np.ones(seq_len + 1)
     if full:
-        fprev .fill(0.0)
-        fprev[0] = 1.0
+        fwd .fill(0.0)
+        fwd[0] = 1.0
     score = 0.0
 
     for p in post:
+        fwd, fprev = fprev, fwd
+
         #  Emit blank and stay in current state
         fwd = fprev * p[-1]
         #  Move from previous state and emit new character
@@ -64,9 +66,7 @@ def forwards(post, seq, full=False):
         fwd /= m
         score += np.log(m)
 
-        fwd, fprev = fprev, fwd
-
-    return score + (np.log(fprev[-1]) if full else 0.0)
+    return score + (np.log(fwd[-1]) if full else 0.0)
 
 
 def backwards(post, seq):
@@ -79,7 +79,8 @@ def backwards(post, seq):
     """
     pass
 
-def forwards_transposed(post, seq):
+
+def forwards_transposed(post, seq, skip_prob=0.0):
     """ Forwards score but computed through sequence
 
     Demonstrate that the forward score for a transducer can be computed by
@@ -88,22 +89,29 @@ def forwards_transposed(post, seq):
 
     :param post: A 2D :class:`ndarray`
     :param seq: Sequence to map against
+    :param skip_prob: Probability of skip
 
     :returns: score
     """
     nev, nstate = post.shape
 
-    fwd = np.zeros(nev)
     fprev = np.zeros(nev)
-    score = 0.0
+    fwd = np.cumprod(post[:, -1])
+    m = np.sum(fwd)
+    fwd /= m
+    score = np.log(m)
 
     for s in seq:
-        fwd
+        fwd, fprev = fprev, fwd
+
+        # Iteration through events
+        fwd = fprev * skip_prob
+        fwd[1:] += fprev[:-1] * post[1:, s]
+        for i in xrange(1, nev):
+            fwd[i] += fwd[i - 1] * post[i, -1]
 
         m = np.sum(fwd)
         fwd /= m
         score += np.log(m)
 
-        fwd, fprev = fprev, fwd
-
-    return score
+    return score + np.log(fwd[-1])

@@ -21,6 +21,7 @@ class TestDecode(unittest.TestCase):
         self.bases = np.array([2, 3, 1, 1, 1, 2])
         self.score = -4.4275354890527474
         self.score_full = -5.0702616325672301
+        self.score_viterbi = -5.70653594347
 
     def test_001_argmax(self):
         bases = decode.argmax(self.post)
@@ -42,5 +43,11 @@ class TestDecode(unittest.TestCase):
         vpath = np.argmax(self.post, axis=1)
         vscore = np.sum(np.log([p[vp] for p, vp in zip(self.post, vpath)]))
 
+        print score1, score2, vscore
+
         self.assertGreaterEqual(score1, score2)
         self.assertGreaterEqual(score2, vscore)
+
+    def test_005_transposed_score(self):
+        score = decode.forwards_transposed(self.post, self.bases)
+        print score
