@@ -43,11 +43,15 @@ class TestDecode(unittest.TestCase):
         vpath = np.argmax(self.post, axis=1)
         vscore = np.sum(np.log([p[vp] for p, vp in zip(self.post, vpath)]))
 
-        print score1, score2, vscore
-
         self.assertGreaterEqual(score1, score2)
         self.assertGreaterEqual(score2, vscore)
 
     def test_005_transposed_score(self):
-        score = decode.forwards_transposed(self.post, self.bases)
-        print score
+        score = decode.forwards_transpose(self.post, self.bases)
+        self.assertAlmostEqual(score, self.score_full)
+
+    def test_006_forward_equals_backwards(self):
+        bases = decode.argmax(self.post)
+        scoreF = decode.forwards_transpose(self.post, bases)
+        scoreB = decode.backwards_transpose(self.post, bases)
+        self.assertAlmostEqual(scoreF, scoreB)
