@@ -22,6 +22,8 @@ parser.add_argument('--batch', default=1000, metavar='size', type=Positive(int),
     help='Batch size (number of chunks to run in parallel)')
 parser.add_argument('--chunk', default=100, metavar='events', type=Positive(int),
     help='Length of each read chunk')
+parser.add_argument('--convolution', default=False, action=AutoBool,
+    help='Do general convolution rather than windowing')
 parser.add_argument('--edam', nargs=3, metavar=('rate', 'decay1', 'decay2'),
     default=(0.1, 0.9, 0.99), type=(NonNegative(float), NonNegative(float), NonNegative(float)),
     action=ParseToNamedTuple, help='Parameters for Exponential Decay Adaptive Momementum')
@@ -85,7 +87,9 @@ if __name__ == '__main__':
         with open(args.model, 'r') as fh:
             network = cPickle.load(fh)
     else:
-        network = networks.transducer(winlen=args.window, sd=args.sd, bad_state=False, size=args.size)
+        network = networks.transducer(winlen=args.window, sd=args.sd,
+                                      bad_state=False, size=args.size,
+                                      convolution=args.convolution)
     fg, fv = wrap_network(network)
 
     train_files = set(fast5.iterate_fast5(args.input_folder, paths=True, limit=args.limit, strand_list=args.strand_list))
