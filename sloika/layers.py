@@ -224,13 +224,14 @@ class Convolution(Layer):
     :params size: Layer size (number of filters)
     :param w: Size of convolution
     """
-    def __init__(self, insize, size, w, init=zeros):
+    def __init__(self, insize, size, w, init=zeros, fun=T.tanh):
         assert size > 0, "Size (number of filters) must be positive"
         assert w > 0, "Window size must be positive"
         self.w = w
         self.flt = th.shared(init((size, insize, 1, w)) / np.sqrt(w))
         self.insize = insize
         self.size = size
+        self.fun = fun
 
     def params(self):
         return [self.flt]
@@ -249,7 +250,7 @@ class Convolution(Layer):
 
         outMat = outMat.transpose((3, 0, 1, 2))
         outMat = outMat.reshape((ntime - self.w + 1, nbatch, self.size))
-        return outMat
+        return self.fun(outMat)
 
 class Recurrent(RNN):
     """ A simple recurrent layer
