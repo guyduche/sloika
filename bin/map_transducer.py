@@ -7,7 +7,7 @@ import numpy.lib.recfunctions as nprf
 import time
 
 from untangled import bio, fast5
-from untangled.cmdargs import (AutoBool, display_version_and_exit, FileExist,
+from untangled.cmdargs import (AutoBool, display_version_and_exit, FileExists,
                                NonNegative, Positive, TypeOrNone)
 from untangled.iterators import imap_mp
 
@@ -23,7 +23,7 @@ parser.add_argument('--section', default='template', choices=['template', 'compl
     help='Section to call')
 parser.add_argument('--slip', default=None, type=TypeOrNone(NonNegative(float)),
     help='Slip penalty')
-parser.add_argument('--strand_list', default=None, action=FileExist,
+parser.add_argument('--strand_list', default=None, action=FileExists,
     help='strand summary file containing subset.')
 parser.add_argument('--trim', default=(500, 50), nargs=2, type=Positive(int),
     metavar=('beginning', 'end'), help='Number of events to trim off start and end')
@@ -33,9 +33,9 @@ parser.add_argument('--version', nargs=0, action=display_version_and_exit, metav
     help='Display version information.')
 parser.add_argument('--window', default=3, type=Positive(int), metavar='length',
     help='Window length for input features')
-parser.add_argument('model', action=FileExist, help='Pickled model file')
+parser.add_argument('model', action=FileExists, help='Pickled model file')
 parser.add_argument('output', help='HDF5 file for output')
-parser.add_argument('input_folder', action=FileExist,
+parser.add_argument('input_folder', action=FileExists,
     help='Directory containing single-read fast5 files.')
 
 def map_transducer(args, fn):

@@ -7,8 +7,8 @@ import time
 
 
 from untangled import bio, fast5
-from untangled.cmdargs import (AutoBool, display_version_and_exit, FileExist,
-                              probability, Positive, TypeOrNone, Vector)
+from untangled.cmdargs import (AutoBool, display_version_and_exit, FileExists,
+                              proportion, Positive, TypeOrNone, Vector)
 from untangled.iterators import imap_mp
 
 from sloika import features, transducer, __version__
@@ -23,11 +23,11 @@ parser.add_argument('--individual', default=False, type=AutoBool,
     help='Return individual basecalls for each section')
 parser.add_argument('--limit', default=None, type=TypeOrNone(Positive(int)),
     help='Limit number of reads to process.')
-parser.add_argument('--min_prob', metavar='probability', default=1e-5,
-    type=probability, help='Minimum allowed probabiility for basecalls')
-parser.add_argument('--strand_list', default=None, action=FileExist,
+parser.add_argument('--min_prob', metavar='proportion', default=1e-5,
+    type=proportion, help='Minimum allowed probabiility for basecalls')
+parser.add_argument('--strand_list', default=None, action=FileExists,
     help='strand summary file containing subset.')
-parser.add_argument('--trans', default=None, action=Vector(probability), nargs=3,
+parser.add_argument('--trans', default=None, action=Vector(proportion), nargs=3,
     metavar=('stay', 'step', 'skip'), help='Base transition probabilities')
 parser.add_argument('--trim', default=(500, 50), nargs=2, type=Positive(int),
     metavar=('beginning', 'end'), help='Number of events to trim off start and end')
@@ -35,9 +35,9 @@ parser.add_argument('--version', nargs=0, action=display_version_and_exit, metav
     help='Display version information.')
 parser.add_argument('--window', default=3, type=Positive(int), metavar='length',
     help='Window length for input features')
-parser.add_argument('template', action=FileExist, help='Pickled template model file')
-parser.add_argument('complement', action=FileExist, help='Pickled complement model file')
-parser.add_argument('input_folder', action=FileExist,
+parser.add_argument('template', action=FileExists, help='Pickled template model file')
+parser.add_argument('complement', action=FileExists, help='Pickled complement model file')
+parser.add_argument('input_folder', action=FileExists,
     help='Directory containing single-read fast5 files.')
 
 _ETA = 1e-300

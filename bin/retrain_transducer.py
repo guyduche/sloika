@@ -12,9 +12,9 @@ import theano as th
 import theano.tensor as T
 
 from untangled import bio, fileio
-from untangled.cmdargs import (AutoBool, display_version_and_exit, FileExist,
+from untangled.cmdargs import (AutoBool, display_version_and_exit, FileExists,
                                NonNegative, ParseToNamedTuple, Positive,
-                               probability)
+                               proportion)
 
 from sloika import networks, updates, features, sloika_dtype, __version__
 
@@ -33,7 +33,7 @@ parser.add_argument('--edam', nargs=3, metavar=('rate', 'decay1', 'decay2'),
     action=ParseToNamedTuple, help='Parameters for Exponential Decay Adaptive Momementum')
 parser.add_argument('--lrdecay', default=None, metavar='epochs', type=Positive(float),
     help='Number of epochs over which learning rate is halved')
-parser.add_argument('--model', metavar='file', action=FileExist,
+parser.add_argument('--model', metavar='file', action=FileExists,
     help='File to read model from')
 parser.add_argument('--niteration', metavar='epochs', type=Positive(int), default=500,
     help='Maximum number of epochs to train for')
@@ -43,18 +43,18 @@ parser.add_argument('--sd', default=0.1, metavar='value', type=Positive(float),
     help='Standard deviation to initialise with')
 parser.add_argument('--size', default=64, type=Positive(int), metavar='n',
     help='Hidden layers of network to have size n')
-parser.add_argument('--strand_list', default=None, action=FileExist,
+parser.add_argument('--strand_list', default=None, action=FileExists,
     help='Strand list')
 parser.add_argument('--use_scaled', default=False, action=AutoBool,
     help='Train from scaled event statistics')
-parser.add_argument('--validation', default=None, type=probability,
+parser.add_argument('--validation', default=None, type=proportion,
     help='Proportion of reads to use for validation')
 parser.add_argument('--version', nargs=0, action=display_version_and_exit, metavar=__version__,
     help='Display version information.')
 parser.add_argument('--window', default=3, type=Positive(int), metavar='length',
     help='Window length for input features')
 parser.add_argument('output', help='Prefix for output files')
-parser.add_argument('input', action=FileExist, help='HDF5 file.')
+parser.add_argument('input', action=FileExists, help='HDF5 file.')
 
 _ETA = 1e-300
 _NBASE = 4
