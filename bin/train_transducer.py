@@ -110,7 +110,7 @@ if __name__ == '__main__':
         dt = 0.0
         for i, in_data in enumerate(batch.transducer(train_files, args.section,
                                                      args.batch, args.chunk,
-                                                     args.window, trim=args.trim,
+                                                     args.window, filter_chunks=True,
                                                      use_scaled=args.use_scaled)):
             t0 = time.time()
             fval, ncorr = fg(in_data[0], in_data[1], learning_rate)
@@ -131,7 +131,7 @@ if __name__ == '__main__':
             vscore = vnev = vncorr = 0
             for i, in_data in enumerate(batch.transducer(val_files, args.section,
                                                          args.batch, args.chunk,
-                                                         args.window, trim=args.trim,
+                                                         args.window, filter_chunks=True,
                                                          use_scaled=args.use_scaled)):
                 t0 = time.time()
                 fval, ncorr = fv(in_data[0], in_data[1])
