@@ -110,27 +110,29 @@ def lagged(kmer=3, winlen=3, size=64, bad_state=True, sd=0.1, fun=layers.tanh):
 
     return _wrap_nanonet([layer1, layer2, layer3, layer4], kmer, winlen, size, bad_state, sd)
 
-def transducer(winlen=3, size=64, bad_state=True, sd=0.1, fun=layers.tanh, convolution=False):
+def transducer(winlen=3, size=64, nfilter=None, bad_state=True, sd=0.1, fun=layers.tanh):
     """ Create standard Nanonet
 
     :param winlen: Window size
     :param size: size of hidden layers
+    :param nfilter: Number of filters to use (None: normal windowing)
     :param bad_state: Add output state for bad events
     :param fun: activation function
-    :param convolution: Do a more general convolution rather than windowing
 
     :returns: a `class`:layer.Layer:
     """
     _prn = partial(_rn, sd=sd)
     nstate = _NBASE + 1 + bad_state
 
-    if convolution:
-        inlayer = layers.Convolution(_NFEATURE, _NFEATURE * winlen, winlen, init=_prn)
-    else:
+    if nfilter is None:
+        nfilter = _NFEATURE * winlen
         inlayer = layers.Window(winlen)
+    else:
+        inlayer = layers.Convolution(_NFEATURE, nfilter, winlen,
+                                     fun=fun, init=_prn)
 
-    fwd1 = layers.Gru(winlen * _NFEATURE, size, init=_prn, has_bias=True, fun=fun)
-    bwd1 = layers.Gru(winlen * _NFEATURE, size, init=_prn, has_bias=True, fun=fun)
+    fwd1 = layers.Gru(nfilter, size, init=_prn, has_bias=True, fun=fun)
+    bwd1 = layers.Gru(nfilter, size, init=_prn, has_bias=True, fun=fun)
     layer1 = layers.birnn(fwd1, bwd1)
 
     layer2 = layers.FeedForward(2 * size, size, has_bias=True, fun=fun)
