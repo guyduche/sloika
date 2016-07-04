@@ -10,7 +10,7 @@ import theano.tensor as T
 from untangled import bio, fast5
 from untangled.cmdargs import (AutoBool, display_version_and_exit, FileExists,
                               NonNegative, ParseToNamedTuple, Positive,
-                              proportion, TypeOrNone)
+                              proportion, Maybe)
 
 from sloika import batch, networks, updates, __version__
 
@@ -28,7 +28,7 @@ parser.add_argument('--edam', nargs=3, metavar=('rate', 'decay1', 'decay2'),
     action=ParseToNamedTuple, help='Parameters for Exponential Decay Adaptive Momementum')
 parser.add_argument('--kmer', default=3, metavar='length', type=Positive(int),
     help='Length of kmer to estimate')
-parser.add_argument('--limit', default=None, type=TypeOrNone(Positive(int)),
+parser.add_argument('--limit', default=None, type=Maybe(Positive(int)),
     help='Limit number of reads to process.')
 parser.add_argument('--lrdecay', default=None, metavar='epochs', type=Positive(float),
     help='Number of epochs over which learning rate is halved')
