@@ -198,8 +198,8 @@ def decode_full_transducer(ltrans):
 
     :returns: A tuple containing score and path
     """
-    nev = len(trans)
-    assert trans.shape == (nev, 4, 25), "Transducer has incorrect shape"
+    nev = len(ltrans)
+    assert ltrans.shape == (nev, 4, 25), "Transducer has incorrect shape"
 
     #  Viterbi forwards path
     vitmat = np.empty((nev + 1, 4))
@@ -279,7 +279,7 @@ def map_to_sequence(trans, sequence, slip=None, prior_initial=None, prior_final=
 
     if prior_final is not None:
         pscore += prior_final
-   
+
     # Viterbi traceback
     path = np.empty(nev, dtype=np.int16)
     path[0] = np.argmax(pscore)
