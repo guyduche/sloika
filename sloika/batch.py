@@ -5,11 +5,11 @@ from untangled.maths import med_mad
 
 _NBASE = 4
 
-def filter_by_slope(position, chunk, time=None, fact=3.0):
-    """  Filter chunks using slope of mapping
+def filter_by_rate(position, chunk, time=None, fact=3.0):
+    """  Filter chunks using sequencing rate from mapping
 
     Fits a linear regression through the mapping of events and indicates
-    whether any regions have a unusual slope.
+    whether any regions have a unusual bps
 
     :param position: A :class:`ndarray` containing positions mapped to.
     :param chunk:
@@ -30,12 +30,12 @@ def filter_by_slope(position, chunk, time=None, fact=3.0):
         chunk_time = time[chunk * np.arange(nchunk + 1)]
         delta_time = np.diff(chunk_time)
 
-    slope = delta_pos / delta_time
+    bps = delta_pos / delta_time
     #  Determine accept / reject regions
-    centre, thresh = med_mad(slope)
-    slope -= centre
+    centre, thresh = med_mad(bps)
+    bps -= centre
     thresh *= fact
-    return np.logical_and(slope < thresh, slope > -thresh)
+    return np.logical_and(bps < thresh, bps > -thresh)
 
 
 def kmers(files, section, batch_size, chunk_len, window, kmer_len, bad=False,
@@ -146,7 +146,7 @@ def transducer(files, section, batch_size, chunk_len, window,
         new_labels = new_labels[:, (window // 2) : -(window // 2)]
 
         if filter_chunks:
-            accept = filter_by_slope(ev['seq_pos'], chunk_len, time=ev['start'])
+            accept = filter_by_rate(ev['seq_pos'], chunk_len, time=ev['start'])
             new_inMat = new_inMat[accept]
             new_labels = new_labels[accept]
 
