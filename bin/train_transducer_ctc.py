@@ -11,9 +11,9 @@ import theano.tensor as T
 from ctc import cpu_ctc_th
 
 from untangled import bio, fast5
-from untangled.cmdargs import (display_version_and_exit, FileExist,
+from untangled.cmdargs import (display_version_and_exit, FileExistss,
                               NonNegative, ParseToNamedTuple, Positive,
-                              proportion, TypeOrNone)
+                              proportion, Maybe)
 
 from sloika import networks, updates, features, __version__
 
@@ -28,11 +28,11 @@ parser.add_argument('--chunk', default=100, metavar='events', type=Positive(int)
 parser.add_argument('--edam', nargs=3, metavar=('rate', 'decay1', 'decay2'),
     default=(0.1, 0.9, 0.99), type=(NonNegative(float), NonNegative(float), NonNegative(float)),
     action=ParseToNamedTuple, help='Parameters for Exponential Decay Adaptive Momementum')
-parser.add_argument('--limit', default=None, type=TypeOrNone(Positive(int)),
+parser.add_argument('--limit', default=None, type=Maybe(Positive(int)),
     help='Limit number of reads to process.')
 parser.add_argument('--lrdecay', default=None, metavar='epochs', type=Positive(float),
     help='Number of epochs over which learning rate is halved')
-parser.add_argument('--model', metavar='file', action=FileExist,
+parser.add_argument('--model', metavar='file', action=FileExists,
     help='File to read model from')
 parser.add_argument('--niteration', metavar='epochs', type=Positive(int), default=500,
     help='Maximum number of epochs to train for')
@@ -44,7 +44,7 @@ parser.add_argument('--section', default='template', choices=['template', 'compl
     help='Section to call')
 parser.add_argument('--size', default=64, type=Positive(int), metavar='n',
     help='Hidden layers of network to have size n')
-parser.add_argument('--strand_list', default=None, action=FileExist,
+parser.add_argument('--strand_list', default=None, action=FileExists,
     help='strand summary file containing subset.')
 parser.add_argument('--trim', default=(500, 50), nargs=2, type=Positive(int),
     metavar=('beginning', 'end'), help='Number of events to trim off start and end')
@@ -55,7 +55,7 @@ parser.add_argument('--version', nargs=0, action=display_version_and_exit, metav
 parser.add_argument('--window', default=3, type=Positive(int), metavar='length',
     help='Window length for input features')
 parser.add_argument('output', help='Prefix for output files')
-parser.add_argument('input_folder', action=FileExist,
+parser.add_argument('input_folder', action=FileExists,
     help='Directory containing single-read fast5 files.')
 
 _ETA = 1e-300
