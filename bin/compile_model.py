@@ -4,12 +4,12 @@ import cPickle
 import sys
 
 from sloika import layers
-from untangled.cmdargs import FileExist
+from untangled.cmdargs import FileExists
 
 parser = argparse.ArgumentParser(
     description='Compile a pickled model file for basecalling',
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-parser.add_argument('input', action=FileExist, help='Input model pickle')
+parser.add_argument('input', action=FileExists, help='Input model pickle')
 parser.add_argument('output', help='output file for compiled pickle')
 
 if __name__ == '__main__':

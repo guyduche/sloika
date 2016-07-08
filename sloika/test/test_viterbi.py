@@ -11,9 +11,9 @@ class ViterbiTest(unittest.TestCase):
         self.slip = 5.0
 
     def test_001_cython_same_as_python(self):
-        x = np.random.normal(size=self.n)
+        x = np.random.normal(size=self.n).astype(np.float32)
         y1s, y1i = viterbi_helpers.slip_update(x, self.slip)
-        y2s = np.zeros(len(x), dtype=np.float64)
+        y2s = np.zeros(len(x), dtype=np.float32)
         y2i = np.zeros(len(x), dtype=np.int)
 
         y2s[0] = y2s[1] = -1e38
@@ -27,8 +27,6 @@ class ViterbiTest(unittest.TestCase):
                 y2s[j] = x[j - 2]
                 y2i[j] = j - 2
             y2s[j] -= self.slip
-            
+
         np.testing.assert_almost_equal(y1s, y2s)
         np.testing.assert_equal(y1i, y2i)
-
-        

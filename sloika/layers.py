@@ -217,6 +217,41 @@ class Window(Layer):
         tmp = T.concatenate([inMat[i : 1 + i - self.w] for i in xrange(self.w - 1)], axis=2)
         return T.concatenate([tmp, inMat[self.w - 1 :]], axis=2)
 
+class Convolution(Layer):
+    """ Create a 1D convolution over input
+
+    :params insize: Size of input to layer
+    :params size: Layer size (number of filters)
+    :param w: Size of convolution
+    """
+    def __init__(self, insize, size, w, init=zeros, fun=T.tanh):
+        assert size > 0, "Size (number of filters) must be positive"
+        assert w > 0, "Window size must be positive"
+        self.w = w
+        self.flt = th.shared(init((size, insize, 1, w)) / np.sqrt(w))
+        self.insize = insize
+        self.size = size
+        self.fun = fun
+
+    def params(self):
+        return [self.flt]
+
+    def set_params(self, values):
+        assert values['flt'].shape == (self.size, self.insize, 1, self.w)
+        self.flt = th.shared(values['flt'])
+
+    def run(self, inMat):
+        # Input to convolution is (batch x channels x row x column)
+        ntime, nbatch, nfeatres = T.shape(inMat)
+        inMatT = T.shape_padaxis(inMat.transpose((1, 2, 0)), axis=2)
+        outMat = T.nnet.conv2d(inMatT, filters=self.flt,
+                               filter_shape=(self.size, self.insize, 1, self.w))
+        # Output of concolution is (batch x filters x row x col)
+
+        outMat = outMat.transpose((3, 0, 1, 2))
+        outMat = outMat.reshape((ntime - self.w + 1, nbatch, self.size))
+        return self.fun(outMat)
+
 class Recurrent(RNN):
     """ A simple recurrent layer
         Step:  state_new = fun( [state_old, input_new] W + b )

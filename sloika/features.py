@@ -1,14 +1,15 @@
 import numpy as np
-from sloika import sloika_dtype, layers
+from sloika import sloika_dtype
 from untangled.maths import studentise
+
 
 def from_events(ev, tag='scaled_'):
     """  Create a matrix of features from
 
-    :param ev: A :class:ndrecarray with fields 'mean', 'stdv' and 'length'
+    :param ev: A :class:`ndrecarray` with fields 'mean', 'stdv' and 'length'
     :param tag: Prefix of which fields to read
 
-    :Returns: A :class:ndarray with studentised features
+    :returns: A :class:`ndarray` with studentised features
     """
     nev = len(ev)
     features = np.zeros((nev, 4), dtype=sloika_dtype)

@@ -8,9 +8,9 @@ import theano as th
 import theano.tensor as T
 
 from untangled import bio, fast5
-from untangled.cmdargs import (display_version_and_exit, FileExist,
-                               NonNegative, ParseToNamedTuple, Positive,
-                               probability, TypeOrNone)
+from untangled.cmdargs import (AutoBool, display_version_and_exit, FileExists,
+                               Maybe, NonNegative, ParseToNamedTuple, Positive,
+                               proportion)
 
 from sloika import batch, networks, updates, __version__
 
@@ -25,11 +25,13 @@ parser.add_argument('--chunk', default=100, metavar='events', type=Positive(int)
 parser.add_argument('--edam', nargs=3, metavar=('rate', 'decay1', 'decay2'),
     default=(0.1, 0.9, 0.99), type=(NonNegative(float), NonNegative(float), NonNegative(float)),
     action=ParseToNamedTuple, help='Parameters for Exponential Decay Adaptive Momementum')
-parser.add_argument('--limit', default=None, type=TypeOrNone(Positive(int)),
+parser.add_argument('--filters', default=None, metavar='number',
+    type=Maybe(Positive(int)), help='Number of filters for convolution')
+parser.add_argument('--limit', default=None, type=Maybe(Positive(int)),
     help='Limit number of reads to process.')
 parser.add_argument('--lrdecay', default=None, metavar='epochs', type=Positive(float),
     help='Number of epochs over which learning rate is halved')
-parser.add_argument('--model', metavar='file', action=FileExist,
+parser.add_argument('--model', metavar='file', action=FileExists,
     help='File to read model from')
 parser.add_argument('--niteration', metavar='epochs', type=Positive(int), default=500,
     help='Maximum number of epochs to train for')
@@ -41,18 +43,20 @@ parser.add_argument('--section', default='template', choices=['template', 'compl
     help='Section to call')
 parser.add_argument('--size', default=64, type=Positive(int), metavar='n',
     help='Hidden layers of network to have size n')
-parser.add_argument('--strand_list', default=None, action=FileExist,
+parser.add_argument('--strand_list', default=None, action=FileExists,
     help='strand summary file containing subset.')
 parser.add_argument('--trim', default=(500, 50), nargs=2, type=Positive(int),
     metavar=('beginning', 'end'), help='Number of events to trim off start and end')
-parser.add_argument('--validation', default=None, type=probability,
+parser.add_argument('--use_scaled', default=False, action=AutoBool,
+    help='Train from scaled event statistics')
+parser.add_argument('--validation', default=None, type=proportion,
     help='Proportion of reads to use for validation')
 parser.add_argument('--version', nargs=0, action=display_version_and_exit, metavar=__version__,
     help='Display version information.')
 parser.add_argument('--window', default=3, type=Positive(int), metavar='length',
     help='Window length for input features')
 parser.add_argument('output', help='Prefix for output files')
-parser.add_argument('input_folder', action=FileExist,
+parser.add_argument('input_folder', action=FileExists,
     help='Directory containing single-read fast5 files.')
 
 _ETA = 1e-300
@@ -82,7 +86,9 @@ if __name__ == '__main__':
         with open(args.model, 'r') as fh:
             network = cPickle.load(fh)
     else:
-        network = networks.transducer(winlen=args.window, sd=args.sd, bad_state=False, size=args.size)
+        network = networks.transducer(winlen=args.window, size=args.size,
+                                      nfilter=args.filters, sd=args.sd,
+                                      bad_state=False)
     fg, fv = wrap_network(network)
 
     train_files = set(fast5.iterate_fast5(args.input_folder, paths=True, limit=args.limit, strand_list=args.strand_list))
@@ -103,10 +109,12 @@ if __name__ == '__main__':
         dt = 0.0
         for i, in_data in enumerate(batch.transducer(train_files, args.section,
                                                      args.batch, args.chunk,
-                                                     args.window, trim=args.trim)):
+                                                     args.window, filter_chunks=True,
+                                                     use_scaled=args.use_scaled)):
             labels = in_data[1]
             labels += 1
             labels %= _NBASE + 1
+
             t0 = time.time()
             fval, ncorr = fg(in_data[0], labels, learning_rate)
             fval = float(fval)
@@ -126,10 +134,12 @@ if __name__ == '__main__':
             vscore = vnev = vncorr = 0
             for i, in_data in enumerate(batch.transducer(val_files, args.section,
                                                          args.batch, args.chunk,
-                                                         args.window, trim=args.trim)):
+                                                         args.window, filter_chunks=True,
+                                                         use_scaled=args.use_scaled)):
                 labels = in_data[1]
                 labels += 1
                 labels %= _NBASE + 1
+
                 t0 = time.time()
                 fval, ncorr = fv(in_data[0], labels)
                 fval = float(fval)

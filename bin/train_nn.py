@@ -8,9 +8,9 @@ import theano as th
 import theano.tensor as T
 
 from untangled import bio, fast5
-from untangled.cmdargs import (AutoBool, display_version_and_exit, FileExist,
+from untangled.cmdargs import (AutoBool, display_version_and_exit, FileExists,
                               NonNegative, ParseToNamedTuple, Positive,
-                              probability, TypeOrNone)
+                              proportion, TypeOrNone)
 
 from sloika import batch, networks, updates, __version__
 
@@ -32,7 +32,7 @@ parser.add_argument('--limit', default=None, type=TypeOrNone(Positive(int)),
     help='Limit number of reads to process.')
 parser.add_argument('--lrdecay', default=None, metavar='epochs', type=Positive(float),
     help='Number of epochs over which learning rate is halved')
-parser.add_argument('--model', metavar='file', action=FileExist,
+parser.add_argument('--model', metavar='file', action=FileExists,
     help='File to read model from')
 parser.add_argument('--niteration', metavar='epochs', type=Positive(int), default=500,
     help='Maximum number of epochs to train for')
@@ -42,18 +42,20 @@ parser.add_argument('--sd', default=0.1, metavar='value', type=Positive(float),
     help='Standard deviation to initialise with')
 parser.add_argument('--section', default='template', choices=['template', 'complement'],
     help='Section to call')
-parser.add_argument('--strand_list', default=None, action=FileExist,
+parser.add_argument('--strand_list', default=None, action=FileExists,
     help='strand summary file containing subset.')
 parser.add_argument('--trim', default=(500, 50), nargs=2, type=Positive(int),
     metavar=('beginning', 'end'), help='Number of events to trim off start and end')
-parser.add_argument('--validation', default=None, type=probability,
+parser.add_argument('--use_scaled', default=False, action=AutoBool,
+    help='Train from scaled event statistics')
+parser.add_argument('--validation', default=None, type=proportion,
     help='Proportion of reads to use for validation')
 parser.add_argument('--version', nargs=0, action=display_version_and_exit, metavar=__version__,
     help='Display version information.')
 parser.add_argument('--window', default=3, type=Positive(int), metavar='length',
     help='Window length for input features')
 parser.add_argument('output', help='Prefix for output files')
-parser.add_argument('input_folder', action=FileExist,
+parser.add_argument('input_folder', action=FileExists,
     help='Directory containing single-read fast5 files.')
 
 _ETA = 1e-300
@@ -86,7 +88,7 @@ if __name__ == '__main__':
         network = networks.nanonet(kmer=args.kmer, winlen=args.window, sd=args.sd, bad_state=args.bad)
     fg, fv = wrap_network(network)
 
-    train_files = set(fast5.terate_fast5(args.input_folder, paths=True, limit=args.limit, strand_list=args.strand_list))
+    train_files = set(fast5.iterate_fast5(args.input_folder, paths=True, limit=args.limit, strand_list=args.strand_list))
     if args.validation is not None:
         nval = 1 + int(args.validation * len(train_files))
         val_files = set(np.random.choice(list(train_files), size=nval, replace=False))
@@ -103,9 +105,10 @@ if __name__ == '__main__':
         total_ev = 0
         t0 = time.time()
         for i, in_data in enumerate(batch.kmers(train_files, args.section,
-                                                     args.batch, args.chunk,
-                                                     args.window, args.kmer,
-                                                     trim=args.trim, bad=args.bad)):
+                                                args.batch, args.chunk,
+                                                args.window, args.kmer,
+                                                trim=args.trim, bad=args.bad,
+                                                use_scaled=args.use_scaled)):
             fval, ncorr = fg(in_data[0], in_data[1], learning_rate)
             fval = float(fval)
             ncorr = float(ncorr)
@@ -125,7 +128,8 @@ if __name__ == '__main__':
             for i, in_data in enumerate(batch.kmers(train_files, args.section,
                                                      args.batch, args.chunk,
                                                      args.window, args.kmer,
-                                                     trim=args.trim, bad=args.bad)):
+                                                     trim=args.trim, bad=args.bad,
+                                                     use_scaled=args.use_scaled)):
                 fval, ncorr = fv(in_data[0], in_data[1])
                 fval = float(fval)
                 ncorr = float(ncorr)
