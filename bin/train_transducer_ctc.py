@@ -98,8 +98,9 @@ def chunk_events_ctc(files, max_len, permute=True):
             continue
         if len(ev) <= sum(args.trim) + args.chunk:
             continue
+        ev = ev[args.trim[0] : args.trim[1]]
 
-        new_inMat = features.from_events(ev)[args.trim[0] : -args.trim[1]]
+        new_inMat = features.from_events(ev)
         ml = len(new_inMat) // args.chunk
         new_inMat = new_inMat[:ml * args.chunk].reshape((ml, args.chunk, -1))
 
@@ -110,17 +111,11 @@ def chunk_events_ctc(files, max_len, permute=True):
         wh = args.window // 2
         valid_labels = np.ones(len(new_inMat), dtype=np.bool)
         for i in xrange(len(new_inMat)):
-            offset = args.trim[0] + i * args.chunk + (args.window // 2)
+            offset = i * args.chunk + (args.window // 2)
             kmers = ev['kmer'][offset : offset + args.chunk]
             moves = np.abs(np.ediff1d(ev['seq_pos'][offset : offset + args.chunk]))
             seq = bio.reduce_kmers(kmers, moves)
 
-            if len(seq) < 4 * kh or len(seq) > args.chunk:
-                new_label_len[i] = -1 # Canary
-                valid_labels[i] = False
-                continue
-
-            seq = seq[kh + kh : -(kh + kh)]
             states = 1 + np.array(map(lambda k: kmer_to_state[k], bio.seq_to_kmers(seq, klen)), dtype=np.int32)
             new_labels = np.concatenate((new_labels, states))
             new_label_len[i] = len(states)
@@ -174,7 +169,7 @@ if __name__ == '__main__':
 
     score = wscore = 0.0
     acc = wacc = 0.0
-    SMOOTH = 0.8
+    SMOOTH = 0.95
     learning_rate = args.edam.rate
     learning_factor = 0.5 ** (1.0 / args.lrdecay) if args.lrdecay is not None else 1.0
     for it in xrange(1, args.niteration):
@@ -185,13 +180,20 @@ if __name__ == '__main__':
         for i, in_data in enumerate(chunk_events_ctc(train_files, args.batch)):
             t0 = time.time()
             lens = np.repeat(in_data[0].shape[0] - 2 * wh, in_data[0].shape[1]).astype(np.int32)
-            fval = float(fg(in_data[0], lens, in_data[1], in_data[2], learning_rate))
+            fval = float(fg(in_data[0], lens, in_data[1], in_data[2], learning_rate)) * 100.0 / args.chunk
+            print i, fval
+            if i > 10:
+                exit(0)
+            if fval == 0.0:
+                continue
+
             nev = in_data[0].shape[0] * in_data[0].shape[1]
             total_ev += nev
             score = fval + SMOOTH * score
             wscore = 1.0 + SMOOTH * wscore
-            #  print '{:5d} {} {}'.format(i + 1, fval, score / wscore)
             dt += time.time() - t0
+            sys.stdout.write('.')
+        sys.stdout.write('\n')
         print '  training   {:5.3f} ... {:6.1f}s ({:.2f} kev/s)'.format(score / wscore, dt, 0.001 * total_ev / dt)
 
         #  Validation
@@ -201,7 +203,7 @@ if __name__ == '__main__':
             for i, in_data in enumerate(chunk_events_ctc(val_files, args.batch)):
                 t0 = time.time()
                 lens = np.repeat(in_data[0].shape[0] - 2 * wh, in_data[0].shape[1]).astype(np.int32)
-                fval = float(fv(in_data[0], lens, in_data[1], in_data[2]))
+                fval = float(fv(in_data[0], lens, in_data[1], in_data[2])) * 100.0 / args.chunk
                 nev = in_data[0].shape[0] * in_data[0].shape[1]
                 vscore += fval * nev
                 vnev += nev
