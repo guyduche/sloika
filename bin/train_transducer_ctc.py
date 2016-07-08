@@ -11,7 +11,7 @@ import theano.tensor as T
 from ctc import cpu_ctc_th
 
 from untangled import bio, fast5
-from untangled.cmdargs import (display_version_and_exit, FileExists
+from untangled.cmdargs import (display_version_and_exit, FileExists,
                               NonNegative, ParseToNamedTuple, Positive,
                               proportion, Maybe)
 
