@@ -13,7 +13,7 @@ from ctc import cpu_ctc_th
 from untangled import bio, fast5
 from untangled.cmdargs import (display_version_and_exit, FileExist,
                               NonNegative, ParseToNamedTuple, Positive,
-                              probability, TypeOrNone)
+                              proportion, TypeOrNone)
 
 from sloika import networks, updates, features, __version__
 
@@ -48,7 +48,7 @@ parser.add_argument('--strand_list', default=None, action=FileExist,
     help='strand summary file containing subset.')
 parser.add_argument('--trim', default=(500, 50), nargs=2, type=Positive(int),
     metavar=('beginning', 'end'), help='Number of events to trim off start and end')
-parser.add_argument('--validation', default=None, type=probability,
+parser.add_argument('--validation', default=None, type=proportion,
     help='Proportion of reads to use for validation')
 parser.add_argument('--version', nargs=0, action=display_version_and_exit, metavar=__version__,
     help='Display version information.')
