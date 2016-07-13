@@ -21,14 +21,13 @@ def filter_by_rate(position, chunk, time=None, fact=3.0):
     :returns: A :class:`ndarray` contain a boolean of whether chunk is good
     """
     assert time is None or len(position) == len(time)
-    nchunk = (len(position) - 1) // chunk
-    chunk_pos = position[chunk * np.arange(nchunk + 1)]
-    delta_pos = np.diff(chunk_pos)
+    nchunk = len(position)  // chunk
+    chunk_idx = chunk * np.arange(nchunk)
+    delta_pos = position[chunk_idx + chunk - 1] - position[chunk_idx]
     if time is None:
         delta_time = chunk
     else:
-        chunk_time = time[chunk * np.arange(nchunk + 1)]
-        delta_time = np.diff(chunk_time)
+        delta_time = time[chunk_idx + chunk -1 ] - time[chunk_idx]
 
     bps = delta_pos / delta_time
     #  Determine accept / reject regions
