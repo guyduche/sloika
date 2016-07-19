@@ -117,7 +117,7 @@ def chunk_events_ctc(files, max_len, permute=True, klen=1):
             moves = np.abs(np.ediff1d(ev['seq_pos'][offset : offset + args.chunk]))
             seq = bio.reduce_kmers(kmers, moves)
 
-            states = 1 + np.array(map(lambda k: kmer_to_state[k0 : k0 + klen], bio.seq_to_kmers(seq, klen)), dtype=np.int32)
+            states = 1 + np.array(map(lambda k: kmer_to_state[k[k0 : k0 + klen]], bio.seq_to_kmers(seq, klen)), dtype=np.int32)
             new_labels = np.concatenate((new_labels, states))
             new_label_len[i] = len(states)
 
