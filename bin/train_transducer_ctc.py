@@ -158,7 +158,7 @@ if __name__ == '__main__':
         with open(args.model, 'r') as fh:
             network = cPickle.load(fh)
     else:
-        network = networks.transducer(winlen=args.window, sd=args.sd, bad_state=False, size=args.size)
+        network = networks.transducer(winlen=args.window, sd=args.sd, bad_state=False, size=args.size, klen=args.kmer)
     fg, fv = wrap_network(network)
 
     print '* Reading files'
