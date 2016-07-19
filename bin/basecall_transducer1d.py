@@ -7,7 +7,7 @@ import time
 
 from untangled import bio
 from untangled.cmdargs import (AutoBool, display_version_and_exit, FileExists,
-                              proportion, Positive, TypeOrNone, Vector)
+                              proportion, Positive, Maybe, Vector)
 from untangled import fast5
 from untangled.iterators import imap_mp
 
@@ -19,7 +19,7 @@ parser = argparse.ArgumentParser(
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('--individual', default=False, type=AutoBool,
     help='Return individual basecalls for each section')
-parser.add_argument('--limit', default=None, type=TypeOrNone(Positive(int)),
+parser.add_argument('--limit', default=None, type=Maybe(Positive(int)),
     help='Limit number of reads to process.')
 parser.add_argument('--min_prob', metavar='proportion', default=1e-5,
     type=proportion, help='Minimum allowed probabiility for basecalls')
