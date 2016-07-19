@@ -17,7 +17,7 @@ from sloika import features, __version__
 parser = argparse.ArgumentParser(
     description='1D basecaller for simple transducers',
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-parser.add_argument('--limit', default=None, type=Maybe(Positive(int)),
+parser.add_argument('--limit', default=None, metavar='reads', type=Maybe(Positive(int)),
     help='Limit number of reads to process.')
 parser.add_argument('--min_prob', metavar='proportion', default=1e-5,
     type=proportion, help='Minimum allowed probabiility for basecalls')
