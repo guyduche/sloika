@@ -117,7 +117,7 @@ def chunk_events_ctc(files, max_len, permute=True, klen=1):
             moves = np.abs(np.ediff1d(ev['seq_pos'][offset : offset + args.chunk]))
             seq = bio.reduce_kmers(kmers, moves)
 
-            states = 1 + np.array(map(lambda k: kmer_to_state[k[k0 : k0 + klen]], bio.seq_to_kmers(seq, klen)), dtype=np.int32)
+            states = 1 + np.array(map(lambda k: kmer_to_state[k], bio.seq_to_kmers(seq, klen)), dtype=np.int32)
             new_labels = np.concatenate((new_labels, states))
             new_label_len[i] = len(states)
 
@@ -128,14 +128,18 @@ def chunk_events_ctc(files, max_len, permute=True, klen=1):
         labels = np.concatenate((labels, new_labels)) if labels is not None else new_labels
         label_len = np.concatenate((label_len, new_label_len)) if label_len is not None else new_label_len
 
-        while len(in_mat) > max_len:
-            sumlab = np.sum(label_len[:max_len])
-            yield (np.ascontiguousarray(in_mat[:max_len].transpose((1,0,2))),
-                   np.ascontiguousarray(labels[:sumlab]),
-                   np.ascontiguousarray(label_len[:max_len]))
-            in_mat = in_mat[max_len:]
-            labels = labels[sumlab:]
-            label_len = label_len[max_len:]
+        if len(in_mat) > max_len:
+            idx = np.random.permutation(len(in_mat))
+            in_mat = in_mat[idx]
+            labels = labels[idx]
+            while len(in_mat) > max_len:
+                sumlab = np.sum(label_len[:max_len])
+                yield (np.ascontiguousarray(in_mat[:max_len].transpose((1,0,2))),
+                    np.ascontiguousarray(labels[:sumlab]),
+                    np.ascontiguousarray(label_len[:max_len]))
+                in_mat = in_mat[max_len:]
+                labels = labels[sumlab:]
+                label_len = label_len[max_len:]
 
     if in_mat is not None:
         yield (np.ascontiguousarray(in_mat.transpose((1,0,2))),
