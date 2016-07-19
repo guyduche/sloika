@@ -110,7 +110,7 @@ def lagged(kmer=3, winlen=3, size=64, bad_state=True, sd=0.1, fun=layers.tanh):
 
     return _wrap_nanonet([layer1, layer2, layer3, layer4], kmer, winlen, size, bad_state, sd)
 
-def transducer(winlen=3, size=64, nfilter=None, bad_state=True, sd=0.1, fun=layers.tanh):
+def transducer(winlen=3, size=64, nfilter=None, bad_state=True, sd=0.1, fun=layers.tanh, klen=1):
     """ Create standard Nanonet
 
     :param winlen: Window size
@@ -118,11 +118,12 @@ def transducer(winlen=3, size=64, nfilter=None, bad_state=True, sd=0.1, fun=laye
     :param nfilter: Number of filters to use (None: normal windowing)
     :param bad_state: Add output state for bad events
     :param fun: activation function
+    :param klen: Length of kmer
 
     :returns: a `class`:layer.Layer:
     """
     _prn = partial(_rn, sd=sd)
-    nstate = _NBASE + 1 + bad_state
+    nstate = (_NBASE ** klen) + 1 + bad_state
 
     if nfilter is None:
         nfilter = _NFEATURE * winlen
@@ -148,19 +149,20 @@ def transducer(winlen=3, size=64, nfilter=None, bad_state=True, sd=0.1, fun=laye
     return layers.Serial([inlayer, layer1, layer2, layer3, layer4, outlayer])
 
 
-def lagged_transducer(winlen=3, size=64, bad_state=True, sd=0.1, fun=layers.tanh):
+def lagged_transducer(winlen=3, size=64, bad_state=True, sd=0.1, fun=layers.tanh, klen=1):
     """ Create unidirectional version of nanonet intended for lagged calling
 
     :param winlen: Window size
     :param size: size of hidden layers
     :param bad_state: Add output state for bad events
     :param fun: activation function
+    :param klen: Length of kmer
 
     :returns: a `class`:layer.Layer:
     """
     lsize = 2 * size
     _prn = partial(_rn, sd=sd)
-    nstate = _NBASE + 1 + bad_state
+    nstate = (_NBASE ** klen) + 1 + bad_state
 
     inlayer = layers.Window(winlen)
 
