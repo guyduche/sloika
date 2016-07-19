@@ -128,14 +128,18 @@ def chunk_events_ctc(files, max_len, permute=True, klen=1):
         labels = np.concatenate((labels, new_labels)) if labels is not None else new_labels
         label_len = np.concatenate((label_len, new_label_len)) if label_len is not None else new_label_len
 
-        while len(in_mat) > max_len:
-            sumlab = np.sum(label_len[:max_len])
-            yield (np.ascontiguousarray(in_mat[:max_len].transpose((1,0,2))),
-                   np.ascontiguousarray(labels[:sumlab]),
-                   np.ascontiguousarray(label_len[:max_len]))
-            in_mat = in_mat[max_len:]
-            labels = labels[sumlab:]
-            label_len = label_len[max_len:]
+        if len(in_mat) > max_len:
+            idx = np.random.permutation(len(in_mat))
+            in_mat = in_mat[idx]
+            labels = labels[idx]
+            while len(in_mat) > max_len:
+                sumlab = np.sum(label_len[:max_len])
+                yield (np.ascontiguousarray(in_mat[:max_len].transpose((1,0,2))),
+                    np.ascontiguousarray(labels[:sumlab]),
+                    np.ascontiguousarray(label_len[:max_len]))
+                in_mat = in_mat[max_len:]
+                labels = labels[sumlab:]
+                label_len = label_len[max_len:]
 
     if in_mat is not None:
         yield (np.ascontiguousarray(in_mat.transpose((1,0,2))),
