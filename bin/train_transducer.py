@@ -27,6 +27,8 @@ parser.add_argument('--edam', nargs=3, metavar=('rate', 'decay1', 'decay2'),
     action=ParseToNamedTuple, help='Parameters for Exponential Decay Adaptive Momementum')
 parser.add_argument('--filters', default=None, metavar='number',
     type=Maybe(Positive(int)), help='Number of filters for convolution')
+parser.add_argument('--kmer', default=1, metavar='length', type=Positive(int),
+    help='Length of kmer transducer to train')
 parser.add_argument('--limit', default=None, type=Maybe(Positive(int)),
     help='Limit number of reads to process.')
 parser.add_argument('--lrdecay', default=None, metavar='epochs', type=Positive(float),
