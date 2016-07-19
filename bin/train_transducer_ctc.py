@@ -28,6 +28,8 @@ parser.add_argument('--chunk', default=100, metavar='events', type=Positive(int)
 parser.add_argument('--edam', nargs=3, metavar=('rate', 'decay1', 'decay2'),
     default=(0.1, 0.9, 0.99), type=(NonNegative(float), NonNegative(float), NonNegative(float)),
     action=ParseToNamedTuple, help='Parameters for Exponential Decay Adaptive Momementum')
+parser.add_argument('--kmer', default=1, metavar='length', type=Positive(int),
+    help='Length of kmer transducer to train')
 parser.add_argument('--limit', default=None, type=Maybe(Positive(int)),
     help='Limit number of reads to process.')
 parser.add_argument('--lrdecay', default=None, metavar='epochs', type=Positive(float),
@@ -78,8 +80,7 @@ def wrap_network(network):
     fv = th.function([x, post_len, labels, label_len], loss)
     return fg, fv
 
-def chunk_events_ctc(files, max_len, permute=True):
-    klen = 1
+def chunk_events_ctc(files, max_len, permute=True, klen=1):
     kmer_to_state = bio.kmer_mapping(klen)
     black_list = set()
 
@@ -106,7 +107,8 @@ def chunk_events_ctc(files, max_len, permute=True):
         #  Construct label sequence for each row of the event matrix
         new_labels = np.array([], dtype=np.int32)
         new_label_len = np.zeros(len(new_inMat), dtype=np.int32)
-        kh = len(ev['kmer'][0]) // 2
+        mkl = len(ev['kmer'][0])
+        k0 = (mkl - klen + 1) // 2
         wh = args.window // 2
         valid_labels = np.ones(len(new_inMat), dtype=np.bool)
         for i in xrange(len(new_inMat)):
@@ -115,7 +117,7 @@ def chunk_events_ctc(files, max_len, permute=True):
             moves = np.abs(np.ediff1d(ev['seq_pos'][offset : offset + args.chunk]))
             seq = bio.reduce_kmers(kmers, moves)
 
-            states = 1 + np.array(map(lambda k: kmer_to_state[k], bio.seq_to_kmers(seq, klen)), dtype=np.int32)
+            states = 1 + np.array(map(lambda k: kmer_to_state[k0 : k0 + klen], bio.seq_to_kmers(seq, klen)), dtype=np.int32)
             new_labels = np.concatenate((new_labels, states))
             new_label_len[i] = len(states)
 
@@ -176,7 +178,7 @@ if __name__ == '__main__':
         #  Training
         total_ev = 0
         dt = 0.0
-        for i, in_data in enumerate(chunk_events_ctc(train_files, args.batch)):
+        for i, in_data in enumerate(chunk_events_ctc(train_files, args.batch, klen=args.kmer)):
             t0 = time.time()
             lens = np.repeat(in_data[0].shape[0] - 2 * wh, in_data[0].shape[1]).astype(np.int32)
             fval = float(fg(in_data[0], lens, in_data[1], in_data[2], learning_rate)) * 100.0 / args.chunk
@@ -196,7 +198,7 @@ if __name__ == '__main__':
         if args.validation is not None:
             dt = 0.0
             vscore = vnev = vncorr = 0
-            for i, in_data in enumerate(chunk_events_ctc(val_files, args.batch)):
+            for i, in_data in enumerate(chunk_events_ctc(val_files, args.batch, klen=args.kmer)):
                 t0 = time.time()
                 lens = np.repeat(in_data[0].shape[0] - 2 * wh, in_data[0].shape[1]).astype(np.int32)
                 fval = float(fv(in_data[0], lens, in_data[1], in_data[2])) * 100.0 / args.chunk
