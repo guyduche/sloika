@@ -45,9 +45,13 @@ def prepare_post(post, min_prob=1e-5, init_trans=None):
     return min_prob + (1.0 - min_prob) * post
 
 def basecall(args, fn):
-    with fast5.Reader(fn) as f5:
-        ev = f5.get_section_events(args.section)
-        sn = f5.filename_short
+    try:
+        with fast5.Reader(fn) as f5:
+            ev = f5.get_section_events(args.section)
+            sn = f5.filename_short
+    except:
+        return None
+
     if len(ev) <= sum(args.trim):
         return None
     ev = ev[args.trim[0] : -args.trim[1]]

@@ -8,7 +8,7 @@ import time
 
 from untangled import bio, fast5
 from untangled.cmdargs import (AutoBool, display_version_and_exit, FileExists,
-                               NonNegative, Positive, TypeOrNone)
+                               NonNegative, Positive, Maybe)
 from untangled.iterators import imap_mp
 
 from sloika import features, transducer, __version__
@@ -17,11 +17,11 @@ from sloika import features, transducer, __version__
 parser = argparse.ArgumentParser(
     description='Map transducer to reference sequence',
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-parser.add_argument('--limit', default=None, type=TypeOrNone(Positive(int)),
+parser.add_argument('--limit', default=None, type=Maybe(Positive(int)),
     help='Limit number of reads to process.')
 parser.add_argument('--section', default='template', choices=['template', 'complement'],
     help='Section to call')
-parser.add_argument('--slip', default=None, type=TypeOrNone(NonNegative(float)),
+parser.add_argument('--slip', default=None, type=Maybe(NonNegative(float)),
     help='Slip penalty')
 parser.add_argument('--strand_list', default=None, action=FileExists,
     help='strand summary file containing subset.')

@@ -94,11 +94,10 @@ def chunk_events_ctc(files, max_len, permute=True):
                 ev, _ = f5.get_any_mapping_data(args.section)
         except:
             black_list.add(fn)
-            sys.stderr.write('Failed to read from {}.\n'.format(fn))
             continue
         if len(ev) <= sum(args.trim) + args.chunk:
             continue
-        ev = ev[args.trim[0] : args.trim[1]]
+        ev = ev[args.trim[0] : -args.trim[1]]
 
         new_inMat = features.from_events(ev)
         ml = len(new_inMat) // args.chunk
@@ -181,11 +180,6 @@ if __name__ == '__main__':
             t0 = time.time()
             lens = np.repeat(in_data[0].shape[0] - 2 * wh, in_data[0].shape[1]).astype(np.int32)
             fval = float(fg(in_data[0], lens, in_data[1], in_data[2], learning_rate)) * 100.0 / args.chunk
-            print i, fval
-            if i > 10:
-                exit(0)
-            if fval == 0.0:
-                continue
 
             nev = in_data[0].shape[0] * in_data[0].shape[1]
             total_ev += nev
@@ -193,6 +187,8 @@ if __name__ == '__main__':
             wscore = 1.0 + SMOOTH * wscore
             dt += time.time() - t0
             sys.stdout.write('.')
+            if (i + 1) % 50 == 0:
+                print "{:8d} : {:8.4f} {:8.4f}".format(i + 1, fval, score / wscore)
         sys.stdout.write('\n')
         print '  training   {:5.3f} ... {:6.1f}s ({:.2f} kev/s)'.format(score / wscore, dt, 0.001 * total_ev / dt)
 
