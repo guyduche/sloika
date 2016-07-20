@@ -174,7 +174,7 @@ if __name__ == '__main__':
 
     score = wscore = 0.0
     acc = wacc = 0.0
-    SMOOTH = 0.95
+    SMOOTH = 0.99
     learning_rate = args.edam.rate
     learning_factor = 0.5 ** (1.0 / args.lrdecay) if args.lrdecay is not None else 1.0
     for it in xrange(1, args.niteration):
@@ -210,6 +210,10 @@ if __name__ == '__main__':
                 vscore += fval * nev
                 vnev += nev
                 dt += time.time() - t0
+                sys.stdout.write('.')
+                if (i + 1) % 50 == 0:
+                    print "{:8d} : {:8.4f} {:8.4f}".format(i + 1, fval, score / wscore)
+            sys.stdout.write('\n')
             print '  validation {:5.3f} ... {:6.1f}s ({:.2f} kev/s)'.format(vscore / vnev, dt, 0.001 * vnev / dt)
 
         # Save model
