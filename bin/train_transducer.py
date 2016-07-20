@@ -82,7 +82,7 @@ def wrap_network(network):
 
 if __name__ == '__main__':
     args = parser.parse_args()
-    kmers = bio.all_kmers(1)
+    kmers = bio.all_kmers(args.kmer)
 
     if args.model is not None:
         with open(args.model, 'r') as fh:
@@ -90,7 +90,7 @@ if __name__ == '__main__':
     else:
         network = networks.transducer(winlen=args.window, size=args.size,
                                       nfilter=args.filters, sd=args.sd,
-                                      bad_state=False)
+                                      bad_state=False, klen=args.kmer)
     fg, fv = wrap_network(network)
 
     train_files = set(fast5.iterate_fast5(args.input_folder, paths=True, limit=args.limit, strand_list=args.strand_list))
@@ -112,7 +112,8 @@ if __name__ == '__main__':
         for i, in_data in enumerate(batch.transducer(train_files, args.section,
                                                      args.batch, args.chunk,
                                                      args.window, filter_chunks=True,
-                                                     use_scaled=args.use_scaled)):
+                                                     use_scaled=args.use_scaled,
+                                                     kmer_len=args.kmer)):
             labels = in_data[1]
             labels += 1
             labels %= _NBASE + 1
@@ -137,7 +138,8 @@ if __name__ == '__main__':
             for i, in_data in enumerate(batch.transducer(val_files, args.section,
                                                          args.batch, args.chunk,
                                                          args.window, filter_chunks=True,
-                                                         use_scaled=args.use_scaled)):
+                                                         use_scaled=args.use_scaled,
+                                                         kmer_len=args.kmer)):
                 labels = in_data[1]
                 labels += 1
                 labels %= _NBASE + 1

@@ -151,7 +151,7 @@ def chunk_events_ctc(files, max_len, permute=True, klen=1):
 
 if __name__ == '__main__':
     args = parser.parse_args()
-    kmers = bio.all_kmers(1)
+    kmers = bio.all_kmers(args.kmer)
 
     print '* Creating model'
     if args.model is not None:
