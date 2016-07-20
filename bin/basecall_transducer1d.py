@@ -59,8 +59,9 @@ def basecall(args, fn):
 
     if len(ev) <= sum(args.trim):
         return None
+    ev = ev[args.trim[0] : -args.trim[1]]
 
-    inMat = features.from_events(ev)[args.trim[0] : -args.trim[1]]
+    inMat = features.from_events(ev, tag='')
     inMat = np.expand_dims(inMat, axis=1)
 
     with open(args.model, 'r') as fh:
@@ -68,9 +69,9 @@ def basecall(args, fn):
 
     post = prepare_post(calc_post(inMat), args.min_prob)
 
-    stay_state = post.shape[1] - 1
+    stay_state = 0
     call = np.argmax(post, axis=1)
-    call = call[call != stay_state]
+    call = call[call != stay_state] - 1
     score = np.sum(np.log(np.amax(post, axis=1)))
 
     return sn, score, call, inMat.shape[0]

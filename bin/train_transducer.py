@@ -2,6 +2,7 @@
 import argparse
 import cPickle
 import numpy as np
+import sys
 import time
 
 import theano as th
@@ -129,6 +130,10 @@ if __name__ == '__main__':
             wscore = 1.0 + SMOOTH * wscore
             wacc = 1.0 + SMOOTH * wacc
             dt += time.time() - t0
+            sys.stdout.write('.')
+            if (i + 1) % 50 == 0:
+                print "{:8d} : {:8.4f} {:8.4f}".format(i + 1, fval, score / wscore)
+        sys.stdout.write('\n')
         print '  training   {:5.3f}   {:5.2f}% ... {:6.1f}s ({:.2f} kev/s)'.format(score / wscore, 100.0 * acc / wacc, dt, 0.001 * total_ev / dt)
 
         #  Validation
@@ -153,6 +158,10 @@ if __name__ == '__main__':
                 vncorr += ncorr
                 vnev += nev
                 dt += time.time() - t0
+                sys.stdout.write('.')
+                if (i + 1) % 50 == 0:
+                    print "{:8d} : {:8.4f} {:8.4f}".format(i + 1, fval, score / wscore)
+            sys.stdout.write('\n')
             print '  validation {:5.3f}   {:5.2f}% ... {:6.1f}s ({:.2f} kev/s)'.format(vscore / vnev, 100.0 * vncorr / vnev, dt, 0.001 * vnev / dt)
 
         # Save model
