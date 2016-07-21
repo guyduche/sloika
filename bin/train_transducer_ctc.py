@@ -184,7 +184,7 @@ if __name__ == '__main__':
             lens = np.repeat(in_data[0].shape[0] - 2 * wh, in_data[0].shape[1]).astype(np.int32)
             fval = float(fg(in_data[0], lens, in_data[1], in_data[2], learning_rate)) * 100.0 / args.chunk
 
-            nev = in_data[0].shape[0] * in_data[0].shape[1]
+            nev = np.size(in_data[0])
             total_ev += nev
             score = fval + SMOOTH * score
             wscore = 1.0 + SMOOTH * wscore
@@ -203,7 +203,7 @@ if __name__ == '__main__':
                 t0 = time.time()
                 lens = np.repeat(in_data[0].shape[0] - 2 * wh, in_data[0].shape[1]).astype(np.int32)
                 fval = float(fv(in_data[0], lens, in_data[1], in_data[2])) * 100.0 / args.chunk
-                nev = in_data[0].shape[0] * in_data[0].shape[1]
+                nev = np.size(in_data[0])
                 vscore += fval * nev
                 vnev += nev
                 dt += time.time() - t0
