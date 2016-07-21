@@ -41,12 +41,6 @@ _ETA = 1e-300
 
 def prepare_post(post, min_prob=1e-5, init_trans=None):
     post = np.squeeze(post, axis=1)
-    bad_state = post.shape[1] - 1
-    max_call = np.argmax(post, axis=1)
-    post = post[max_call != bad_state]
-    post = post[:,:-1]
-    post /= _ETA + np.sum(post, axis=1).reshape((-1, 1))
-
     return min_prob + (1.0 - min_prob) * post
 
 def basecall(args, fn):
