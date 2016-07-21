@@ -57,8 +57,9 @@ def basecall(args, fn):
         sn = f5.filename_short
     if len(ev) <= sum(args.trim):
         return None
+    ev = ev[args.trim[0] : -args.trim[1]]
 
-    inMat = features.from_events(ev)[args.trim[0] : -args.trim[1]]
+    inMat = features.from_events(ev, tag='')
     inMat = np.expand_dims(inMat, axis=1)
 
     with open(args.model, 'r') as fh:
