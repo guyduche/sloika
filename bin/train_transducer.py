@@ -115,14 +115,11 @@ if __name__ == '__main__':
                                                      args.window, filter_chunks=True,
                                                      use_scaled=args.use_scaled,
                                                      kmer_len=args.kmer)):
-            labels = in_data[1]
-            labels += 1
-            labels %= _NBASE + 1
-
             t0 = time.time()
             fval, ncorr = fg(in_data[0], labels, learning_rate)
             fval = float(fval)
             ncorr = float(ncorr)
+            nev = np.size(in_data[1])
             nev = labels.shape[0] * labels.shape[1]
             total_ev += nev
             score = fval + SMOOTH * score
@@ -145,15 +142,11 @@ if __name__ == '__main__':
                                                          args.window, filter_chunks=True,
                                                          use_scaled=args.use_scaled,
                                                          kmer_len=args.kmer)):
-                labels = in_data[1]
-                labels += 1
-                labels %= _NBASE + 1
-
                 t0 = time.time()
                 fval, ncorr = fv(in_data[0], labels)
                 fval = float(fval)
                 ncorr = float(ncorr)
-                nev = labels.shape[0] * labels.shape[1]
+                nev = np.size(in_data[1])
                 vscore += fval * nev
                 vncorr += ncorr
                 vnev += nev

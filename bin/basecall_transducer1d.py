@@ -41,7 +41,6 @@ _ETA = 1e-300
 
 def prepare_post(post, min_prob=1e-5, init_trans=None):
     post = np.squeeze(post, axis=1)
-
     return min_prob + (1.0 - min_prob) * post
 
 def basecall(args, fn):
