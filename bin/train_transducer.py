@@ -116,11 +116,10 @@ if __name__ == '__main__':
                                                      use_scaled=args.use_scaled,
                                                      kmer_len=args.kmer)):
             t0 = time.time()
-            fval, ncorr = fg(in_data[0], labels, learning_rate)
+            fval, ncorr = fg(in_data[0], in_data[1], learning_rate)
             fval = float(fval)
             ncorr = float(ncorr)
             nev = np.size(in_data[1])
-            nev = labels.shape[0] * labels.shape[1]
             total_ev += nev
             score = fval + SMOOTH * score
             acc = (ncorr / nev) + SMOOTH * acc
@@ -143,7 +142,7 @@ if __name__ == '__main__':
                                                          use_scaled=args.use_scaled,
                                                          kmer_len=args.kmer)):
                 t0 = time.time()
-                fval, ncorr = fv(in_data[0], labels)
+                fval, ncorr = fv(in_data[0], in_data[1])
                 fval = float(fval)
                 ncorr = float(ncorr)
                 nev = np.size(in_data[1])
