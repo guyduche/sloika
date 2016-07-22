@@ -2,6 +2,7 @@
 import argparse
 import cPickle
 import numpy as np
+import sys
 import time
 
 import theano as th
@@ -96,7 +97,7 @@ if __name__ == '__main__':
 
     score = wscore = 0.0
     acc = wacc = 0.0
-    SMOOTH = 0.8
+    SMOOTH = 0.9
     learning_rate = args.edam.rate
     learning_factor = 0.5 ** (1.0 / args.lrdecay) if args.lrdecay is not None else 1.0
     for it in xrange(args.niteration):
@@ -118,6 +119,9 @@ if __name__ == '__main__':
             acc = (ncorr / nev) + SMOOTH * acc
             wscore = 1.0 + SMOOTH * wscore
             wacc = 1.0 + SMOOTH * wacc
+            if (i + 1) % 50 == 0:
+                print "{:8d} : {:8.4f} {:8.4f}".format(i + 1, fval, score / wscore)
+        sys.stdout.write('\n')
         tn = time.time()
         print '  training   {:5.3f}   {:5.2f}% ... {:6.1f}s ({:.2f} kev/s)'.format(score / wscore, 100.0 * acc / wacc, tn - t0, 0.001 * total_ev / (tn - t0))
 
@@ -137,6 +141,9 @@ if __name__ == '__main__':
                 vscore += fval * nev
                 vncorr += ncorr
                 vnev += nev
+                if (i + 1) % 50 == 0:
+                    print "{:8d} : {:8.4f} {:8.4f}".format(i + 1, fval, vscore / vnev)
+            sys.stdout.write('\n')
             tn = time.time()
             print '  validation {:5.3f}   {:5.2f}% ... {:6.1f}s ({:.2f} kev/s)'.format(vscore / vnev, 100.0 * vncorr / vnev, tn - t0, 0.001 * vnev / (tn - t0))
 
