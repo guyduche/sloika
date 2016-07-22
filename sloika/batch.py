@@ -59,6 +59,9 @@ def _kmer_worker(fn, section, chunk_len, window, kmer_len, trim, use_scaled, bad
             ev, _ = f5.get_any_mapping_data(section)
     except:
         return fn, None, None
+
+    if len(ev) < sum(trim) + chunk_len:
+        return fn, None, None
     ev = ev[trim[0] : -trim[1]]
 
     new_inMat = features.from_events(ev, tag='' if use_scaled else 'scaled_')
@@ -131,7 +134,7 @@ def kmers(files, section, batch_size, chunk_len, window, kmer_len, bad=False,
 
 
 def _transducer_worker(fn, section, chunk_len, window, filter_chunks, use_scaled):
-    """ Batch dat together for transducer
+    """ Batch data together for transducer
 
     :param files: A `set` of files to read
     :param section: Section of read to process (template / complement)
