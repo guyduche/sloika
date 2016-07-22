@@ -50,7 +50,7 @@ def _kmer_worker(fn, section, chunk_len, window, kmer_len, trim, use_scaled, bad
     :param use_scaled: Use prescaled event statistics
     :param bad: Have bad events a separate state
     """
-    kmer_to_state = bio.kmer_mapping(1)
+    kmer_to_state = bio.kmer_mapping(kmer_len)
     begin, end = trim
     end = None if end is 0 else -end
 
