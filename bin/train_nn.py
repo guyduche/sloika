@@ -119,6 +119,7 @@ if __name__ == '__main__':
             acc = (ncorr / nev) + SMOOTH * acc
             wscore = 1.0 + SMOOTH * wscore
             wacc = 1.0 + SMOOTH * wacc
+            sys.stdout.write('.')
             if (i + 1) % 50 == 0:
                 print "{:8d} : {:8.4f} {:8.4f}".format(i + 1, fval, score / wscore)
         sys.stdout.write('\n')
@@ -141,6 +142,7 @@ if __name__ == '__main__':
                 vscore += fval * nev
                 vncorr += ncorr
                 vnev += nev
+                sys.stdout.write('.')
                 if (i + 1) % 50 == 0:
                     print "{:8d} : {:8.4f} {:8.4f}".format(i + 1, fval, vscore / vnev)
             sys.stdout.write('\n')
