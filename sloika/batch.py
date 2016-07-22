@@ -67,7 +67,7 @@ def _kmer_worker(fn, section, chunk_len, window, kmer_len, trim, use_scaled, bad
 
     model_kmer_len = len(ev['kmer'][0])
     ub = chunk_len * ml
-    kl = model_kmer_len // 2
+    kl = (model_kmer_len - kmer_len) // 2
     ku = kl + kmer_len
     new_labels = np.array(map(lambda k: kmer_to_state[k[kl : ku]], ev['kmer'][:ub]),
                           dtype=np.int32)
