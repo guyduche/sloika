@@ -113,7 +113,7 @@ if __name__ == '__main__':
             fval, ncorr = fg(in_data[0], in_data[1], learning_rate)
             fval = float(fval)
             ncorr = float(ncorr)
-            nev = in_data[1].shape[0] * in_data[1].shape[1]
+            nev = np.size(in_data[1])
             total_ev += nev
             score = fval + SMOOTH * score
             acc = (ncorr / nev) + SMOOTH * acc
@@ -130,15 +130,15 @@ if __name__ == '__main__':
         if args.validation is not None:
             t0 = time.time()
             vscore = vnev = vncorr = 0
-            for i, in_data in enumerate(batch.kmers(train_files, args.section,
-                                                     args.batch, args.chunk,
-                                                     args.window, args.kmer,
-                                                     trim=args.trim, bad=args.bad,
-                                                     use_scaled=args.use_scaled)):
+            for i, in_data in enumerate(batch.kmers(val_files, args.section,
+                                                    args.batch, args.chunk,
+                                                    args.window, args.kmer,
+                                                    trim=args.trim, bad=args.bad,
+                                                    use_scaled=args.use_scaled)):
                 fval, ncorr = fv(in_data[0], in_data[1])
                 fval = float(fval)
                 ncorr = float(ncorr)
-                nev = in_data[1].shape[0] * in_data[1].shape[1]
+                nev = np.size(in_data[1])
                 vscore += fval * nev
                 vncorr += ncorr
                 vnev += nev
