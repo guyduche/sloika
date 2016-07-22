@@ -161,8 +161,8 @@ def _transducer_worker(fn, section, chunk_len, window, filter_chunks, use_scaled
     mapped_kmer_len = len(ev['kmer'][0])
     ub = chunk_len * ml
     k0 = (mapped_kmer_len - kmer_len + 1) // 2
-    new_labels = np.array(map(lambda k: kmer_to_state[k[k0 : k0 + kmer_len]], ev['kmer'][:ub]), dtype=np.int32)
-    new_labels[np.ediff1d(ev['seq_pos'][:ub], to_begin=1) == 0] = _NBASE
+    new_labels = 1 + np.array(map(lambda k: kmer_to_state[k[k0 : k0 + kmer_len]], ev['kmer'][:ub]), dtype=np.int32)
+    new_labels[np.ediff1d(ev['seq_pos'][:ub], to_begin=1) == 0] = 0
     new_labels = new_labels.reshape((ml, chunk_len))
     new_labels = new_labels[:, (window // 2) : -(window // 2)]
 
