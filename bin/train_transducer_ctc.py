@@ -209,7 +209,7 @@ if __name__ == '__main__':
                 dt += time.time() - t0
                 sys.stdout.write('.')
                 if (i + 1) % 50 == 0:
-                    print "{:8d} : {:8.4f} {:8.4f}".format(i + 1, fval, score / wscore)
+                    print "{:8d} : {:8.4f} {:8.4f}".format(i + 1, fval, vscore / vnev)
             sys.stdout.write('\n')
             print '  validation {:5.3f} ... {:6.1f}s ({:.2f} kev/s)'.format(vscore / vnev, dt, 0.001 * vnev / dt)
 
