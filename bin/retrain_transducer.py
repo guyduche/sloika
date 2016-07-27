@@ -84,8 +84,11 @@ def chunk_events(infile, files, max_len, permute=True):
 
     in_mat = labels = None
     for fn in pfiles:
-        with h5py.File(infile, 'r') as h5:
-            ev = h5[fn][:]
+        try:
+            with h5py.File(infile, 'r') as h5:
+                ev = h5[fn][:]
+        except:
+            continue
         if len(ev) <= args.chunk:
             continue
 

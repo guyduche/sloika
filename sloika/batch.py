@@ -50,7 +50,7 @@ def _kmer_worker(fn, section, chunk_len, window, kmer_len, trim, use_scaled, bad
     :param use_scaled: Use prescaled event statistics
     :param bad: Have bad events a separate state
     """
-    kmer_to_state = bio.kmer_mapping(1)
+    kmer_to_state = bio.kmer_mapping(kmer_len)
     begin, end = trim
     end = None if end is 0 else -end
 
@@ -58,6 +58,9 @@ def _kmer_worker(fn, section, chunk_len, window, kmer_len, trim, use_scaled, bad
         with fast5.Reader(fn) as f5:
             ev, _ = f5.get_any_mapping_data(section)
     except:
+        return fn, None, None
+
+    if len(ev) < sum(trim) + chunk_len:
         return fn, None, None
     ev = ev[trim[0] : -trim[1]]
 
@@ -67,7 +70,8 @@ def _kmer_worker(fn, section, chunk_len, window, kmer_len, trim, use_scaled, bad
 
     model_kmer_len = len(ev['kmer'][0])
     ub = chunk_len * ml
-    kl = model_kmer_len // 2
+    # Use rightmost middle kmer
+    kl = (model_kmer_len - kmer_len + 1) // 2
     ku = kl + kmer_len
     new_labels = np.array(map(lambda k: kmer_to_state[k[kl : ku]], ev['kmer'][:ub]),
                           dtype=np.int32)

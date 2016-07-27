@@ -2,6 +2,7 @@
 import argparse
 import cPickle
 import numpy as np
+import sys
 import time
 
 import theano as th
@@ -18,15 +19,15 @@ from sloika import batch, networks, updates, __version__
 parser = argparse.ArgumentParser(
     description='Train Nanonet neural network',
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-parser.add_argument('--bad', default=False, action=AutoBool, help='Label bad emissions')
-parser.add_argument('--batch', default=1000, metavar='size', type=Positive(int),
+parser.add_argument('--bad', default=True, action=AutoBool, help='Label bad emissions')
+parser.add_argument('--batch', default=300, metavar='size', type=Positive(int),
     help='Batch size (number of chunks to run in parallel)')
-parser.add_argument('--chunk', default=100, metavar='events', type=Positive(int),
+parser.add_argument('--chunk', default=500, metavar='events', type=Positive(int),
     help='Length of each read chunk')
 parser.add_argument('--edam', nargs=3, metavar=('rate', 'decay1', 'decay2'),
     default=(0.1, 0.9, 0.99), type=(NonNegative(float), NonNegative(float), NonNegative(float)),
     action=ParseToNamedTuple, help='Parameters for Exponential Decay Adaptive Momementum')
-parser.add_argument('--kmer', default=3, metavar='length', type=Positive(int),
+parser.add_argument('--kmer', default=5, metavar='length', type=Positive(int),
     help='Length of kmer to estimate')
 parser.add_argument('--limit', default=None, type=Maybe(Positive(int)),
     help='Limit number of reads to process.')
@@ -38,7 +39,7 @@ parser.add_argument('--niteration', metavar='epochs', type=Positive(int), defaul
     help='Maximum number of epochs to train for')
 parser.add_argument('--save_every', metavar='x', type=Positive(int), default=5,
     help='Save model every x epochs')
-parser.add_argument('--sd', default=0.1, metavar='value', type=Positive(float),
+parser.add_argument('--sd', default=0.5, metavar='value', type=Positive(float),
     help='Standard deviation to initialise with')
 parser.add_argument('--section', default='template', choices=['template', 'complement'],
     help='Section to call')
@@ -96,7 +97,7 @@ if __name__ == '__main__':
 
     score = wscore = 0.0
     acc = wacc = 0.0
-    SMOOTH = 0.8
+    SMOOTH = 0.9
     learning_rate = args.edam.rate
     learning_factor = 0.5 ** (1.0 / args.lrdecay) if args.lrdecay is not None else 1.0
     for it in xrange(args.niteration):
@@ -112,12 +113,16 @@ if __name__ == '__main__':
             fval, ncorr = fg(in_data[0], in_data[1], learning_rate)
             fval = float(fval)
             ncorr = float(ncorr)
-            nev = in_data[1].shape[0] * in_data[1].shape[1]
+            nev = np.size(in_data[1])
             total_ev += nev
             score = fval + SMOOTH * score
             acc = (ncorr / nev) + SMOOTH * acc
             wscore = 1.0 + SMOOTH * wscore
             wacc = 1.0 + SMOOTH * wacc
+            sys.stdout.write('.')
+            if (i + 1) % 50 == 0:
+                print "{:8d} : {:8.4f} {:8.4f}".format(i + 1, fval, score / wscore)
+        sys.stdout.write('\n')
         tn = time.time()
         print '  training   {:5.3f}   {:5.2f}% ... {:6.1f}s ({:.2f} kev/s)'.format(score / wscore, 100.0 * acc / wacc, tn - t0, 0.001 * total_ev / (tn - t0))
 
@@ -125,18 +130,22 @@ if __name__ == '__main__':
         if args.validation is not None:
             t0 = time.time()
             vscore = vnev = vncorr = 0
-            for i, in_data in enumerate(batch.kmers(train_files, args.section,
-                                                     args.batch, args.chunk,
-                                                     args.window, args.kmer,
-                                                     trim=args.trim, bad=args.bad,
-                                                     use_scaled=args.use_scaled)):
+            for i, in_data in enumerate(batch.kmers(val_files, args.section,
+                                                    args.batch, args.chunk,
+                                                    args.window, args.kmer,
+                                                    trim=args.trim, bad=args.bad,
+                                                    use_scaled=args.use_scaled)):
                 fval, ncorr = fv(in_data[0], in_data[1])
                 fval = float(fval)
                 ncorr = float(ncorr)
-                nev = in_data[1].shape[0] * in_data[1].shape[1]
+                nev = np.size(in_data[1])
                 vscore += fval * nev
                 vncorr += ncorr
                 vnev += nev
+                sys.stdout.write('.')
+                if (i + 1) % 50 == 0:
+                    print "{:8d} : {:8.4f} {:8.4f}".format(i + 1, fval, vscore / vnev)
+            sys.stdout.write('\n')
             tn = time.time()
             print '  validation {:5.3f}   {:5.2f}% ... {:6.1f}s ({:.2f} kev/s)'.format(vscore / vnev, 100.0 * vncorr / vnev, tn - t0, 0.001 * vnev / (tn - t0))
 
