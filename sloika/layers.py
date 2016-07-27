@@ -94,7 +94,7 @@ class FeedForward(Layer):
     """
     def __init__(self, insize, size, init=zeros, has_bias=False, fun=T.tanh):
         self.has_bias = has_bias
-        self.b = th.shared(has_bias * init(size))
+        self.b = th.shared(has_bias * np.ones(size, dtype=sloika_dtype))
         self.W = th.shared(init((size, insize)))
         self.insize = insize
         self.size = size
@@ -144,7 +144,7 @@ class Softmax(Layer):
     """
     def __init__(self, insize, size, init=zeros, has_bias=False):
         self.has_bias = has_bias
-        self.b = th.shared(has_bias * init(size))
+        self.b = th.shared(has_bias * np.ones(size, dtype=sloika_dtype))
         self.W = th.shared(init((size, insize)) / np.sqrt(insize))
         self.insize = insize
         self.size = size
@@ -176,7 +176,7 @@ class SoftmaxOld(Layer):
     """
     def __init__(self, insize, size, init=zeros, has_bias=False):
         self.has_bias = has_bias
-        self.b = th.shared(has_bias * init(size))
+        self.b = th.shared(has_bias * np.ones(size, dtype=sloika_dtype))
         self.W = th.shared(init((size, insize)) / np.sqrt(insize))
         self.insize = insize
         self.size = size
