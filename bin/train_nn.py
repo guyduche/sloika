@@ -19,15 +19,15 @@ from sloika import batch, networks, updates, __version__
 parser = argparse.ArgumentParser(
     description='Train Nanonet neural network',
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-parser.add_argument('--bad', default=False, action=AutoBool, help='Label bad emissions')
-parser.add_argument('--batch', default=1000, metavar='size', type=Positive(int),
+parser.add_argument('--bad', default=True, action=AutoBool, help='Label bad emissions')
+parser.add_argument('--batch', default=300, metavar='size', type=Positive(int),
     help='Batch size (number of chunks to run in parallel)')
-parser.add_argument('--chunk', default=100, metavar='events', type=Positive(int),
+parser.add_argument('--chunk', default=500, metavar='events', type=Positive(int),
     help='Length of each read chunk')
 parser.add_argument('--edam', nargs=3, metavar=('rate', 'decay1', 'decay2'),
     default=(0.1, 0.9, 0.99), type=(NonNegative(float), NonNegative(float), NonNegative(float)),
     action=ParseToNamedTuple, help='Parameters for Exponential Decay Adaptive Momementum')
-parser.add_argument('--kmer', default=3, metavar='length', type=Positive(int),
+parser.add_argument('--kmer', default=5, metavar='length', type=Positive(int),
     help='Length of kmer to estimate')
 parser.add_argument('--limit', default=None, type=Maybe(Positive(int)),
     help='Limit number of reads to process.')
@@ -39,7 +39,7 @@ parser.add_argument('--niteration', metavar='epochs', type=Positive(int), defaul
     help='Maximum number of epochs to train for')
 parser.add_argument('--save_every', metavar='x', type=Positive(int), default=5,
     help='Save model every x epochs')
-parser.add_argument('--sd', default=0.1, metavar='value', type=Positive(float),
+parser.add_argument('--sd', default=0.5, metavar='value', type=Positive(float),
     help='Standard deviation to initialise with')
 parser.add_argument('--section', default='template', choices=['template', 'complement'],
     help='Section to call')
