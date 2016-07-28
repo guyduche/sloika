@@ -24,6 +24,8 @@ class TestDecode(unittest.TestCase):
         self.score_full = -5.0702616325672301
         self.score_viterbi = -5.70653594347
 
+        self.post3 =
+
     def test_001_argmax(self):
         bases = decode.argmax(self.post)
         self.assertEqual(len(bases), len(self.bases))
@@ -56,3 +58,7 @@ class TestDecode(unittest.TestCase):
         scoreF = decode.forwards_transpose(self.post, bases)
         scoreB = decode.backwards_transpose(self.post, bases)
         self.assertAlmostEqual(scoreF, scoreB)
+
+    def test_007_viterbi(self):
+        score = decode.viterbi(self.post3, 3)
+        print score

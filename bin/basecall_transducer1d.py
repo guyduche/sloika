@@ -11,14 +11,16 @@ from untangled.cmdargs import (display_version_and_exit, FileExists,
 from untangled import fast5
 from untangled.iterators import imap_mp
 
-from sloika import features, __version__
+from sloika import decode, features, __version__
 
 # This is here, not in main to allow documentation to be built
 parser = argparse.ArgumentParser(
     description='1D basecaller for simple transducers',
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-parser.add_argument('--limit', default=None, metavar='reads', type=Maybe(Positive(int)),
-    help='Limit number of reads to process.')
+parser.add_argument('--kmer', default=1, metavar='length', type=Positive(int),
+    help='Length of kmer')
+parser.add_argument('--limit', default=None, metavar='reads',
+    type=Maybe(Positive(int)), help='Limit number of reads to process.')
 parser.add_argument('--min_prob', metavar='proportion', default=1e-5,
     type=proportion, help='Minimum allowed probabiility for basecalls')
 parser.add_argument('--section', default='template', choices=['template', 'complement'],
@@ -29,19 +31,19 @@ parser.add_argument('--trans', default=None, action=Vector(proportion), nargs=3,
     metavar=('stay', 'step', 'skip'), help='Base transition probabilities')
 parser.add_argument('--trim', default=(500, 50), nargs=2, type=Positive(int),
     metavar=('beginning', 'end'), help='Number of events to trim off start and end')
-parser.add_argument('--version', nargs=0, action=display_version_and_exit, metavar=__version__,
-    help='Display version information.')
+parser.add_argument('--version', nargs=0, action=display_version_and_exit,
+    metavar=__version__, help='Display version information.')
 parser.add_argument('--window', default=3, type=Positive(int), metavar='length',
     help='Window length for input features')
 parser.add_argument('model', action=FileExists, help='Pickled model file')
 parser.add_argument('input_folder', action=FileExists,
     help='Directory containing single-read fast5 files.')
 
-_ETA = 1e-300
 
 def prepare_post(post, min_prob=1e-5, init_trans=None):
     post = np.squeeze(post, axis=1)
     return min_prob + (1.0 - min_prob) * post
+
 
 def basecall(args, fn):
     try:
@@ -63,12 +65,10 @@ def basecall(args, fn):
 
     post = prepare_post(calc_post(inMat), args.min_prob)
 
-    stay_state = 0
-    call = np.argmax(post, axis=1)
-    call = call[call != stay_state] - 1
-    score = np.sum(np.log(np.amax(post, axis=1)))
+    score, call = decode.viterbi(post, args.kmer)
 
     return sn, score, call, inMat.shape[0]
+
 
 class SeqPrinter(object):
     def __init__(self, kmerlen, fh=None):
@@ -91,19 +91,22 @@ class SeqPrinter(object):
     def write(self, read_name, score, call, nev):
         kmer_path = [self.kmers[i] for i in call]
         seq = ''.join(kmer_path)
-        self.fh.write(">{} {} {} events to {} bases\n".format(read_name, score, nev, len(seq)))
+        self.fh.write(">{} {} {} events to {} bases\n".format(read_name, score,
+                                                              nev, len(seq)))
         self.fh.write(seq + '\n')
         return len(seq)
 
 
 if __name__ == '__main__':
     args = parser.parse_args()
-    seq_printer = SeqPrinter(1)
+    seq_printer = SeqPrinter(args.kmer)
 
-    files = fast5.iterate_fast5(args.input_folder, paths=True, limit=args.limit, strand_list=args.strand_list)
+    files = fast5.iterate_fast5(args.input_folder, paths=True, limit=args.limit,
+                                strand_list=args.strand_list)
     nbases = nevents = 0
     t0 = time.time()
-    for res in imap_mp(basecall, files, threads=1, fix_args=[args], unordered=True):
+    for res in imap_mp(basecall, files, threads=1, fix_args=[args],
+                       unordered=True):
         if res is None:
             continue
         read, score, call, nev = res

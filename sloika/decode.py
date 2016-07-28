@@ -1,5 +1,7 @@
 import numpy as np
 
+_NBASE = 4
+
 def argmax(post):
     """  Argmax decoding of simple transducer
 
@@ -10,6 +12,60 @@ def argmax(post):
     blank_state = post.shape[1] - 1
     path = np.argmax(post, axis=1)
     return path[path != blank_state]
+
+
+def viterbi(post, klen, log=True):
+    """  Viterbi decoding of a kmer transducer
+
+    :param post: A 2d :class:`ndarray`
+    :param klen: Length of kmer
+    :param log: post array is in log space
+
+    :returns:
+    """
+    nev, nst = post.shape
+    nkmer = _NBASE ** klen
+    assert klen > 0
+    assert nkmer + 1 == nst
+
+
+    lpost = np.log(post) if not log else post
+    vscore = lpost[0][1:].copy()
+    pscore = np.empty(nkmer)
+    traceback = np.empty((nev, nkmer), dtype=np.int16)
+    for i in range(1, nst):
+        #  Forwards Viterbi iteration
+        pscore, vscore = pscore, vscore
+
+        #  Step
+        pscore = pscore.reshape(4, -1)
+        nrem = pscore.shape[1]
+        score_step = np.repeat(np.amax(pscore, axis=0), 4)
+        from_step = np.repeat(nrem * np.argmax(pscore, axis=0) + range(nrem), 4)
+        #  Skip
+        pscore = pscore.reshape(16, -1)
+        nrem = pscore.shape[1]
+        score_skip = np.repeat(np.amax(pscore, axis=0), 16)
+        from_skip = np.repeat(nrem * np.argmax(pscore, axis=0) + range(nrem), 16)
+        #  Best score for step and skip
+        vscore = lpost[i][1:] + np.maximum(score_step, score_skip)
+        traceback[i] = np.where(score_step > score_skip, from_step, from_skip)
+
+        #  Stay -- set traceback to be negative
+        pscore = pscore.reshape(-1)
+        score_stay = pscore + lpost[i][0]
+        traceback[i] = np.where(vscore > score_stay, traceback[i], -1)
+        vscore = np.maximum(vscore, score_stay)
+
+    seq = np.empty(nev, dtype=np.int16)
+    seq = [np.argmax(vscore)]
+    for i in range(nev - 1, 0, -1):
+        #  Viterbi traceback
+        tstate = traceback[i][seq[-1]]
+        if tstate >= 0:
+            seq.append(tstate)
+
+    return np.amax(vscore), seq[::-1]
 
 
 def score(post, seq, full=False):
@@ -107,7 +163,7 @@ def forwards_transpose(post, seq, skip_prob=0.0):
         # Iteration through sequence
         fwd = fprev * skip_prob
         fwd[1:] += fprev[:-1] * post[:, s]
-        for i in xrange(nev):
+        for i in range(nev):
             fwd[i + 1] += fwd[i] * post[i, -1]
 
         m = np.sum(fwd)
@@ -143,7 +199,7 @@ def backwards_transpose(post, seq, skip_prob=0.0):
 
         bwd = bnext * skip_prob
         bwd[:-1] += bnext[1:] * post[:, s]
-        for i in xrange(nev, 0, -1):
+        for i in range(nev, 0, -1):
             bwd[i - 1] += bwd[i] * post[i - 1, -1]
 
         m = np.sum(bwd)
