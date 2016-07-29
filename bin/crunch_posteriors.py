@@ -14,10 +14,12 @@ from sloika import batch, __version__
 parser = argparse.ArgumentParser(
     description='Calculate posteriors for template or complement strands',
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-parser.add_argument('--batch', default=1000, metavar='size', type=Positive(int),
+parser.add_argument('--batch', default=512, metavar='size', type=Positive(int),
     help='Batch size (number of chunks to run in parallel)')
-parser.add_argument('--chunk', default=100, metavar='events', type=Positive(int),
+parser.add_argument('--chunk', default=1000, metavar='events', type=Positive(int),
     help='Length of each read chunk')
+parser.add_argument('--kmer', metavar='length', default=1, type=Positive(int),
+    help='Kmer length of model')
 parser.add_argument('--limit', default=None, metavar='reads', type=Maybe(Positive(int)),
     help='Limit number of reads to process.')
 parser.add_argument('--min_prob', metavar='proportion', default=1e-5,
@@ -50,10 +52,10 @@ if __name__ == '__main__':
                                      strand_list=args.strand_list))
     nevents = 0
     t0 = time.time()
-    for in_data in batch.kmer(files, args.section, args.batch, args.chunk,
+    for in_data in batch.kmers(files, args.section, args.batch, args.chunk,
                               args.window, trim=args.trim,
-                              use_scaled=args.use_scaled, kmer_len=args.kmer):
+                              use_scaled=True, kmer_len=args.kmer):
         post = calc_post(in_data[0])
-        nevents += in_data.size
+        nevents += in_data[0].size
     dt = time.time() - t0
-    sys.stderr.write('{} events in {:.1f} s ({:.1f} events/s)\n'.format(nevents, dt, nevents / dt))
+    sys.stderr.write('{} events in {:.1f} s ({:.1f} kev/s)\n'.format(nevents, dt, nevents / (1000.0 * dt)))
