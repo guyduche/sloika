@@ -8,12 +8,14 @@ import time
 import theano as th
 import theano.tensor as T
 
-from untangled import bio, fast5
-from untangled.cmdargs import (AutoBool, display_version_and_exit, FileExists,
-                               Maybe, NonNegative, ParseToNamedTuple, Positive,
-                               proportion)
+from ctc import cpu_ctc_th
 
-from sloika import batch, networks, updates, __version__
+from untangled import bio, fast5
+from untangled.cmdargs import (display_version_and_exit, FileExists,
+                              NonNegative, ParseToNamedTuple, Positive,
+                              proportion, Maybe)
+
+from sloika import networks, updates, features, __version__
 
 # This is here, not in main to allow documentation to be built
 parser = argparse.ArgumentParser(
@@ -26,8 +28,6 @@ parser.add_argument('--chunk', default=100, metavar='events', type=Positive(int)
 parser.add_argument('--edam', nargs=3, metavar=('rate', 'decay1', 'decay2'),
     default=(0.1, 0.9, 0.99), type=(NonNegative(float), NonNegative(float), NonNegative(float)),
     action=ParseToNamedTuple, help='Parameters for Exponential Decay Adaptive Momementum')
-parser.add_argument('--filters', default=None, metavar='number',
-    type=Maybe(Positive(int)), help='Number of filters for convolution')
 parser.add_argument('--kmer', default=1, metavar='length', type=Positive(int),
     help='Length of kmer transducer to train')
 parser.add_argument('--limit', default=None, type=Maybe(Positive(int)),
@@ -50,8 +50,6 @@ parser.add_argument('--strand_list', default=None, action=FileExists,
     help='strand summary file containing subset.')
 parser.add_argument('--trim', default=(500, 50), nargs=2, type=Positive(int),
     metavar=('beginning', 'end'), help='Number of events to trim off start and end')
-parser.add_argument('--use_scaled', default=False, action=AutoBool,
-    help='Train from scaled event statistics')
 parser.add_argument('--validation', default=None, type=proportion,
     help='Proportion of reads to use for validation')
 parser.add_argument('--version', nargs=0, action=display_version_and_exit, metavar=__version__,
@@ -68,31 +66,99 @@ _NBASE = 4
 
 def wrap_network(network):
     x = T.tensor3()
-    labels = T.imatrix()
+    labels = T.ivector()
     rate = T.scalar()
     post = network.run(x)
-    loss = T.mean(th.map(T.nnet.categorical_crossentropy, sequences=[post, labels])[0])
-    ncorrect = T.sum(T.eq(T.argmax(post,  axis=2), labels))
+    post_len = T.ivector()
+    label_len = T.ivector()
+    #loss = T.mean(th.map(T.nnet.categorical_crossentropy, sequences=[post, labels])[0])
+    loss = T.mean(cpu_ctc_th(post, post_len, labels, label_len))
     update_dict = updates.edam(network, loss, rate, (args.edam.decay1, args.edam.decay2))
     # update_dict = updates.sgd(network, loss, rate, args.edam.decay1)
 
-    fg = th.function([x, labels, rate], [loss, ncorrect], updates=update_dict)
-    fv = th.function([x, labels], [loss, ncorrect])
+    fg = th.function([x, post_len, labels, label_len, rate], loss, updates=update_dict)
+    fv = th.function([x, post_len, labels, label_len], loss)
     return fg, fv
+
+def chunk_events_ctc(files, max_len, permute=True, klen=1):
+    kmer_to_state = bio.kmer_mapping(klen)
+    black_list = set()
+
+    pfiles = list(files)
+    if permute:
+        pfiles = np.random.permutation(pfiles)
+
+    in_mat = labels = label_len = None
+    for fn in pfiles:
+        try:
+            with fast5.Reader(fn) as f5:
+                ev, _ = f5.get_any_mapping_data(args.section)
+        except:
+            black_list.add(fn)
+            continue
+        if len(ev) <= sum(args.trim) + args.chunk:
+            continue
+        ev = ev[args.trim[0] : -args.trim[1]]
+
+        new_inMat = features.from_events(ev)
+        ml = len(new_inMat) // args.chunk
+        new_inMat = new_inMat[:ml * args.chunk].reshape((ml, args.chunk, -1))
+
+        #  Construct label sequence for each row of the event matrix
+        new_labels = np.array([], dtype=np.int32)
+        new_label_len = np.zeros(len(new_inMat), dtype=np.int32)
+        mkl = len(ev['kmer'][0])
+        k0 = (mkl - klen + 1) // 2
+        wh = args.window // 2
+        valid_labels = np.ones(len(new_inMat), dtype=np.bool)
+        for i in xrange(len(new_inMat)):
+            offset = i * args.chunk + (args.window // 2)
+            kmers = ev['kmer'][offset : offset + args.chunk]
+            moves = np.abs(np.ediff1d(ev['seq_pos'][offset : offset + args.chunk]))
+            seq = bio.reduce_kmers(kmers, moves)
+
+            states = 1 + np.array(map(lambda k: kmer_to_state[k], bio.seq_to_kmers(seq, klen)), dtype=np.int32)
+            new_labels = np.concatenate((new_labels, states))
+            new_label_len[i] = len(states)
+
+        new_inMat = new_inMat[valid_labels]
+        new_label_len = new_label_len[valid_labels]
+
+        in_mat = np.vstack((in_mat, new_inMat)) if in_mat is not None else new_inMat
+        labels = np.concatenate((labels, new_labels)) if labels is not None else new_labels
+        label_len = np.concatenate((label_len, new_label_len)) if label_len is not None else new_label_len
+
+        if len(in_mat) > max_len:
+            while len(in_mat) > max_len:
+                sumlab = np.sum(label_len[:max_len])
+                yield (np.ascontiguousarray(in_mat[:max_len].transpose((1,0,2))),
+                    np.ascontiguousarray(labels[:sumlab]),
+                    np.ascontiguousarray(label_len[:max_len]))
+                in_mat = in_mat[max_len:]
+                labels = labels[sumlab:]
+                label_len = label_len[max_len:]
+
+    if in_mat is not None:
+        yield (np.ascontiguousarray(in_mat.transpose((1,0,2))),
+               np.ascontiguousarray(labels),
+               np.ascontiguousarray(label_len))
+
+    files -= black_list
 
 
 if __name__ == '__main__':
     args = parser.parse_args()
     kmers = bio.all_kmers(args.kmer)
 
+    print '* Creating model'
     if args.model is not None:
         with open(args.model, 'r') as fh:
             network = cPickle.load(fh)
     else:
-        network = networks.transducer(winlen=args.window, size=args.size,
-                                      nfilter=args.filters, sd=args.sd,
-                                      bad_state=False, klen=args.kmer)
+        network = networks.transducer(winlen=args.window, sd=args.sd, bad_state=False, size=args.size, klen=args.kmer)
     fg, fv = wrap_network(network)
+
+    print '* Reading files'
 
     train_files = set(fast5.iterate_fast5(args.input_folder, paths=True, limit=args.limit, strand_list=args.strand_list))
     if args.validation is not None:
@@ -100,61 +166,52 @@ if __name__ == '__main__':
         val_files = set(np.random.choice(list(train_files), size=nval, replace=False))
         train_files -= val_files
 
+    print '* Running'
+    wh = args.window // 2
+
     score = wscore = 0.0
     acc = wacc = 0.0
-    SMOOTH = 0.8
+    SMOOTH = 0.99
     learning_rate = args.edam.rate
     learning_factor = 0.5 ** (1.0 / args.lrdecay) if args.lrdecay is not None else 1.0
-    for it in xrange(args.niteration):
-        print '* Epoch {}: learning rate {:6.2e}'.format(it + 1, learning_rate)
+    for it in xrange(1, args.niteration):
+        print '* Epoch {}: learning rate {:6.2e}'.format(it, learning_rate)
         #  Training
         total_ev = 0
         dt = 0.0
-        for i, in_data in enumerate(batch.transducer(train_files, args.section,
-                                                     args.batch, args.chunk,
-                                                     args.window, filter_chunks=True,
-                                                     use_scaled=args.use_scaled,
-                                                     kmer_len=args.kmer)):
+        for i, in_data in enumerate(chunk_events_ctc(train_files, args.batch, klen=args.kmer)):
             t0 = time.time()
-            fval, ncorr = fg(in_data[0], in_data[1], learning_rate)
-            fval = float(fval)
-            ncorr = float(ncorr)
-            nev = np.size(in_data[1])
+            lens = np.repeat(in_data[0].shape[0] - 2 * wh, in_data[0].shape[1]).astype(np.int32)
+            fval = float(fg(in_data[0], lens, in_data[1], in_data[2], learning_rate)) * 100.0 / args.chunk
+
+            nev = np.size(in_data[0])
             total_ev += nev
             score = fval + SMOOTH * score
-            acc = (ncorr / nev) + SMOOTH * acc
             wscore = 1.0 + SMOOTH * wscore
-            wacc = 1.0 + SMOOTH * wacc
             dt += time.time() - t0
             sys.stdout.write('.')
             if (i + 1) % 50 == 0:
                 print "{:8d} : {:8.4f} {:8.4f}".format(i + 1, fval, score / wscore)
         sys.stdout.write('\n')
-        print '  training   {:5.3f}   {:5.2f}% ... {:6.1f}s ({:.2f} kev/s)'.format(score / wscore, 100.0 * acc / wacc, dt, 0.001 * total_ev / dt)
+        print '  training   {:5.3f} ... {:6.1f}s ({:.2f} kev/s)'.format(score / wscore, dt, 0.001 * total_ev / dt)
 
         #  Validation
         if args.validation is not None:
             dt = 0.0
             vscore = vnev = vncorr = 0
-            for i, in_data in enumerate(batch.transducer(val_files, args.section,
-                                                         args.batch, args.chunk,
-                                                         args.window, filter_chunks=True,
-                                                         use_scaled=args.use_scaled,
-                                                         kmer_len=args.kmer)):
+            for i, in_data in enumerate(chunk_events_ctc(val_files, args.batch, klen=args.kmer)):
                 t0 = time.time()
-                fval, ncorr = fv(in_data[0], in_data[1])
-                fval = float(fval)
-                ncorr = float(ncorr)
-                nev = np.size(in_data[1])
+                lens = np.repeat(in_data[0].shape[0] - 2 * wh, in_data[0].shape[1]).astype(np.int32)
+                fval = float(fv(in_data[0], lens, in_data[1], in_data[2])) * 100.0 / args.chunk
+                nev = np.size(in_data[0])
                 vscore += fval * nev
-                vncorr += ncorr
                 vnev += nev
                 dt += time.time() - t0
                 sys.stdout.write('.')
                 if (i + 1) % 50 == 0:
                     print "{:8d} : {:8.4f} {:8.4f}".format(i + 1, fval, vscore / vnev)
             sys.stdout.write('\n')
-            print '  validation {:5.3f}   {:5.2f}% ... {:6.1f}s ({:.2f} kev/s)'.format(vscore / vnev, 100.0 * vncorr / vnev, dt, 0.001 * vnev / dt)
+            print '  validation {:5.3f} ... {:6.1f}s ({:.2f} kev/s)'.format(vscore / vnev, dt, 0.001 * vnev / dt)
 
         # Save model
         if (it % args.save_every) == 0:

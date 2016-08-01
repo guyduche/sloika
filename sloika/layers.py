@@ -34,7 +34,7 @@ class Layer(object):
 
     def compile(self):
         x = T.tensor3()
-        return th.function([x], self.run(x))
+        return th.function([th.In(x, borrow=True)], th.Out(self.run(x), borrow=True))
 
     @abc.abstractmethod
     def params(self):

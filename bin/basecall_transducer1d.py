@@ -6,8 +6,8 @@ import sys
 import time
 
 from untangled import bio
-from untangled.cmdargs import (AutoBool, display_version_and_exit, FileExists,
-                              proportion, Positive, Maybe, Vector)
+from untangled.cmdargs import (display_version_and_exit, FileExists,
+                               Maybe, proportion, Positive, Vector)
 from untangled import fast5
 from untangled.iterators import imap_mp
 
@@ -17,9 +17,7 @@ from sloika import features, __version__
 parser = argparse.ArgumentParser(
     description='1D basecaller for simple transducers',
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-parser.add_argument('--individual', default=False, type=AutoBool,
-    help='Return individual basecalls for each section')
-parser.add_argument('--limit', default=None, type=Maybe(Positive(int)),
+parser.add_argument('--limit', default=None, metavar='reads', type=Maybe(Positive(int)),
     help='Limit number of reads to process.')
 parser.add_argument('--min_prob', metavar='proportion', default=1e-5,
     type=proportion, help='Minimum allowed probabiility for basecalls')
@@ -43,12 +41,6 @@ _ETA = 1e-300
 
 def prepare_post(post, min_prob=1e-5, init_trans=None):
     post = np.squeeze(post, axis=1)
-    bad_state = post.shape[1] - 1
-    max_call = np.argmax(post, axis=1)
-    post = post[max_call != bad_state]
-    post = post[:,:-1]
-    post /= _ETA + np.sum(post, axis=1).reshape((-1, 1))
-
     return min_prob + (1.0 - min_prob) * post
 
 def basecall(args, fn):
@@ -71,9 +63,9 @@ def basecall(args, fn):
 
     post = prepare_post(calc_post(inMat), args.min_prob)
 
-    stay_state = post.shape[1] - 1
+    stay_state = 0
     call = np.argmax(post, axis=1)
-    call = call[call != stay_state]
+    call = call[call != stay_state] - 1
     score = np.sum(np.log(np.amax(post, axis=1)))
 
     return sn, score, call, inMat.shape[0]

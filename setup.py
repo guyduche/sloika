@@ -20,6 +20,7 @@ else:
 # To ensure that we can build .debs with adequate dependencies,
 #    .gitlab-ci.yml should contain package versions of these.
 requires=[
+    'ctc',
     'numpy',
     'Theano',
     'untangled >= 0.2.0'

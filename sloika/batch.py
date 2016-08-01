@@ -29,7 +29,7 @@ def filter_by_rate(position, chunk, time=None, fact=3.0):
     if time is None:
         delta_time = chunk
     else:
-        delta_time = time[chunk_idx + chunk - 1 ] - time[chunk_idx]
+        delta_time = time[chunk_idx + chunk - 1] - time[chunk_idx]
 
     bps = delta_pos / delta_time
     #  Determine accept / reject regions
@@ -134,8 +134,8 @@ def kmers(files, section, batch_size, chunk_len, window, kmer_len, bad=False,
                 labels = labels[batch_size:]
 
 
-def _transducer_worker(fn, section, chunk_len, window, filter_chunks, use_scaled):
-    """ Batch data together for transducer
+def _transducer_worker(fn, section, chunk_len, window, filter_chunks, use_scaled, kmer_len=1):
+    """ Worker to batch data together for transducer
 
     :param files: A `set` of files to read
     :param section: Section of read to process (template / complement)
@@ -143,13 +143,14 @@ def _transducer_worker(fn, section, chunk_len, window, filter_chunks, use_scaled
     :param window: Length of window for features
     :param filter_chunks: Filter by mapping slope?
     :param use_scaled: Use prescaled event statistics
+    :param kmer_len: length of kmer
 
     :yields: A tuple containing a 3D :class:`ndarray` of size
     (X, chunk_len, nfeatures) containing the features for the batch
     and a 2D :class`ndarray` of size (X, chunk_len) containing the
     associated labels.  1 <= X <= batch_size.
     """
-    kmer_to_state = bio.kmer_mapping(1)
+    kmer_to_state = bio.kmer_mapping(kmer_len)
 
     try:
         with fast5.Reader(fn) as f5:
@@ -161,11 +162,11 @@ def _transducer_worker(fn, section, chunk_len, window, filter_chunks, use_scaled
     ml = len(new_inMat) // chunk_len
     new_inMat = new_inMat[:ml * chunk_len].reshape((ml, chunk_len, -1))
 
-    kmer_len = len(ev['kmer'][0])
+    mapped_kmer_len = len(ev['kmer'][0])
     ub = chunk_len * ml
-    kp = kmer_len // 2
-    new_labels = np.array(map(lambda k: kmer_to_state[k[kp]], ev['kmer'][:ub]), dtype=np.int32)
-    new_labels[np.ediff1d(ev['seq_pos'][:ub], to_begin=1) == 0] = _NBASE
+    k0 = (mapped_kmer_len - kmer_len + 1) // 2
+    new_labels = 1 + np.array(map(lambda k: kmer_to_state[k[k0 : k0 + kmer_len]], ev['kmer'][:ub]), dtype=np.int32)
+    new_labels[np.ediff1d(ev['seq_pos'][:ub], to_begin=1) == 0] = 0
     new_labels = new_labels.reshape((ml, chunk_len))
     new_labels = new_labels[:, (window // 2) : -(window // 2)]
 
@@ -177,9 +178,9 @@ def _transducer_worker(fn, section, chunk_len, window, filter_chunks, use_scaled
     return fn, new_inMat, new_labels
 
 
-def transducer(files, section, batch_size, chunk_len, window,
-               filter_chunks=True, shuffle=True, use_scaled=False):
-    """ Batch dat together for transducer
+def transducer(files, section, batch_size, chunk_len, window, filter_chunks=True,
+               shuffle=True, use_scaled=False, kmer_len=1):
+    """ Batch data together for transducer
 
     :param files: A `set` of files to read
     :param section: Section of read to process (template / complement)
@@ -189,6 +190,7 @@ def transducer(files, section, batch_size, chunk_len, window,
     :param filter_chunks: Filter by mapping slope?
     :param shuffle: Shuffle order of files
     :param use_scaled: Use prescaled event statistics
+    :param kmer_len: length of kmer
 
     :yields: A tuple containing a 3D :class:`ndarray` of size
     (X, chunk_len, nfeatures) containing the features for the batch
@@ -202,6 +204,7 @@ def transducer(files, section, batch_size, chunk_len, window,
     in_mat = labels = None
     wargs = {'chunk_len' : chunk_len,
              'filter_chunks' : filter_chunks,
+             'kmer_len' : kmer_len,
              'section' : section,
              'use_scaled' : use_scaled,
              'window' : window
