@@ -52,10 +52,14 @@ if __name__ == '__main__':
                                      strand_list=args.strand_list))
     nevents = 0
     t0 = time.time()
+    t_gpu = 0.0
     for in_data in batch.kmers(files, args.section, args.batch, args.chunk,
                               args.window, trim=args.trim,
                               use_scaled=True, kmer_len=args.kmer):
+	t_start = time.time()
         post = calc_post(in_data[0])
-        nevents += in_data[0].size
+        t_gpu += time.time() - t_start
+        nevents += in_data[0].shape[0] * in_data[0].shape[1]
     dt = time.time() - t0
     sys.stderr.write('{} events in {:.1f} s ({:.1f} kev/s)\n'.format(nevents, dt, nevents / (1000.0 * dt)))
+    sys.stderr.write('GPU time {:.1f} s ({:.1f} kev/s)\n'.format(t_gpu, nevents / (1000.0 * t_gpu)))
