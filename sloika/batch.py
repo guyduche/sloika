@@ -115,7 +115,7 @@ def kmers(files, section, batch_size, chunk_len, window, kmer_len, bad=False,
              'window' : window
             }
 
-    for fn, new_inMat, new_labels in imap_mp(_kmer_worker, pfiles, threads=2, fix_kwargs=wargs):
+    for fn, new_inMat, new_labels in imap_mp(_kmer_worker, pfiles, threads=8, fix_kwargs=wargs):
         if new_inMat is None:
             assert new_labels is None
             continue
@@ -209,7 +209,7 @@ def transducer(files, section, batch_size, chunk_len, window, filter_chunks=True
              'use_scaled' : use_scaled,
              'window' : window
             }
-    for fn, new_inMat, new_labels in imap_mp(_transducer_worker, pfiles, threads=2, fix_kwargs=wargs):
+    for fn, new_inMat, new_labels in imap_mp(_transducer_worker, pfiles, threads=8, fix_kwargs=wargs):
         if new_inMat is None:
             assert new_labels is None
             continue
