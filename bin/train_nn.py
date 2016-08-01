@@ -123,8 +123,8 @@ if __name__ == '__main__':
             if (i + 1) % 50 == 0:
                 print "{:8d} : {:8.4f} {:8.4f}".format(i + 1, fval, score / wscore)
         sys.stdout.write('\n')
-        tn = time.time()
-        print '  training   {:5.3f}   {:5.2f}% ... {:6.1f}s ({:.2f} kev/s)'.format(score / wscore, 100.0 * acc / wacc, tn - t0, 0.001 * total_ev / (tn - t0))
+        dt = time.time() - t0
+        print '  training   {:5.3f}   {:5.2f}% ... {:6.1f}s ({:.2f} kev/s)'.format(score / wscore, 100.0 * acc / wacc, dt, 0.001 * total_ev / dt)
 
         #  Validation
         if args.validation is not None:
@@ -146,8 +146,8 @@ if __name__ == '__main__':
                 if (i + 1) % 50 == 0:
                     print "{:8d} : {:8.4f} {:8.4f}".format(i + 1, fval, vscore / vnev)
             sys.stdout.write('\n')
-            tn = time.time()
-            print '  validation {:5.3f}   {:5.2f}% ... {:6.1f}s ({:.2f} kev/s)'.format(vscore / vnev, 100.0 * vncorr / vnev, tn - t0, 0.001 * vnev / (tn - t0))
+            dt = time.time() - t0
+            print '  validation {:5.3f}   {:5.2f}% ... {:6.1f}s ({:.2f} kev/s)'.format(vscore / vnev, 100.0 * vncorr / vnev, dt, 0.001 * vnev / dt)
 
         # Save model
         if (it % args.save_every) == 0:
