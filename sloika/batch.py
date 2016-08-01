@@ -29,7 +29,7 @@ def filter_by_rate(position, chunk, time=None, fact=3.0):
     if time is None:
         delta_time = chunk
     else:
-        delta_time = time[chunk_idx + chunk -1 ] - time[chunk_idx]
+        delta_time = time[chunk_idx + chunk - 1 ] - time[chunk_idx]
 
     bps = delta_pos / delta_time
     #  Determine accept / reject regions
@@ -115,7 +115,7 @@ def kmers(files, section, batch_size, chunk_len, window, kmer_len, bad=False,
              'window' : window
             }
 
-    for fn, new_inMat, new_labels in imap_mp(_kmer_worker, pfiles, threads=2, fix_kwargs=wargs):
+    for fn, new_inMat, new_labels in imap_mp(_kmer_worker, pfiles, threads=8, fix_kwargs=wargs):
         if new_inMat is None:
             assert new_labels is None
             continue
@@ -206,7 +206,7 @@ def transducer(files, section, batch_size, chunk_len, window,
              'use_scaled' : use_scaled,
              'window' : window
             }
-    for fn, new_inMat, new_labels in imap_mp(_transducer_worker, pfiles, threads=2, fix_kwargs=wargs):
+    for fn, new_inMat, new_labels in imap_mp(_transducer_worker, pfiles, threads=8, fix_kwargs=wargs):
         if new_inMat is None:
             assert new_labels is None
             continue
