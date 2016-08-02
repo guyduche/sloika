@@ -1,6 +1,6 @@
 #  Yaml CI config for Gitlab See. http://docs.gitlab.com/ce/ci/yaml/README.html
 #  Machine image on which to build, test etc
-image: docker-registry.oxfordnanolabs.local:5000/ont-base-python:2.7
+image: docker-registry.oxfordnanolabs.local:5000/ont-base-ubuntu:14.04
 
 stages:
     - test
@@ -11,7 +11,8 @@ before_script:
     - apt-get update
     - apt-get install -y python-numpy python-h5py python-scipy python-docutils 
     - apt-get install -y cython python-pip python-all-dev python-setuptools
-    - pip install Theano untangled
+    - 
+    - pip install --extra-index-url=https://pypi.oxfordnanolabs.local/simple Theano untangled
 
 do_testing:
     stage: test
