@@ -11,7 +11,7 @@ before_script:
     - apt-get update
     - apt-get install -y python-numpy python-h5py python-scipy python-docutils 
     - apt-get install -y cython python-pip python-all-dev python-setuptools ont-ca-certs
-    - pip install --extra-index-url=https://pypi.oxfordnanolabs.local/simple untangled
+    - pip install --log .pip/pip_untangled.log --extra-index-url=https://pypi.oxfordnanolabs.local/simple untangled
     - pip install Theano
 
 do_testing:
@@ -22,6 +22,9 @@ do_testing:
     except:
         #  Don't test tags (just branches)
         - tags
+    artifacts:
+        paths:
+            - .pip/
 
 do_release:
     stage: release
