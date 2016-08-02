@@ -3,7 +3,7 @@ from glob import glob
 import numpy as np
 import os
 from setuptools import setup, find_packages
-from Cython.Build import cythonize
+from cython.Build import cythonize
 
 # Get the version number from __init__.py
 package_name = 'sloika'
