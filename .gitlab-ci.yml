@@ -9,7 +9,8 @@ stages:
 before_script:
     #  Addition setup for machine image.  Here install a few packages
     - apt-get update
-    - apt-get install -y python-numpy python-h5py python-scipy python-docutils cython python-pip python-all-dev python-setuptools
+    - apt-get install -y python-numpy python-h5py python-scipy python-docutils 
+    - apt-get install cython python-pip python-all-dev python-setuptools
     - pip install Theano untangled
 
 do_testing:
