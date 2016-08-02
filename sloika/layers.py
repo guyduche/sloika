@@ -246,7 +246,7 @@ class Convolution(Layer):
         inMatT = T.shape_padaxis(inMat.transpose((1, 2, 0)), axis=2)
         outMat = T.nnet.conv2d(inMatT, filters=self.flt,
                                filter_shape=(self.size, self.insize, 1, self.w))
-        # Output of concolution is (batch x filters x row x col)
+        # Output of convolution is (batch x filters x row x col)
 
         outMat = outMat.transpose((3, 0, 1, 2))
         outMat = outMat.reshape((ntime - self.w + 1, nbatch, self.size))
