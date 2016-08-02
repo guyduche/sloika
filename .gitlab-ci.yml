@@ -1,0 +1,42 @@
+#  Yaml CI config for Gitlab See. http://docs.gitlab.com/ce/ci/yaml/README.html
+#  Machine image on which to build, test etc
+image: docker-registry.oxfordnanolabs.local:5000/ont-base-ofan-dev:14.04
+
+stages:
+    - test
+    - release
+
+before_script:
+    #  Addition setup for machine image.  Here install a few packages
+    - sudo apt-get update
+    - sudo apt-get install -y python-numpy python-h5py python-docutils cython
+    - sudo pip install untangled Theano
+
+do_testing:
+    stage: test
+    script:
+        #  Simple test of Python project.  Could be e.g. `make test`
+        - python setup.py test
+    except:
+        #  Don't test tags (just branches)
+        - tags
+
+do_release:
+    stage: release
+    script:
+        #  Build project
+        - python setup.py sdist
+        #  Going to push project via ssh.
+        #  PYPI_KEY and PYPI_HOST should set up as project variables on Gitlab
+        #  PYPI_KEY is private key produced by ssh-keygen
+        - sudo apt-get install -y openssh-client
+        - eval $(ssh-agent -s)
+        - ssh-add <(set +x; echo "$PYPI_KEY")
+        - scp -o StrictHostKeyChecking=no dist/* gitlab-ci-pypi@${PYPI_HOST}:/opt/ont-pypi/site-packages/
+    only:
+        #  Only do a release of tags marked explicit as release (match this regular expression)
+        - /^release_.*$/
+    except:
+        #  Do look for tags in branches
+        - branches
+
