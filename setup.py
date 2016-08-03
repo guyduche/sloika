@@ -1,5 +1,6 @@
 import re
 from glob import glob
+import numpy as np
 import os
 from setuptools import setup, find_packages
 from Cython.Build import cythonize
@@ -20,7 +21,6 @@ else:
 # To ensure that we can build .debs with adequate dependencies,
 #    .gitlab-ci.yml should contain package versions of these.
 requires=[
-    'ctc',
     'numpy',
     'Theano',
     'untangled >= 0.2.0'
@@ -38,6 +38,7 @@ setup(
     package_data={'configs':'data/configs/*'},
     exclude_package_data={'': ['*.hdf', '*.c', '*.h']},
     ext_modules = cythonize(os.path.join(package_dir, "viterbi_helpers.pyx")),
+    include_dirs=[np.get_include()],
     tests_require=requires,
     install_requires=requires,
     dependency_links=[],
