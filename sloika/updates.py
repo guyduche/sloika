@@ -5,7 +5,7 @@ import theano.tensor as T
 
 from sloika import sloika_dtype
 
-def sgd(network, loss, rate, momentum, clip=0.1):
+def sgd(network, loss, rate, momentum, clip=5.0):
     """  Stochastic Gradient Descent with momentum
 
     :param network: network to optimise
@@ -23,12 +23,15 @@ def sgd(network, loss, rate, momentum, clip=0.1):
     for param, grad in zip(params, gradients):
         val = param.get_value(borrow=True)
         vel = th.shared(np.zeros(val.shape, dtype=val.dtype))
-        updates[vel] = momentum * vel - rate * grad
-        updates[param] = param + T.clip(updates[vel], -clip, clip)
+
+        grad_clip = T.clip(grad, -clip, clip)
+
+        updates[vel] = momentum * vel - rate * grad_clip
+        updates[param] = param + updates[vel]
 
     return updates
 
-def adam(network, loss, rate, decay, epsilon=1e-4):
+def adam(network, loss, rate, decay, epsilon=1e-8, clip=5.0):
     """  ADAM optimiser
 
     :param network: network to optimise
@@ -57,14 +60,16 @@ def adam(network, loss, rate, decay, epsilon=1e-4):
         momentum = th.shared(np.zeros(val.shape, dtype=val.dtype))
         variance = th.shared(np.zeros(val.shape, dtype=val.dtype))
 
-        updates[momentum] = decay[0] * momentum + (1.0 - decay[0]) * grad
-        updates[variance] = decay[1] * variance + (1.0 - decay[1]) * T.sqr(grad)
-        updates[param] = param - lr_t * momentum / (T.sqrt(variance) + epsilon)
+        grad_clip = T.clip(grad, -clip, clip)
+
+        updates[momentum] = decay[0] * momentum + (1.0 - decay[0]) * grad_clip
+        updates[variance] = decay[1] * variance + (1.0 - decay[1]) * T.sqr(grad_clip)
+        updates[param] = param - updates[lr_t] * updates[momentum] / (T.sqrt(updates[variance]) + epsilon)
 
     return updates
 
 
-def edam(network, loss, rate, decay, epsilon=1e-4, clip=0.1):
+def edam(network, loss, rate, decay, epsilon=1e-8, clip=5.0):
     """  Exponential Decay Adaptive Momentum
     (similar to ADAM optimiser)
 
@@ -90,11 +95,13 @@ def edam(network, loss, rate, decay, epsilon=1e-4, clip=0.1):
         n0 = th.shared(np.float32(0.0).astype(val.dtype))
         n1 = th.shared(np.float32(1.0).astype(val.dtype))
 
-        updates[gr] = decay[0] * gr + grad
+        grad_clip = T.clip(grad, -clip, clip)
+
+        updates[gr] = decay[0] * gr + grad_clip
         updates[n0] = 1.0 + decay[0] * n0
-        step = (updates[gr] / updates[n0]) / T.sqrt((cu + epsilon) / (epsilon + n1))
-        updates[param] = param - T.clip(rate * step, -clip, clip)
-        updates[cu] = decay[1] * cu + T.square(grad)
+        updates[cu] = decay[1] * cu + T.square(grad_clip)
         updates[n1] = 1.0 + decay[1] * n1
+        step = (updates[gr] / updates[n0]) / T.sqrt((updates[cu] / updates[n1]) + epsilon)
+        updates[param] = param - rate * step
 
     return updates
