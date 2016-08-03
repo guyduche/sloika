@@ -26,6 +26,41 @@ def sgd(network, loss, rate, momentum, clip=0.1):
 
     return updates
 
+ def adam(network, loss, rate, decay, epsilon=1e-8):                              
+     """  ADAM optimiser                                                          
+                                                                                  
+     :param network: network to optimise                                          
+     :param loss: loss function to optimise over                                  
+     :param rate: rate (step size) for optimiser                                  
+     :param decay: decay for estimate of gradient and curvature                   
+     :param epsilon: same parameter to prevent reciprocal of variance exploding   
+                                                                                  
+     :returns: a dictionary containing update functions for Tensors               
+     """                                                                          
+     assert decay >= (0.0, 0.0), "Decay must be non-negative"                     
+     assert decay <= (1.0, 1.0), "Decay must be less-than or equal to one"        
+                                                                                  
+     params = network.params()                                                    
+     updates = OrderedDict()                                                      
+     gradients = th.grad(loss, params)                                            
+                                                                                  
+     ldecay = np.log(decay)                                                       
+                                                                                  
+     t = T.scalar(0)                                                              
+     lr_t = T.scalar(rate)                                                        
+     updates[t] = t + 1.0                                                         
+     updates[lr_t] = rate * T.sqrt(-expm1(t * ldecay[0])) / -T.expm1(t * ldecay[1])
+     for param, grad in zip(params, gradients):                                   
+         val = param_in.get_value(borrow=True)                                    
+                                                                                  
+         momentum = th.shared(np.zeros(val.shape, dtype=val.dtype))               
+         variance = th.shared(np.zeros(val.shape, dtype=val.dtype))               
+         updates[momentum] = decay[0] * momentum + (1.0 - decay[0]) * grad        
+         updates[variance] = decay[1] * variance + (1.0 - decay[1]) * T.sqr(grad) 
+         update[param] = param - lt_t * momentum / (T.sqrt(variance) + epsilon)   
+
+     return updates  
+
 
 def edam(network, loss, rate, decay, epsilon=1e-4, clip=0.1):
     """  Exponential Decay Adaptive Momentum
