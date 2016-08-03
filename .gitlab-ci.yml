@@ -17,8 +17,8 @@ do_testing:
     stage: test
     script:
         #  Simple test of Python project.  Could be e.g. `make test`
-        - pip install --trusted-host=pypi.oxfordnanolabs.local --extra-index-url=https://pypi.oxfordnanolabs.local/simple untangled
-        - pip install Theano
+        - /usr/local/bin/pip install --trusted-host=pypi.oxfordnanolabs.local --extra-index-url=https://pypi.oxfordnanolabs.local/simple untangled
+        - /usr/local/bin/pip install Theano
         - python setup.py test
     except:
         #  Don't test tags (just branches)
