@@ -90,7 +90,7 @@ class SeqPrinter(object):
 
     def write(self, read_name, score, call, nev):
         kmer_path = [self.kmers[i] for i in call]
-        seq = ''.join(kmer_path)
+        seq = bio.kmers_to_sequence(kmer_path, homopolymer_step=True)
         self.fh.write(">{} {} {} events to {} bases\n".format(read_name, score,
                                                               nev, len(seq)))
         self.fh.write(seq + '\n')
