@@ -359,7 +359,7 @@ class Lstm(RNN):
         #  Update state with input
         out_state += self.fun(sumW[:,:,0]) * sigmoid(sumW[:,:,1] + state * self.p[0])
         #  Output gate activation
-        out = self.fun(state) * sigmoid(sumW[:,:,3]  + out_state * self.p[2])
+        out = self.fun(out_state) * sigmoid(sumW[:,:,3]  + out_state * self.p[2])
         return T.concatenate((out, out_state), axis=1)
 
     def run(self, inMat):
