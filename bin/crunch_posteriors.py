@@ -56,7 +56,7 @@ if __name__ == '__main__':
     for in_data in batch.kmers(files, args.section, args.batch, args.chunk,
                               args.window, trim=args.trim,
                               use_scaled=True, kmer_len=args.kmer):
-	t_start = time.time()
+        t_start = time.time()
         post = calc_post(in_data[0])
         t_gpu += time.time() - t_start
         nevents += in_data[0].shape[0] * in_data[0].shape[1]
