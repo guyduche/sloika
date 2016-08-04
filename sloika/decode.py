@@ -14,7 +14,7 @@ def argmax(post):
     return path[path != blank_state]
 
 
-def viterbi(post, klen, log=True):
+def viterbi(post, klen, log=False):
     """  Viterbi decoding of a kmer transducer
 
     :param post: A 2d :class:`ndarray`
@@ -23,19 +23,19 @@ def viterbi(post, klen, log=True):
 
     :returns:
     """
+    _ETA = 1e-10
     nev, nst = post.shape
     nkmer = _NBASE ** klen
     assert klen > 0
     assert nkmer + 1 == nst
 
-
-    lpost = np.log(post) if not log else post
+    lpost = np.log(post + _ETA) if not log else post
     vscore = lpost[0][1:].copy()
     pscore = np.empty(nkmer)
     traceback = np.empty((nev, nkmer), dtype=np.int16)
-    for i in range(1, nst):
+    for i in range(1, nev):
         #  Forwards Viterbi iteration
-        pscore, vscore = pscore, vscore
+        pscore, vscore = vscore, pscore
 
         #  Step
         pscore = pscore.reshape(4, -1)
