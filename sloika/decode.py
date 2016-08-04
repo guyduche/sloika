@@ -14,7 +14,7 @@ def argmax(post):
     return path[path != blank_state]
 
 
-def viterbi(post, klen, log=False):
+def viterbi(post, klen, skip_pen=0.0, log=False):
     """  Viterbi decoding of a kmer transducer
 
     :param post: A 2d :class:`ndarray`
@@ -45,7 +45,7 @@ def viterbi(post, klen, log=False):
         #  Skip
         pscore = pscore.reshape(16, -1)
         nrem = pscore.shape[1]
-        score_skip = np.repeat(np.amax(pscore, axis=0), 16)
+        score_skip = np.repeat(np.amax(pscore, axis=0), 16) - skip_pen
         from_skip = np.repeat(nrem * np.argmax(pscore, axis=0) + range(nrem), 16)
         #  Best score for step and skip
         vscore = lpost[i][1:] + np.maximum(score_step, score_skip)

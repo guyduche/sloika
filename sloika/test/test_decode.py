@@ -196,8 +196,6 @@ class TestDecode(unittest.TestCase):
         self.score = -4.4275354890527474
         self.score_full = -5.0702616325672301
         self.score_viterbi = -5.70653594347
-        self.score3 = -11.130084569094556
-        self.path3 = [49, 7, 63, 63]
 
     def test_001_argmax(self):
         bases = decode.argmax(self.post)
@@ -226,7 +224,7 @@ class TestDecode(unittest.TestCase):
         score = decode.forwards_transpose(self.post, self.bases)
         self.assertAlmostEqual(score, self.score_full)
 
-    def test_006_forward_equals_backwards(self):
+
         bases = decode.argmax(self.post)
         scoreF = decode.forwards_transpose(self.post, bases)
         scoreB = decode.backwards_transpose(self.post, bases)
@@ -234,5 +232,10 @@ class TestDecode(unittest.TestCase):
 
     def test_007_viterbi(self):
         score, path = decode.viterbi(self.post3, 3)
-        self.assertAlmostEqual(score, self.score3)
-        self.assertEqual(path, self.path3)
+        self.assertAlmostEqual(score, -11.130084569094556)
+        self.assertEqual(path, [49, 7, 63, 63])
+
+    def test_008_viterbi_with_skippen(self):
+        score, path = decode.viterbi(self.post3, 3, skip_pen=3.0)
+        self.assertAlmostEqual(score, -11.936803444063674)
+        self.assertEqual(path, [49, 7, 31, 63, 63])
