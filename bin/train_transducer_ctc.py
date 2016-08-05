@@ -178,9 +178,8 @@ if __name__ == '__main__':
         print '* Epoch {}: learning rate {:6.2e}'.format(it, learning_rate)
         #  Training
         total_ev = 0
-        dt = 0.0
+        t0 = time.time()
         for i, in_data in enumerate(chunk_events_ctc(train_files, args.batch, klen=args.kmer)):
-            t0 = time.time()
             lens = np.repeat(in_data[0].shape[0] - 2 * wh, in_data[0].shape[1]).astype(np.int32)
             fval = float(fg(in_data[0], lens, in_data[1], in_data[2], learning_rate)) * 100.0 / args.chunk
 
@@ -188,19 +187,18 @@ if __name__ == '__main__':
             total_ev += nev
             score = fval + SMOOTH * score
             wscore = 1.0 + SMOOTH * wscore
-            dt += time.time() - t0
             sys.stdout.write('.')
             if (i + 1) % 50 == 0:
                 print "{:8d} : {:8.4f} {:8.4f}".format(i + 1, fval, score / wscore)
+        dt = time.time() - t0
         sys.stdout.write('\n')
         print '  training   {:5.3f} ... {:6.1f}s ({:.2f} kev/s)'.format(score / wscore, dt, 0.001 * total_ev / dt)
 
         #  Validation
         if args.validation is not None:
-            dt = 0.0
+            t0 = time.time()
             vscore = vnev = vncorr = 0
             for i, in_data in enumerate(chunk_events_ctc(val_files, args.batch, klen=args.kmer)):
-                t0 = time.time()
                 lens = np.repeat(in_data[0].shape[0] - 2 * wh, in_data[0].shape[1]).astype(np.int32)
                 fval = float(fv(in_data[0], lens, in_data[1], in_data[2])) * 100.0 / args.chunk
                 nev = np.size(in_data[0])
@@ -210,6 +208,7 @@ if __name__ == '__main__':
                 sys.stdout.write('.')
                 if (i + 1) % 50 == 0:
                     print "{:8d} : {:8.4f} {:8.4f}".format(i + 1, fval, vscore / vnev)
+            dt = time.time() - t0
             sys.stdout.write('\n')
             print '  validation {:5.3f} ... {:6.1f}s ({:.2f} kev/s)'.format(vscore / vnev, dt, 0.001 * vnev / dt)
 
