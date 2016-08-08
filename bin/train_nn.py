@@ -94,6 +94,7 @@ if __name__ == '__main__':
     learning_factor = 0.5 ** (1.0 / args.lrdecay) if args.lrdecay is not None else 1.0
 
     with h5py.File(args.input, 'r') as h5:
+        t0 = time.time()
         for it in xrange(args.niteration):
             #  Training
             idx = np.sort(np.random.choice(len(h5['chunks']), size=args.batch, replace=False))
@@ -111,7 +112,11 @@ if __name__ == '__main__':
             wacc = 1.0 + SMOOTH * wacc
             sys.stdout.write('.')
             if (it + 1) % 50 == 0:
-                print ' {:5.3f} {:5.2f}%'.format(score / wscore, 100.0 * acc / wacc)
+                tn = time.time()
+                dt = tn - t0
+                print ' {:5.3f}  {:5.2f}%  {:5.2f}s ({:5.2f} kev/s)'.format(score / wscore, 100.0 * acc / wacc, dt, total_ev / 1000.0 / dt)
+                total_ev = 0
+                t0 = tn
 
             # Save model
             if (it + 1) % args.save_every == 0:
