@@ -93,37 +93,32 @@ if __name__ == '__main__':
     learning_rate = args.adam.rate
     learning_factor = 0.5 ** (1.0 / args.lrdecay) if args.lrdecay is not None else 1.0
 
-    with h5py.File(args.input, 'r') as h5:
-        t0 = time.time()
-        for it in xrange(args.niteration):
-            #  Training
-            idx = np.sort(np.random.choice(len(h5['chunks']), size=args.batch, replace=False))
-            events = np.ascontiguousarray(h5['chunks'][idx, :, :].transpose((1, 0 ,2)))
-            labels = np.ascontiguousarray(h5['labels'][idx, :].transpose())
+    t0 = time.time()
+    #  Training
+    for i, (events, labels) in enumerate(batch.hdf5(args.input, args.batch, args.niteration)):
+        fval, ncorr = fg(events, labels, learning_rate)
+        fval = float(fval)
+        ncorr = float(ncorr)
+        nev = np.size(labels)
+        total_ev += nev
+        score = fval + SMOOTH * score
+        acc = (ncorr / nev) + SMOOTH * acc
+        wscore = 1.0 + SMOOTH * wscore
+        wacc = 1.0 + SMOOTH * wacc
+        sys.stdout.write('.')
+        if ((i + 1) % 50) == 0:
+	    tn = time.time()
+            dt = tn - t0
+            print ' {:5.3f}  {:5.2f}%  {:5.2f}s ({:5.2f} kev/s)'.format(score / wscore, 100.0 * acc / wacc, dt, total_ev / 1000.0 / dt)
+            total_ev = 0
+            t0 = tn
 
-            fval, ncorr = fg(events, labels, learning_rate)
-            fval = float(fval)
-            ncorr = float(ncorr)
-            nev = np.size(labels)
-            total_ev += nev
-            score = fval + SMOOTH * score
-            acc = (ncorr / nev) + SMOOTH * acc
-            wscore = 1.0 + SMOOTH * wscore
-            wacc = 1.0 + SMOOTH * wacc
-            sys.stdout.write('.')
-            if (it + 1) % 50 == 0:
-                tn = time.time()
-                dt = tn - t0
-                print ' {:5.3f}  {:5.2f}%  {:5.2f}s ({:5.2f} kev/s)'.format(score / wscore, 100.0 * acc / wacc, dt, total_ev / 1000.0 / dt)
-                total_ev = 0
-                t0 = tn
+        # Save model
+        if ((i + 1) % args.save_every) == 0:
+	    with open(args.output + '_epoch{:05d}.pkl'.format(i), 'wb') as fh:
+	        cPickle.dump(network, fh, protocol=cPickle.HIGHEST_PROTOCOL)
 
-            # Save model
-            if (it + 1) % args.save_every == 0:
-                with open(args.output + '_epoch{:05d}.pkl'.format(it), 'wb') as fh:
-                    cPickle.dump(network, fh, protocol=cPickle.HIGHEST_PROTOCOL)
-
-            learning_rate *= learning_factor
+        learning_rate *= learning_factor
 
     with open(args.output + '_final.pkl', 'wb') as fh:
         cPickle.dump(network, fh, protocol=cPickle.HIGHEST_PROTOCOL)
