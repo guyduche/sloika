@@ -2,6 +2,7 @@ import numpy as np
 from sloika import sloika_dtype
 from untangled.maths import studentise
 
+NFEATURES = 4
 
 def from_events(ev, tag='scaled_'):
     """  Create a matrix of features from
