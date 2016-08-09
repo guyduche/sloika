@@ -21,7 +21,6 @@ from sloika import networks, updates, __version__
 parser = argparse.ArgumentParser(
     description='Train Nanonet neural network',
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-parser.add_argument('--bad', default=True, action=AutoBool, help='Label bad emissions')
 parser.add_argument('--batch', default=300, metavar='size', type=Positive(int),
     help='Batch size (number of chunks to run in parallel)')
 parser.add_argument('--adam', nargs=3, metavar=('rate', 'decay1', 'decay2'),
@@ -29,8 +28,6 @@ parser.add_argument('--adam', nargs=3, metavar=('rate', 'decay1', 'decay2'),
     action=ParseToNamedTuple, help='Parameters for Exponential Decay Adaptive Momementum')
 parser.add_argument('--kmer', default=5, metavar='length', type=Positive(int),
     help='Length of kmer to estimate')
-parser.add_argument('--limit', default=None, type=Maybe(Positive(int)),
-    help='Limit number of reads to process.')
 parser.add_argument('--lrdecay', default=None, metavar='batches', type=Positive(float),
     help='Number batches over which learning rate is halved')
 parser.add_argument('--model', metavar='file', action=FileExists,
@@ -68,6 +65,16 @@ def wrap_network(network):
     return fg, fv
 
 
+def remove_blanks(labels, blank=0):
+    lshape = labels.shape
+    labels = labels.reshape(-1, lshape[-1])
+    for i in xrange(labels.shape[0]):
+        for j in xrange(1, labels.shape[1]):
+            if labels[i, j] == blank:
+                labels[i, j] = labels[i, j - 1]
+    return labels - 1
+
+
 if __name__ == '__main__':
     args = parser.parse_args()
     kmers = bio.all_kmers(args.kmer)
@@ -76,12 +83,13 @@ if __name__ == '__main__':
         with open(args.model, 'r') as fh:
             network = cPickle.load(fh)
     else:
-        network = networks.nanonet(kmer=args.kmer, winlen=args.window, sd=args.sd, bad_state=args.bad)
+        network = networks.nanonet(kmer=args.kmer, winlen=args.window, sd=args.sd, bad_state=False)
     fg, fv = wrap_network(network)
 
     with h5py.File(args.input, 'r') as h5:
         full_chunks = h5['chunks'][:]
         full_labels = h5['labels'][:]
+    full_labels = remove_blanks(full_labels)
 
     score = wscore = 0.0
     acc = wacc = 0.0
@@ -107,16 +115,16 @@ if __name__ == '__main__':
         wscore = 1.0 + SMOOTH * wscore
         wacc = 1.0 + SMOOTH * wacc
         sys.stdout.write('.')
-        if ((i + 1) % 50) == 0:
+        if (i + 1) % 50 == 0:
             tn = time.time()
             dt = tn - t0
-            print ' {:5.3f}  {:5.2f}%  {:5.2f}s ({:5.2f} kev/s)'.format(score / wscore, 100.0 * acc / wacc, dt, total_ev / 1000.0 / dt)
+            print ' {:5d} {:5.3f}  {:5.2f}%  {:5.2f}s ({:5.2f} kev/s)'.format((i + 1) // 50, score / wscore, 100.0 * acc / wacc, dt, total_ev / 1000.0 / dt)
             total_ev = 0
             t0 = tn
 
         # Save model
-        if ((i + 1) % args.save_every) == 0:
-            with open(args.output + '_{:05d}.pkl'.format((i  + 1) % args.save_every), 'wb') as fh:
+        if (i + 1) % args.save_every == 0:
+            with open(args.output + '_{:05d}.pkl'.format((i  + 1) // args.save_every), 'wb') as fh:
                 cPickle.dump(network, fh, protocol=cPickle.HIGHEST_PROTOCOL)
 
         learning_rate *= learning_factor

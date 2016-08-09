@@ -15,8 +15,6 @@ parser = argparse.ArgumentParser(
     description = 'Create HDF file of a dataset',
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-parser.add_argument('--bad', default=True, action=AutoBool,
-    help='Label bad emissions')
 parser.add_argument('--chunk', default=500, metavar='events', type=Positive(int),
     help='Length of each read chunk')
 parser.add_argument('--kmer', default=5, metavar='length', type=Positive(int),
@@ -52,9 +50,9 @@ if __name__ == '__main__':
     chunk_list = []
     label_list = []
     print '* Reading in data'
-    for i, (chunks, labels) in enumerate(batch.kmers(fast5_files, args.section, None,
+    for i, (chunks, labels) in enumerate(batch.kmers(fast5_files, args.section,
                                                      args.chunk, args.window, args.kmer,
-                                                     trim=args.trim, bad=args.bad,
+                                                     trim=args.trim,
                                                      use_scaled=args.use_scaled)):
         sys.stderr.write('.')
         if (i + 1) % 50 == 0:
