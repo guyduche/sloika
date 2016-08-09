@@ -25,8 +25,8 @@ parser.add_argument('--batch', default=1000, metavar='size', type=Positive(int),
     help='Batch size (number of chunks to run in parallel)')
 parser.add_argument('--chunk', default=100, metavar='events', type=Positive(int),
     help='Length of each read chunk')
-parser.add_argument('--edam', nargs=3, metavar=('rate', 'decay1', 'decay2'),
-    default=(0.1, 0.9, 0.99), type=(NonNegative(float), NonNegative(float), NonNegative(float)),
+parser.add_argument('--adam', nargs=3, metavar=('rate', 'decay1', 'decay2'),
+    default=(1e-3, 0.9, 0.999), type=(NonNegative(float), NonNegative(float), NonNegative(float)),
     action=ParseToNamedTuple, help='Parameters for Exponential Decay Adaptive Momementum')
 parser.add_argument('--kmer', default=1, metavar='length', type=Positive(int),
     help='Length of kmer transducer to train')
@@ -73,8 +73,8 @@ def wrap_network(network):
     label_len = T.ivector()
     #loss = T.mean(th.map(T.nnet.categorical_crossentropy, sequences=[post, labels])[0])
     loss = T.mean(cpu_ctc_th(post, post_len, labels, label_len))
-    update_dict = updates.edam(network, loss, rate, (args.edam.decay1, args.edam.decay2))
-    # update_dict = updates.sgd(network, loss, rate, args.edam.decay1)
+    update_dict = updates.adam(network, loss, rate, (args.adam.decay1, args.adam.decay2))
+    # update_dict = updates.sgd(network, loss, rate, args.adam.decay1)
 
     fg = th.function([x, post_len, labels, label_len, rate], loss, updates=update_dict)
     fv = th.function([x, post_len, labels, label_len], loss)
@@ -172,7 +172,7 @@ if __name__ == '__main__':
     score = wscore = 0.0
     acc = wacc = 0.0
     SMOOTH = 0.99
-    learning_rate = args.edam.rate
+    learning_rate = args.adam.rate
     learning_factor = 0.5 ** (1.0 / args.lrdecay) if args.lrdecay is not None else 1.0
     for it in xrange(1, args.niteration):
         print '* Epoch {}: learning rate {:6.2e}'.format(it, learning_rate)
