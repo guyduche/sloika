@@ -3,8 +3,9 @@ import argparse
 import h5py
 import numpy as np
 from scipy import linalg
+import sys
 
-from sloika import batch
+from sloika import batch, sloika_dtype
 from sloika.features import NFEATURES
 
 from untangled.cmdargs import (AutoBool, FileExists, Maybe, Positive)
@@ -48,18 +49,39 @@ if __name__ == '__main__':
                                           strand_list=args.strand_list))
 
 
-    all_chunks = None
-    all_labels = None
-    for chunks, labels in batch.kmers(fast5_files, args.section, None,
-                                      args.chunk, args.window, args.kmer,
-                                      trim=args.trim, bad=args.bad,
-                                      use_scaled=args.use_scaled):
-        all_chunks = np.vstack((all_chunks, chunks)) if all_chunks is not None else chunks
-        all_labels = np.vstack((all_labels, labels)) if all_labels is not None else labels
+    chunk_list = []
+    label_list = []
+    print '* Reading in data'
+    for i, (chunks, labels) in enumerate(batch.kmers(fast5_files, args.section, None,
+                                                     args.chunk, args.window, args.kmer,
+                                                     trim=args.trim, bad=args.bad,
+                                                     use_scaled=args.use_scaled)):
+        sys.stderr.write('.')
+        if (i + 1) % 50 == 0:
+            print '{:8d}'.format(i + 1)
+        chunk_list.append(chunks)
+        label_list.append(labels)
+
+    nchunks = sum(map(lambda x: len(x), label_list))
+    nfeature = chunk_list[0].shape[-1]
+    label_len = label_list[0].shape[-1]
+    all_chunks = np.empty((nchunks, args.chunk, nfeature), dtype=sloika_dtype)
+    all_labels = np.empty((nchunks, label_len), dtype=np.int32)
+    idx = 0
+    for chunk in chunk_list:
+        chunk_size = len(chunk)
+        all_chunks[idx : idx + chunk_size] = chunk
+        idx += chunk_size
+    idx = 0
+    for label in label_list:
+        label_size = len(label)
+        all_labels[idx : idx + label_size] = label
+        idx += label_size
 
 
-    Rotation = np.identity(all_chunks.shape[-1])
+    rotation = np.identity(all_chunks.shape[-1])
     if args.orthogonal:
+        print '* Doing orthogonalisation'
         chunk_shape = all_chunks.shape
         all_chunks = all_chunks.reshape(-1, chunk_shape[-1])
         V = linalg.blas.ssyrk(1.0, all_chunks, trans=True, lower=True) / np.float32(len(all_chunks))
@@ -68,7 +90,10 @@ if __name__ == '__main__':
         all_chunks = linalg.blas.sgemm(1.0, all_chunks, rotation, trans_b=True)
         all_chunks = all_chunks.reshape(chunk_shape)
 
+    print '* Writing out to HDF5'
     with h5py.File(args.output, 'w') as h5:
-        h5['chunks'] = all_chunks
-        h5['labels'] = all_labels
+        chunk_ds = h5.create_dataset('chunks', all_chunks.shape, dtype='f4')
+        label_ds = h5.create_dataset('labels', all_labels.shape, dtype='i4')
+        chunk_ds[:] = all_chunks
+        label_ds[:] = all_labels
         h5['rotation'] = rotation

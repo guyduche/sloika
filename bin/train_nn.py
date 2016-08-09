@@ -116,8 +116,8 @@ if __name__ == '__main__':
 
         # Save model
         if ((i + 1) % args.save_every) == 0:
-        with open(args.output + '_epoch{:05d}.pkl'.format(i + 1), 'wb') as fh:
-            cPickle.dump(network, fh, protocol=cPickle.HIGHEST_PROTOCOL)
+            with open(args.output + '_{:05d}.pkl'.format((i  + 1) % args.save_every), 'wb') as fh:
+                cPickle.dump(network, fh, protocol=cPickle.HIGHEST_PROTOCOL)
 
         learning_rate *= learning_factor
 
