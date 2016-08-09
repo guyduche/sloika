@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 import argparse
 import h5py
+import numpy as np
+from scipy import linalg
 
 from sloika import batch
 from sloika.features import NFEATURES
@@ -52,21 +54,21 @@ if __name__ == '__main__':
                                       args.chunk, args.window, args.kmer,
                                       trim=args.trim, bad=args.bad,
                                       use_scaled=args.use_scaled):
-	all_chunks = np.vstack((all_chunks, chunks)) if all_chunks is not None else chunks
+        all_chunks = np.vstack((all_chunks, chunks)) if all_chunks is not None else chunks
         all_labels = np.vstack((all_labels, labels)) if all_labels is not None else labels
-        
-   
+
+
     Rotation = np.identity(all_chunks.shape[-1])
     if args.orthogonal:
         chunk_shape = all_chunks.shape
         all_chunks = all_chunks.reshape(-1, chunk_shape[-1])
-        V = linalg.blas.ssyrk(1.0, full_chunks, trans=True) / np.float32(len(full_chunks))
+        V = linalg.blas.ssyrk(1.0, all_chunks, trans=True, lower=True) / np.float32(len(all_chunks))
         w, E = linalg.eigh(V)
-        Rotation = E / np.sqrt(w.reshape(1, -1))
-        all_chunks = linalg.blas.sgemm(1.0, all_chunks, Rotation, trans_b=True)
+        rotation = E / np.sqrt(w.reshape(1, -1))
+        all_chunks = linalg.blas.sgemm(1.0, all_chunks, rotation, trans_b=True)
         all_chunks = all_chunks.reshape(chunk_shape)
 
-    with h5py.File(args.ouput, 'w') as h5:
+    with h5py.File(args.output, 'w') as h5:
         h5['chunks'] = all_chunks
-        h5['labels'] = all_labels 
-        h5['rotation'] = Rotation
+        h5['labels'] = all_labels
+        h5['rotation'] = rotation

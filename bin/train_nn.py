@@ -31,14 +31,14 @@ parser.add_argument('--kmer', default=5, metavar='length', type=Positive(int),
     help='Length of kmer to estimate')
 parser.add_argument('--limit', default=None, type=Maybe(Positive(int)),
     help='Limit number of reads to process.')
-parser.add_argument('--lrdecay', default=None, metavar='epochs', type=Positive(float),
-    help='Number of epochs over which learning rate is halved')
+parser.add_argument('--lrdecay', default=None, metavar='batches', type=Positive(float),
+    help='Number batches over which learning rate is halved')
 parser.add_argument('--model', metavar='file', action=FileExists,
     help='File to read model from')
-parser.add_argument('--niteration', metavar='epochs', type=Positive(int), default=1000,
-    help='Maximum number of epochs to train for')
+parser.add_argument('--niteration', metavar='batches', type=Positive(int), default=1000,
+    help='Maximum number of batches to train for')
 parser.add_argument('--save_every', metavar='x', type=Positive(int), default=200,
-    help='Save model every x epochs')
+    help='Save model every x batches')
 parser.add_argument('--sd', default=0.5, metavar='value', type=Positive(float),
     help='Standard deviation to initialise with')
 parser.add_argument('--version', nargs=0, action=display_version_and_exit, metavar=__version__,
@@ -108,7 +108,7 @@ if __name__ == '__main__':
         wacc = 1.0 + SMOOTH * wacc
         sys.stdout.write('.')
         if ((i + 1) % 50) == 0:
-	    tn = time.time()
+            tn = time.time()
             dt = tn - t0
             print ' {:5.3f}  {:5.2f}%  {:5.2f}s ({:5.2f} kev/s)'.format(score / wscore, 100.0 * acc / wacc, dt, total_ev / 1000.0 / dt)
             total_ev = 0
@@ -116,8 +116,8 @@ if __name__ == '__main__':
 
         # Save model
         if ((i + 1) % args.save_every) == 0:
-	    with open(args.output + '_epoch{:05d}.pkl'.format(i + 1), 'wb') as fh:
-	        cPickle.dump(network, fh, protocol=cPickle.HIGHEST_PROTOCOL)
+        with open(args.output + '_epoch{:05d}.pkl'.format(i + 1), 'wb') as fh:
+            cPickle.dump(network, fh, protocol=cPickle.HIGHEST_PROTOCOL)
 
         learning_rate *= learning_factor
 
