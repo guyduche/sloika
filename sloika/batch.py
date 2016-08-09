@@ -230,32 +230,3 @@ def transducer(files, section, batch_size, chunk_len, window, filter_chunks=True
                     np.ascontiguousarray(labels[:batch_size].transpose()))
                 in_mat = in_mat[batch_size:]
                 labels = labels[batch_size:]
-
-def _hdf5_worker(idx, hdf5, batch, shuffle=True):
-    """
-
-    :param idx: Dummy index variable
-    :param hdf5:  HDF5 filename to open
-    :param batch: Batch size
-    :param shuffle: Whether to shuffle indices
-    """
-    with h5py.File(hdf5, 'r') as h5:
-        idx = np.sort(np.random.choice(len(h5['chunks']), size=batch, replace=False))
-        events = np.ascontiguousarray(h5['chunks'][idx, :, :].transpose((1, 0, 2)))
-        labels = np.ascontiguousarray(h5['labels'][idx, :].transpose())
-    return events, labels
-
-def hdf5(hdf5, batch, nbatch, shuffle=True):    
-    """
-
-    :param hdf5:  HDF5 filename to open
-    :param batch: Batch size
-    :param nbatch: Number of batches to emmit
-    :param shuffle: Whether to shuffle indices
-    """
-    wargs = {'hdf5' : hdf5,
-             'batch' : batch,
-             'shuffle' : shuffle}
-
-    for events, labels in imap_mp(_hdf5_worker, range(nbatch), threads=2, fix_kwargs=wargs):
-        yield events, labels

@@ -3,6 +3,7 @@ import argparse
 import cPickle
 import h5py
 import numpy as np
+from scipy import linalg
 import sys
 import time
 
@@ -14,7 +15,7 @@ from untangled.cmdargs import (AutoBool, display_version_and_exit, FileExists,
                               NonNegative, ParseToNamedTuple, Positive,
                               proportion, Maybe)
 
-from sloika import batch, networks, updates, __version__
+from sloika import networks, updates, __version__
 
 # This is here, not in main to allow documentation to be built
 parser = argparse.ArgumentParser(
@@ -40,14 +41,6 @@ parser.add_argument('--save_every', metavar='x', type=Positive(int), default=200
     help='Save model every x epochs')
 parser.add_argument('--sd', default=0.5, metavar='value', type=Positive(float),
     help='Standard deviation to initialise with')
-parser.add_argument('--section', default='template', choices=['template', 'complement'],
-    help='Section to call')
-parser.add_argument('--strand_list', default=None, action=FileExists,
-    help='strand summary file containing subset.')
-parser.add_argument('--trim', default=(500, 50), nargs=2, type=Positive(int),
-    metavar=('beginning', 'end'), help='Number of events to trim off start and end')
-parser.add_argument('--use_scaled', default=False, action=AutoBool,
-    help='Train from scaled event statistics')
 parser.add_argument('--version', nargs=0, action=display_version_and_exit, metavar=__version__,
     help='Display version information.')
 parser.add_argument('--window', default=3, type=Positive(int), metavar='length',
@@ -86,6 +79,10 @@ if __name__ == '__main__':
         network = networks.nanonet(kmer=args.kmer, winlen=args.window, sd=args.sd, bad_state=args.bad)
     fg, fv = wrap_network(network)
 
+    with h5py.File(args.input, 'r') as h5:
+        full_chunks = h5['chunks'][:]
+        full_labels = h5['labels'][:]
+
     score = wscore = 0.0
     acc = wacc = 0.0
     SMOOTH = 0.9
@@ -95,7 +92,11 @@ if __name__ == '__main__':
 
     t0 = time.time()
     #  Training
-    for i, (events, labels) in enumerate(batch.hdf5(args.input, args.batch, args.niteration)):
+    for i in xrange(args.niteration):
+        idx = np.sort(np.random.choice(len(full_chunks), size=args.batch, replace=False))
+        events = np.ascontiguousarray(full_chunks[idx].transpose((1, 0, 2)))
+        labels = np.ascontiguousarray(full_labels[idx].transpose())
+
         fval, ncorr = fg(events, labels, learning_rate)
         fval = float(fval)
         ncorr = float(ncorr)
@@ -115,7 +116,7 @@ if __name__ == '__main__':
 
         # Save model
         if ((i + 1) % args.save_every) == 0:
-	    with open(args.output + '_epoch{:05d}.pkl'.format(i), 'wb') as fh:
+	    with open(args.output + '_epoch{:05d}.pkl'.format(i + 1), 'wb') as fh:
 	        cPickle.dump(network, fh, protocol=cPickle.HIGHEST_PROTOCOL)
 
         learning_rate *= learning_factor

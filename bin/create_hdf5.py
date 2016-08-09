@@ -20,6 +20,8 @@ parser.add_argument('--kmer', default=5, metavar='length', type=Positive(int),
     help='Length of kmer to estimate')
 parser.add_argument('--limit', default=None, type=Maybe(Positive(int)),
     help='Limit number of reads to process.')
+parser.add_argument('--orthogonal', default=False, action=AutoBool,
+    help='Make input features orthogonal')
 parser.add_argument('--section', default='template',
     choices=['template', 'complement'], help='Section to call')
 parser.add_argument('--strand_list', default=None, action=FileExists,
@@ -42,21 +44,29 @@ if __name__ == '__main__':
     fast5_files = set(fast5.iterate_fast5(args.input_folder, paths=True,
                                           limit=args.limit,
                                           strand_list=args.strand_list))
-    with h5py.File(args.output, 'w') as h5:
-        curr_chunks = 0
-        label_chunk_len = args.chunk - args.window + 1
-        ds_chunks = h5.create_dataset("chunks", (curr_chunks, args.chunk, NFEATURES),
-                                   maxshape=(None, args.chunk, NFEATURES), dtype='f4')
-        ds_labels = h5.create_dataset("labels", (curr_chunks, label_chunk_len),
-                                      maxshape=(None, label_chunk_len), dtype='i4')
 
-        for events, labels in batch.kmers(fast5_files, args.section, None,
-                                          args.chunk, args.window, args.kmer,
-                                          trim=args.trim, bad=args.bad,
-                                          use_scaled=args.use_scaled):
-            nchunk = len(events)
-            ds_chunks.resize(curr_chunks + nchunk, axis=0)
-            ds_labels.resize(curr_chunks + nchunk, axis=0)
-            ds_chunks[curr_chunks : curr_chunks + nchunk] = events
-            ds_labels[curr_chunks : curr_chunks + nchunk] = labels
-            curr_chunks += nchunk
+
+    all_chunks = None
+    all_labels = None
+    for chunks, labels in batch.kmers(fast5_files, args.section, None,
+                                      args.chunk, args.window, args.kmer,
+                                      trim=args.trim, bad=args.bad,
+                                      use_scaled=args.use_scaled):
+	all_chunks = np.vstack((all_chunks, chunks)) if all_chunks is not None else chunks
+        all_labels = np.vstack((all_labels, labels)) if all_labels is not None else labels
+        
+   
+    Rotation = np.identity(all_chunks.shape[-1])
+    if args.orthogonal:
+        chunk_shape = all_chunks.shape
+        all_chunks = all_chunks.reshape(-1, chunk_shape[-1])
+        V = linalg.blas.ssyrk(1.0, full_chunks, trans=True) / np.float32(len(full_chunks))
+        w, E = linalg.eigh(V)
+        Rotation = E / np.sqrt(w.reshape(1, -1))
+        all_chunks = linalg.blas.sgemm(1.0, all_chunks, Rotation, trans_b=True)
+        all_chunks = all_chunks.reshape(chunk_shape)
+
+    with h5py.File(args.ouput, 'w') as h5:
+        h5['chunks'] = all_chunks
+        h5['labels'] = all_labels 
+        h5['rotation'] = Rotation
