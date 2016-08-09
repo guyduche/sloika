@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 import argparse
 import cPickle
+import h5py
 import numpy as np
+from scipy import linalg
 import sys
 import time
 
@@ -13,7 +15,7 @@ from untangled.cmdargs import (AutoBool, display_version_and_exit, FileExists,
                               NonNegative, ParseToNamedTuple, Positive,
                               proportion, Maybe)
 
-from sloika import batch, networks, updates, __version__
+from sloika import networks, updates, __version__
 
 # This is here, not in main to allow documentation to be built
 parser = argparse.ArgumentParser(
@@ -22,8 +24,6 @@ parser = argparse.ArgumentParser(
 parser.add_argument('--bad', default=True, action=AutoBool, help='Label bad emissions')
 parser.add_argument('--batch', default=300, metavar='size', type=Positive(int),
     help='Batch size (number of chunks to run in parallel)')
-parser.add_argument('--chunk', default=500, metavar='events', type=Positive(int),
-    help='Length of each read chunk')
 parser.add_argument('--adam', nargs=3, metavar=('rate', 'decay1', 'decay2'),
     default=(1e-3, 0.9, 0.999), type=(NonNegative(float), NonNegative(float), NonNegative(float)),
     action=ParseToNamedTuple, help='Parameters for Exponential Decay Adaptive Momementum')
@@ -31,33 +31,23 @@ parser.add_argument('--kmer', default=5, metavar='length', type=Positive(int),
     help='Length of kmer to estimate')
 parser.add_argument('--limit', default=None, type=Maybe(Positive(int)),
     help='Limit number of reads to process.')
-parser.add_argument('--lrdecay', default=None, metavar='epochs', type=Positive(float),
-    help='Number of epochs over which learning rate is halved')
+parser.add_argument('--lrdecay', default=None, metavar='batches', type=Positive(float),
+    help='Number batches over which learning rate is halved')
 parser.add_argument('--model', metavar='file', action=FileExists,
     help='File to read model from')
-parser.add_argument('--niteration', metavar='epochs', type=Positive(int), default=500,
-    help='Maximum number of epochs to train for')
-parser.add_argument('--save_every', metavar='x', type=Positive(int), default=5,
-    help='Save model every x epochs')
+parser.add_argument('--niteration', metavar='batches', type=Positive(int), default=1000,
+    help='Maximum number of batches to train for')
+parser.add_argument('--save_every', metavar='x', type=Positive(int), default=200,
+    help='Save model every x batches')
 parser.add_argument('--sd', default=0.5, metavar='value', type=Positive(float),
     help='Standard deviation to initialise with')
-parser.add_argument('--section', default='template', choices=['template', 'complement'],
-    help='Section to call')
-parser.add_argument('--strand_list', default=None, action=FileExists,
-    help='strand summary file containing subset.')
-parser.add_argument('--trim', default=(500, 50), nargs=2, type=Positive(int),
-    metavar=('beginning', 'end'), help='Number of events to trim off start and end')
-parser.add_argument('--use_scaled', default=False, action=AutoBool,
-    help='Train from scaled event statistics')
-parser.add_argument('--validation', default=None, type=proportion,
-    help='Proportion of reads to use for validation')
 parser.add_argument('--version', nargs=0, action=display_version_and_exit, metavar=__version__,
     help='Display version information.')
 parser.add_argument('--window', default=3, type=Positive(int), metavar='length',
     help='Window length for input features')
 parser.add_argument('output', help='Prefix for output files')
-parser.add_argument('input_folder', action=FileExists,
-    help='Directory containing single-read fast5 files.')
+parser.add_argument('input', action=FileExists,
+    help='HDF5 file containing chunks')
 
 _ETA = 1e-300
 _NBASE = 4
@@ -89,70 +79,45 @@ if __name__ == '__main__':
         network = networks.nanonet(kmer=args.kmer, winlen=args.window, sd=args.sd, bad_state=args.bad)
     fg, fv = wrap_network(network)
 
-    train_files = set(fast5.iterate_fast5(args.input_folder, paths=True, limit=args.limit, strand_list=args.strand_list))
-    if args.validation is not None:
-        nval = 1 + int(args.validation * len(train_files))
-        val_files = set(np.random.choice(list(train_files), size=nval, replace=False))
-        train_files -= val_files
+    with h5py.File(args.input, 'r') as h5:
+        full_chunks = h5['chunks'][:]
+        full_labels = h5['labels'][:]
 
     score = wscore = 0.0
     acc = wacc = 0.0
     SMOOTH = 0.9
+    total_ev = 0
     learning_rate = args.adam.rate
     learning_factor = 0.5 ** (1.0 / args.lrdecay) if args.lrdecay is not None else 1.0
-    for it in xrange(args.niteration):
-        print '* Epoch {}: learning rate {:6.2e}'.format(it + 1, learning_rate)
-        #  Training
-        total_ev = 0
-        t0 = time.time()
-        for i, in_data in enumerate(batch.kmers(train_files, args.section,
-                                                args.batch, args.chunk,
-                                                args.window, args.kmer,
-                                                trim=args.trim, bad=args.bad,
-                                                use_scaled=args.use_scaled)):
-            fval, ncorr = fg(in_data[0], in_data[1], learning_rate)
-            fval = float(fval)
-            ncorr = float(ncorr)
-            nev = np.size(in_data[1])
-            total_ev += nev
-            score = fval + SMOOTH * score
-            acc = (ncorr / nev) + SMOOTH * acc
-            wscore = 1.0 + SMOOTH * wscore
-            wacc = 1.0 + SMOOTH * wacc
-            sys.stdout.write('.')
-            if (i + 1) % 50 == 0:
-                print "{:8d} : {:8.4f} {:8.4f}".format(i + 1, fval, score / wscore)
-        sys.stdout.write('\n')
-        dt = time.time() - t0
-        print '  training   {:5.3f}   {:5.2f}% ... {:6.1f}s ({:.2f} kev/s)'.format(score / wscore, 100.0 * acc / wacc, dt, 0.001 * total_ev / dt)
 
-        #  Validation
-        if args.validation is not None:
-            t0 = time.time()
-            vscore = vnev = vncorr = 0
-            for i, in_data in enumerate(batch.kmers(val_files, args.section,
-                                                    args.batch, args.chunk,
-                                                    args.window, args.kmer,
-                                                    trim=args.trim, bad=args.bad,
-                                                    use_scaled=args.use_scaled)):
-                fval, ncorr = fv(in_data[0], in_data[1])
-                fval = float(fval)
-                ncorr = float(ncorr)
-                nev = np.size(in_data[1])
-                vscore += fval * nev
-                vncorr += ncorr
-                vnev += nev
-                sys.stdout.write('.')
-                if (i + 1) % 50 == 0:
-                    print "{:8d} : {:8.4f} {:8.4f}".format(i + 1, fval, vscore / vnev)
-            sys.stdout.write('\n')
-            dt = time.time() - t0
-            print '  validation {:5.3f}   {:5.2f}% ... {:6.1f}s ({:.2f} kev/s)'.format(vscore / vnev, 100.0 * vncorr / vnev, dt, 0.001 * vnev / dt)
+    t0 = time.time()
+    #  Training
+    for i in xrange(args.niteration):
+        idx = np.sort(np.random.choice(len(full_chunks), size=args.batch, replace=False))
+        events = np.ascontiguousarray(full_chunks[idx].transpose((1, 0, 2)))
+        labels = np.ascontiguousarray(full_labels[idx].transpose())
+
+        fval, ncorr = fg(events, labels, learning_rate)
+        fval = float(fval)
+        ncorr = float(ncorr)
+        nev = np.size(labels)
+        total_ev += nev
+        score = fval + SMOOTH * score
+        acc = (ncorr / nev) + SMOOTH * acc
+        wscore = 1.0 + SMOOTH * wscore
+        wacc = 1.0 + SMOOTH * wacc
+        sys.stdout.write('.')
+        if ((i + 1) % 50) == 0:
+            tn = time.time()
+            dt = tn - t0
+            print ' {:5.3f}  {:5.2f}%  {:5.2f}s ({:5.2f} kev/s)'.format(score / wscore, 100.0 * acc / wacc, dt, total_ev / 1000.0 / dt)
+            total_ev = 0
+            t0 = tn
 
         # Save model
-        if (it % args.save_every) == 0:
-            with open(args.output + '_epoch{:05d}.pkl'.format(it), 'wb') as fh:
-                cPickle.dump(network, fh, protocol=cPickle.HIGHEST_PROTOCOL)
+        if ((i + 1) % args.save_every) == 0:
+        with open(args.output + '_epoch{:05d}.pkl'.format(i + 1), 'wb') as fh:
+            cPickle.dump(network, fh, protocol=cPickle.HIGHEST_PROTOCOL)
 
         learning_rate *= learning_factor
 

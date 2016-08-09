@@ -1,4 +1,5 @@
 from __future__ import print_function
+import h5py
 import numpy as np
 from sloika import features
 from untangled import bio, fast5
@@ -88,7 +89,7 @@ def kmers(files, section, batch_size, chunk_len, window, kmer_len, bad=False,
 
     :param files: A `set` of files to read
     :param section: Section of read to process (template / complement)
-    :param batch_size: Size of batch of chunks
+    :param batch_size: Size of batch of chunks.  None == emit all
     :param chunk_len: Length on each chunk
     :param window: Length of window for features
     :param kmer_len: Kmer length for training
@@ -123,13 +124,16 @@ def kmers(files, section, batch_size, chunk_len, window, kmer_len, bad=False,
 
         in_mat = np.vstack((in_mat, new_inMat)) if in_mat is not None else new_inMat
         labels = np.vstack((labels, new_labels)) if labels is not None else new_labels
-        if len(in_mat) > batch_size:
-            idx = np.random.permutation(len(in_mat))
-            in_mat = in_mat[idx]
-            labels = labels[idx]
-            while len(in_mat) > batch_size:
-                yield (np.ascontiguousarray(in_mat[:batch_size].transpose((1,0,2))),
-                    np.ascontiguousarray(labels[:batch_size].transpose()))
+        while len(in_mat) > batch_size:
+            #  Taking advantage of Python's treatment of `None`
+            yield (np.ascontiguousarray(in_mat[:batch_size]),
+                   np.ascontiguousarray(labels[:batch_size]))
+            if batch_size is None:
+                # Nasty special case
+                in_mat = None
+                labels = None
+                break
+            else:
                 in_mat = in_mat[batch_size:]
                 labels = labels[batch_size:]
 
