@@ -87,9 +87,11 @@ def compress_labels(labels, klen):
         label_kmers = [state_to_kmer[s - 1] for s in lbl if s > 0]
         seq = bio.kmers_to_sequence(label_kmers, homopolymer_step=True)
         seq_kmers = bio.seq_to_kmers(seq, klen)
-        label_vec = 1 + np.append(label_vec, [kmer_to_state[k] for k in seq_kmers])
+        label_vec = np.append(label_vec, [kmer_to_state[k] for k in seq_kmers])
         label_len[i] = len(seq_kmers)
 
+    # Adjust label states so 0 is blank
+    label_vec += 1
     return label_vec.astype(np.int32), label_len
 
 
@@ -136,7 +138,7 @@ if __name__ == '__main__':
         if (i + 1) % 50 == 0:
             tn = time.time()
             dt = tn - t0
-            print ' {:5d} {:5.3f}  {:5.2f}%  {:5.2f}s ({:.2f} kev/s)'.format((i + 1) // 50, score / wscore, dt, total_ev / 1000.0 / dt)
+            print ' {:5d} {:5.3f} {:5.2f}s ({:.2f} kev/s)'.format((i + 1) // 50, score / wscore, dt, total_ev / 1000.0 / dt)
             total_ev = 0
             t0 = tn
 
