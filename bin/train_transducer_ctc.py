@@ -113,7 +113,6 @@ if __name__ == '__main__':
 
     total_ev = 0
     score = wscore = 0.0
-    acc = wacc = 0.0
     SMOOTH = 0.99
     learning_rate = args.adam.rate
     learning_factor = 0.5 ** (1.0 / args.lrdecay) if args.lrdecay is not None else 1.0
@@ -137,7 +136,7 @@ if __name__ == '__main__':
         if (i + 1) % 50 == 0:
             tn = time.time()
             dt = tn - t0
-            print ' {:5d} {:5.3f}  {:5.2f}%  {:5.2f}s ({:5.2f} kev/s)'.format((i + 1) // 50, score / wscore, 100.0 * acc / wacc, dt, total_ev / 1000.0 / dt)
+            print ' {:5d} {:5.3f}  {:5.2f}%  {:5.2f}s ({:.2f} kev/s)'.format((i + 1) // 50, score / wscore, dt, total_ev / 1000.0 / dt)
             total_ev = 0
             t0 = tn
 
