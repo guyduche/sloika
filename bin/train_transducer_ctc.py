@@ -118,6 +118,7 @@ if __name__ == '__main__':
     learning_rate = args.adam.rate
     learning_factor = 0.5 ** (1.0 / args.lrdecay) if args.lrdecay is not None else 1.0
 
+    t0 = time.time()
     for i in xrange(args.niteration):
         idx = np.sort(np.random.choice(len(all_chunks), size=args.batch, replace=False))
         events = np.ascontiguousarray(all_chunks[idx].transpose((1, 0, 2)))
