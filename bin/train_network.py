@@ -6,6 +6,7 @@ import imp
 import numpy as np
 import os
 from shutil import copyfile
+import sys
 import time
 
 import theano as th
@@ -58,16 +59,6 @@ def wrap_network(network):
     return fg, fv
 
 
-def remove_blanks(labels, blank=0):
-    lshape = labels.shape
-    labels = labels.reshape(-1, lshape[-1])
-    for i in xrange(labels.shape[0]):
-        for j in xrange(1, labels.shape[1]):
-            if labels[i, j] == blank:
-                labels[i, j] = labels[i, j - 1]
-    return labels - 1
-
-
 if __name__ == '__main__':
     args = parser.parse_args()
 
@@ -76,12 +67,14 @@ if __name__ == '__main__':
 
     log = open(os.path.join(args.output, 'model.log'), 'w', 0)
 
+    log.write('* Command line\n')
+    log.write(' '.join(sys.argv) + '\n')
+
     log.write('* Creating network from {}\n'.format(args.model))
     with h5py.File(args.input, 'r') as h5:
         klen =h5.attrs['kmer']
-        winlen = h5.attrs['window']
     netmodule = imp.load_source('netmodule', args.model)
-    network = netmodule.network(winlen=winlen, klen=klen, sd=args.sd)
+    network = netmodule.network(klen=klen, sd=args.sd)
     fg, fv = wrap_network(network)
 
     log.write('* Loading data from {}\n'.format(args.input))

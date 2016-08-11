@@ -39,13 +39,12 @@ def filter_by_rate(position, chunk, time=None, fact=3.0):
     return np.logical_and(bps < thresh, bps > -thresh)
 
 
-def _kmer_worker(fn, section, chunk_len, window, kmer_len, trim, use_scaled):
+def _kmer_worker(fn, section, chunk_len, kmer_len, trim, use_scaled):
     """  Worker for reading kmer-overlap data
 
     :param fn: Fast5 filename
     :param section: Section of read to process (template / complement)
     :param chunk_len: Length on each chunk
-    :param window: Length of window for features
     :param kmer_len: Kmer length for training
     :param trim: Tuple of number of events to trim from start and end
     :param use_scaled: Use prescaled event statistics
@@ -76,30 +75,22 @@ def _kmer_worker(fn, section, chunk_len, window, kmer_len, trim, use_scaled):
     new_labels = 1 + np.array(map(lambda k: kmer_to_state[k[kl : ku]],
                                   ev['kmer'][:ub]), dtype=np.int32)
 
-    #  blank_correction so that first label is never a blank
-    blank_correction = new_labels.reshape(ml, chunk_len)[:, window // 2].copy()
-    assert not np.any(blank_correction == 0)
     new_labels[np.ediff1d(ev['seq_pos'][:ub], to_begin=1) == 0] = 0
     new_labels = new_labels.reshape((ml, chunk_len))
-    new_labels = new_labels[:, (window // 2) : -(window // 2)]
-    new_labels[:, 0] = blank_correction
 
     new_bad  = np.logical_not(ev['good_emission'][:ub])
     new_bad = new_bad.reshape(ml, chunk_len)
-    new_bad = new_bad[:, (window // 2) : -(window // 2)]
 
     return fn, new_inMat, new_labels, new_bad
 
 
-def kmers(files, section, chunk_len, window, kmer_len,
-          trim=(0, 0), use_scaled=False):
+def kmers(files, section, chunk_len, kmer_len, trim=(0, 0), use_scaled=False):
     """ Batch data together for kmer training
 
     :param files: A `set` of files to read
     :param section: Section of read to process (template / complement)
     :param batch_size: Size of batch of chunks.  None == emit all
     :param chunk_len: Length on each chunk
-    :param window: Length of window for features
     :param kmer_len: Kmer length for training
     :param use_scaled: Use prescaled event statistics
 
@@ -115,8 +106,8 @@ def kmers(files, section, chunk_len, window, kmer_len,
              'kmer_len' : kmer_len,
              'section' : section,
              'trim' : trim,
-             'use_scaled' : use_scaled,
-             'window' : window}
+             'use_scaled' : use_scaled
+            }
 
     for fn, chunks, labels, bad_ev in imap_mp(_kmer_worker, pfiles, threads=8, fix_kwargs=wargs):
         if chunks is None or labels is None:

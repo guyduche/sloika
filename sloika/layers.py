@@ -205,6 +205,7 @@ class Window(Layer):
     """
     def __init__(self, w):
         assert w > 0, "Window size must be positive"
+        assert w % 2 == 1, 'Window size should be odd'
         self.w = w
 
     def params(self):
@@ -214,8 +215,11 @@ class Window(Layer):
         return
 
     def run(self, inMat):
-        tmp = T.concatenate([inMat[i : 1 + i - self.w] for i in xrange(self.w - 1)], axis=2)
-        return T.concatenate([tmp, inMat[self.w - 1 :]], axis=2)
+        ntime, nbatch, nfeatures = T.shape(inMat)
+        zeros = T.zeros((self.w // 2, nbatch, nfeatures))
+        padMat = T.concatenate([zeros, inMat, zeros], axis=0)
+        tmp = T.concatenate([padMat[i : 1 + i - self.w] for i in xrange(self.w - 1)], axis=2)
+        return T.concatenate([tmp, padMat[self.w - 1 :]], axis=2)
 
 class Convolution(Layer):
     """ Create a 1D convolution over input
@@ -242,14 +246,14 @@ class Convolution(Layer):
 
     def run(self, inMat):
         # Input to convolution is (batch x channels x row x column)
-        ntime, nbatch, nfeatres = T.shape(inMat)
+        ntime, nbatch, nfeatures = T.shape(inMat)
         inMatT = T.shape_padaxis(inMat.transpose((1, 2, 0)), axis=2)
-        outMat = T.nnet.conv2d(inMatT, filters=self.flt,
+        outMat = T.nnet.conv2d(inMatT, filters=self.flt, border_mode='half',
                                filter_shape=(self.size, self.insize, 1, self.w))
-        # Output of concolution is (batch x filters x row x col)
+        # Output of convolution is (batch x filters x row x col)
 
         outMat = outMat.transpose((3, 0, 1, 2))
-        outMat = outMat.reshape((ntime - self.w + 1, nbatch, self.size))
+        outMat = outMat.reshape((ntime, nbatch, self.size))
         return self.fun(outMat)
 
 class Recurrent(RNN):

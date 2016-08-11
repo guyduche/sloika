@@ -32,8 +32,6 @@ parser.add_argument('--trim', default=(500, 50), nargs=2, type=Positive(int),
     help='Number of events to trim off start and end')
 parser.add_argument('--use_scaled', default=False, action=AutoBool,
     help='Train from scaled event statistics')
-parser.add_argument('--window', default=3, type=Positive(int), metavar='length',
-    help='Window length for input features')
 parser.add_argument('input_folder', action=FileExists,
     help='Directory containing single-read fast5 files.')
 parser.add_argument('output', help='Output HDF5 file')
@@ -51,7 +49,7 @@ if __name__ == '__main__':
     label_list = []
     print '* Reading in data'
     for i, (chunks, labels, bad) in enumerate(batch.kmers(fast5_files, args.section,
-                                                          args.chunk, args.window, args.kmer,
+                                                          args.chunk, args.kmer,
                                                           trim=args.trim,
                                                           use_scaled=args.use_scaled)):
         sys.stderr.write('.')
@@ -109,4 +107,3 @@ if __name__ == '__main__':
         h5['/'].attrs['section'] = args.section
         h5['/'].attrs['trim'] = args.trim
         h5['/'].attrs['scaled'] = args.use_scaled
-        h5['/'].attrs['window'] = args.window
