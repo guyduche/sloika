@@ -30,11 +30,11 @@ parser.add_argument('--adam', nargs=3, metavar=('rate', 'decay1', 'decay2'),
     action=ParseToNamedTuple, help='Parameters for Exponential Decay Adaptive Momementum')
 parser.add_argument('--lrdecay', default=5000, metavar='batches', type=Positive(float),
     help='Number of batches over which learning rate is halved')
-parser.add_argument('--niteration', metavar='batches', type=Positive(int), default=500000,
+parser.add_argument('--niteration', metavar='batches', type=Positive(int), default=50000,
     help='Maximum number of batches to train for')
 parser.add_argument('--save_every', metavar='x', type=Positive(int), default=5000,
     help='Save model every x batches')
-parser.add_argument('--sd', default=0.1, metavar='value', type=Positive(float),
+parser.add_argument('--sd', default=0.5, metavar='value', type=Positive(float),
     help='Standard deviation to initialise with')
 parser.add_argument('--window', default=3, type=Positive(int), metavar='length',
     help='Window length for input features')
