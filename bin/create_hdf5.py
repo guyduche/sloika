@@ -95,3 +95,9 @@ if __name__ == '__main__':
         chunk_ds[:] = all_chunks
         label_ds[:] = all_labels
         h5['rotation'] = rotation
+        h5['/'].attrs['chunk'] = args.chunk
+        h5['/'].attrs['kmer'] = args.kmer
+        h5['/'].attrs['section'] = args.section
+        h5['/'].attrs['trim'] = args.trim
+        h5['/'].attrs['scaled'] = args.use_scaled
+        h5['/'].attrs['window'] = args.window

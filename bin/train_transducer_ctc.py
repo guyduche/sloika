@@ -134,18 +134,21 @@ if __name__ == '__main__':
         total_ev += nev
         score = fval + SMOOTH * score
         wscore = 1.0 + SMOOTH * wscore
-        sys.stdout.write('.')
+
+        # Save model
+        if (i + 1) % args.save_every == 0:
+            sys.stdout.write('C')
+            with open(args.output + '_{:05d}.pkl'.format((i + 1) // args.save_every), 'wb') as fh:
+                cPickle.dump(network, fh, protocol=cPickle.HIGHEST_PROTOCOL)
+        else:
+            sys.stdout.write('.')
+
         if (i + 1) % 50 == 0:
             tn = time.time()
             dt = tn - t0
             print ' {:5d} {:5.3f} {:5.2f}s ({:.2f} kev/s)'.format((i + 1) // 50, score / wscore, dt, total_ev / 1000.0 / dt)
             total_ev = 0
             t0 = tn
-
-        # Save model
-        if (i + 1) % args.save_every == 0:
-            with open(args.output + '_{:05d}.pkl'.format((i + 1) // args.save_every), 'wb') as fh:
-                cPickle.dump(network, fh, protocol=cPickle.HIGHEST_PROTOCOL)
 
         learning_rate *= learning_factor
 
