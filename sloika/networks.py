@@ -1,13 +1,14 @@
 from functools import partial
 from sloika import layers, sloika_dtype
-from numpy.random import normal as rn
+from scipy.stats import truncnorm
 
 
 _NBASE = 4
 _NFEATURE = 4
 
 def _rn(size, sd):
-    return rn(size=size, scale=sd).astype(sloika_dtype)
+    res = sd * truncnorm.rvs(-2, 2, size=size)
+    return res.astype(sloika_dtype)
 
 def _wrap_nanonet(net_layers, kmer, winlen, size, bad_state, sd):
     """ Standard wrappinfg for Nanonet like networks

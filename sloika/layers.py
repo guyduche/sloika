@@ -95,7 +95,7 @@ class FeedForward(Layer):
     def __init__(self, insize, size, init=zeros, has_bias=False, fun=T.tanh):
         self.has_bias = has_bias
         self.b = th.shared(has_bias * np.ones(size, dtype=sloika_dtype))
-        self.W = th.shared(init((size, insize)))
+        self.W = th.shared(init((size, insize)) / np.sqrt(size + insize))
         self.insize = insize
         self.size = size
         self.f = fun
@@ -145,7 +145,7 @@ class Softmax(Layer):
     def __init__(self, insize, size, init=zeros, has_bias=False):
         self.has_bias = has_bias
         self.b = th.shared(has_bias * np.ones(size, dtype=sloika_dtype))
-        self.W = th.shared(init((size, insize)) / np.sqrt(insize))
+        self.W = th.shared(init((size, insize)) / np.sqrt(insize + size))
         self.insize = insize
         self.size = size
 
@@ -177,7 +177,7 @@ class SoftmaxOld(Layer):
     def __init__(self, insize, size, init=zeros, has_bias=False):
         self.has_bias = has_bias
         self.b = th.shared(has_bias * np.ones(size, dtype=sloika_dtype))
-        self.W = th.shared(init((size, insize)) / np.sqrt(insize))
+        self.W = th.shared(init((size, insize)) / np.sqrt(size + insize))
         self.insize = insize
         self.size = size
 
@@ -228,7 +228,7 @@ class Convolution(Layer):
         assert size > 0, "Size (number of filters) must be positive"
         assert w > 0, "Window size must be positive"
         self.w = w
-        self.flt = th.shared(init((size, insize, 1, w)) / np.sqrt(w))
+        self.flt = th.shared(init((size, insize, 1, w)) / np.sqrt(w * insize + size))
         self.insize = insize
         self.size = size
         self.fun = fun
@@ -266,8 +266,8 @@ class Recurrent(RNN):
     def __init__(self, insize, size, init=zeros, has_bias=False, fun=T.tanh):
         self.has_bias = has_bias
         self.b = th.shared(has_bias * np.ones(size, dtype=sloika_dtype))
-        self.iW = th.shared(init((size, insize)) / np.sqrt(insize))
-        self.sW = th.shared(init((size, size)) / np.sqrt(size))
+        self.iW = th.shared(init((size, insize)) / np.sqrt(insize + size))
+        self.sW = th.shared(init((size, size)) / np.sqrt(size + size))
         self.f = fun
         self.insize = insize
         self.size = size
@@ -323,8 +323,8 @@ class Lstm(RNN):
 
         self.b = th.shared(has_bias * np.ones(4 * size, dtype=sloika_dtype))
         self.p = th.shared(has_peep * init((3, size)) / np.sqrt(size))
-        self.iW = th.shared(init((4 * size, insize)) / np.sqrt(insize))
-        self.sW = th.shared(init((4 * size, size)) / np.sqrt(size))
+        self.iW = th.shared(init((4 * size, insize)) / np.sqrt(insize + size))
+        self.sW = th.shared(init((4 * size, size)) / np.sqrt(size + size))
 
     def params(self):
         params =  [self.iW, self.sW]
@@ -394,8 +394,8 @@ class LstmO(RNN):
 
         self.b = th.shared(has_bias * np.ones(3 * size, dtype=sloika_dtype))
         self.p = th.shared(has_peep * init((3, size))/ np.sqrt(size))
-        self.iW = th.shared(init((3 * size, insize)) / np.sqrt(insize))
-        self.sW = th.shared(init((3 * size, size)) / np.sqrt(size))
+        self.iW = th.shared(init((3 * size, insize)) / np.sqrt(insize + size))
+        self.sW = th.shared(init((3 * size, size)) / np.sqrt(size + size))
 
     def params(self):
         params =  [self.iW, self.sW]
@@ -446,8 +446,8 @@ class Forget(RNN):
         self.fun = fun
 
         self.b = th.shared(has_bias * np.ones(2 * size, dtype=sloika_dtype))
-        self.iW = th.shared(init((2 * size, insize)) / np.sqrt(insize))
-        self.sW = th.shared(init((2 * size, size)) / np.sqrt(size))
+        self.iW = th.shared(init((2 * size, insize)) / np.sqrt(insize + size))
+        self.sW = th.shared(init((2 * size, size)) / np.sqrt(size + size))
 
     def params(self):
         params =  [self.iW, self.sW]
@@ -490,9 +490,9 @@ class Gru(RNN):
         self.fun = fun
 
         self.b = th.shared(has_bias * np.ones(3 * size, dtype=sloika_dtype))
-        self.iW = th.shared(init((3 * size, insize)) / np.sqrt(insize))
-        self.sW = th.shared(init((2 * size, size)) / np.sqrt(size))
-        self.sW2 = th.shared(init((size, size)) / np.sqrt(size))
+        self.iW = th.shared(init((3 * size, insize)) / np.sqrt(insize + size))
+        self.sW = th.shared(init((2 * size, size)) / np.sqrt(size + size))
+        self.sW2 = th.shared(init((size, size)) / np.sqrt(size + size))
 
     def params(self):
         params =  [self.iW, self.sW, self.sW2]
@@ -542,9 +542,9 @@ class Mut1(RNN):
 
         self.b = th.shared(has_bias * np.ones(2 * size, dtype=sloika_dtype))
         self.b2 = th.shared(has_bias * np.ones(size, dtype=sloika_dtype))
-        self.iW = th.shared(init((2 * size, insize)) / np.sqrt(insize))
-        self.sW = th.shared(init((size, size)) / np.sqrt(size))
-        self.sW2 = th.shared(init((size, size)) / np.sqrt(size))
+        self.iW = th.shared(init((2 * size, insize)) / np.sqrt(insize + size))
+        self.sW = th.shared(init((size, size)) / np.sqrt(size + size))
+        self.sW2 = th.shared(init((size, size)) / np.sqrt(size + size))
 
     def params(self):
         params =  [self.iW, self.sW, self.sW2]
