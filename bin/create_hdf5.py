@@ -46,25 +46,27 @@ if __name__ == '__main__':
                                           limit=args.limit,
                                           strand_list=args.strand_list))
 
-
+    bad_list = []
     chunk_list = []
     label_list = []
     print '* Reading in data'
-    for i, (chunks, labels) in enumerate(batch.kmers(fast5_files, args.section,
-                                                     args.chunk, args.window, args.kmer,
-                                                     trim=args.trim,
-                                                     use_scaled=args.use_scaled)):
+    for i, (chunks, labels, bad) in enumerate(batch.kmers(fast5_files, args.section,
+                                                          args.chunk, args.window, args.kmer,
+                                                          trim=args.trim,
+                                                          use_scaled=args.use_scaled)):
         sys.stderr.write('.')
         if (i + 1) % 50 == 0:
             print '{:8d}'.format(i + 1)
         chunk_list.append(chunks)
         label_list.append(labels)
+        bad_list.append(bad)
 
     nchunks = sum(map(lambda x: len(x), label_list))
     nfeature = chunk_list[0].shape[-1]
     label_len = label_list[0].shape[-1]
     all_chunks = np.empty((nchunks, args.chunk, nfeature), dtype=sloika_dtype)
     all_labels = np.empty((nchunks, label_len), dtype=np.int32)
+    all_bad = np.empty((nchunks, label_len), dtype=np.int8)
     idx = 0
     for chunk in chunk_list:
         chunk_size = len(chunk)
@@ -75,6 +77,11 @@ if __name__ == '__main__':
         label_size = len(label)
         all_labels[idx : idx + label_size] = label
         idx += label_size
+    idx = 0
+    for bad in bad_list:
+        bad_size = len(bad)
+        all_bad[idx : idx + bad_size] = bad
+        idx += bad_size
 
 
     rotation = np.identity(all_chunks.shape[-1])
@@ -90,8 +97,10 @@ if __name__ == '__main__':
 
     print '* Writing out to HDF5'
     with h5py.File(args.output, 'w') as h5:
+        bad_ds = h5.create_dataset('bad', all_bad.shape, dtype='i1')
         chunk_ds = h5.create_dataset('chunks', all_chunks.shape, dtype='f4')
         label_ds = h5.create_dataset('labels', all_labels.shape, dtype='i4')
+        bad_ds[:] = all_bad
         chunk_ds[:] = all_chunks
         label_ds[:] = all_labels
         h5['rotation'] = rotation

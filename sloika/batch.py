@@ -58,10 +58,10 @@ def _kmer_worker(fn, section, chunk_len, window, kmer_len, trim, use_scaled):
         with fast5.Reader(fn) as f5:
             ev, _ = f5.get_any_mapping_data(section)
     except:
-        return fn, None, None
+        return fn, None, None, None
 
     if len(ev) < sum(trim) + chunk_len:
-        return fn, None, None
+        return fn, None, None, None
     ev = ev[trim[0] : -trim[1]]
 
     new_inMat = features.from_events(ev, tag='' if use_scaled else 'scaled_')
@@ -84,7 +84,11 @@ def _kmer_worker(fn, section, chunk_len, window, kmer_len, trim, use_scaled):
     new_labels = new_labels[:, (window // 2) : -(window // 2)]
     new_labels[:, 0] = blank_correction
 
-    return fn, new_inMat, new_labels
+    new_bad  = np.logical_not(ev['good_emission'][:ub])
+    new_bad = new_bad.reshape(ml, chunk_len)
+    new_bad = new_bad[:, (window // 2) : -(window // 2)]
+
+    return fn, new_inMat, new_labels, new_bad
 
 
 def kmers(files, section, chunk_len, window, kmer_len,
@@ -114,8 +118,10 @@ def kmers(files, section, chunk_len, window, kmer_len,
              'use_scaled' : use_scaled,
              'window' : window}
 
-    for fn, chunks, labels in imap_mp(_kmer_worker, pfiles, threads=8, fix_kwargs=wargs):
+    for fn, chunks, labels, bad_ev in imap_mp(_kmer_worker, pfiles, threads=8, fix_kwargs=wargs):
         if chunks is None or labels is None:
             continue
 
-        yield np.ascontiguousarray(chunks), np.ascontiguousarray(labels)
+        yield (np.ascontiguousarray(chunks),
+               np.ascontiguousarray(labels),
+               np.ascontiguousarray(bad_ev))

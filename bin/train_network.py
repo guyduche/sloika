@@ -11,7 +11,7 @@ import time
 import theano as th
 import theano.tensor as T
 
-from untangled.cmdargs import (display_version_and_exit, FileExists,
+from untangled.cmdargs import (AutoBool, display_version_and_exit, FileExists,
                                NonNegative, ParseToNamedTuple, Positive)
 
 from sloika import updates, __version__
@@ -20,6 +20,8 @@ from sloika import updates, __version__
 parser = argparse.ArgumentParser(
     description='Train a simple transducer neural network',
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+parser.add_argument('--bad', default=True, action=AutoBool,
+    help='Use bad events as a separate state')
 parser.add_argument('--batch', default=100, metavar='size', type=Positive(int),
     help='Batch size (number of chunks to run in parallel)')
 parser.add_argument('--adam', nargs=3, metavar=('rate', 'decay1', 'decay2'),
@@ -56,6 +58,16 @@ def wrap_network(network):
     return fg, fv
 
 
+def remove_blanks(labels, blank=0):
+    lshape = labels.shape
+    labels = labels.reshape(-1, lshape[-1])
+    for i in xrange(labels.shape[0]):
+        for j in xrange(1, labels.shape[1]):
+            if labels[i, j] == blank:
+                labels[i, j] = labels[i, j - 1]
+    return labels - 1
+
+
 if __name__ == '__main__':
     args = parser.parse_args()
 
@@ -76,6 +88,8 @@ if __name__ == '__main__':
     with h5py.File(args.input, 'r') as h5:
         full_chunks = h5['chunks'][:]
         full_labels = h5['labels'][:]
+        if args.bad:
+            full_labels[h5['bad'][:]] = 0
 
     total_ev = 0
     score = wscore = 0.0
