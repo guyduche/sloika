@@ -36,6 +36,8 @@ parser.add_argument('--save_every', metavar='x', type=Positive(int), default=500
     help='Save model every x batches')
 parser.add_argument('--sd', default=0.1, metavar='value', type=Positive(float),
     help='Standard deviation to initialise with')
+parser.add_argument('--window', default=3, type=Positive(int), metavar='length',
+    help='Window length for input features')
 parser.add_argument('--version', nargs=0, action=display_version_and_exit, metavar=__version__,
     help='Display version information.')
 parser.add_argument('model', metavar='file.py', action=FileExists,
@@ -74,7 +76,7 @@ if __name__ == '__main__':
     with h5py.File(args.input, 'r') as h5:
         klen =h5.attrs['kmer']
     netmodule = imp.load_source('netmodule', args.model)
-    network = netmodule.network(klen=klen, sd=args.sd)
+    network = netmodule.network(wlen=args.window, klen=klen, sd=args.sd)
     fg, fv = wrap_network(network)
 
     log.write('* Loading data from {}\n'.format(args.input))
