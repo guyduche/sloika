@@ -76,7 +76,7 @@ if __name__ == '__main__':
     with h5py.File(args.input, 'r') as h5:
         klen =h5.attrs['kmer']
     netmodule = imp.load_source('netmodule', args.model)
-    network = netmodule.network(wlen=args.window, klen=klen, sd=args.sd)
+    network = netmodule.network(winlen=args.window, klen=klen, sd=args.sd)
     fg, fv = wrap_network(network)
 
     log.write('* Loading data from {}\n'.format(args.input))
