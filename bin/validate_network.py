@@ -26,8 +26,7 @@ parser.add_argument('--version', nargs=0, action=display_version_and_exit, metav
     help='Display version information.')
 parser.add_argument('model', metavar='file.npy', action=FileExists,
     help='File to read model description from')
-parser.add_argument('output', help='Prefix for output files')
-parser.add_argument('input', action=FileExists,
+parser.add_argument('input', metavar='hdf5', action=FileExists,
     help='HDF5 file containing chunks')
 
 
