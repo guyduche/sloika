@@ -359,7 +359,7 @@ class Lstm(RNN):
         sumW = sumW.reshape((-1, self.size, 4))
 
         #  Forget gate activation
-        out_state = sigmoid(sumW[:,:,2] + state * self.p[1])
+        out_state = state * sigmoid(sumW[:,:,2] + state * self.p[1])
         #  Update state with input
         out_state += self.fun(sumW[:,:,0]) * sigmoid(sumW[:,:,1] + state * self.p[0])
         #  Output gate activation
