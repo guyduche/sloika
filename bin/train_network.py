@@ -28,6 +28,8 @@ parser.add_argument('--batch', default=100, metavar='size', type=Positive(int),
 parser.add_argument('--adam', nargs=3, metavar=('rate', 'decay1', 'decay2'),
     default=(1e-3, 0.9, 0.999), type=(NonNegative(float), NonNegative(float), NonNegative(float)),
     action=ParseToNamedTuple, help='Parameters for Exponential Decay Adaptive Momementum')
+parser.add_argument('--l2', default=0.0, metavar='penalty', type=NonNegative(float),
+    help='L2 penalty on parameters')
 parser.add_argument('--lrdecay', default=5000, metavar='batches', type=Positive(float),
     help='Number of batches over which learning rate is halved')
 parser.add_argument('--niteration', metavar='batches', type=Positive(int), default=50000,
@@ -47,12 +49,13 @@ parser.add_argument('input', action=FileExists,
     help='HDF5 file containing chunks')
 
 
-def wrap_network(network):
+def wrap_network(network, l2=0.0):
     x = T.tensor3()
     labels = T.imatrix()
     rate = T.scalar()
     post = network.run(x)
-    loss = T.mean(th.map(T.nnet.categorical_crossentropy, sequences=[post, labels])[0])
+    penalty = l2 * updates.param_sqr(network)
+    loss = penalty + T.mean(th.map(T.nnet.categorical_crossentropy, sequences=[post, labels])[0])
     ncorrect = T.sum(T.eq(T.argmax(post,  axis=2), labels))
     update_dict = updates.adam(network, loss, rate, (args.adam.decay1, args.adam.decay2))
 
@@ -76,7 +79,7 @@ if __name__ == '__main__':
         klen =h5.attrs['kmer']
     netmodule = imp.load_source('netmodule', args.model)
     network = netmodule.network(winlen=args.window, klen=klen, sd=args.sd)
-    fg = wrap_network(network)
+    fg = wrap_network(network, args.l2)
 
     log.write('* Loading data from {}\n'.format(args.input))
     with h5py.File(args.input, 'r') as h5:
