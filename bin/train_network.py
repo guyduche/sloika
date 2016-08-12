@@ -57,8 +57,7 @@ def wrap_network(network):
     update_dict = updates.adam(network, loss, rate, (args.adam.decay1, args.adam.decay2))
 
     fg = th.function([x, labels, rate], [loss, ncorrect], updates=update_dict)
-    fv = th.function([x, labels], [loss, ncorrect])
-    return fg, fv
+    return fg
 
 
 if __name__ == '__main__':
@@ -77,7 +76,7 @@ if __name__ == '__main__':
         klen =h5.attrs['kmer']
     netmodule = imp.load_source('netmodule', args.model)
     network = netmodule.network(winlen=args.window, klen=klen, sd=args.sd)
-    fg, fv = wrap_network(network)
+    fg = wrap_network(network)
 
     log.write('* Loading data from {}\n'.format(args.input))
     with h5py.File(args.input, 'r') as h5:
