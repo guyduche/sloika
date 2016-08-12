@@ -105,3 +105,16 @@ def edam(network, loss, rate, decay, epsilon=1e-8, clip=5.0):
         updates[param] = param - rate * step
 
     return updates
+
+def param_sqr(network):
+    """  Return sum of squares of network parameters
+
+    :param network:  Network of which parmeters to sum
+
+    :returns: A :tensor:`scalar` representing the sum of squares
+    """
+    params = network.params()
+    psum = T.sum(T.sqr(params[0]))
+    for param in params[1:]:
+        psum += T.sum(T.sqr(param))
+    return psum

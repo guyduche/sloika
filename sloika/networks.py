@@ -1,13 +1,14 @@
 from functools import partial
 from sloika import layers, sloika_dtype
-from numpy.random import normal as rn
+from scipy.stats import truncnorm
 
 
 _NBASE = 4
 _NFEATURE = 4
 
 def _rn(size, sd):
-    return rn(size=size, scale=sd).astype(sloika_dtype)
+    res = sd * truncnorm.rvs(-2, 2, size=size)
+    return res.astype(sloika_dtype)
 
 def _wrap_nanonet(net_layers, kmer, winlen, size, bad_state, sd):
     """ Standard wrappinfg for Nanonet like networks
@@ -90,20 +91,19 @@ def nanonet(kmer=3, winlen=3, size=64, bad_state=True, sd=0.1, fun=layers.tanh):
     return _wrap_nanonet([layer1, layer2, layer3, layer4], kmer, winlen, size, bad_state, sd)
 
 
-def transducer(winlen=3, size=64, nfilter=None, bad_state=True, sd=0.1, fun=layers.tanh, klen=1):
+def transducer(winlen=3, size=64, nfilter=None, sd=0.1, fun=layers.tanh, klen=1):
     """ Create standard Nanonet
 
     :param winlen: Window size
     :param size: size of hidden layers
     :param nfilter: Number of filters to use (None: normal windowing)
-    :param bad_state: Add output state for bad events
     :param fun: activation function
     :param klen: Length of kmer
 
     :returns: a `class`:layer.Layer:
     """
     _prn = partial(_rn, sd=sd)
-    nstate = (_NBASE ** klen) + 1 + bad_state
+    nstate = (_NBASE ** klen) + 1
 
     if nfilter is None:
         nfilter = _NFEATURE * winlen
