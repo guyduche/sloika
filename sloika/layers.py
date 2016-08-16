@@ -328,7 +328,7 @@ class Lstm(RNN):
 
         self.b = th.shared(has_bias * (init(4 * size)
                                        + np.repeat([0, 0, _FORGET_BIAS, 0],
-                                                   size, dtype=sloika_dtype)))
+                                                   size).astype(sloika_dtype)))
         self.p = th.shared(has_peep * init((3, size)) / np.sqrt(size))
         self.iW = th.shared(init((4 * size, insize)) / np.sqrt(insize + size))
         self.sW = th.shared(init((4 * size, size)) / np.sqrt(size + size))
@@ -401,7 +401,7 @@ class LstmO(RNN):
 
         self.b = th.shared(has_bias * (init(3 * size)
                                        + np.repeat([0, 0, _FORGET_BIAS],
-                                                   size, dtype=sloika_dtype)))
+                                                   size).astype(sloika_dtype)))
         self.p = th.shared(has_peep * init((3, size))/ np.sqrt(size))
         self.iW = th.shared(init((3 * size, insize)) / np.sqrt(insize + size))
         self.sW = th.shared(init((3 * size, size)) / np.sqrt(size + size))
@@ -455,8 +455,8 @@ class Forget(RNN):
         self.fun = fun
 
         self.b = th.shared(has_bias * (init(2 * size)
-                                       + np.repeat([_FORGET_BIAS, 0], size,
-                                                   dtype=sloika_dtype)))
+                                       + np.repeat([_FORGET_BIAS, 0],
+                                                   size).astype(sloika_dtype)))
         self.iW = th.shared(init((2 * size, insize)) / np.sqrt(insize + size))
         self.sW = th.shared(init((2 * size, size)) / np.sqrt(size + size))
 
@@ -552,8 +552,8 @@ class Mut1(RNN):
         self.fun = fun
 
         self.b = th.shared(has_bias * (init(2 * size)
-                                       + np.repeat([_FORGET_BIAS, 0], size,
-                                                   dtype=sloika_dtype)))
+                                       + np.repeat([_FORGET_BIAS, 0],
+                                                   size).astype(sloika_dtype)))
         self.b2 = th.shared(has_bias * init(size))
         self.iW = th.shared(init((2 * size, insize)) / np.sqrt(insize + size))
         self.sW = th.shared(init((size, size)) / np.sqrt(size + size))
