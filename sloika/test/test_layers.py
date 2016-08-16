@@ -208,6 +208,9 @@ class ANNTest(unittest.TestCase):
         network = nn.Window(_WINLEN)
         f = network.compile()
         res = f(self.x)
+        #  Window is now 'SAME' not 'VALID'. Trim
+        wh = _WINLEN // 2
+        res = res[wh : -wh]
         for j in xrange(self._NBATCH):
             for i in xrange(_WINLEN - 1):
                 try:
