@@ -64,13 +64,13 @@ def run_job(args):
     # arglist
     model, output, data, runid = args
     arglist = ["/home/ubuntu/git/sloika/bin/train_network.py",
-               "--lrdecay", "7000",
+               "--lrdecay", "5000",
                "--window", "3",
                "--bad",
                model,
                output,
                data]
- 
+
     proc = subprocess.Popen(arglist, env=env)
     proc.wait()
     return model, output, data, runid, proc.returncode
