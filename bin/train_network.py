@@ -83,10 +83,10 @@ if __name__ == '__main__':
 
     log.write('* Loading data from {}\n'.format(args.input))
     with h5py.File(args.input, 'r') as h5:
-        full_chunks = h5['chunks'][:]
-        full_labels = h5['labels'][:]
+        all_chunks = h5['chunks'][:]
+        all_labels = h5['labels'][:]
         if args.bad:
-            full_labels[h5['bad'][:]] = 0
+            all_labels[h5['bad'][:]] = 0
     nblank = np.sum(all_labels == 0, axis=1)
     max_blanks = int(all_labels.shape[1] * 0.7)
     all_chunks = all_chunks[nblank < max_blanks]
@@ -103,9 +103,9 @@ if __name__ == '__main__':
     log.write('* Training\n')
     for i in xrange(args.niteration):
         learning_rate = args.adam.rate / (1.0 + i * lrfactor)
-        idx = np.sort(np.random.choice(len(full_chunks), size=args.batch, replace=False))
-        events = np.ascontiguousarray(full_chunks[idx].transpose((1, 0, 2)))
-        labels = np.ascontiguousarray(full_labels[idx].transpose())
+        idx = np.sort(np.random.choice(len(all_chunks), size=args.batch, replace=False))
+        events = np.ascontiguousarray(all_chunks[idx].transpose((1, 0, 2)))
+        labels = np.ascontiguousarray(all_labels[idx].transpose())
 
         fval, ncorr = fg(events, labels, learning_rate)
         fval = float(fval)
