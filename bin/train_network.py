@@ -97,12 +97,12 @@ if __name__ == '__main__':
     score = wscore = 0.0
     acc = wacc = 0.0
     SMOOTH = 0.8
-    learning_rate = args.adam.rate
-    learning_factor = 0.5 ** (1.0 / args.lrdecay) if args.lrdecay is not None else 1.0
+    lrfactor = 0.0 if args.lrdecay is None else (1.0 / args.lrdecay)
 
     t0 = time.time()
     log.write('* Training\n')
     for i in xrange(args.niteration):
+        learning_rate = args.adam.rate / (1.0 + i * lrfactor)
         idx = np.sort(np.random.choice(len(full_chunks), size=args.batch, replace=False))
         events = np.ascontiguousarray(full_chunks[idx].transpose((1, 0, 2)))
         labels = np.ascontiguousarray(full_labels[idx].transpose())
@@ -132,8 +132,6 @@ if __name__ == '__main__':
             log.write(' {:5d} {:5.3f}  {:5.2f}%  {:5.2f}s ({:.2f} kev/s)\n'.format((i + 1) // 50, score / wscore, 100.0 * acc / wacc, dt, total_ev / 1000.0 / dt))
             total_ev = 0
             t0 = tn
-
-        learning_rate *= learning_factor
 
     with open(os.path.join(args.output,  'model_final.pkl'), 'wb') as fh:
         cPickle.dump(network, fh, protocol=cPickle.HIGHEST_PROTOCOL)
