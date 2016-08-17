@@ -87,6 +87,11 @@ if __name__ == '__main__':
         full_labels = h5['labels'][:]
         if args.bad:
             full_labels[h5['bad'][:]] = 0
+    nblank = np.sum(all_labels == 0, axis=1)
+    max_blanks = int(all_labels.shape[1] * 0.7)
+    all_chunks = all_chunks[nblank < max_blanks]
+    all_labels = all_labels[nblank < max_blanks]
+
 
     total_ev = 0
     score = wscore = 0.0
