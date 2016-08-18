@@ -33,7 +33,7 @@ parser.add_argument('--drop', default=None, metavar='events', type=Positive(int)
 parser.add_argument('--l2', default=0.0, metavar='penalty', type=NonNegative(float),
     help='L2 penalty on parameters')
 parser.add_argument('--lrdecay', default=5000, metavar='batches', type=Positive(float),
-    help='Number of batches over which learning rate is halved')
+    help='Number of batches to halving of learning rate')
 parser.add_argument('--niteration', metavar='batches', type=Positive(int), default=50000,
     help='Maximum number of batches to train for')
 parser.add_argument('--save_every', metavar='x', type=Positive(int), default=5000,
