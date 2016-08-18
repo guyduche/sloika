@@ -21,13 +21,15 @@ from sloika import updates, __version__
 parser = argparse.ArgumentParser(
     description='Train a simple transducer neural network',
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+parser.add_argument('--adam', nargs=3, metavar=('rate', 'decay1', 'decay2'),
+    default=(1e-3, 0.9, 0.999), type=(NonNegative(float), NonNegative(float), NonNegative(float)),
+    action=ParseToNamedTuple, help='Parameters for Exponential Decay Adaptive Momementum')
 parser.add_argument('--bad', default=True, action=AutoBool,
     help='Use bad events as a separate state')
 parser.add_argument('--batch', default=100, metavar='size', type=Positive(int),
     help='Batch size (number of chunks to run in parallel)')
-parser.add_argument('--adam', nargs=3, metavar=('rate', 'decay1', 'decay2'),
-    default=(1e-3, 0.9, 0.999), type=(NonNegative(float), NonNegative(float), NonNegative(float)),
-    action=ParseToNamedTuple, help='Parameters for Exponential Decay Adaptive Momementum')
+parser.add_argument('--drop', default=None, metavar='events', type=Positive(int),
+    help='Drop a number of events from start and end of chunk before evaluating loss')
 parser.add_argument('--l2', default=0.0, metavar='penalty', type=NonNegative(float),
     help='L2 penalty on parameters')
 parser.add_argument('--lrdecay', default=5000, metavar='batches', type=Positive(float),
@@ -49,13 +51,19 @@ parser.add_argument('input', action=FileExists,
     help='HDF5 file containing chunks')
 
 
-def wrap_network(network, l2=0.0):
+def wrap_network(network, l2=0.0, drop=None):
+    ldrop, udrop = drop, drop
+    if drop is not None:
+        udrop = - udrop
+
     x = T.tensor3()
     labels = T.imatrix()
     rate = T.scalar()
     post = network.run(x)
     penalty = l2 * updates.param_sqr(network)
-    loss = penalty + T.mean(th.map(T.nnet.categorical_crossentropy, sequences=[post, labels])[0])
+
+    loss_per_event, _ = th.map(T.nnet.categorical_crossentropy, sequences=[post, labels])
+    loss = penalty + T.mean(loss_per_event[ldrop : udrop])
     ncorrect = T.sum(T.eq(T.argmax(post,  axis=2), labels))
     update_dict = updates.adam(network, loss, rate, (args.adam.decay1, args.adam.decay2))
 
@@ -79,7 +87,7 @@ if __name__ == '__main__':
         klen =h5.attrs['kmer']
     netmodule = imp.load_source('netmodule', args.model)
     network = netmodule.network(winlen=args.window, klen=klen, sd=args.sd)
-    fg = wrap_network(network, args.l2)
+    fg = wrap_network(network, l2=args.l2, drop=args.drop)
 
     log.write('* Loading data from {}\n'.format(args.input))
     with h5py.File(args.input, 'r') as h5:
