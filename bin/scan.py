@@ -65,12 +65,11 @@ def run_job(args):
     pid = int(multiprocessing.current_process().name.split('-')[-1])
     gpu = (pid - 1) // 2
     env = os.environ.copy()
-    env['THEANO_FLAGS'] = 'floatX=float32,warn_float64=warn,optimizer=fast_run,device=gpu{},scan.allow_gc=False,lib.cnmem=0.3'.format(gpu)
+    env['THEANO_FLAGS'] = 'floatX=float32,warn_float64=warn,optimizer=fast_run,ncc.fastmath=True,device=gpu{},scan.allow_gc=False,lib.cnmem=0.3'.format(gpu)
 
     # arglist
     model, output, data, runid = args
     arglist = ["/home/ubuntu/git/sloika/bin/train_network.py",
-               "--lrdecay", "5000",
                "--window", "3",
                "--bad",
                model,
