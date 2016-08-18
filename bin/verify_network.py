@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import argparse
 import imp
+import os
 import sys
 
 import theano as th
@@ -54,5 +55,7 @@ if __name__ == '__main__':
         raise
         exit(1)
 
-    sys.stderr.write('Compilation of model {} succeeded\n'.format(args.model))
+    nparam = sum([p.get_value().size for p in network.params()])
+    sys.stderr.write('Compilation of model {} succeeded\n'.format(os.path.basename(args.model)))
+    sys.stderr.write('nparam = {}\n'.format(nparam))
     exit(0)
