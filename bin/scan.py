@@ -39,19 +39,24 @@ def create_jobs(dbname, sleep=5, limit=None):
             time.sleep(sleep)
 
 
-# From bugs.python.org/issues19993
 def imap_unordered(pool, f, iterable):
-    from collections import deque
-    q = deque()
-    # would be better to use the number of processes
-    # actually in the pool
-    MAX = pool._processes
-    for arg in iterable:
-        while len(q) >= MAX:
-            yield q.popleft().get()
-        q.append(pool.apply_async(f, (arg,)))
-    while q:
-        yield q.popleft().get()
+    nproc = pool._processes
+
+    #  Fill job array with at most nproc processes
+    jobs = [pool.apply_async(f, (args,)) for args in islice(iterable, nproc)]
+
+    #  Repeatedly scan through job array looking for new jobs
+    while any(jobs):
+        for i in xrange(len(jobs)):
+            if jobs[i] is not None and jobs[i].ready():
+                res = jobs[i].get()
+                try:
+                    next_job = iterable.next()
+                    jobs[i] = pool.apply_async(f, (next_job,))
+                except StopIteration:
+                    jobs[i] = None
+
+                yield res
 
 
 def run_job(args):
