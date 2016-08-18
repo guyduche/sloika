@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import argparse
+from itertools import islice
 import multiprocessing
 import os
 import sqlite3
