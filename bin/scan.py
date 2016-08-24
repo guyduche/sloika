@@ -13,6 +13,8 @@ _RUNNING = 1
 _SUCCESS = 2
 _FAILURE = 3
 
+sloika_gitdir = "/home/ubuntu/git/sloika"
+
 parser = argparse.ArgumentParser(
     description = 'server for model training',
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -24,15 +26,21 @@ parser.add_argument('database', metavar='file.db', action=FileExists,
     help='')
 
 
+def get_git_commit(gitdir):
+    return subprocess.check_output(
+              'cd {} && git log --pretty=format:"%H" -1'.format(gitdir), shell=True
+          ).rstrip()
+
+
 def create_jobs(dbname, sleep=5, limit=None):
     njobs = 0
     with sqlite3.connect(dbname) as conn:
         while limit is None or njobs < limit:
             c = conn.cursor()
-            c.execute('select * from runs where status = ? limit 1', (_PENDING,))
+            c.execute('select model, output_directory, training_data, runid from runs where status = ? order by priority limit 1', (_PENDING,))
             res = c.fetchone()
             if res is not None:
-                model, output, data, _, runid = res
+                model, output, data, runid = res
                 c.execute('update runs set status = ? where runid = ?', (_RUNNING, runid))
                 conn.commit()
                 njobs += 1
@@ -69,7 +77,7 @@ def run_job(args):
 
     # arglist
     model, output, data, runid = args
-    arglist = ["/home/ubuntu/git/sloika/bin/train_network.py",
+    arglist = [os.path.join(sloika_gitdir,"bin/train_network.py"),
                "--window", "3",
                "--bad",
                model,
@@ -88,8 +96,9 @@ if __name__ == '__main__':
     pool = multiprocessing.Pool(8)
     for model, output, data, runid, returncode in imap_unordered(pool, run_job, jobs):
         status = _SUCCESS if returncode == 0 else _FAILURE
+        commit = get_git_commit(sloika_gitdir)
         with sqlite3.connect(args.database) as conn:
             c = conn.cursor()
-            c.execute('update runs set status = ? where runid = ?', (status, runid))
+            c.execute('update runs set status = ?, sloika_commit = ? where runid = ?', (status, commit, runid))
     pool.close()
     pool.join()
