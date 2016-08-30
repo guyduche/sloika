@@ -12,6 +12,7 @@ _PENDING = 0
 _RUNNING = 1
 _SUCCESS = 2
 _FAILURE = 3
+_SUSPEND = 4
 
 parser = argparse.ArgumentParser(
     description = 'server for model training',
