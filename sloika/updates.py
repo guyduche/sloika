@@ -44,6 +44,9 @@ def adam(network, loss, rate, decay, epsilon=1e-8, clip=5.0):
     """
     assert decay > (0.0, 0.0), "Decay must be non-negative"
     assert decay < (1.0, 1.0), "Decay must be less-than or equal to one"
+    _M_RATE = np.float32(-1.0 / 2000.0).astype(sloika_dtype)
+    _M_P = np.exp(_M_RATE)
+    _M_K = np.float32((1.0 - decay[0]) * decay[0] * _M_P / (1.0 - _M_P * decay[0])).astype(sloika_dtype)
 
     params = network.params()
     updates = OrderedDict()
@@ -53,8 +56,11 @@ def adam(network, loss, rate, decay, epsilon=1e-8, clip=5.0):
 
     t = th.shared(np.float32(0.0).astype(sloika_dtype))
     lr_t = th.shared(np.float32(0.0).astype(sloika_dtype))
+    momentum_decay = th.shared(np.float32(0.0).astype(sloika_dtype))
     updates[t] = t + 1.0
-    updates[lr_t] = rate * T.sqrt(-T.expm1(updates[t] * ldecay[1])) / -T.expm1(updates[t] * ldecay[0])
+    momentum_factor = _M_K * T.expm1(updates[t] * (ldecay[0] - _M_RATE)) - T.expm1(updates[t] * ldecay[0])
+    updates[lr_t] = rate * T.sqrt(-T.expm1(updates[t] * ldecay[1])) / momentum_factor
+    updates[momentum_decay] = decay[0] #* T.expm1(updates[t] * _M_RATE)
     for param, grad in zip(params, gradients):
         val = param.get_value(borrow=True)
         momentum = th.shared(np.zeros(val.shape, dtype=val.dtype))
@@ -62,7 +68,7 @@ def adam(network, loss, rate, decay, epsilon=1e-8, clip=5.0):
 
         grad_clip = T.clip(grad, -clip, clip)
 
-        updates[momentum] = decay[0] * momentum + (1.0 - decay[0]) * grad_clip
+        updates[momentum] = updates[momentum_decay] * momentum + (1.0 - updates[momentum_decay]) * grad_clip
         updates[variance] = decay[1] * variance + (1.0 - decay[1]) * T.sqr(grad_clip)
         updates[param] = param - updates[lr_t] * updates[momentum] / (T.sqrt(updates[variance]) + epsilon)
 
