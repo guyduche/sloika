@@ -21,7 +21,7 @@ parser = argparse.ArgumentParser(
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('--limit', metavar='jobs', default=None, type=Maybe(Positive(int)),
     help='Maximum number of jobs')
-parser.add_argument('--sleep', metavar='seconds', default=5, type=NonNegative(int),
+parser.add_argument('--sleep', metavar='seconds', default=30, type=NonNegative(int),
     help='Time between polling database')
 parser.add_argument('database', metavar='file.db', action=FileExists,
     help='')
@@ -33,7 +33,7 @@ def get_git_commit(gitdir):
           ).rstrip()
 
 
-def create_jobs(dbname, sleep=5, limit=None):
+def create_jobs(dbname, sleep=30, limit=None):
     njobs = 0
     with sqlite3.connect(dbname) as conn:
         while limit is None or njobs < limit:
@@ -41,12 +41,15 @@ def create_jobs(dbname, sleep=5, limit=None):
             c.execute('select model, output_directory, training_data, runid from runs where status = ? order by priority limit 1', (_PENDING,))
             res = c.fetchone()
             if res is not None:
-                model, output, data, runid = res
+                runid = res[3]
                 c.execute('update runs set status = ? where runid = ?', (_RUNNING, runid))
                 conn.commit()
                 njobs += 1
-                yield model, output, data, runid
-            time.sleep(sleep)
+                yield res
+            else:
+                #  Yield dummy jobs so queue of finished jobs can empty
+                yield None
+                time.sleep(sleep)
 
 
 def imap_unordered(pool, f, iterable):
@@ -70,6 +73,9 @@ def imap_unordered(pool, f, iterable):
 
 
 def run_job(args):
+    if args is None:
+        return None
+
     # Theano flags
     pid = int(multiprocessing.current_process().name.split('-')[-1])
     gpu = (pid - 1) // 2
@@ -95,7 +101,10 @@ if __name__ == '__main__':
 
     jobs = create_jobs(args.database, sleep=args.sleep, limit=args.limit)
     pool = multiprocessing.Pool(8)
-    for model, output, data, runid, returncode in imap_unordered(pool, run_job, jobs):
+    for res in imap_unordered(pool, run_job, jobs):
+        if res is None:
+            continue
+        model, output, data, runid, returncode = res
         status = _SUCCESS if returncode == 0 else _FAILURE
         commit = get_git_commit(sloika_gitdir)
         with sqlite3.connect(args.database) as conn:
