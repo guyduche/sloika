@@ -25,18 +25,18 @@ if __name__ == '__main__':
         for read in sf:
             if read.flag != 0 and read.flag != 16:
                 continue
-            coverage = float(read.query_alignment_length) / read.query_length
+            coverage = float(read.alen) / read.qlen
             if coverage < args.coverage:
                 continue
             bins = np.zeros(9, dtype='i4')
-            for flag, count in read.cigartuples:
+            for flag, count in read.cigar:
                 bins[flag] += count
 
             alnlen = np.sum(bins[:3])
             mismatch = read.get_tag('NM')
             correct = alnlen - mismatch
-            print(ref_name[read.reference_id], read.query_name,
+            print(ref_name[read.reference_id], read.qname,
                   STRAND[read.flag], bins[0], mismatch, bins[1], bins[2],
-                  float(read.query_alignment_length) / read.query_length,
+                  coverage,
                   float(bins[0]) / alnlen,
                   float(correct) / alnlen)
