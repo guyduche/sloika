@@ -36,16 +36,17 @@ def get_git_commit(gitdir):
 def create_jobs(dbname, sleep=30, limit=None):
     njobs = 0
     with sqlite3.connect(dbname) as conn:
+        conn.row_factory = sqlite3.Row
         while limit is None or njobs < limit:
             c = conn.cursor()
-            c.execute('select model, output_directory, training_data, runid from runs where status = ? order by priority limit 1', (_PENDING,))
+            c.execute('select * from runs where status = ? order by priority limit 1', (_PENDING,))
             res = c.fetchone()
             if res is not None:
-                runid = res[3]
+                runid = res["runid"]
                 c.execute('update runs set status = ? where runid = ?', (_RUNNING, runid))
                 conn.commit()
                 njobs += 1
-                yield res
+                yield dict(res)
             else:
                 #  Yield dummy jobs so queue of finished jobs can empty
                 yield None
@@ -82,18 +83,33 @@ def run_job(args):
     env = os.environ.copy()
     env['THEANO_FLAGS'] = 'floatX=float32,warn_float64=warn,optimizer=fast_run,nvcc.fastmath=True,device=gpu{},scan.allow_gc=False,lib.cnmem=0.3'.format(gpu)
 
-    # arglist
-    model, output, data, runid = args
+    # arglist for training
     arglist = [os.path.join(sloika_gitdir,"bin/train_network.py"),
                "--window", "3",
                "--bad",
-               model,
-               output,
-               data]
+               args["model"]
+               args["output_directory"],
+               args["training_data"]
+               ]
 
     proc = subprocess.Popen(arglist, env=env)
     proc.wait()
-    return model, output, data, runid, proc.returncode
+    returncode = proc.returncode
+
+    if returncode == 0 and args["validation_data"] is not None:
+        # arglist for validation
+        final_model = os.path.join(args["output_directory"], "model_final.pkl")
+        arglist = [os.path.join(sloika_gitdir,"bin/validate_network.py"),
+                   "--bad",
+                   final_model,
+                   args["validation_data"]
+                   ]
+        with open(os.path.join(args["output_directory"], "model_final.validate"), "w") as fh:
+            proc = subprocess.Popen(arglist, env=env, stdout=fh)
+            proc.wait()
+        returncode2 = proc.returncode
+
+    return args["runid"], returncode
 
 
 if __name__ == '__main__':
@@ -104,7 +120,7 @@ if __name__ == '__main__':
     for res in imap_unordered(pool, run_job, jobs):
         if res is None:
             continue
-        model, output, data, runid, returncode = res
+        runid, returncode = res
         status = _SUCCESS if returncode == 0 else _FAILURE
         commit = get_git_commit(sloika_gitdir)
         with sqlite3.connect(args.database) as conn:
