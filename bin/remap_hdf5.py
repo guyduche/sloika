@@ -1,5 +1,6 @@
 #!/usr/bin/env python 
 import argparse
+import cPickle
 import h5py
 import numpy as np
 import numpy.lib.recfunctions as nprf
@@ -7,18 +8,25 @@ import sys
 import time
 
 from untangled import bio, fast5
-from untangled.cmdargs import (AutoBool, FileExists, NonNegative, Positive, Maybe)
-from untangled.iterators import imap_mp
+from untangled.cmdargs import (AutoBool, display_version_and_exit, FileExists, 
+                               NonNegative, Positive, Maybe)
+from untangled.iterators import imap_mp, izip
+
+from sloika import features, transducer, __version__
 
 
 # This is here, not in main to allow documentation to be built
 parser = argparse.ArgumentParser(
     description='Map transducer to reference sequence',
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+parser.add_argument('--batch', metavar='size', default=1000, type=Positive(int),
+    help='Number of posterior matrices to calculate simulataneously on GPU')
 parser.add_argument('--jobs', default=8, type=Positive(int),
     help='Number of jobs to run in parallel')
 parser.add_argument('--slip', default=None, metavar='score', type=Maybe(NonNegative(float)),
     help='Slip penalty')
+parser.add_argument('--version', nargs=0, action=display_version_and_exit, metavar=__version__,
+    help='Display version information.')
 parser.add_argument('model', action=FileExists, help='Pickled model file')
 parser.add_argument('input', help='HDF5 file for input')
 parser.add_argument('output', help='HDF5 for output')
@@ -46,32 +54,25 @@ def compress_labels(labels, klen):
     return label_vec.astype(np.int32)
 
 
-def map_transducer(args, idx):
-    import cPickle
-    from sloika import transducer
+def map_transducer(args, fargs):
+    idx, inmat, post, lbls = fargs
     try:
-        with h5py.File(args.input, 'r') as h5:
-            inMat = h5['chunks'][idx]
-            lbls = h5['labels'][idx]
-        inMat = np.expand_dims(inMat, axis=1)
+        seq = compress_labels(lbls, args.kmer)
+
+        score, path = transducer.map_to_sequence(post, seq, slip=args.slip, log=False)
+        labels = seq[path]
+        labels[np.ediff1d(path, to_begin=1) == 0] = 0
     except:
-        return None
+        return idx, inmat, lbls, np.zeros(len(inmat))
 
-    with open(args.model, 'r') as fh:
-        calc_post = cPickle.load(fh)
-
-    post = np.squeeze(calc_post(inMat))
-    seq = compress_labels(lbls, args.kmer)
-
-    score, path = transducer.map_to_sequence(post, seq, slip=args.slip, log=False)
-    labels = seq[path]
-    labels[np.ediff1d(path, to_begin=1) == 0] = 0
-
-    return score, np.squeeze(inMat), labels, path
+    return idx, inmat, labels, path
 
 
 if __name__ == '__main__':
     args = parser.parse_args()
+
+    with open(args.model, 'r') as fh:
+        calc_post = cPickle.load(fh)
 
     with h5py.File(args.output, 'w') as h5:
         with h5py.File(args.input, 'r') as h5in:
@@ -87,15 +88,28 @@ if __name__ == '__main__':
             args.kmer = h5in.attrs['kmer']
             nchunk, chunk_len = label_ds.shape
 
+            nbatch = nchunk // args.batch
+            ichunk = 0
+            for bidx in xrange(nbatch+1):
+                idx = bidx * args.batch
+                inMat = h5in['chunks'][idx : idx + args.batch]
+                inMat = inMat.transpose(1, 0, 2)
+                lbls = h5in['labels'][idx : idx + args.batch]
 
-        for idx, res in enumerate(imap_mp(map_transducer, xrange(nchunk), threads=args.jobs, fix_args=[args], unordered=False)):
-            if res is None:
-                continue
-            score, inMat, labels, path = res
-            chunk_ds[idx] = inMat
-            label_ds[idx] = labels
-            path_ds[idx] = path
-            sys.stderr.write('.')
-            if (idx + 1) % 50 == 0:
-                sys.stderr.write('{:6d}\n'.format((idx + 1) // 50))
-        sys.stderr.write('\n')
+                post = calc_post(inMat).transpose(1, 0, 2)
+                inMat = inMat.transpose(1, 0, 2)
+                assert len(lbls) == len(inMat)
+                assert len(lbls) == len(post)
+                idata = izip(xrange(idx, idx + len(lbls)), inMat, post, lbls)
+               
+                for res in imap_mp(map_transducer, idata, threads=args.jobs, fix_args=[args], unordered=True):
+                    idx, inMat, labels, path = res
+                    chunk_ds[idx] = inMat
+                    label_ds[idx] = labels
+                    path_ds[idx] = path
+                    sys.stderr.write('.')
+                    ichunk += 1
+                    if ichunk % 50 == 0:
+                        sys.stderr.write('{:6d} {:8d}\n'.format(ichunk // 50, ichunk))
+             
+    sys.stderr.write('\n')
