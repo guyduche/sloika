@@ -1,22 +1,21 @@
 #!/usr/bin/env python
 import argparse
-import cPickle
 import numpy as np
 import sys
 import time
 
 from untangled import bio
-from untangled.cmdargs import (display_version_and_exit, FileExists,
-                               Maybe, proportion, Positive, Vector)
+from untangled.cmdargs import (FileExists, Maybe, proportion, Positive, Vector)
 from untangled import fast5
 from untangled.iterators import imap_mp
 
-from sloika import decode, features, __version__
 
 # This is here, not in main to allow documentation to be built
 parser = argparse.ArgumentParser(
     description='1D basecaller for simple transducers',
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+parser.add_argument('--jobs', default=4, metavar='n', type=Positive(int),
+    help='Number of jobs to run in parallel')
 parser.add_argument('--kmer', default=1, metavar='length', type=Positive(int),
     help='Length of kmer')
 parser.add_argument('--limit', default=None, metavar='reads',
@@ -31,8 +30,6 @@ parser.add_argument('--trans', default=None, action=Vector(proportion), nargs=3,
     metavar=('stay', 'step', 'skip'), help='Base transition probabilities')
 parser.add_argument('--trim', default=(500, 50), nargs=2, type=Positive(int),
     metavar=('beginning', 'end'), help='Number of events to trim off start and end')
-parser.add_argument('--version', nargs=0, action=display_version_and_exit,
-    metavar=__version__, help='Display version information.')
 parser.add_argument('--window', default=3, type=Positive(int), metavar='length',
     help='Window length for input features')
 parser.add_argument('model', action=FileExists, help='Pickled model file')
@@ -45,7 +42,15 @@ def prepare_post(post, min_prob=1e-5, init_trans=None):
     return min_prob + (1.0 - min_prob) * post
 
 
+def init_worker(model):
+    import cPickle
+    global calc_post
+    with open(model, 'r') as fh:
+        calc_post = cPickle.load(fh)
+
+
 def basecall(args, fn):
+    from sloika import decode, features
     try:
         with fast5.Reader(fn) as f5:
             ev = f5.get_section_events(args.section)
@@ -59,9 +64,6 @@ def basecall(args, fn):
 
     inMat = features.from_events(ev, tag='')
     inMat = np.expand_dims(inMat, axis=1)
-
-    with open(args.model, 'r') as fh:
-        calc_post = cPickle.load(fh)
 
     post = prepare_post(calc_post(inMat), args.min_prob)
 
@@ -105,8 +107,8 @@ if __name__ == '__main__':
                                 strand_list=args.strand_list)
     nbases = nevents = 0
     t0 = time.time()
-    for res in imap_mp(basecall, files, threads=1, fix_args=[args],
-                       unordered=True):
+    for res in imap_mp(basecall, files, threads=args.jobs, fix_args=[args],
+                       unordered=True, init=init_worker, initargs=[args.model]):
         if res is None:
             continue
         read, score, call, nev = res
