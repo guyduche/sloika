@@ -21,8 +21,12 @@ parser.add_argument('--kmer', default=5, metavar='length', type=Positive(int),
     help='Length of kmer to estimate')
 parser.add_argument('--limit', default=None, type=Maybe(Positive(int)),
     help='Limit number of reads to process.')
+parser.add_argument('--normalise', default=True, action=AutoBool,
+    help='Per-strand normalisation')
 parser.add_argument('--orthogonal', default=False, action=AutoBool,
     help='Make input features orthogonal')
+parser.add_argument('--normalise', default=True, action=AutoBool,
+    help='Per-strand normalisation')
 parser.add_argument('--section', default='template',
     choices=['template', 'complement'], help='Section to call')
 parser.add_argument('--strand_list', default=None, action=FileExists,
@@ -51,7 +55,8 @@ if __name__ == '__main__':
     for i, (chunks, labels, bad) in enumerate(batch.kmers(fast5_files, args.section,
                                                           args.chunk, args.kmer,
                                                           trim=args.trim,
-                                                          use_scaled=args.use_scaled)):
+                                                          use_scaled=args.use_scaled,
+                                                          normalise=args.normalise)):
         sys.stderr.write('.')
         if (i + 1) % 50 == 0:
             print '{:8d}'.format(i + 1)
