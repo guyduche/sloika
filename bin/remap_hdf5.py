@@ -82,6 +82,7 @@ if __name__ == '__main__':
             path_ds = h5.create_dataset('paths', h5in['labels'].shape, dtype='i4')
 
             h5['rotation'] = h5in['rotation'][()]
+            h5['centre'] = h5in['centre'][()]
             for k, v in h5in.attrs.items():
                 h5.attrs[k] = v
 

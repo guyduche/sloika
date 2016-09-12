@@ -23,4 +23,4 @@ def from_events(ev, tag='scaled_', normalise=True):
     if normalise:
         features = studentise(features, axis=0)
 
-    return featuresfeaturesscontiguousarray(features, dtype=sloika_dtype)
+    return np.ascontiguousarray(features, dtype=sloika_dtype)

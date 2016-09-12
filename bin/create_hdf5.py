@@ -25,8 +25,6 @@ parser.add_argument('--normalise', default=True, action=AutoBool,
     help='Per-strand normalisation')
 parser.add_argument('--orthogonal', default=False, action=AutoBool,
     help='Make input features orthogonal')
-parser.add_argument('--normalise', default=True, action=AutoBool,
-    help='Per-strand normalisation')
 parser.add_argument('--section', default='template',
     choices=['template', 'complement'], help='Section to call')
 parser.add_argument('--strand_list', default=None, action=FileExists,
@@ -88,14 +86,23 @@ if __name__ == '__main__':
 
 
     rotation = np.identity(all_chunks.shape[-1])
+    centre = np.zeros(all_chunks.shape[-1])
     if args.orthogonal:
-        print '* Doing orthogonalisation'
+        print '\n* Doing orthogonalisation'
         chunk_shape = all_chunks.shape
         all_chunks = all_chunks.reshape(-1, chunk_shape[-1])
+        # Centre
+        centre = np.mean(all_chunks, axis=0, dtype=np.float64).astype(sloika_dtype)
+        all_chunks -= centre
+        
+        # Rotate 
         V = linalg.blas.ssyrk(1.0, all_chunks, trans=True, lower=True) / np.float32(len(all_chunks))
-        w, E = linalg.eigh(V)
-        rotation = E / np.sqrt(w.reshape(1, -1))
-        all_chunks = linalg.blas.sgemm(1.0, all_chunks, rotation, trans_b=True)
+        V = V + V.T - np.diag(np.diag(V))
+        L0 = linalg.cho_factor(V, lower=True)
+
+        all_chunks = linalg.solve_triangular(L0[0], all_chunks.T, trans=False, lower=L0[1])
+        all_chunks = np.ascontiguousarray(all_chunks.T)
+        
         all_chunks = all_chunks.reshape(chunk_shape)
 
     print '* Writing out to HDF5'
@@ -107,6 +114,7 @@ if __name__ == '__main__':
         chunk_ds[:] = all_chunks
         label_ds[:] = all_labels
         h5['rotation'] = rotation
+        h5['centre'] = centre
         h5['/'].attrs['chunk'] = args.chunk
         h5['/'].attrs['kmer'] = args.kmer
         h5['/'].attrs['section'] = args.section
