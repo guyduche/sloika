@@ -39,7 +39,7 @@ def filter_by_rate(position, chunk, time=None, fact=3.0):
     return np.logical_and(bps < thresh, bps > -thresh)
 
 
-def _kmer_worker(fn, section, chunk_len, kmer_len, trim, use_scaled):
+def _kmer_worker(fn, section, chunk_len, kmer_len, trim, use_scaled, normalise):
     """  Worker for reading kmer-overlap data
 
     :param fn: Fast5 filename
@@ -48,6 +48,7 @@ def _kmer_worker(fn, section, chunk_len, kmer_len, trim, use_scaled):
     :param kmer_len: Kmer length for training
     :param trim: Tuple of number of events to trim from start and end
     :param use_scaled: Use prescaled event statistics
+    :param normalise: Do per-strand normalisation
     """
     kmer_to_state = bio.kmer_mapping(kmer_len)
     begin, end = trim
@@ -63,7 +64,8 @@ def _kmer_worker(fn, section, chunk_len, kmer_len, trim, use_scaled):
         return fn, None, None, None
     ev = ev[trim[0] : -trim[1]]
 
-    new_inMat = features.from_events(ev, tag='' if use_scaled else 'scaled_')
+    new_inMat = features.from_events(ev, tag='' if use_scaled else 'scaled_',
+                                     normalise=normalise)
     ml = len(new_inMat) // chunk_len
     new_inMat = new_inMat[:ml * chunk_len].reshape((ml, chunk_len, -1))
 
@@ -84,7 +86,8 @@ def _kmer_worker(fn, section, chunk_len, kmer_len, trim, use_scaled):
     return fn, new_inMat, new_labels, new_bad
 
 
-def kmers(files, section, chunk_len, kmer_len, trim=(0, 0), use_scaled=False):
+def kmers(files, section, chunk_len, kmer_len, trim=(0, 0), use_scaled=False,
+          normalise=True):
     """ Batch data together for kmer training
 
     :param files: A `set` of files to read
@@ -93,6 +96,7 @@ def kmers(files, section, chunk_len, kmer_len, trim=(0, 0), use_scaled=False):
     :param chunk_len: Length on each chunk
     :param kmer_len: Kmer length for training
     :param use_scaled: Use prescaled event statistics
+    :param normalise: Do per-strand normalisation
 
     :yields: A tuple containing a 3D :class:`ndarray` of size
     (X, chunk_len, nfeatures) containing the features for the batch
@@ -104,12 +108,14 @@ def kmers(files, section, chunk_len, kmer_len, trim=(0, 0), use_scaled=False):
 
     wargs = {'chunk_len' : chunk_len,
              'kmer_len' : kmer_len,
+             'normalise' : normalise,
              'section' : section,
              'trim' : trim,
              'use_scaled' : use_scaled
             }
 
-    for fn, chunks, labels, bad_ev in imap_mp(_kmer_worker, pfiles, threads=8, fix_kwargs=wargs):
+    for fn, chunks, labels, bad_ev in imap_mp(_kmer_worker, pfiles, threads=8,
+                                              fix_kwargs=wargs):
         if chunks is None or labels is None:
             continue
 

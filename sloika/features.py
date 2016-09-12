@@ -4,7 +4,7 @@ from untangled.maths import studentise
 
 NFEATURES = 4
 
-def from_events(ev, tag='scaled_'):
+def from_events(ev, tag='scaled_', normalise=True):
     """  Create a matrix of features from
 
     :param ev: A :class:`ndrecarray` with fields 'mean', 'stdv' and 'length'
@@ -20,5 +20,7 @@ def from_events(ev, tag='scaled_'):
     #  Zero pad delta mean
     features[:,3] = np.fabs(np.ediff1d(ev[tag + 'mean'], to_end=0))
 
-    features = np.ascontiguousarray(studentise(features, axis=0), dtype=sloika_dtype)
-    return features
+    if normalise:
+        features = studentise(features, axis=0)
+
+    return featuresfeaturesscontiguousarray(features, dtype=sloika_dtype)
