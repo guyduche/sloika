@@ -1,0 +1,9 @@
+CREATE TABLE runs(
+    model text not NULL,
+    output_directory text unique not NULL,
+    training_data text not NULL,
+    status integer default 0,
+    runid integer primary key, 
+    priority integer default 10, 
+    sloika_commit test default NULL, 
+    validation_data text default NULL);
