@@ -825,6 +825,9 @@ class Decode(RNN):
     def params(self):
         return []
 
+    def json(self, params=False):
+        return OrderedDict([('type', "decode")])
+
     def set_params(self, values):
         return
 
