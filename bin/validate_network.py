@@ -22,6 +22,8 @@ parser.add_argument('--bad', default=True, action=AutoBool,
     help='Use bad events as a separate state')
 parser.add_argument('--batch', default=200, metavar='size', type=Positive(int),
     help='Batch size (number of chunks to run in parallel)')
+parser.add_argument('--transducer', default=True, action=AutoBool,
+    help='Model is a transducer')
 parser.add_argument('--version', nargs=0, action=display_version_and_exit, metavar=__version__,
     help='Display version information.')
 parser.add_argument('model', metavar='file.npy', action=FileExists,
@@ -29,6 +31,13 @@ parser.add_argument('model', metavar='file.npy', action=FileExists,
 parser.add_argument('input', metavar='hdf5', action=FileExists,
     help='HDF5 file containing chunks')
 
+
+def remove_blanks(labels):
+    for lbl_ch in labels:
+        for i in xrange(1, len(lbl_ch)):
+            if lbl_ch[i] == 0:
+                lbl_ch[i] = lbl_ch[i - 1]
+    return labels
 
 def wrap_network(network):
     x = T.tensor3()
@@ -53,8 +62,11 @@ if __name__ == '__main__':
     with h5py.File(args.input, 'r') as h5:
         full_chunks = h5['chunks'][:]
         full_labels = h5['labels'][:]
-        if args.bad:
-            full_labels[h5['bad'][:]] = 0
+        full_bad = h5['bad'][:]
+    if not args.transducer:
+        remove_blanks(full_labels)
+    if args.bad:
+        full_labels[full_bad] = 0
 
     total_ev = line_ev = 0
     score = acc = wacc = wscore = 0.0

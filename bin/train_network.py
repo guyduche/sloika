@@ -40,6 +40,8 @@ parser.add_argument('--save_every', metavar='x', type=Positive(int), default=500
     help='Save model every x batches')
 parser.add_argument('--sd', default=0.5, metavar='value', type=Positive(float),
     help='Standard deviation to initialise with')
+parser.add_argument('--transducer', default=True, action=AutoBool,
+    help='Train a transducer based model')
 parser.add_argument('--window', default=3, type=Positive(int), metavar='length',
     help='Window length for input features')
 parser.add_argument('--version', nargs=0, action=display_version_and_exit, metavar=__version__,
@@ -50,6 +52,13 @@ parser.add_argument('output', help='Prefix for output files')
 parser.add_argument('input', action=FileExists,
     help='HDF5 file containing chunks')
 
+
+def remove_blanks(labels):
+    for lbl_ch in labels:
+        for i in xrange(1, len(lbl_ch)):
+            if lbl_ch[i] == 0:
+                lbl_ch[i] = lbl_ch[i - 1]
+    return labels
 
 def wrap_network(network, l2=0.0, drop=None):
     ldrop, udrop = drop, drop
@@ -101,12 +110,16 @@ if __name__ == '__main__':
     with h5py.File(args.input, 'r') as h5:
         all_chunks = h5['chunks'][:]
         all_labels = h5['labels'][:]
-        if args.bad:
-            all_labels[h5['bad'][:]] = 0
+        all_bad = h5['bad'][:]
     nblank = np.sum(all_labels == 0, axis=1)
     max_blanks = int(all_labels.shape[1] * 0.7)
     all_chunks = all_chunks[nblank < max_blanks]
     all_labels = all_labels[nblank < max_blanks]
+    all_bad = all_bad[nblank < max_blanks]
+    if not args.transducer:
+        remove_blanks(all_labels)
+    if args.bad:
+        all_labels[all_bad] = 0
 
 
     total_ev = 0
