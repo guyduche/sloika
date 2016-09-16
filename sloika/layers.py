@@ -1,4 +1,5 @@
 import abc
+from collections import OrderedDict
 import theano as th
 import theano.tensor as T
 import numpy as np
@@ -11,6 +12,7 @@ _NBASE = 4
 _NSTEP = _NBASE
 _NSKIP = _NBASE * _NBASE
 _FORGET_BIAS = 2.0
+_INDENT = ' ' * 4
 
 def tanh(x):
     return T.tanh(x)
@@ -30,6 +32,10 @@ def relu(x):
 def zeros(size):
     return np.zeros(size, dtype=sloika_dtype)
 
+def _extract(x):
+    return x.get_value().tolist()
+
+
 class Layer(object):
     __metaclass__ = abc.ABCMeta
 
@@ -44,6 +50,12 @@ class Layer(object):
         return
 
     @abc.abstractmethod
+    def json(self, params):
+        """ emit json string describing layer
+        """
+        return
+
+    @abc.abstractmethod
     def set_params(self, values):
         """ Set parameters from a dictionary of values
         """
@@ -54,6 +66,7 @@ class Layer(object):
         """  Run network layer
         """
         return
+
 
 class RNN(Layer):
 
@@ -70,6 +83,7 @@ class RNN(Layer):
         out, _ = th.scan(self.step, sequences=inMat, outputs_info=T.zeros((nbatch, self.size)))
         return out
 
+
 class Identity(Layer):
     def __init__(self):
         pass
@@ -77,11 +91,15 @@ class Identity(Layer):
     def params(self):
         return []
 
+    def json(self):
+        return {'type' : "identity"}
+
     def set_params(self, values):
         return
 
     def run(self, inMat):
         return inMat
+
 
 class FeedForward(Layer):
     """  Basic feedforward layer
@@ -104,6 +122,17 @@ class FeedForward(Layer):
     def params(self):
         return [self.W, self.b] if self.has_bias else [self.W]
 
+    def json(self, params=False):
+        res = OrderedDict([('type', "feed-forward"),
+                           ('activation', self.f.func_name),
+                           ('size', self.size),
+                           ('insize', self.insize),
+                           ('bias', self.has_bias)])
+        if params:
+            res['params'] = OrderedDict([('W', _extract(self.W)),
+                                         ('b', _extract(self.b))])
+        return res
+
     def set_params(self, values):
         if self.has_bias:
             assert values['b'].shape[0] == self.size
@@ -113,6 +142,7 @@ class FeedForward(Layer):
 
     def run(self, inMat):
         return self.f(T.tensordot(inMat, self.W, axes=(2, 1)) + self.b)
+
 
 class Studentise(Layer):
     """ Normal all features in batch
@@ -125,6 +155,9 @@ class Studentise(Layer):
     def params(self):
         return []
 
+    def json(self, params=False):
+        return {'type' : "studentise"}
+
     def set_params(self, values):
         return
 
@@ -132,6 +165,7 @@ class Studentise(Layer):
         m = T.shape_padleft(T.mean(inMat, axis=(0, 1)), n_ones=2)
         v = T.shape_padleft(T.var(inMat, axis=(0, 1)), n_ones=2)
         return (inMat - m) / T.sqrt(v + self.epsilion)
+
 
 class Softmax(Layer):
     """  Softmax layer
@@ -153,6 +187,16 @@ class Softmax(Layer):
     def params(self):
         return [self.W, self.b] if self.has_bias else [self.W]
 
+    def json(self, params=False):
+        res = OrderedDict([('type', "softmax"),
+                           ('size', self.size),
+                           ('insize', self.insize),
+                           ('bias', self.has_bias)])
+        if params:
+            res['params'] = OrderedDict([('W', _extract(self.W)),
+                                         ('b', _extract(self.b))])
+        return res
+
     def set_params(self, values):
         if self.has_bias:
             assert values['b'].shape[0] == self.size
@@ -160,10 +204,12 @@ class Softmax(Layer):
         assert values['W'].shape == (self.size, self.insize)
         self.W = th.shared(values['W'])
 
+
     def run(self, inMat):
         tmp =  T.tensordot(inMat, self.W, axes=(2,1)) + self.b
         out, _ = th.map(T.nnet.softmax, sequences=tmp)
         return out
+
 
 class SoftmaxOld(Layer):
     """  Softmax layer
@@ -185,6 +231,17 @@ class SoftmaxOld(Layer):
     def params(self):
         return [self.W, self.b] if self.has_bias else [self.W]
 
+    def json(self, params=False):
+        res = OrderedDict([('type', "softmax_old"),
+                           ('size', self.size),
+                           ('insize', self.insize),
+                           ('bias', self.has_bias)])
+
+        if params:
+            res['params'] = OrderedDict([('W', _extract(self.W)),
+                                         ('b', _extract(self.b))])
+        return res
+
     def set_params(self, values):
         if self.has_bias:
             assert values['b'].shape[0] == self.size
@@ -199,6 +256,7 @@ class SoftmaxOld(Layer):
         rowsum = T.sum(out, axis=2)
         return out / T.shape_padright(rowsum)
 
+
 class Window(Layer):
     """  Create a sliding window over input
 
@@ -212,6 +270,11 @@ class Window(Layer):
     def params(self):
         return []
 
+    def json(self, params=False):
+        res = OrderedDict([('type', "window")])
+        if params:
+            res['params'] = OrderedDict([('w', self.w)])
+
     def set_params(self, values):
         return
 
@@ -221,6 +284,7 @@ class Window(Layer):
         padMat = T.concatenate([zeros, inMat, zeros], axis=0)
         tmp = T.concatenate([padMat[i : 1 + i - self.w] for i in xrange(self.w - 1)], axis=2)
         return T.concatenate([tmp, padMat[self.w - 1 :]], axis=2)
+
 
 class Convolution(Layer):
     """ Create a 1D convolution over input
@@ -241,6 +305,16 @@ class Convolution(Layer):
     def params(self):
         return [self.flt]
 
+    def json(self, params=False):
+        res = OrderedDict([('type', "convolution"),
+                           ('activation', self.f.func_name),
+                           ('size', self.size),
+                           ('insize', self.insize)])
+        if params:
+            res['params'] = OrderedDict([('w', self.w),
+                                         ('filter', _extract(self.flt))])
+        return res
+
     def set_params(self, values):
         assert values['flt'].shape == (self.size, self.insize, 1, self.w)
         self.flt = th.shared(values['flt'])
@@ -256,6 +330,7 @@ class Convolution(Layer):
         outMat = outMat.transpose((3, 0, 1, 2))
         outMat = outMat.reshape((ntime, nbatch, self.size))
         return self.fun(outMat)
+
 
 class Recurrent(RNN):
     """ A simple recurrent layer
@@ -280,6 +355,18 @@ class Recurrent(RNN):
     def params(self):
         return [self.W, self.b] if self.has_bias else [self.W]
 
+    def json(self, params=False):
+        res = OrderedDict([('type', "recurrent"),
+                           ('activation', self.f.func_name),
+                           ('size', self.size),
+                           ('insize', self.insize),
+                           ('bias', self.has_bias)])
+        if params:
+            res['params'] = OrderedDict([('iW', _extract(self.iW)),
+                                         ('sW', _extract(self.sW)),
+                                         ('b', _extract(self.b))])
+        return res
+
     def set_params(self, values):
         if self.has_bias:
             assert values['b'].shape[0] == self.size
@@ -294,6 +381,7 @@ class Recurrent(RNN):
         sV = T.tensordot(in_state, self.sW, axes=(1, 1))
         state_out = self.f(iV + sV + self.b)
         return state_out
+
 
 class Lstm(RNN):
     """ LSTM layer with peepholes.  Implementation is to be consistent with
@@ -341,6 +429,21 @@ class Lstm(RNN):
             params += [self.p]
         return params
 
+    def json(self, params=False):
+        res = OrderedDict([('type', "LSTM"),
+                           ('activation', self.fun.func_name),
+                           ('size', self.size),
+                           ('insize', self.insize),
+                           ('bias', self.has_bias),
+                           ('peep', self.has_peep)])
+        if params:
+            res['params'] = OrderedDict([('iW', _extract(self.iW)),
+                                         ('sW', _extract(self.sW)),
+                                         ('b', _extract(self.b)),
+                                         ('p', _extract(self.p))])
+        return res
+
+
     def set_params(self, values):
         if self.has_bias:
             assert values['b'].shape == (4, self.size)
@@ -374,6 +477,7 @@ class Lstm(RNN):
         out, _ = th.scan(self.step, sequences=inMat,
                          outputs_info=T.zeros((nbatch, 2 * self.size)))
         return out[:,:,:self.size]
+
 
 class LstmO(RNN):
     """ LSTM layer with peepholes but no output gate.
@@ -414,6 +518,20 @@ class LstmO(RNN):
             params += [self.p]
         return params
 
+    def json(self, params=False):
+        res = OrderedDict([('type', "LSTM-O"),
+                           ('activation', self.fun.func_name),
+                           ('size', self.size),
+                           ('insize', self.insize),
+                           ('bias', self.has_bias),
+                           ('peep', self.has_peep)])
+        if params:
+            res['params'] = OrderedDict([('iW', _extract(self.iW)),
+                                         ('sW', _extract(self.sW)),
+                                         ('b', _extract(self.b)),
+                                         ('p', _extract(self.p))])
+        return res
+
     def set_params(self, values):
         if self.has_bias:
             assert values['b'].shape == (3, self.size)
@@ -438,6 +556,7 @@ class LstmO(RNN):
         #  Update state with input
         state += self.fun(sumW[:,0] + in_state * self.p[0]) * sigmoid(sumW[:,1] + in_state * self.p[1])
         return state
+
 
 class Forget(RNN):
     """ Simple forget gate
@@ -466,6 +585,18 @@ class Forget(RNN):
             params += [self.b]
         return params
 
+    def json(self, params=False):
+        res = OrderedDict([('type', "forget gate"),
+                           ('activation',self.fun.func_name),
+                           ('size', self.size),
+                           ('insize', self.insize),
+                           ('bias', self.has_bias)])
+        if params:
+            res['params'] = OrderedDict([('iW', _extract(self.iW)),
+                                         ('sW', _extract(self.sW)),
+                                         ('b', _extract(self.b))])
+        return res
+
     def set_params(self, values):
         if self.has_bias:
             assert values['b'].shape == (2, self.size)
@@ -484,6 +615,7 @@ class Forget(RNN):
         forget = sigmoid(vT[:,0])
         state = in_state * forget + (1.0 - forget) * self.fun(vT[:,1])
         return state
+
 
 class Gru(RNN):
     """ Gated Recurrent Unit
@@ -511,6 +643,19 @@ class Gru(RNN):
             params += [self.b]
         return params
 
+    def json(self, params=False):
+        res = OrderedDict([('type', "GRU"),
+                           ('activation', self.fun.func_name),
+                           ('size', self.size),
+                           ('insize', self.insize),
+                           ('bias', self.has_bias)])
+        if params:
+            res['params'] = OrderedDict([('iW', _extract(self.iW)),
+                                         ('sW', _extract(self.sW)),
+                                         ('sW2', _extract(self.sW2)),
+                                         ('b', _extract(self.b))])
+        return res
+
     def set_params(self, values):
         if self.has_bias:
             assert values['b'].shape == (3, self.size)
@@ -534,6 +679,7 @@ class Gru(RNN):
         hbar = self.fun(vI[:, 2 * self.size:] + y)
         state = z * in_state + (1 - z) * hbar
         return state
+
 
 class Mut1(RNN):
     """ MUT1 from Jozefowicz
@@ -565,6 +711,20 @@ class Mut1(RNN):
             params += [self.b, self.b2]
         return params
 
+    def json(self, params=False):
+        res = OrderedDict([('type', "MUT1"),
+                           ('activation', self.fun.func_name),
+                           ('size', self.size),
+                           ('insize', self.insize),
+                           ('bias', self.has_bias)])
+        if params:
+            res['params'] = OrderedDict([('iW', _extract(self.iW)),
+                                         ('sW', _extract(self.sW)),
+                                         ('sW2', _extract(self.sW2)),
+                                         ('b', _extarct(self.b)),
+                                         ('b2', _extract(self.b2))])
+        return res
+
     def set_params(self, values):
         if self.has_bias:
             assert values['b'].shape == (2, self.size)
@@ -590,6 +750,7 @@ class Mut1(RNN):
         state = self.fun(y + self.fun(in_vec) + self.b2) * (1 - z) + z * in_state
         return state
 
+
 class Reverse(Layer):
     """  Runs a recurrent layer in reverse time (backwards)
     """
@@ -599,11 +760,16 @@ class Reverse(Layer):
     def params(self):
         return self.layer.params()
 
+    def json(self, params=False):
+        return OrderedDict([('type', "reverse"),
+                            ('sublayer', self.layer.json(params))])
+
     def set_params(self, values):
         return
 
     def run(self, inMat):
         return self.layer.run(inMat[::-1])[::-1]
+
 
 class Parallel(Layer):
     """ Run multiple layers in parallel (all have same input and outputs are concatenated)
@@ -614,11 +780,16 @@ class Parallel(Layer):
     def params(self):
         return reduce(lambda x, y: x + y.params(), self.layers, [])
 
+    def json(self, params=False):
+        return OrderedDict([('type', "parallel"),
+                            ('sublayers', [layer.json(params) for layer in self.layers])])
+
     def set_params(self, values):
         return
 
     def run(self, inMat):
         return T.concatenate(map(lambda x: x.run(inMat), self.layers), axis=2)
+
 
 class Serial(Layer):
     """ Run multiple layers serially: output of a layer is the input for the next layer
@@ -629,6 +800,10 @@ class Serial(Layer):
     def params(self):
         return reduce(lambda x, y: x + y.params(), self.layers, [])
 
+    def json(self, params=False):
+        return OrderedDict([('type', "serial"),
+                            ('sublayers', [layer.json(params) for layer in self.layers])])
+
     def set_params(self, values):
         return
 
@@ -637,6 +812,7 @@ class Serial(Layer):
         for layer in self.layers:
             tmp = layer.run(tmp)
         return tmp
+
 
 class Decode(RNN):
     """ Forward pass of a Viterbi decoder
@@ -648,6 +824,9 @@ class Decode(RNN):
 
     def params(self):
         return []
+
+    def json(self, params=False):
+        return OrderedDict([('type', "decode")])
 
     def set_params(self, values):
         return
