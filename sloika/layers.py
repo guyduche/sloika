@@ -307,7 +307,7 @@ class Convolution(Layer):
 
     def json(self, params=False):
         res = OrderedDict([('type', "convolution"),
-                           ('activation', self.f.func_name),
+                           ('activation', self.fun.func_name),
                            ('size', self.size),
                            ('insize', self.insize)])
         if params:
