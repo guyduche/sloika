@@ -82,11 +82,19 @@ if __name__ == '__main__':
     log.write('* Command line\n')
     log.write(' '.join(sys.argv) + '\n')
 
-    log.write('* Creating network from {}\n'.format(args.model))
-    with h5py.File(args.input, 'r') as h5:
-        klen =h5.attrs['kmer']
-    netmodule = imp.load_source('netmodule', args.model)
-    network = netmodule.network(winlen=args.window, klen=klen, sd=args.sd)
+    log.write('* Reading network from {}\n'.format(args.model))
+    model_ext = os.path.splitext(args.model)[1]
+    if model_ext == '.py':
+        with h5py.File(args.input, 'r') as h5:
+            klen =h5.attrs['kmer']
+        netmodule = imp.load_source('netmodule', args.model)
+        network = netmodule.network(winlen=args.window, klen=klen, sd=args.sd)
+    elif model_ext == '.pkl':
+        with open(args.model, 'r') as fh:
+            network = cPickle.load(fh)
+    else:
+        log.write('* Model is neither python file nor model pickle\n')
+        exit(1)
     fg = wrap_network(network, l2=args.l2, drop=args.drop)
 
     log.write('* Loading data from {}\n'.format(args.input))
