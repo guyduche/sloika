@@ -32,6 +32,9 @@ def relu(x):
 def zeros(size):
     return np.zeros(size, dtype=sloika_dtype)
 
+def _extract(x):
+    return x.get_value().tolist()
+
 
 class Layer(object):
     __metaclass__ = abc.ABCMeta
@@ -47,7 +50,7 @@ class Layer(object):
         return
 
     @abc.abstractmethod
-    def json(self):
+    def json(self, params):
         """ emit json string describing layer
         """
         return
@@ -119,11 +122,16 @@ class FeedForward(Layer):
     def params(self):
         return [self.W, self.b] if self.has_bias else [self.W]
 
-    def json(self):
-        return OrderedDict([('type', "feed-forward"),
-                            ('activation', self.f.func_name),
-                            ('size', self.size),
-                            ('insize', self.insize)])
+    def json(self, params=False):
+        res = OrderedDict([('type', "feed-forward"),
+                           ('activation', self.f.func_name),
+                           ('size', self.size),
+                           ('insize', self.insize),
+                           ('bias', self.has_bias)])
+        if params:
+            res['params'] = OrderedDict([('W', _extract(self.W)),
+                                         ('b', _extract(self.b))])
+        return res
 
     def set_params(self, values):
         if self.has_bias:
@@ -147,7 +155,7 @@ class Studentise(Layer):
     def params(self):
         return []
 
-    def json(self):
+    def json(self, params=False):
         return {'type' : "studentise"}
 
     def set_params(self, values):
@@ -179,10 +187,15 @@ class Softmax(Layer):
     def params(self):
         return [self.W, self.b] if self.has_bias else [self.W]
 
-    def json(self):
-        return OrderedDict([('type', "softmax"),
-                            ('size', self.size),
-                            ('insize', self.insize)])
+    def json(self, params=False):
+        res = OrderedDict([('type', "softmax"),
+                           ('size', self.size),
+                           ('insize', self.insize),
+                           ('bias', self.has_bias)])
+        if params:
+            res['params'] = OrderedDict([('W', _extract(self.W)),
+                                         ('b', _extract(self.b))])
+        return res
 
     def set_params(self, values):
         if self.has_bias:
@@ -218,10 +231,16 @@ class SoftmaxOld(Layer):
     def params(self):
         return [self.W, self.b] if self.has_bias else [self.W]
 
-    def json(self):
-        return OrderedDict([('type', "softmax_old"),
-                            ('size', self.size),
-                            ('insize', self.insize)])
+    def json(self, params=False):
+        res = OrderedDict([('type', "softmax_old"),
+                           ('size', self.size),
+                           ('insize', self.insize),
+                           ('bias', self.has_bias)])
+
+        if params:
+            res['params'] = OrderedDict([('W', _extract(self.W)),
+                                         ('b', _extract(self.b))])
+        return res
 
     def set_params(self, values):
         if self.has_bias:
@@ -251,8 +270,10 @@ class Window(Layer):
     def params(self):
         return []
 
-    def json(self):
-        return {'type' : "window"}
+    def json(self, params=False):
+        res = OrderedDict([('type', "window")])
+        if params:
+            res['params'] = OrderedDict([('w', self.w)])
 
     def set_params(self, values):
         return
@@ -284,11 +305,15 @@ class Convolution(Layer):
     def params(self):
         return [self.flt]
 
-    def json(self):
-        return OrderedDict([('type', "convolution"),
-                            ('activation', self.f.func_name),
-                            ('size', self.size),
-                            ('insize', self.insize)])
+    def json(self, params=False):
+        res = OrderedDict([('type', "convolution"),
+                           ('activation', self.f.func_name),
+                           ('size', self.size),
+                           ('insize', self.insize)])
+        if params:
+            res['params'] = OrderedDict([('w', self.w),
+                                         ('filter', _extract(self.flt))])
+        return res
 
     def set_params(self, values):
         assert values['flt'].shape == (self.size, self.insize, 1, self.w)
@@ -330,11 +355,17 @@ class Recurrent(RNN):
     def params(self):
         return [self.W, self.b] if self.has_bias else [self.W]
 
-    def json(self):
-        return OrderedDict([('type', "recurrent"),
-                            ('activation', self.f.func_name),
-                            ('size', self.size),
-                            ('insize', self.insize)])
+    def json(self, params=False):
+        res = OrderedDict([('type', "recurrent"),
+                           ('activation', self.f.func_name),
+                           ('size', self.size),
+                           ('insize', self.insize),
+                           ('bias', self.has_bias)])
+        if params:
+            res['params'] = OrderedDict([('iW', _extract(self.iW)),
+                                         ('sW', _extract(self.sW)),
+                                         ('b', _extract(self.b))])
+        return res
 
     def set_params(self, values):
         if self.has_bias:
@@ -398,11 +429,20 @@ class Lstm(RNN):
             params += [self.p]
         return params
 
-    def json(self):
-        return OrderedDict([('type', "LSTM"),
-                            ('activation', self.fun.func_name),
-                            ('size', self.size),
-                            ('insize', self.insize)])
+    def json(self, params=False):
+        res = OrderedDict([('type', "LSTM"),
+                           ('activation', self.fun.func_name),
+                           ('size', self.size),
+                           ('insize', self.insize),
+                           ('bias', self.has_bias),
+                           ('peep', self.has_peep)])
+        if params:
+            res['params'] = OrderedDict([('iW', _extract(self.iW)),
+                                         ('sW', _extract(self.sW)),
+                                         ('b', _extract(self.b)),
+                                         ('p', _extract(self.p))])
+        return res
+
 
     def set_params(self, values):
         if self.has_bias:
@@ -478,11 +518,19 @@ class LstmO(RNN):
             params += [self.p]
         return params
 
-    def json(self):
-        return OrderedDict([('type', "LSTM-O"),
-                            ('activation', self.fun.func_name),
-                            ('size', self.size),
-                            ('insize', self.insize)])
+    def json(self, params=False):
+        res = OrderedDict([('type', "LSTM-O"),
+                           ('activation', self.fun.func_name),
+                           ('size', self.size),
+                           ('insize', self.insize),
+                           ('bias', self.has_bias),
+                           ('peep', self.has_peep)])
+        if params:
+            res['params'] = OrderedDict([('iW', _extract(self.iW)),
+                                         ('sW', _extract(self.sW)),
+                                         ('b', _extract(self.b)),
+                                         ('p', _extract(self.p))])
+        return res
 
     def set_params(self, values):
         if self.has_bias:
@@ -537,11 +585,17 @@ class Forget(RNN):
             params += [self.b]
         return params
 
-    def json(self):
-        return OrderedDict([('type', "forget gate"),
-                            ('activation',self.fun.func_name),
-                            ('size', self.size),
-                            ('insize', self.insize)])
+    def json(self, params=False):
+        res = OrderedDict([('type', "forget gate"),
+                           ('activation',self.fun.func_name),
+                           ('size', self.size),
+                           ('insize', self.insize),
+                           ('bias', self.has_bias)])
+        if params:
+            res['params'] = OrderedDict([('iW', _extract(self.iW)),
+                                         ('sW', _extract(self.sW)),
+                                         ('b', _extract(self.b))])
+        return res
 
     def set_params(self, values):
         if self.has_bias:
@@ -589,11 +643,18 @@ class Gru(RNN):
             params += [self.b]
         return params
 
-    def json(self):
-        return OrderedDict([('type', "GRU"),
-                            ('activation', self.fun.func_name),
-                            ('size', self.size),
-                            ('insize', self.insize)])
+    def json(self, params=False):
+        res = OrderedDict([('type', "GRU"),
+                           ('activation', self.fun.func_name),
+                           ('size', self.size),
+                           ('insize', self.insize),
+                           ('bias', self.has_bias)])
+        if params:
+            res['params'] = OrderedDict([('iW', _extract(self.iW)),
+                                         ('sW', _extract(self.sW)),
+                                         ('sW2', _extract(self.sW2)),
+                                         ('b', _extract(self.b))])
+        return res
 
     def set_params(self, values):
         if self.has_bias:
@@ -650,11 +711,19 @@ class Mut1(RNN):
             params += [self.b, self.b2]
         return params
 
-    def json(self):
-        return OrderedDict([('type', "MUT1"),
-                            ('activation', self.fun.func_name),
-                            ('size', self.size),
-                            ('insize', self.insize)])
+    def json(self, params=False):
+        res = OrderedDict([('type', "MUT1"),
+                           ('activation', self.fun.func_name),
+                           ('size', self.size),
+                           ('insize', self.insize),
+                           ('bias', self.has_bias)])
+        if params:
+            res['params'] = OrderedDict([('iW', _extract(self.iW)),
+                                         ('sW', _extract(self.sW)),
+                                         ('sW2', _extract(self.sW2)),
+                                         ('b', _extarct(self.b)),
+                                         ('b2', _extract(self.b2))])
+        return res
 
     def set_params(self, values):
         if self.has_bias:
@@ -691,9 +760,9 @@ class Reverse(Layer):
     def params(self):
         return self.layer.params()
 
-    def json(self):
+    def json(self, params=False):
         return OrderedDict([('type', "reverse"),
-                            ('sublayer', self.layer.json())])
+                            ('sublayer', self.layer.json(params))])
 
     def set_params(self, values):
         return
@@ -711,9 +780,9 @@ class Parallel(Layer):
     def params(self):
         return reduce(lambda x, y: x + y.params(), self.layers, [])
 
-    def json(self):
+    def json(self, params=False):
         return OrderedDict([('type', "parallel"),
-                            ('sublayers', [layer.json() for layer in self.layers])])
+                            ('sublayers', [layer.json(params) for layer in self.layers])])
 
     def set_params(self, values):
         return
@@ -731,9 +800,9 @@ class Serial(Layer):
     def params(self):
         return reduce(lambda x, y: x + y.params(), self.layers, [])
 
-    def json(self):
+    def json(self, params=False):
         return OrderedDict([('type', "serial"),
-                            ('sublayers', [layer.json() for layer in self.layers])])
+                            ('sublayers', [layer.json(params) for layer in self.layers])])
 
     def set_params(self, values):
         return
