@@ -26,6 +26,7 @@ parser.add_argument('--section', default='template', choices=['template', 'compl
     help='Section to call')
 parser.add_argument('--strand_list', default=None, action=FileExists,
     help='strand summary file containing subset.')
+parser.add_argument('--skip', default=0.0, type=Positive(float), help='Skip penalty')
 parser.add_argument('--trans', default=None, action=Vector(proportion), nargs=3,
     metavar=('stay', 'step', 'skip'), help='Base transition probabilities')
 parser.add_argument('--trim', default=(500, 50), nargs=2, type=Positive(int),
@@ -67,7 +68,7 @@ def basecall(args, fn):
 
     post = prepare_post(calc_post(inMat), args.min_prob)
 
-    score, call = decode.viterbi(post, args.kmer)
+    score, call = decode.viterbi(post, args.kmer, skip_pen=args.skip)
 
     return sn, score, call, inMat.shape[0]
 
