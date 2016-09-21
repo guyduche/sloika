@@ -5,7 +5,7 @@ import sys
 import time
 
 from untangled import bio
-from untangled.cmdargs import (FileExists, Maybe, proportion, Positive, Vector)
+from untangled.cmdargs import (AutoBool, FileExists, Maybe, proportion, Positive, Vector)
 from untangled import fast5
 from untangled.iterators import imap_mp
 
@@ -42,8 +42,13 @@ parser.add_argument('input_folder', action=FileExists,
 _ETA = 1e-10
 
 
-def prepare_post(post, min_prob=1e-5, init_trans=None):
+def prepare_post(post, min_prob=1e-5, drop_bad=False):
     post = np.squeeze(post, axis=1)
+    if drop_bad:
+        maxcall = np.argmax(post, axis=1)
+        post = post[maxcall > 0, 1:]
+        weight = np.sum(post, axis=1, keepdims=True)
+        post /= weight
     return min_prob + (1.0 - min_prob) * post
 
 
@@ -55,7 +60,7 @@ def init_worker(model):
 
 
 def basecall(args, fn):
-    from sloika import decode, features
+    from sloika import decode, features, olddecode
     try:
         with fast5.Reader(fn) as f5:
             ev = f5.get_section_events(args.section)
@@ -70,10 +75,10 @@ def basecall(args, fn):
     inMat = features.from_events(ev, tag='')
     inMat = np.expand_dims(inMat, axis=1)
 
-    post = prepare_post(calc_post(inMat), args.min_prob)
+    post = prepare_post(calc_post(inMat), min_prob=args.min_prob, drop_bad=(not args.transducer))
 
     if args.transducer:
-        score, call = decode.viterbi(post, args.kmer, skip_pen=arks.skip)
+        score, call = decode.viterbi(post, args.kmer, skip_pen=args.skip)
     else:
         trans = olddecode.estimate_transitions(post, trans=args.trans)
         score, call = olddecode.decode_profile(post, trans=np.log(_ETA + trans), log=False)
