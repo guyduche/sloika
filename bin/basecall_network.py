@@ -26,6 +26,8 @@ parser.add_argument('--section', default='template', choices=['template', 'compl
     help='Section to call')
 parser.add_argument('--strand_list', default=None, action=FileExists,
     help='strand summary file containing subset.')
+parser.add_argument('--transducer', default=True, action=AutoBool,
+    help='Model is transducer')
 parser.add_argument('--trans', default=None, action=Vector(proportion), nargs=3,
     metavar=('stay', 'step', 'skip'), help='Base transition probabilities')
 parser.add_argument('--trim', default=(500, 50), nargs=2, type=Positive(int),
@@ -35,6 +37,8 @@ parser.add_argument('--window', default=3, type=Positive(int), metavar='length',
 parser.add_argument('model', action=FileExists, help='Pickled model file')
 parser.add_argument('input_folder', action=FileExists,
     help='Directory containing single-read fast5 files.')
+
+_ETA = 1e-10
 
 
 def prepare_post(post, min_prob=1e-5, init_trans=None):
@@ -67,14 +71,20 @@ def basecall(args, fn):
 
     post = prepare_post(calc_post(inMat), args.min_prob)
 
-    score, call = decode.viterbi(post, args.kmer)
+    if args.transducer:
+        score, call = decode.viterbi(post, args.kmer)
+    else:
+        trans = olddecode.estimate_transitions(post, trans=args.trans)
+        score, call = olddecode.decode_profile(post, trans=np.log(_ETA + trans), log=False)
+
 
     return sn, score, call, inMat.shape[0]
 
 
 class SeqPrinter(object):
-    def __init__(self, kmerlen, fh=None):
+    def __init__(self, kmerlen, transducer=False, fh=None):
         self.kmers = bio.all_kmers(kmerlen)
+        self.transducer = transducer
         self.close_fh = False
 
         if fh is None:
@@ -92,7 +102,7 @@ class SeqPrinter(object):
 
     def write(self, read_name, score, call, nev):
         kmer_path = [self.kmers[i] for i in call]
-        seq = bio.kmers_to_sequence(kmer_path, homopolymer_step=True)
+        seq = bio.kmers_to_sequence(kmer_path, homopolymer_step=self.transducer)
         self.fh.write(">{} {} {} events to {} bases\n".format(read_name, score,
                                                               nev, len(seq)))
         self.fh.write(seq + '\n')
@@ -101,7 +111,7 @@ class SeqPrinter(object):
 
 if __name__ == '__main__':
     args = parser.parse_args()
-    seq_printer = SeqPrinter(args.kmer)
+    seq_printer = SeqPrinter(args.kmer, transducer=args.transducer)
 
     files = fast5.iterate_fast5(args.input_folder, paths=True, limit=args.limit,
                                 strand_list=args.strand_list)
