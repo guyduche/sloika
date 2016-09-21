@@ -31,7 +31,7 @@ parser.add_argument('--transducer', default=True, action=AutoBool,
     help='Model is transducer')
 parser.add_argument('--trans', default=None, action=Vector(proportion), nargs=3,
     metavar=('stay', 'step', 'skip'), help='Base transition probabilities')
-parser.add_argument('--trim', default=(500, 50), nargs=2, type=Positive(int),
+parser.add_argument('--trim', default=(50, 1), nargs=2, type=Positive(int),
     metavar=('beginning', 'end'), help='Number of events to trim off start and end')
 parser.add_argument('--window', default=3, type=Positive(int), metavar='length',
     help='Window length for input features')
