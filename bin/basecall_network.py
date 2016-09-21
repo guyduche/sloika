@@ -24,6 +24,7 @@ parser.add_argument('--min_prob', metavar='proportion', default=1e-5,
     type=proportion, help='Minimum allowed probabiility for basecalls')
 parser.add_argument('--section', default='template', choices=['template', 'complement'],
     help='Section to call')
+parser.add_argument('--skip', default=0.0, type=Positive(float), help='Skip penalty')
 parser.add_argument('--strand_list', default=None, action=FileExists,
     help='strand summary file containing subset.')
 parser.add_argument('--transducer', default=True, action=AutoBool,
@@ -72,11 +73,10 @@ def basecall(args, fn):
     post = prepare_post(calc_post(inMat), args.min_prob)
 
     if args.transducer:
-        score, call = decode.viterbi(post, args.kmer)
+        score, call = decode.viterbi(post, args.kmer, skip_pen=arks.skip)
     else:
         trans = olddecode.estimate_transitions(post, trans=args.trans)
         score, call = olddecode.decode_profile(post, trans=np.log(_ETA + trans), log=False)
-
 
     return sn, score, call, inMat.shape[0]
 

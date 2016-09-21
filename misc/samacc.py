@@ -26,7 +26,7 @@ if __name__ == '__main__':
             if read.flag != 0 and read.flag != 16:
                 continue
 
-            coverage = float(read.alen) / read.qlen
+            coverage = float(read.qlen) / read.rlen
             if coverage < args.coverage:
                 continue
 

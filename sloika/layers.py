@@ -32,8 +32,11 @@ def relu(x):
 def zeros(size):
     return np.zeros(size, dtype=sloika_dtype)
 
-def _extract(x):
-    return x.get_value().tolist()
+def _extract(x, shape=None):
+    xv = x.get_value()
+    if shape is not None:
+        xv = xv.reshape(shape)
+    return xv.tolist()
 
 
 class Layer(object):
@@ -437,10 +440,10 @@ class Lstm(RNN):
                            ('bias', self.has_bias),
                            ('peep', self.has_peep)])
         if params:
-            res['params'] = OrderedDict([('iW', _extract(self.iW)),
-                                         ('sW', _extract(self.sW)),
-                                         ('b', _extract(self.b)),
-                                         ('p', _extract(self.p))])
+            res['params'] = OrderedDict([('iW', _extract(self.iW, (self.size, 4, self.insize))),
+                                         ('sW', _extract(self.sW, (self.size, 4, self.size))),
+                                         ('b', _extract(self.b, (4, self.size))),
+                                         ('p', _extract(self.p, (3, self.size)))])
         return res
 
 
@@ -526,10 +529,10 @@ class LstmO(RNN):
                            ('bias', self.has_bias),
                            ('peep', self.has_peep)])
         if params:
-            res['params'] = OrderedDict([('iW', _extract(self.iW)),
-                                         ('sW', _extract(self.sW)),
-                                         ('b', _extract(self.b)),
-                                         ('p', _extract(self.p))])
+            res['params'] = OrderedDict([('iW', _extract(self.iW, (self.size, 3, self.insize))),
+                                         ('sW', _extract(self.sW, (self.size, 3, self.size))),
+                                         ('b', _extract(self.b, (3, self.size))),
+                                         ('p', _extract(self.p, (3, self.size)))])
         return res
 
     def set_params(self, values):
@@ -592,9 +595,9 @@ class Forget(RNN):
                            ('insize', self.insize),
                            ('bias', self.has_bias)])
         if params:
-            res['params'] = OrderedDict([('iW', _extract(self.iW)),
-                                         ('sW', _extract(self.sW)),
-                                         ('b', _extract(self.b))])
+            res['params'] = OrderedDict([('iW', _extract(self.iW, (self.size, 2, self.insize))),
+                                         ('sW', _extract(self.sW, (self.size, 2, self.size))),
+                                         ('b', _extract(self.b, (2, self.size)))])
         return res
 
     def set_params(self, values):
@@ -650,10 +653,10 @@ class Gru(RNN):
                            ('insize', self.insize),
                            ('bias', self.has_bias)])
         if params:
-            res['params'] = OrderedDict([('iW', _extract(self.iW)),
-                                         ('sW', _extract(self.sW)),
+            res['params'] = OrderedDict([('iW', _extract(self.iW, (self.size, 3, self.insize))),
+                                         ('sW', _extract(self.sW, (self.size, 2, self.size))),
                                          ('sW2', _extract(self.sW2)),
-                                         ('b', _extract(self.b))])
+                                         ('b', _extract(self.b, (3, self.size)))])
         return res
 
     def set_params(self, values):
@@ -662,7 +665,7 @@ class Gru(RNN):
             self.b = th.shared(values['b'].reshape(-1))
         assert values['iW'].shape == (self.size, 3, self.insize)
         self.iW = th.shared(values['iW'].reshape((3 * self.size, self.insize)))
-        assert values['sW'].shape == (2, self.size, self.size)
+        assert values['sW'].shape == (self.size, 2, self.size)
         self.sW = th.shared(values['sW'].reshape((2 * self.size, self.size)))
         assert values['sW2'].shape == (self.size,  self.size)
         self.sW2 = th.shared(values['sW2'])
@@ -718,10 +721,10 @@ class Mut1(RNN):
                            ('insize', self.insize),
                            ('bias', self.has_bias)])
         if params:
-            res['params'] = OrderedDict([('iW', _extract(self.iW)),
+            res['params'] = OrderedDict([('iW', _extract(self.iW, (self.size, 2, self.insize))),
                                          ('sW', _extract(self.sW)),
                                          ('sW2', _extract(self.sW2)),
-                                         ('b', _extarct(self.b)),
+                                         ('b', _extarct(self.b, (2, self.size))),
                                          ('b2', _extract(self.b2))])
         return res
 
@@ -729,7 +732,7 @@ class Mut1(RNN):
         if self.has_bias:
             assert values['b'].shape == (2, self.size)
             self.b = th.shared(values['b'].reshape(-1))
-            assert values['b2'].shape == (1, self.size)
+            assert values['b2'].shape == (self.size)
             self.b2 = th.shared(values['b2'].reshape(-1))
         assert values['iW'].shape == (self.size, 2, self.insize)
         self.iW = th.shared(values['iW'].reshape((2 * self.size, self.insize)))
