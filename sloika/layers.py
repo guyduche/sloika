@@ -120,14 +120,14 @@ class FeedForward(Layer):
         self.W = th.shared(init((size, insize)) / np.sqrt(size + insize))
         self.insize = insize
         self.size = size
-        self.f = fun
+        self.fun = fun
 
     def params(self):
         return [self.W, self.b] if self.has_bias else [self.W]
 
     def json(self, params=False):
         res = OrderedDict([('type', "feed-forward"),
-                           ('activation', self.f.func_name),
+                           ('activation', self.fun.func_name),
                            ('size', self.size),
                            ('insize', self.insize),
                            ('bias', self.has_bias)])
@@ -144,7 +144,7 @@ class FeedForward(Layer):
         self.W = th.shared(values['W'])
 
     def run(self, inMat):
-        return self.f(T.tensordot(inMat, self.W, axes=(2, 1)) + self.b)
+        return self.fun(T.tensordot(inMat, self.W, axes=(2, 1)) + self.b)
 
 
 class Studentise(Layer):
@@ -351,7 +351,7 @@ class Recurrent(RNN):
         self.b = th.shared(has_bias * init(size))
         self.iW = th.shared(init((size, insize)) / np.sqrt(insize + size))
         self.sW = th.shared(init((size, size)) / np.sqrt(size + size))
-        self.f = fun
+        self.fun = fun
         self.insize = insize
         self.size = size
 
@@ -360,7 +360,7 @@ class Recurrent(RNN):
 
     def json(self, params=False):
         res = OrderedDict([('type', "recurrent"),
-                           ('activation', self.f.func_name),
+                           ('activation', self.fun.func_name),
                            ('size', self.size),
                            ('insize', self.insize),
                            ('bias', self.has_bias)])
@@ -382,7 +382,7 @@ class Recurrent(RNN):
     def step(self, in_vec, in_state):
         iV = T.tensordot(in_vec, self.iW, axes=(1, 1))
         sV = T.tensordot(in_state, self.sW, axes=(1, 1))
-        state_out = self.f(iV + sV + self.b)
+        state_out = self.fun(iV + sV + self.b)
         return state_out
 
 
