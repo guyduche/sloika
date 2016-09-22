@@ -85,7 +85,6 @@ def run_job(args):
 
     # arglist for training
     arglist = [os.path.join(sloika_gitdir,"bin/train_network.py"),
-               "--window", "3",
                "--bad",
                args["model"],
                args["output_directory"],
