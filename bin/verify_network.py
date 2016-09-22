@@ -20,7 +20,8 @@ parser.add_argument('--kmer', default=5, metavar='length', type=Positive(int),
     help='Length of kmer')
 parser.add_argument('--sd', default=0.5, metavar='value', type=Positive(float),
     help='Standard deviation to initialise with')
-    help='Display version information.')
+parser.add_argument('--version', nargs=0, action=display_version_and_exit,
+    metavar=__version__, help='Display version information.')
 parser.add_argument('model', metavar='file.py', action=FileExists,
     help='File to read python model description from')
 
