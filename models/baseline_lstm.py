@@ -1,6 +1,6 @@
 import sloika.module_tools as smt
 
-def network(winlen, klen, sd, nfeature=4, size=64):
+def network(klen, sd, winlen=3, nfeature=4, size=64):
     """ Create standard Nanonet
 
     :param winlen: Window size
