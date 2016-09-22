@@ -5,7 +5,7 @@ import sys
 import time
 
 from untangled import bio
-from untangled.cmdargs import (FileExists, Maybe, proportion, Positive, Vector)
+from untangled.cmdargs import (AutoBool, FileExists, Maybe, proportion, Positive, Vector)
 from untangled import fast5
 from untangled.iterators import imap_mp
 
@@ -24,12 +24,14 @@ parser.add_argument('--min_prob', metavar='proportion', default=1e-5,
     type=proportion, help='Minimum allowed probabiility for basecalls')
 parser.add_argument('--section', default='template', choices=['template', 'complement'],
     help='Section to call')
+parser.add_argument('--skip', default=0.0, type=Positive(float), help='Skip penalty')
 parser.add_argument('--strand_list', default=None, action=FileExists,
     help='strand summary file containing subset.')
-parser.add_argument('--skip', default=0.0, type=Positive(float), help='Skip penalty')
+parser.add_argument('--transducer', default=True, action=AutoBool,
+    help='Model is transducer')
 parser.add_argument('--trans', default=None, action=Vector(proportion), nargs=3,
     metavar=('stay', 'step', 'skip'), help='Base transition probabilities')
-parser.add_argument('--trim', default=(500, 50), nargs=2, type=Positive(int),
+parser.add_argument('--trim', default=(50, 1), nargs=2, type=Positive(int),
     metavar=('beginning', 'end'), help='Number of events to trim off start and end')
 parser.add_argument('--window', default=3, type=Positive(int), metavar='length',
     help='Window length for input features')
@@ -37,9 +39,16 @@ parser.add_argument('model', action=FileExists, help='Pickled model file')
 parser.add_argument('input_folder', action=FileExists,
     help='Directory containing single-read fast5 files.')
 
+_ETA = 1e-10
 
-def prepare_post(post, min_prob=1e-5, init_trans=None):
+
+def prepare_post(post, min_prob=1e-5, drop_bad=False):
     post = np.squeeze(post, axis=1)
+    if drop_bad:
+        maxcall = np.argmax(post, axis=1)
+        post = post[maxcall > 0, 1:]
+        weight = np.sum(post, axis=1, keepdims=True)
+        post /= weight
     return min_prob + (1.0 - min_prob) * post
 
 
@@ -51,7 +60,7 @@ def init_worker(model):
 
 
 def basecall(args, fn):
-    from sloika import decode, features
+    from sloika import decode, features, olddecode
     try:
         with fast5.Reader(fn) as f5:
             ev = f5.get_section_events(args.section)
@@ -66,16 +75,21 @@ def basecall(args, fn):
     inMat = features.from_events(ev, tag='')
     inMat = np.expand_dims(inMat, axis=1)
 
-    post = prepare_post(calc_post(inMat), args.min_prob)
+    post = prepare_post(calc_post(inMat), min_prob=args.min_prob, drop_bad=(not args.transducer))
 
-    score, call = decode.viterbi(post, args.kmer, skip_pen=args.skip)
+    if args.transducer:
+        score, call = decode.viterbi(post, args.kmer, skip_pen=args.skip)
+    else:
+        trans = olddecode.estimate_transitions(post, trans=args.trans)
+        score, call = olddecode.decode_profile(post, trans=np.log(_ETA + trans), log=False)
 
     return sn, score, call, inMat.shape[0]
 
 
 class SeqPrinter(object):
-    def __init__(self, kmerlen, fh=None):
+    def __init__(self, kmerlen, transducer=False, fh=None):
         self.kmers = bio.all_kmers(kmerlen)
+        self.transducer = transducer
         self.close_fh = False
 
         if fh is None:
@@ -93,7 +107,7 @@ class SeqPrinter(object):
 
     def write(self, read_name, score, call, nev):
         kmer_path = [self.kmers[i] for i in call]
-        seq = bio.kmers_to_sequence(kmer_path, homopolymer_step=True)
+        seq = bio.kmers_to_sequence(kmer_path, homopolymer_step=self.transducer)
         self.fh.write(">{} {} {} events to {} bases\n".format(read_name, score,
                                                               nev, len(seq)))
         self.fh.write(seq + '\n')
@@ -102,7 +116,7 @@ class SeqPrinter(object):
 
 if __name__ == '__main__':
     args = parser.parse_args()
-    seq_printer = SeqPrinter(args.kmer)
+    seq_printer = SeqPrinter(args.kmer, transducer=args.transducer)
 
     files = fast5.iterate_fast5(args.input_folder, paths=True, limit=args.limit,
                                 strand_list=args.strand_list)
