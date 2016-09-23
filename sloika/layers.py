@@ -440,8 +440,8 @@ class Lstm(RNN):
                            ('bias', self.has_bias),
                            ('peep', self.has_peep)])
         if params:
-            res['params'] = OrderedDict([('iW', _extract(self.iW, (self.size, 4, self.insize))),
-                                         ('sW', _extract(self.sW, (self.size, 4, self.size))),
+            res['params'] = OrderedDict([('iW', _extract(self.iW, (4, self.size, self.insize))),
+                                         ('sW', _extract(self.sW, (4, self.size, self.size))),
                                          ('b', _extract(self.b, (4, self.size))),
                                          ('p', _extract(self.p, (3, self.size)))])
         return res
@@ -454,9 +454,9 @@ class Lstm(RNN):
         if self.has_peep:
             assert values['p'].shape == (3, self.size)
             self.p = th.shared(values['p'])
-        assert values['iW'].shape == (self.size, 4, self.insize)
+        assert values['iW'].shape == (4, self.size, self.insize)
         self.iW = th.shared(values['iW'].reshape((self.size * 4, self.insize)))
-        assert values['sW'].shape == (self.size, 4, self.size)
+        assert values['sW'].shape == (4, self.size, self.size)
         self.sW = th.shared(values['sW'].reshape((self.size * 4, self.size)))
 
     def step(self, in_vec, in_state):
@@ -529,8 +529,8 @@ class LstmO(RNN):
                            ('bias', self.has_bias),
                            ('peep', self.has_peep)])
         if params:
-            res['params'] = OrderedDict([('iW', _extract(self.iW, (self.size, 3, self.insize))),
-                                         ('sW', _extract(self.sW, (self.size, 3, self.size))),
+            res['params'] = OrderedDict([('iW', _extract(self.iW, (3, self.size, self.insize))),
+                                         ('sW', _extract(self.sW, (3, self.size, self.size))),
                                          ('b', _extract(self.b, (3, self.size))),
                                          ('p', _extract(self.p, (3, self.size)))])
         return res
@@ -542,9 +542,9 @@ class LstmO(RNN):
         if self.has_peep:
             assert values['p'].shape == (3, self.size)
             self.p = th.shared(values['p'])
-        assert values['iW'].shape == (self.size, 3, self.insize)
+        assert values['iW'].shape == (3, self.size, self.insize)
         self.iW = th.shared(values['iW'].reshape((3 * self.size, self.insize)))
-        assert values['sW'].shape == (self.size, 3, self.size)
+        assert values['sW'].shape == (3, self.size, self.size)
         self.sW = th.shared(values['sW'].reshape((3 * self.size, self.size)))
 
 
@@ -595,8 +595,8 @@ class Forget(RNN):
                            ('insize', self.insize),
                            ('bias', self.has_bias)])
         if params:
-            res['params'] = OrderedDict([('iW', _extract(self.iW, (self.size, 2, self.insize))),
-                                         ('sW', _extract(self.sW, (self.size, 2, self.size))),
+            res['params'] = OrderedDict([('iW', _extract(self.iW, (2, self.size, self.insize))),
+                                         ('sW', _extract(self.sW, (2, self.size, self.size))),
                                          ('b', _extract(self.b, (2, self.size)))])
         return res
 
@@ -604,9 +604,9 @@ class Forget(RNN):
         if self.has_bias:
             assert values['b'].shape == (2, self.size)
             self.b = th.shared(values['b'].reshape(-1))
-        assert values['iW'].shape == (self.size, 2, self.insize)
+        assert values['iW'].shape == (2, self.size, self.insize)
         self.iW = th.shared(values['iW'].reshape((2 * self.size, self.insize)))
-        assert values['sW'].shape == (self.size, 2, self.size)
+        assert values['sW'].shape == (2, self.size, self.size)
         self.sW = th.shared(values['sW'].reshape((2 * self.size, self.size)))
 
     def step(self, in_vec, in_state):
@@ -653,8 +653,8 @@ class Gru(RNN):
                            ('insize', self.insize),
                            ('bias', self.has_bias)])
         if params:
-            res['params'] = OrderedDict([('iW', _extract(self.iW, (self.size, 3, self.insize))),
-                                         ('sW', _extract(self.sW, (self.size, 2, self.size))),
+            res['params'] = OrderedDict([('iW', _extract(self.iW, (3, self.size, self.insize))),
+                                         ('sW', _extract(self.sW, (2, self.size, self.size))),
                                          ('sW2', _extract(self.sW2)),
                                          ('b', _extract(self.b, (3, self.size)))])
         return res
@@ -663,9 +663,9 @@ class Gru(RNN):
         if self.has_bias:
             assert values['b'].shape == (3, self.size)
             self.b = th.shared(values['b'].reshape(-1))
-        assert values['iW'].shape == (self.size, 3, self.insize)
+        assert values['iW'].shape == (3, self.size, self.insize)
         self.iW = th.shared(values['iW'].reshape((3 * self.size, self.insize)))
-        assert values['sW'].shape == (self.size, 2, self.size)
+        assert values['sW'].shape == (2, self.size, self.size)
         self.sW = th.shared(values['sW'].reshape((2 * self.size, self.size)))
         assert values['sW2'].shape == (self.size,  self.size)
         self.sW2 = th.shared(values['sW2'])
@@ -721,7 +721,7 @@ class Mut1(RNN):
                            ('insize', self.insize),
                            ('bias', self.has_bias)])
         if params:
-            res['params'] = OrderedDict([('iW', _extract(self.iW, (self.size, 2, self.insize))),
+            res['params'] = OrderedDict([('iW', _extract(self.iW, (2, self.size, self.insize))),
                                          ('sW', _extract(self.sW)),
                                          ('sW2', _extract(self.sW2)),
                                          ('b', _extarct(self.b, (2, self.size))),
@@ -734,7 +734,7 @@ class Mut1(RNN):
             self.b = th.shared(values['b'].reshape(-1))
             assert values['b2'].shape == (self.size)
             self.b2 = th.shared(values['b2'].reshape(-1))
-        assert values['iW'].shape == (self.size, 2, self.insize)
+        assert values['iW'].shape == (2, self.size, self.insize)
         self.iW = th.shared(values['iW'].reshape((2 * self.size, self.insize)))
         assert values['sW'].shape == (self.size, self.size)
         self.sW = th.shared(values['sW'])
