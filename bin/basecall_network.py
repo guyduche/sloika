@@ -16,7 +16,7 @@ parser = argparse.ArgumentParser(
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('--jobs', default=4, metavar='n', type=Positive(int),
     help='Number of jobs to run in parallel')
-parser.add_argument('--kmer', default=1, metavar='length', type=Positive(int),
+parser.add_argument('--kmer', default=5, metavar='length', type=Positive(int),
     help='Length of kmer')
 parser.add_argument('--limit', default=None, metavar='reads',
     type=Maybe(Positive(int)), help='Limit number of reads to process.')
