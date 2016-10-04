@@ -90,7 +90,7 @@ def run_job(args):
                args["output_directory"],
                args["training_data"]
                ]
-    if args.transducer > 0:
+    if args["transducer"] > 0:
         arglist.append("--transducer")
     else:
         arglist.append("--no-transducer")
@@ -107,7 +107,7 @@ def run_job(args):
                    final_model,
                    args["validation_data"]
                    ]
-        if args.transducer > 0:
+        if args["transducer"] > 0:
             arglist.append("--transducer")
         else:
             arglist.append("--no-transducer")
