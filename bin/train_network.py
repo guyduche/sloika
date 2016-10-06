@@ -111,6 +111,8 @@ if __name__ == '__main__':
         all_bad = h5['bad'][:]
     nblank = np.sum(all_labels == 0, axis=1)
     max_blanks = int(all_labels.shape[1] * 0.7)
+    nchunkkeep = np.sum(nblank < max_blanks)
+    log.write('* {} chunks, keeping {}\n'.format(len(all_chunks), nchunkkeep))
     all_chunks = all_chunks[nblank < max_blanks]
     all_labels = all_labels[nblank < max_blanks]
     all_bad = all_bad[nblank < max_blanks]
