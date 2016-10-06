@@ -170,8 +170,8 @@ class ANNTest(unittest.TestCase):
             np.testing.assert_almost_equal(theano_grad[1][i], self._NBATCH * self._NSTEP)
 
     def test_014_complex_derivative(self):
-        iW = np.random.normal(size=(self._SIZE, 4, self._NFEATURES)).astype(sloika_dtype)
-        sW = np.random.normal(size=(self._SIZE, 4, self._SIZE)).astype(sloika_dtype)
+        iW = np.random.normal(size=(4, self._SIZE, self._NFEATURES)).astype(sloika_dtype)
+        sW = np.random.normal(size=(4, self._SIZE, self._SIZE)).astype(sloika_dtype)
         b = np.random.normal(size=(4, self._SIZE)).astype(sloika_dtype)
         p = np.random.normal(size=(3, self._SIZE)).astype(sloika_dtype)
         network = nn.Lstm(self._NFEATURES, self._SIZE, has_bias=True, has_peep=True)
