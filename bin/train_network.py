@@ -42,8 +42,6 @@ parser.add_argument('--sd', default=0.5, metavar='value', type=Positive(float),
     help='Standard deviation to initialise with')
 parser.add_argument('--transducer', default=True, action=AutoBool,
     help='Train a transducer based model')
-parser.add_argument('--window', default=3, type=Positive(int), metavar='length',
-    help='Window length for input features')
 parser.add_argument('--version', nargs=0, action=display_version_and_exit, metavar=__version__,
     help='Display version information.')
 parser.add_argument('model', metavar='file.py', action=FileExists,
@@ -97,7 +95,7 @@ if __name__ == '__main__':
         with h5py.File(args.input, 'r') as h5:
             klen =h5.attrs['kmer']
         netmodule = imp.load_source('netmodule', args.model)
-        network = netmodule.network(winlen=args.window, klen=klen, sd=args.sd)
+        network = netmodule.network(klen=klen, sd=args.sd)
     elif model_ext == '.pkl':
         with open(args.model, 'r') as fh:
             network = cPickle.load(fh)
@@ -113,6 +111,8 @@ if __name__ == '__main__':
         all_bad = h5['bad'][:]
     nblank = np.sum(all_labels == 0, axis=1)
     max_blanks = int(all_labels.shape[1] * 0.7)
+    nchunkkeep = np.sum(nblank < max_blanks)
+    log.write('* {} chunks, keeping {}\n'.format(len(all_chunks), nchunkkeep))
     all_chunks = all_chunks[nblank < max_blanks]
     all_labels = all_labels[nblank < max_blanks]
     all_bad = all_bad[nblank < max_blanks]

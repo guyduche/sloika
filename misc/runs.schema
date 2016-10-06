@@ -6,4 +6,5 @@ CREATE TABLE runs(
     runid integer primary key, 
     priority integer default 10, 
     sloika_commit test default NULL, 
-    validation_data text default NULL);
+    validation_data text default NULL,
+    transducer integer default 1);

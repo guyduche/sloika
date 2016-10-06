@@ -85,12 +85,15 @@ def run_job(args):
 
     # arglist for training
     arglist = [os.path.join(sloika_gitdir,"bin/train_network.py"),
-               "--window", "3",
                "--bad",
                args["model"],
                args["output_directory"],
                args["training_data"]
                ]
+    if args["transducer"] > 0:
+        arglist.append("--transducer")
+    else:
+        arglist.append("--no-transducer")
 
     proc = subprocess.Popen(arglist, env=env)
     proc.wait()
@@ -104,6 +107,11 @@ def run_job(args):
                    final_model,
                    args["validation_data"]
                    ]
+        if args["transducer"] > 0:
+            arglist.append("--transducer")
+        else:
+            arglist.append("--no-transducer")
+
         with open(os.path.join(args["output_directory"], "model_final.validate"), "w") as fh:
             proc = subprocess.Popen(arglist, env=env, stdout=fh)
             proc.wait()

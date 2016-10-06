@@ -1,9 +1,8 @@
 import sloika.module_tools as smt
 
-def network(winlen, klen, sd, size=64, nfeature=4):
+def network(klen, sd, size=64, nfeature=4):
     """ Create standard Nanonet
 
-    :param winlen: Window size
     :param size: size of hidden smt
     :param nfilter: Number of filters to use (None: normal windowing)
     :param fun: activation function

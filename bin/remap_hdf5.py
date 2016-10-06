@@ -1,4 +1,4 @@
-#!/usr/bin/env python 
+#!/usr/bin/env python
 import argparse
 import cPickle
 import h5py
@@ -8,7 +8,7 @@ import sys
 import time
 
 from untangled import bio, fast5
-from untangled.cmdargs import (AutoBool, display_version_and_exit, FileExists, 
+from untangled.cmdargs import (AutoBool, display_version_and_exit, FileExists,
                                NonNegative, Positive, Maybe)
 from untangled.iterators import imap_mp, izip
 
@@ -23,7 +23,7 @@ parser.add_argument('--batch', metavar='size', default=1000, type=Positive(int),
     help='Number of posterior matrices to calculate simulataneously on GPU')
 parser.add_argument('--jobs', default=8, type=Positive(int),
     help='Number of jobs to run in parallel')
-parser.add_argument('--slip', default=None, metavar='score', type=Maybe(NonNegative(float)),
+parser.add_argument('--slip', default=None, metavar='penalty', type=Maybe(NonNegative(float)),
     help='Slip penalty')
 parser.add_argument('--version', nargs=0, action=display_version_and_exit, metavar=__version__,
     help='Display version information.')
@@ -104,7 +104,7 @@ if __name__ == '__main__':
                 assert len(lbls) == len(inMat)
                 assert len(lbls) == len(post)
                 idata = izip(xrange(idx, idx + len(lbls)), inMat, post, lbls)
-               
+
                 for res in imap_mp(map_transducer, idata, threads=args.jobs, fix_args=[args], unordered=True):
                     idx, inMat, labels, path = res
                     chunk_ds[idx] = inMat
@@ -114,5 +114,5 @@ if __name__ == '__main__':
                     ichunk += 1
                     if ichunk % 50 == 0:
                         sys.stderr.write('{:6d} {:8d}\n'.format(ichunk // 50, ichunk))
-             
+
     sys.stderr.write('\n')

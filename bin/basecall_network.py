@@ -16,7 +16,7 @@ parser = argparse.ArgumentParser(
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('--jobs', default=4, metavar='n', type=Positive(int),
     help='Number of jobs to run in parallel')
-parser.add_argument('--kmer', default=1, metavar='length', type=Positive(int),
+parser.add_argument('--kmer', default=5, metavar='length', type=Positive(int),
     help='Length of kmer')
 parser.add_argument('--limit', default=None, metavar='reads',
     type=Maybe(Positive(int)), help='Limit number of reads to process.')
@@ -33,8 +33,6 @@ parser.add_argument('--trans', default=None, action=Vector(proportion), nargs=3,
     metavar=('stay', 'step', 'skip'), help='Base transition probabilities')
 parser.add_argument('--trim', default=(50, 1), nargs=2, type=Positive(int),
     metavar=('beginning', 'end'), help='Number of events to trim off start and end')
-parser.add_argument('--window', default=3, type=Positive(int), metavar='length',
-    help='Window length for input features')
 parser.add_argument('model', action=FileExists, help='Pickled model file')
 parser.add_argument('input_folder', action=FileExists,
     help='Directory containing single-read fast5 files.')
