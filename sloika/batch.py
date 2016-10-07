@@ -39,14 +39,17 @@ def filter_by_rate(position, chunk, time=None, fact=3.0):
     return np.logical_and(bps < thresh, bps > -thresh)
 
 
-def _kmer_worker(fn, section, chunk_len, kmer_len, trim, use_scaled, normalise):
+def _kmer_worker(fn, section, chunk_len, kmer_len, min_length, trim, use_scaled, normalise):
     """  Worker for reading kmer-overlap data
 
-    :param fn: Fast5 filename
+    :param fn: A filename to read from.
     :param section: Section of read to process (template / complement)
     :param chunk_len: Length on each chunk
     :param kmer_len: Kmer length for training
-    :param trim: Tuple of number of events to trim from start and end
+    :param min_length: Minumum number of events before read can be 
+    considered.
+    :param trim: Tuple (beginning, end) of number of events to trim from
+    read.
     :param use_scaled: Use prescaled event statistics
     :param normalise: Do per-strand normalisation
     """
@@ -60,9 +63,9 @@ def _kmer_worker(fn, section, chunk_len, kmer_len, trim, use_scaled, normalise):
     except:
         return fn, None, None, None
 
-    if len(ev) < sum(trim) + chunk_len:
+    if len(ev) < sum(trim) + chunk_len or len(ev) < min_length:
         return fn, None, None, None
-    ev = ev[trim[0] : -trim[1]]
+    ev = ev[begin : end]
 
     new_inMat = features.from_events(ev, tag='' if use_scaled else 'scaled_',
                                      normalise=normalise)
@@ -86,15 +89,18 @@ def _kmer_worker(fn, section, chunk_len, kmer_len, trim, use_scaled, normalise):
     return fn, new_inMat, new_labels, new_bad
 
 
-def kmers(files, section, chunk_len, kmer_len, trim=(0, 0), use_scaled=False,
-          normalise=True):
+def kmers(files, section, chunk_len, kmer_len, min_length=0, trim=(0, 0), 
+          use_scaled=False, normalise=True):
     """ Batch data together for kmer training
 
     :param files: A `set` of files to read
     :param section: Section of read to process (template / complement)
-    :param batch_size: Size of batch of chunks.  None == emit all
     :param chunk_len: Length on each chunk
     :param kmer_len: Kmer length for training
+    :param min_length: Minumum number of events before read can be 
+    considered.
+    :param trim: Tuple (beginning, end) of number of events to trim from
+    read.
     :param use_scaled: Use prescaled event statistics
     :param normalise: Do per-strand normalisation
 
