@@ -13,6 +13,11 @@ def argmax(post):
     path = np.argmax(post, axis=1)
     return path[path != blank_state]
 
+def ishomopolymer(idx, klen):
+    base = (_NBASE ** klen - 1) / (klen - 1)
+    hidx = np.arange(4) * base + 1
+    return idx in hidx
+
 
 def viterbi(post, klen, skip_pen=0.0, log=False):
     """  Viterbi decoding of a kmer transducer
@@ -57,13 +62,34 @@ def viterbi(post, klen, skip_pen=0.0, log=False):
         traceback[i] = np.where(vscore > score_stay, traceback[i], -1)
         vscore = np.maximum(vscore, score_stay)
 
-    seq = np.empty(nev, dtype=np.int16)
+    stseq = np.empty(nev, dtype=np.int16)
     seq = [np.argmax(vscore)]
     for i in range(nev - 1, 0, -1):
         #  Viterbi traceback
         tstate = traceback[i][seq[-1]]
         if tstate >= 0:
             seq.append(tstate)
+        stseq[i - 1] = tstate
+
+    inhomo = None
+    for i in range(nev):
+        if inhomo is not None:
+            if stseq[i] != inhomo and stseq[i] != 0:
+                # Homopolymer ended
+                print 'Predicted length {} -> {}'.format(slen, plen)
+                inhomo = None
+            else:
+                # Homopolymer continuing
+                if stseq[i] == inhomo:
+                    slen += 1
+                plen += np.exp(prob[i, inhomo])
+        if inhomo is None and ishomopolymer(stseq[i], klen):
+            # Starting a new homopolymer
+            inhomo = stseq[i]
+            slen = plen = klen
+    if inhomo is not None:
+        # Homopolymer ended
+        print 'Predicted length {} -> {}'.format(slen, plen)
 
     return np.amax(vscore), seq[::-1]
 
