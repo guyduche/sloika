@@ -27,7 +27,7 @@ parser.add_argument('--section', default='template', choices=['template', 'compl
 parser.add_argument('--skip', default=0.0, type=Positive(float), help='Skip penalty')
 parser.add_argument('--strand_list', default=None, action=FileExists,
     help='strand summary file containing subset.')
-parser.add_argument('--transducer', default=True, action=AutoBool,
+parser.add_argument('--transducer', default=False, action=AutoBool,
     help='Model is transducer')
 parser.add_argument('--trans', default=None, action=Vector(proportion), nargs=3,
     metavar=('stay', 'step', 'skip'), help='Base transition probabilities')
