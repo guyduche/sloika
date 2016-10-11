@@ -114,6 +114,7 @@ def kmers(files, section, chunk_len, kmer_len, min_length=0, trim=(0, 0),
 
     wargs = {'chunk_len' : chunk_len,
              'kmer_len' : kmer_len,
+             'min_length' : min_length,
              'normalise' : normalise,
              'section' : section,
              'trim' : trim,
