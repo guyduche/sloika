@@ -1,13 +1,13 @@
 import sloika.module_tools as smt
 
-def network(klen, sd, winlen=3, nfeature=4, size=64):
+def network(klen, sd, winlen=3, size=64, nfeature=4):
     """ Create standard Nanonet with LSTM recurrent units
 
     :param klen: Length of kmer
     :param sd: Standard Deviation of initialisation noise
     :param winlen: Length of window over data
-    :param nfeature: Number of features
     :param size: size of hidden recurrent layers
+    :param nfeature: Number of features
 
     :returns: a `class`:layer.Layer:
     """
