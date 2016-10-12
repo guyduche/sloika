@@ -36,6 +36,8 @@ parser.add_argument('--lrdecay', default=5000, metavar='batches', type=Positive(
     help='Number of batches to halving of learning rate')
 parser.add_argument('--niteration', metavar='batches', type=Positive(int), default=50000,
     help='Maximum number of batches to train for')
+parser.add_argument('--reweight', metavar='group', default=None, type=Maybe(str),
+    help="Select chunk according to weights in 'group'")
 parser.add_argument('--save_every', metavar='x', type=Positive(int), default=5000,
     help='Save model every x batches')
 parser.add_argument('--sd', default=0.5, metavar='value', type=Positive(float),
@@ -109,13 +111,9 @@ if __name__ == '__main__':
         all_chunks = h5['chunks'][:]
         all_labels = h5['labels'][:]
         all_bad = h5['bad'][:]
-    nblank = np.sum(all_labels == 0, axis=1)
-    max_blanks = int(all_labels.shape[1] * 0.7)
-    nchunkkeep = np.sum(nblank < max_blanks)
-    log.write('* {} chunks, keeping {}\n'.format(len(all_chunks), nchunkkeep))
-    all_chunks = all_chunks[nblank < max_blanks]
-    all_labels = all_labels[nblank < max_blanks]
-    all_bad = all_bad[nblank < max_blanks]
+        all_weights = h5[args.reweight if args.reweight is not None else 'weights'][:]
+
+    all_weights /= np.sum(all_weights)
     if not args.transducer:
         remove_blanks(all_labels)
     if args.bad:
@@ -132,7 +130,8 @@ if __name__ == '__main__':
     log.write('* Training\n')
     for i in xrange(args.niteration):
         learning_rate = args.adam.rate / (1.0 + i * lrfactor)
-        idx = np.sort(np.random.choice(len(all_chunks), size=args.batch, replace=False))
+        idx = np.sort(np.random.choice(len(all_chunks), size=args.batch,
+                                       replace=False, p=all_weights))
         events = np.ascontiguousarray(all_chunks[idx].transpose((1, 0, 2)))
         labels = np.ascontiguousarray(all_labels[idx].transpose())
 

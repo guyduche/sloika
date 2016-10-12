@@ -8,13 +8,15 @@ import sys
 from sloika import batch, sloika_dtype
 from sloika.features import NFEATURES
 
-from untangled.cmdargs import (AutoBool, FileExists, Maybe, Positive)
+from untangled.cmdargs import (AutoBool, FileExists, Maybe, Positive, proportion)
 from untangled import fast5
 
 parser = argparse.ArgumentParser(
     description = 'Create HDF file of a dataset',
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
+parser.add_argument('--blanks', metavar='proportion', default=0.7,
+    type=proportion, help='Maximum proportion of blanks in labels')
 parser.add_argument('--chunk', default=500, metavar='events', type=Positive(int),
     help='Length of each read chunk')
 parser.add_argument('--kmer', default=5, metavar='length', type=Positive(int),
@@ -84,6 +86,11 @@ if __name__ == '__main__':
         all_bad[idx : idx + bad_size] = bad
         idx += bad_size
 
+    #  Mark chunks with too many blanks with a zero weight
+    nblank = np.sum(all_labels == 0, axis=1)
+    max_blanks = int(all_labels.shape[1] * args.blanks)
+    all_weights = nblank < max_blanks
+
 
     rotation = np.identity(all_chunks.shape[-1])
     centre = np.zeros(all_chunks.shape[-1])
@@ -94,15 +101,15 @@ if __name__ == '__main__':
         # Centre
         centre = np.mean(all_chunks, axis=0, dtype=np.float64).astype(sloika_dtype)
         all_chunks -= centre
-        
-        # Rotate 
+
+        # Rotate
         V = linalg.blas.ssyrk(1.0, all_chunks, trans=True, lower=True) / np.float32(len(all_chunks))
         V = V + V.T - np.diag(np.diag(V))
         L0 = linalg.cho_factor(V, lower=True)
 
         all_chunks = linalg.solve_triangular(L0[0], all_chunks.T, trans=False, lower=L0[1])
         all_chunks = np.ascontiguousarray(all_chunks.T)
-        
+
         all_chunks = all_chunks.reshape(chunk_shape)
 
     print '* Writing out to HDF5'
@@ -110,9 +117,11 @@ if __name__ == '__main__':
         bad_ds = h5.create_dataset('bad', all_bad.shape, dtype='i1')
         chunk_ds = h5.create_dataset('chunks', all_chunks.shape, dtype='f4')
         label_ds = h5.create_dataset('labels', all_labels.shape, dtype='i4')
+        weight_ds = h5.create_dataset('weights', all_weights.shape, dtype='f4')
         bad_ds[:] = all_bad
         chunk_ds[:] = all_chunks
         label_ds[:] = all_labels
+        weight_ds[:] = all_weights
         h5['rotation'] = rotation
         h5['centre'] = centre
         h5['/'].attrs['chunk'] = args.chunk
