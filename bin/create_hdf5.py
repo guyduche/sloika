@@ -40,6 +40,19 @@ parser.add_argument('input_folder', action=FileExists,
     help='Directory containing single-read fast5 files.')
 parser.add_argument('output', help='Output HDF5 file')
 
+
+def unfold_list(chunks):
+    nchunk = reduce(lambda x, y: x + y.shape[0], chunks, 0)
+    shape = (nchunk,) + chunks[0].shape[1:]
+    unfolded = np.empty(shape, dtype=chunks[0].dtype)
+    idx = 0
+    for chunk in chunks:
+        chunk_size = len(chunk)
+        unfolded[idx : idx + chunk_size] = chunk
+        idx += chunk_size
+    return  unfolded
+
+
 if __name__ == '__main__':
     args = parser.parse_args()
 
@@ -64,27 +77,9 @@ if __name__ == '__main__':
         label_list.append(labels)
         bad_list.append(bad)
 
-    nchunks = sum(map(lambda x: len(x), label_list))
-    nfeature = chunk_list[0].shape[-1]
-    label_len = label_list[0].shape[-1]
-    all_chunks = np.empty((nchunks, args.chunk, nfeature), dtype=sloika_dtype)
-    all_labels = np.empty((nchunks, label_len), dtype=np.int32)
-    all_bad = np.empty((nchunks, label_len), dtype=np.int8)
-    idx = 0
-    for chunk in chunk_list:
-        chunk_size = len(chunk)
-        all_chunks[idx : idx + chunk_size] = chunk
-        idx += chunk_size
-    idx = 0
-    for label in label_list:
-        label_size = len(label)
-        all_labels[idx : idx + label_size] = label
-        idx += label_size
-    idx = 0
-    for bad in bad_list:
-        bad_size = len(bad)
-        all_bad[idx : idx + bad_size] = bad
-        idx += bad_size
+    all_chunks = unfold_list(chunk_list)
+    all_labels = unfold_list(label_list)
+    all_bad = unfold_list(bad_list)
 
     #  Mark chunks with too many blanks with a zero weight
     nblank = np.sum(all_labels == 0, axis=1)

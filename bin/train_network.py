@@ -12,7 +12,7 @@ import time
 import theano as th
 import theano.tensor as T
 
-from untangled.cmdargs import (AutoBool, display_version_and_exit, FileExists,
+from untangled.cmdargs import (AutoBool, display_version_and_exit, FileExists, Maybe,
                                NonNegative, ParseToNamedTuple, Positive)
 
 from sloika import updates, __version__
@@ -36,7 +36,7 @@ parser.add_argument('--lrdecay', default=5000, metavar='batches', type=Positive(
     help='Number of batches to halving of learning rate')
 parser.add_argument('--niteration', metavar='batches', type=Positive(int), default=50000,
     help='Maximum number of batches to train for')
-parser.add_argument('--reweight', metavar='group', default=None, type=Maybe(str),
+parser.add_argument('--reweight', metavar='group', default='weights', type=Maybe(str),
     help="Select chunk according to weights in 'group'")
 parser.add_argument('--save_every', metavar='x', type=Positive(int), default=5000,
     help='Save model every x batches')
@@ -111,7 +111,10 @@ if __name__ == '__main__':
         all_chunks = h5['chunks'][:]
         all_labels = h5['labels'][:]
         all_bad = h5['bad'][:]
-        all_weights = h5[args.reweight if args.reweight is not None else 'weights'][:]
+        if args.reweight is not None:
+            all_weights = h5[args.reweight][:]
+        else:
+            all_weights = np.ones(len(all_chunks))
 
     all_weights /= np.sum(all_weights)
     if not args.transducer:
