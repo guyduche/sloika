@@ -1,12 +1,12 @@
 import sloika.module_tools as smt
 
 def network(klen, sd, size=64, nfeature=4):
-    """ Create standard Nanonet
+    """ GRU Nanonet with window of size 5
 
-    :param size: size of hidden smt
-    :param nfilter: Number of filters to use (None: normal windowing)
-    :param fun: activation function
     :param klen: Length of kmer
+    :param sd: Standard Deviation of initialisation noise
+    :param size: size of hidden recurrent layers
+    :param nfeature: Number of features
 
     :returns: a `class`:layer.Layer:
     """

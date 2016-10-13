@@ -22,7 +22,7 @@ parser.add_argument('--bad', default=True, action=AutoBool,
     help='Use bad events as a separate state')
 parser.add_argument('--batch', default=200, metavar='size', type=Positive(int),
     help='Batch size (number of chunks to run in parallel)')
-parser.add_argument('--transducer', default=True, action=AutoBool,
+parser.add_argument('--transducer', default=False, action=AutoBool,
     help='Model is a transducer')
 parser.add_argument('--version', nargs=0, action=display_version_and_exit, metavar=__version__,
     help='Display version information.')

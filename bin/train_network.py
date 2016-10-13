@@ -42,7 +42,7 @@ parser.add_argument('--save_every', metavar='x', type=Positive(int), default=500
     help='Save model every x batches')
 parser.add_argument('--sd', default=0.5, metavar='value', type=Positive(float),
     help='Standard deviation to initialise with')
-parser.add_argument('--transducer', default=True, action=AutoBool,
+parser.add_argument('--transducer', default=False, action=AutoBool,
     help='Train a transducer based model')
 parser.add_argument('--version', nargs=0, action=display_version_and_exit, metavar=__version__,
     help='Display version information.')
