@@ -41,17 +41,6 @@ parser.add_argument('input_folder', action=FileExists,
 parser.add_argument('output', help='Output HDF5 file')
 
 
-def unfold_list(chunks):
-    nchunk = reduce(lambda x, y: x + y.shape[0], chunks, 0)
-    shape = (nchunk,) + chunks[0].shape[1:]
-    unfolded = np.empty(shape, dtype=chunks[0].dtype)
-    idx = 0
-    for chunk in chunks:
-        chunk_size = len(chunk)
-        unfolded[idx : idx + chunk_size] = chunk
-        idx += chunk_size
-    return  unfolded
-
 
 if __name__ == '__main__':
     args = parser.parse_args()
@@ -77,9 +66,9 @@ if __name__ == '__main__':
         label_list.append(labels)
         bad_list.append(bad)
 
-    all_chunks = unfold_list(chunk_list)
-    all_labels = unfold_list(label_list)
-    all_bad = unfold_list(bad_list)
+    all_chunks = np.vstack(chunk_list)
+    all_labels = np.vstack(label_list)
+    all_bad = np.vstack(bad_list)
 
     #  Mark chunks with too many blanks with a zero weight
     nblank = np.sum(all_labels == 0, axis=1)
