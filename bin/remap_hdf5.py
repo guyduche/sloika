@@ -81,6 +81,7 @@ if __name__ == '__main__':
             label_ds = h5.create_dataset('labels', h5in['labels'].shape, dtype='i4')
             path_ds = h5.create_dataset('paths', h5in['labels'].shape, dtype='i4')
 
+            h5['weights'] = h5in['weights'][()]
             h5['rotation'] = h5in['rotation'][()]
             if 'centre' in h5in:
                 h5['centre'] = h5in['centre'][()]
