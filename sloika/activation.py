@@ -39,7 +39,7 @@ def Cauchy(x):
     return x / (1 + T.sqr(x / 2.3849))
 
 def GemanMcClure(x):
-    return x / T.sqt(1 + T.sqr(x))
+    return x / T.sqrt(1 + T.sqr(x))
 
 def Welsh(x):
     return x * exp(-T.sqr(x / 2.9846))
