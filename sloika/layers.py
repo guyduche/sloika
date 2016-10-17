@@ -4,6 +4,7 @@ import theano as th
 import theano.tensor as T
 import numpy as np
 
+from sloika.activation import *
 from sloika import sloika_dtype
 
 """  Convention: inMat row major (C ordering) as (time, batch, state)
@@ -13,21 +14,6 @@ _NSTEP = _NBASE
 _NSKIP = _NBASE * _NBASE
 _FORGET_BIAS = 2.0
 _INDENT = ' ' * 4
-
-def tanh(x):
-    return T.tanh(x)
-
-def sigmoid(x):
-    return T.nnet.sigmoid(x)
-
-def linear(x):
-    return x
-
-def softplus(x):
-    return T.nnet.softplus(x)
-
-def relu(x):
-    return T.nnet.relu(x)
 
 def zeros(size):
     return np.zeros(size, dtype=sloika_dtype)
