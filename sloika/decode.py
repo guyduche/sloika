@@ -2,16 +2,21 @@ import numpy as np
 
 _NBASE = 4
 
-def argmax(post):
+def argmax(post, zero_is_blank=True):
     """  Argmax decoding of simple transducer
 
     :param post: A 2D :class:`ndarray`
+    :param zero_is_blank: Zero is blank state
 
     :returns: A 1D :class:`ndarray` containing called sequence
     """
-    blank_state = post.shape[1] - 1
+    blank_state = 0 if zero_is_blank else post.shape[1] - 1
     path = np.argmax(post, axis=1)
-    return path[path != blank_state]
+    path_trimmed = path[path != blank_state] 
+    if zero_is_blank:
+        path_trimmed -= 1
+    return path_trimmed
+
 
 def ishomopolymer(idx, klen):
     base = (_NBASE ** klen - 1) / (klen - 1)
@@ -70,7 +75,7 @@ def viterbi(post, klen, skip_pen=0.0, log=False):
         if tstate >= 0:
             seq.append(tstate)
         stseq[i - 1] = tstate
-
+    """
     inhomo = None
     for i in range(nev):
         if inhomo is not None:
@@ -90,6 +95,7 @@ def viterbi(post, klen, skip_pen=0.0, log=False):
     if inhomo is not None:
         # Homopolymer ended
         print 'Predicted length {} -> {}'.format(slen, plen)
+    """
 
     return np.amax(vscore), seq[::-1]
 
