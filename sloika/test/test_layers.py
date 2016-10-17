@@ -6,7 +6,7 @@ import unittest
 import theano as th
 import theano.tensor as T
 
-from sloika import sloika_dtype
+from sloika import activation, sloika_dtype
 import sloika.layers as nn
 
 class ANNTest(unittest.TestCase):
@@ -25,7 +25,8 @@ class ANNTest(unittest.TestCase):
         self.res = self.x.dot(self.W.transpose()) + self.b
 
     def test_000_single_layer_linear(self):
-        network = nn.FeedForward(self._NFEATURES, self._SIZE, has_bias=True, fun=nn.linear)
+        network = nn.FeedForward(self._NFEATURES, self._SIZE, has_bias=True,
+                                 fun=activation.linear)
         network.set_params({ 'W': self.W, 'b': self.b})
         f = network.compile()
         np.testing.assert_almost_equal(f(self.x), self.res, decimal=5)
@@ -51,9 +52,10 @@ class ANNTest(unittest.TestCase):
         W2 = np.random.normal(size=(self._SIZE, self._SIZE)).astype(sloika_dtype)
         res = self.res.dot(W2.transpose())
 
-        l1 = nn.FeedForward(self._NFEATURES, self._SIZE, has_bias=True, fun=nn.linear)
+        l1 = nn.FeedForward(self._NFEATURES, self._SIZE, has_bias=True,
+                            fun=activation.linear)
         l1.set_params({ 'W': self.W, 'b': self.b})
-        l2 = nn.FeedForward(self._SIZE, self._SIZE, fun=nn.linear)
+        l2 = nn.FeedForward(self._SIZE, self._SIZE, fun=activation.linear)
         l2.set_params({ 'W': W2})
         network = nn.Serial([l1, l2])
         f = network.compile()
@@ -93,7 +95,8 @@ class ANNTest(unittest.TestCase):
 
     def test_007_rnn_no_state(self):
         sW = np.zeros((self._SIZE, self._SIZE), dtype=sloika_dtype)
-        network = nn.Recurrent(self._NFEATURES, self._SIZE, has_bias=True, fun=nn.linear)
+        network = nn.Recurrent(self._NFEATURES, self._SIZE, has_bias=True,
+                               fun=activation.linear)
         network.set_params({ 'iW': self.W, 'sW': sW, 'b': self.b})
         f = network.compile()
 
@@ -113,7 +116,8 @@ class ANNTest(unittest.TestCase):
     def test_009_rnn_no_input_with_bias(self):
         iW = np.zeros((self._SIZE, self._NFEATURES), dtype=sloika_dtype)
         sW = np.random.normal(size=(self._SIZE, self._SIZE)).astype(sloika_dtype)
-        network = nn.Recurrent(self._NFEATURES, self._SIZE, has_bias=True, fun=nn.linear)
+        network = nn.Recurrent(self._NFEATURES, self._SIZE, has_bias=True,
+                               fun=activation.linear)
         network.set_params({ 'iW': iW, 'sW': sW, 'b': self.b})
         f = network.compile()
 
@@ -126,9 +130,11 @@ class ANNTest(unittest.TestCase):
     def test_010_birnn_no_input_with_bias(self):
         iW = np.zeros((self._SIZE, self._NFEATURES), dtype=sloika_dtype)
         sW = np.random.normal(size=(self._SIZE, self._SIZE)).astype(sloika_dtype)
-        layer1 = nn.Recurrent(self._NFEATURES, self._SIZE, has_bias=True, fun=nn.linear)
+        layer1 = nn.Recurrent(self._NFEATURES, self._SIZE, has_bias=True,
+                              fun=activation.linear)
         layer1.set_params({ 'iW': iW, 'sW': sW, 'b': self.b})
-        layer2 = nn.Recurrent(self._NFEATURES, self._SIZE, has_bias=True, fun=nn.linear)
+        layer2 = nn.Recurrent(self._NFEATURES, self._SIZE, has_bias=True,
+                              fun=activation.linear)
         layer2.set_params({ 'iW': iW, 'sW': sW, 'b': self.b})
         network = nn.birnn(layer1, layer2)
 
@@ -138,7 +144,8 @@ class ANNTest(unittest.TestCase):
         np.testing.assert_almost_equal(res[:,:,:self._SIZE], res[::-1,:,self._SIZE:])
 
     def test_012_simple_derivative(self):
-        network = nn.FeedForward(self._NFEATURES, self._SIZE, fun=nn.linear)
+        network = nn.FeedForward(self._NFEATURES, self._SIZE,
+                                 fun=activation.linear)
         network.set_params({'W': self.W})
         params = network.params()
         x = T.tensor3()
@@ -153,7 +160,8 @@ class ANNTest(unittest.TestCase):
             np.testing.assert_almost_equal(theano_grad[i], analytic_grad, decimal=3)
 
     def test_013_simple_derivative_with_bias(self):
-        network = nn.FeedForward(self._NFEATURES, self._SIZE, has_bias=True, fun=nn.linear)
+        network = nn.FeedForward(self._NFEATURES, self._SIZE, has_bias=True,
+                                 fun=activation.linear)
         network.set_params({'W': self.W, 'b': self.b})
         params = network.params()
         x = T.tensor3()
@@ -185,7 +193,8 @@ class ANNTest(unittest.TestCase):
         theano_grad = f(self.x)[0]
 
     def test_015_save_then_load(self):
-        network = nn.FeedForward(self._NFEATURES, self._SIZE, fun=nn.linear)
+        network = nn.FeedForward(self._NFEATURES, self._SIZE,
+                                 fun=activation.linear)
         network.set_params({'W': self.W})
         params = network.params()
         x = T.tensor3()
