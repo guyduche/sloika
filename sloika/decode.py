@@ -12,7 +12,7 @@ def argmax(post, zero_is_blank=True):
     """
     blank_state = 0 if zero_is_blank else post.shape[1] - 1
     path = np.argmax(post, axis=1)
-    path_trimmed = path[path != blank_state] 
+    path_trimmed = path[path != blank_state]
     if zero_is_blank:
         path_trimmed -= 1
     return path_trimmed
@@ -75,27 +75,6 @@ def viterbi(post, klen, skip_pen=0.0, log=False):
         if tstate >= 0:
             seq.append(tstate)
         stseq[i - 1] = tstate
-    """
-    inhomo = None
-    for i in range(nev):
-        if inhomo is not None:
-            if stseq[i] != inhomo and stseq[i] != 0:
-                # Homopolymer ended
-                print 'Predicted length {} -> {}'.format(slen, plen)
-                inhomo = None
-            else:
-                # Homopolymer continuing
-                if stseq[i] == inhomo:
-                    slen += 1
-                plen += np.exp(prob[i, inhomo])
-        if inhomo is None and ishomopolymer(stseq[i], klen):
-            # Starting a new homopolymer
-            inhomo = stseq[i]
-            slen = plen = klen
-    if inhomo is not None:
-        # Homopolymer ended
-        print 'Predicted length {} -> {}'.format(slen, plen)
-    """
 
     return np.amax(vscore), seq[::-1]
 
