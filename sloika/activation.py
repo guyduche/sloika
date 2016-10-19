@@ -31,7 +31,7 @@ def Fair(x):
     return x / (1 + T.abs(x) / 1.3998)
 
 
-#  Bounded and redescenting
+#  Bounded and redescending
 def sin(x):
     return T.sin(x)
 
