@@ -12,7 +12,7 @@ from untangled.iterators import imap_mp
 
 # This is here, not in main to allow documentation to be built
 parser = argparse.ArgumentParser(
-    description='1D basecaller for simple transducers',
+    description='1D basecaller for RNNs',
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('--jobs', default=4, metavar='n', type=Positive(int),
     help='Number of jobs to run in parallel')
@@ -27,7 +27,7 @@ parser.add_argument('--section', default='template', choices=['template', 'compl
 parser.add_argument('--skip', default=0.0, type=Positive(float), help='Skip penalty')
 parser.add_argument('--strand_list', default=None, action=FileExists,
     help='strand summary file containing subset.')
-parser.add_argument('--transducer', default=False, action=AutoBool,
+parser.add_argument('--transducer', default=True, action=AutoBool,
     help='Model is transducer')
 parser.add_argument('--trans', default=None, action=Vector(proportion), nargs=3,
     metavar=('stay', 'step', 'skip'), help='Base transition probabilities')
