@@ -42,6 +42,8 @@ parser.add_argument('--save_every', metavar='x', type=Positive(int), default=500
     help='Save model every x batches')
 parser.add_argument('--sd', default=0.5, metavar='value', type=Positive(float),
     help='Standard deviation to initialise with')
+parser.add_argument('--seed', default=None, metavar='integer', type=Positive(int),
+    help='Set random number seed')
 parser.add_argument('--transducer', default=True, action=AutoBool,
     help='Train a transducer based model')
 parser.add_argument('--version', nargs=0, action=display_version_and_exit, metavar=__version__,
@@ -82,6 +84,7 @@ def wrap_network(network, l2=0.0, drop=None):
 
 if __name__ == '__main__':
     args = parser.parse_args()
+    np.random.seed(args.seed)
 
     os.mkdir(args.output)
     copyfile(args.model, os.path.join(args.output, 'model.py'))
