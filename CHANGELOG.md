@@ -1,9 +1,11 @@
 Release 1.1
 ===========
 * Activation functions have been separated into their own module and many new functions have been added.
+
    See https://wiki/display/~tmassingham/2016/10/17/Activation+functions
 * Default for training and basecalling are transducer based models.
 * Compilation of networks is handled by basecall_network.
+
    Compiled network is saved for future use.  
    compile_network.py executable has been removed.
 
