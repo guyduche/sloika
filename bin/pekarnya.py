@@ -81,7 +81,7 @@ def run_job(args):
     pid = int(multiprocessing.current_process().name.split('-')[-1])
     gpu = (pid - 1) // 2
     env = os.environ.copy()
-    env['THEANO_FLAGS'] = 'floatX=float32,warn_float64=warn,optimizer=fast_run,nvcc.fastmath=True,device=gpu{},scan.allow_gc=False,lib.cnmem=0.3'.format(gpu)
+    env['THEANO_FLAGS'] = 'floatX=float32,warn_float64=warn,optimizer=fast_run,nvcc.fastmath=True,device=gpu{},scan.allow_gc=False,lib.cnmem=0.4'.format(gpu)
 
     # arglist for training
     arglist = [os.path.join(sloika_gitdir,"bin/train_network.py"),

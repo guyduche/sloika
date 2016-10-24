@@ -1,9 +1,13 @@
 #!/usr/bin/env python
 import argparse
+import cPickle
 import numpy as np
 import sys
+import tempfile
+import theano
 import time
 
+from sloika import layers
 from untangled import bio
 from untangled.cmdargs import (AutoBool, FileExists, Maybe, proportion, Positive, Vector)
 from untangled import fast5
@@ -12,8 +16,10 @@ from untangled.iterators import imap_mp
 
 # This is here, not in main to allow documentation to be built
 parser = argparse.ArgumentParser(
-    description='1D basecaller for simple transducers',
+    description='1D basecaller for RNNs',
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+parser.add_argument('--compile', default=None, type=Maybe(str),
+    help='File output compiled model')
 parser.add_argument('--jobs', default=4, metavar='n', type=Positive(int),
     help='Number of jobs to run in parallel')
 parser.add_argument('--kmer', default=5, metavar='length', type=Positive(int),
@@ -27,7 +33,7 @@ parser.add_argument('--section', default='template', choices=['template', 'compl
 parser.add_argument('--skip', default=0.0, type=Positive(float), help='Skip penalty')
 parser.add_argument('--strand_list', default=None, action=FileExists,
     help='strand summary file containing subset.')
-parser.add_argument('--transducer', default=False, action=AutoBool,
+parser.add_argument('--transducer', default=True, action=AutoBool,
     help='Model is transducer')
 parser.add_argument('--trans', default=None, action=Vector(proportion), nargs=3,
     metavar=('stay', 'step', 'skip'), help='Base transition probabilities')
@@ -113,7 +119,25 @@ class SeqPrinter(object):
 
 
 if __name__ == '__main__':
+    sys.setrecursionlimit(10000)
     args = parser.parse_args()
+
+    # Compile model if necessary
+    with open(args.model, 'r') as fh:
+        network = cPickle.load(fh)
+        if not isinstance(network, theano.compile.function_module.Function):
+            if not isinstance(network, layers.Layer):
+                sys.stderr.write("Model file is not a network description.\n")
+                exit(1)
+            with tempfile.NamedTemporaryFile(mode='wb', dir='', suffix='.pkl', delete=False) if args.compile is None else open(args.compile, 'wb') as fh:
+                compiled_file = fh.name
+                sys.stderr.write("Compiling network and writing to {}\n".format(compiled_file))
+                compiled_network = network.compile()
+                cPickle.dump(compiled_network, fh, protocol=cPickle.HIGHEST_PROTOCOL)
+        else:
+            compiled_file = args.model
+
+
     seq_printer = SeqPrinter(args.kmer, transducer=args.transducer)
 
     files = fast5.iterate_fast5(args.input_folder, paths=True, limit=args.limit,
@@ -121,7 +145,7 @@ if __name__ == '__main__':
     nbases = nevents = 0
     t0 = time.time()
     for res in imap_mp(basecall, files, threads=args.jobs, fix_args=[args],
-                       unordered=True, init=init_worker, initargs=[args.model]):
+                       unordered=True, init=init_worker, initargs=[compiled_file]):
         if res is None:
             continue
         read, score, call, nev = res

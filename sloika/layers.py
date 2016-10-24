@@ -4,7 +4,7 @@ import theano as th
 import theano.tensor as T
 import numpy as np
 
-from sloika import sloika_dtype
+from sloika import activation, sloika_dtype
 
 """  Convention: inMat row major (C ordering) as (time, batch, state)
 """
@@ -13,21 +13,6 @@ _NSTEP = _NBASE
 _NSKIP = _NBASE * _NBASE
 _FORGET_BIAS = 2.0
 _INDENT = ' ' * 4
-
-def tanh(x):
-    return T.tanh(x)
-
-def sigmoid(x):
-    return T.nnet.sigmoid(x)
-
-def linear(x):
-    return x
-
-def softplus(x):
-    return T.nnet.softplus(x)
-
-def relu(x):
-    return T.nnet.relu(x)
 
 def zeros(size):
     return np.zeros(size, dtype=sloika_dtype)
@@ -114,7 +99,8 @@ class FeedForward(Layer):
     :params has_bias: Whether layer has bias
     :param fun: The activation function.  Must accept a numpy array as input.
     """
-    def __init__(self, insize, size, init=zeros, has_bias=False, fun=T.tanh):
+    def __init__(self, insize, size, init=zeros, has_bias=False,
+                 fun=activation.tanh):
         self.has_bias = has_bias
         self.b = th.shared(has_bias * init(size))
         self.W = th.shared(init((size, insize)) / np.sqrt(size + insize))
@@ -296,7 +282,7 @@ class Convolution(Layer):
     :params size: Layer size (number of filters)
     :param w: Size of convolution
     """
-    def __init__(self, insize, size, w, init=zeros, fun=T.tanh):
+    def __init__(self, insize, size, w, init=zeros, fun=activation.tanh):
         assert size > 0, "Size (number of filters) must be positive"
         assert w > 0, "Window size must be positive"
         self.w = w
@@ -346,7 +332,8 @@ class Recurrent(RNN):
     :params has_bias: Whether layer has bias
     :param fun: The activation function.  Must accept a numpy array as input.
     """
-    def __init__(self, insize, size, init=zeros, has_bias=False, fun=T.tanh):
+    def __init__(self, insize, size, init=zeros, has_bias=False,
+                 fun=activation.tanh):
         self.has_bias = has_bias
         self.b = th.shared(has_bias * init(size))
         self.iW = th.shared(init((size, insize)) / np.sqrt(insize + size))
@@ -410,7 +397,8 @@ class Lstm(RNN):
     :params has_peep: Whether layer has bias
     :param fun: The activation function.  Must accept a numpy array as input.
     """
-    def __init__(self, insize, size, init=zeros, has_bias=False, has_peep=False, fun=T.tanh):
+    def __init__(self, insize, size, init=zeros, has_bias=False, has_peep=False,
+                 fun=activation.tanh):
         self.size = size
         self.insize = insize
         self.has_bias = has_bias
@@ -468,11 +456,11 @@ class Lstm(RNN):
         sumW = sumW.reshape((-1, self.size, 4))
 
         #  Forget gate activation
-        out_state = state * sigmoid(sumW[:,:,2] + state * self.p[1])
+        out_state = state * activation.sigmoid(sumW[:,:,2] + state * self.p[1])
         #  Update state with input
-        out_state += self.fun(sumW[:,:,0]) * sigmoid(sumW[:,:,1] + state * self.p[0])
+        out_state += self.fun(sumW[:,:,0]) * activation.sigmoid(sumW[:,:,1] + state * self.p[0])
         #  Output gate activation
-        out = self.fun(out_state) * sigmoid(sumW[:,:,3] + out_state * self.p[2])
+        out = self.fun(out_state) * activation.sigmoid(sumW[:,:,3] + out_state * self.p[2])
         return T.concatenate((out, out_state), axis=1)
 
     def run(self, inMat):
@@ -499,7 +487,8 @@ class LstmO(RNN):
     :params has_peep: Whether layer has bias
     :param fun: The activation function.  Must accept a numpy array as input.
     """
-    def __init__(self, insize, size, init=zeros, has_bias=False, has_peep=False, fun=T.tanh):
+    def __init__(self, insize, size, init=zeros, has_bias=False, has_peep=False,
+                 fun=activation.tanh):
         self.size = size
         self.insize = insize
         self.has_bias = has_bias
@@ -555,9 +544,9 @@ class LstmO(RNN):
         sumW = sumW.reshape((-1, 3, self.size))
 
         #  Forget gate activation
-        state = in_state * sigmoid(sumW[:,2] + in_state * self.p[2])
+        state = in_state * activation.sigmoid(sumW[:,2] + in_state * self.p[2])
         #  Update state with input
-        state += self.fun(sumW[:,0] + in_state * self.p[0]) * sigmoid(sumW[:,1] + in_state * self.p[1])
+        state += self.fun(sumW[:,0] + in_state * self.p[0]) * activation.sigmoid(sumW[:,1] + in_state * self.p[1])
         return state
 
 
@@ -570,7 +559,8 @@ class Forget(RNN):
     :params has_bias: Whether layer has bias
     :param fun: The activation function.  Must accept a numpy array as input.
     """
-    def __init__(self, insize, size, init=zeros, has_bias=False, fun=T.tanh):
+    def __init__(self, insize, size, init=zeros, has_bias=False,
+                 fun=activation.tanh):
         self.size = size
         self.insize = insize
         self.has_bias = has_bias
@@ -615,7 +605,7 @@ class Forget(RNN):
         vT = vI + vS + self.b
         vT = vT.reshape((-1, 2, self.size))
 
-        forget = sigmoid(vT[:,0])
+        forget = activation.sigmoid(vT[:,0])
         state = in_state * forget + (1.0 - forget) * self.fun(vT[:,1])
         return state
 
@@ -629,7 +619,8 @@ class Gru(RNN):
     :params has_bias: Whether layer has bias
     :param fun: The activation function.  Must accept a numpy array as input.
     """
-    def __init__(self, insize, size, init=zeros, has_bias=False, fun=T.tanh):
+    def __init__(self, insize, size, init=zeros, has_bias=False,
+                 fun=activation.tanh):
         self.size = size
         self.insize = insize
         self.has_bias = has_bias
@@ -676,8 +667,8 @@ class Gru(RNN):
         vT = vI[:, :2 * self.size] + vS
         vT = vT.reshape((-1, 2, self.size))
 
-        z = sigmoid(vT[:,0])
-        r = sigmoid(vT[:,1])
+        z = activation.sigmoid(vT[:,0])
+        r = activation.sigmoid(vT[:,1])
         y = T.tensordot(r * in_state, self.sW2, axes=(1,1))
         hbar = self.fun(vI[:, 2 * self.size:] + y)
         state = z * in_state + (1 - z) * hbar
@@ -694,7 +685,8 @@ class Mut1(RNN):
     :params has_bias: Whether layer has bias
     :param fun: The activation function.  Must accept a numpy array as input.
     """
-    def __init__(self, insize, size, init=zeros, has_bias=False, fun=T.tanh):
+    def __init__(self, insize, size, init=zeros, has_bias=False,
+                 fun=activation.tanh):
         self.size = size
         self.insize = insize
         self.has_bias = has_bias
@@ -747,8 +739,8 @@ class Mut1(RNN):
         vT = vI + self.b
         vT = vT.reshape((-1, 2, self.size))
 
-        z = sigmoid(vT[:,0])
-        r = sigmoid(vT[:,1] + vS)
+        z = activation.sigmoid(vT[:,0])
+        r = activation.sigmoid(vT[:,1] + vS)
         y = T.tensordot(r * in_state, self.sW2, axes=(1,1))
         state = self.fun(y + self.fun(in_vec) + self.b2) * (1 - z) + z * in_state
         return state

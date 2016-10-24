@@ -23,6 +23,8 @@ parser.add_argument('--kmer', default=5, metavar='length', type=Positive(int),
     help='Length of kmer to estimate')
 parser.add_argument('--limit', default=None, type=Maybe(Positive(int)),
     help='Limit number of reads to process.')
+parser.add_argument('--min_length', default=1200, metavar='events', 
+    type=Positive(int), help='Minimum events in acceptable read')
 parser.add_argument('--normalise', default=True, action=AutoBool,
     help='Per-strand normalisation')
 parser.add_argument('--orthogonal', default=False, action=AutoBool,
@@ -31,7 +33,7 @@ parser.add_argument('--section', default='template',
     choices=['template', 'complement'], help='Section to call')
 parser.add_argument('--strand_list', default=None, action=FileExists,
     help='strand summary file containing subset.')
-parser.add_argument('--trim', default=(500, 50), nargs=2, type=Positive(int),
+parser.add_argument('--trim', default=(50, 10), nargs=2, type=Positive(int),
     metavar=('beginning', 'end'),
     help='Number of events to trim off start and end')
 parser.add_argument('--use_scaled', default=False, action=AutoBool,
@@ -56,6 +58,7 @@ if __name__ == '__main__':
     print '* Reading in data'
     for i, (chunks, labels, bad) in enumerate(batch.kmers(fast5_files, args.section,
                                                           args.chunk, args.kmer,
+                                                          min_length=args.min_length,
                                                           trim=args.trim,
                                                           use_scaled=args.use_scaled,
                                                           normalise=args.normalise)):

@@ -2,16 +2,26 @@ import numpy as np
 
 _NBASE = 4
 
-def argmax(post):
+def argmax(post, zero_is_blank=True):
     """  Argmax decoding of simple transducer
 
     :param post: A 2D :class:`ndarray`
+    :param zero_is_blank: Zero is blank state
 
     :returns: A 1D :class:`ndarray` containing called sequence
     """
-    blank_state = post.shape[1] - 1
+    blank_state = 0 if zero_is_blank else post.shape[1] - 1
     path = np.argmax(post, axis=1)
-    return path[path != blank_state]
+    path_trimmed = path[path != blank_state]
+    if zero_is_blank:
+        path_trimmed -= 1
+    return path_trimmed
+
+
+def ishomopolymer(idx, klen):
+    base = (_NBASE ** klen - 1) / (klen - 1)
+    hidx = np.arange(4) * base + 1
+    return idx in hidx
 
 
 def viterbi(post, klen, skip_pen=0.0, log=False):
@@ -57,13 +67,14 @@ def viterbi(post, klen, skip_pen=0.0, log=False):
         traceback[i] = np.where(vscore > score_stay, traceback[i], -1)
         vscore = np.maximum(vscore, score_stay)
 
-    seq = np.empty(nev, dtype=np.int16)
+    stseq = np.empty(nev, dtype=np.int16)
     seq = [np.argmax(vscore)]
     for i in range(nev - 1, 0, -1):
         #  Viterbi traceback
         tstate = traceback[i][seq[-1]]
         if tstate >= 0:
             seq.append(tstate)
+        stseq[i - 1] = tstate
 
     return np.amax(vscore), seq[::-1]
 

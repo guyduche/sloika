@@ -198,7 +198,7 @@ class TestDecode(unittest.TestCase):
         self.score_viterbi = -5.70653594347
 
     def test_001_argmax(self):
-        bases = decode.argmax(self.post)
+        bases = decode.argmax(self.post, zero_is_blank=False)
         self.assertEqual(len(bases), len(self.bases))
         self.assertTrue(np.array_equiv(bases, self.bases))
 
@@ -211,7 +211,7 @@ class TestDecode(unittest.TestCase):
         self.assertAlmostEqual(score, self.score_full)
 
     def test_004_score_ordering(self):
-        bases = decode.argmax(self.post)
+        bases = decode.argmax(self.post, zero_is_blank=False)
         score1 = decode.score(self.post, bases)
         score2 = decode.score(self.post, bases, full=True)
         vpath = np.argmax(self.post, axis=1)

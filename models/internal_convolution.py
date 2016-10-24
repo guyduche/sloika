@@ -1,13 +1,13 @@
 import sloika.module_tools as smt
 
-def network(klen, sd, winlen=3, size=64, nfeature=4):
+def network(klen, sd, nfeature=4, winlen=3, size=64):
     """ GRU Nanonet with internal convolution layer
 
     :param klen: Length of kmer
     :param sd: Standard Deviation of initialisation noise
+    :param nfeature: Number of features
     :param winlen: Length of window over data
     :param size: size of hidden recurrent layers
-    :param nfeature: Number of features
 
     :returns: a `class`:layer.Layer:
     """
