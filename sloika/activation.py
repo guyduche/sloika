@@ -25,10 +25,10 @@ def erf(x):
     return T.erf(x)
 
 def L1mL2(x):
-    return x / T.sqrt(1 + 0.5 * T.sqr(x))
+    return x / T.sqrt(1.0 + 0.5 * T.sqr(x))
 
 def Fair(x):
-    return x / (1 + T.abs(x) / 1.3998)
+    return x / (1.0 + T.abs_(x) / 1.3998)
 
 
 #  Bounded and redescending
@@ -36,10 +36,10 @@ def sin(x):
     return T.sin(x)
 
 def Cauchy(x):
-    return x / (1 + T.sqr(x / 2.3849))
+    return x / (1.0 + T.sqr(x / 2.3849))
 
 def GemanMcClure(x):
-    return x / T.sqr(1 + T.sqr(x))
+    return x / T.sqr(1.0 + T.sqr(x))
 
 def Welsh(x):
-    return x * exp(-T.sqr(x / 2.9846))
+    return x * T.exp(-T.sqr(x / 2.9846))
