@@ -1,7 +1,7 @@
-from fast5_research import fast5
 import glob
 import os
 import unittest
+from untangled import fast5
 
 class fast5Test(unittest.TestCase):
     @classmethod
