@@ -1,13 +1,11 @@
 #!/usr/bin/env python
 import argparse
 import cPickle
+from multiprocessing import Process, Queue
 import numpy as np
 import sys
-import tempfile
-import theano
 import time
 
-from sloika import layers
 from untangled import bio
 from untangled.cmdargs import (AutoBool, FileExists, Maybe, NonNegative,
                                proportion, Positive, Vector)
@@ -55,6 +53,29 @@ def prepare_post(post, min_prob=1e-5, drop_bad=False):
         weight = np.sum(post, axis=1, keepdims=True)
         post /= weight
     return min_prob + (1.0 - min_prob) * post
+
+
+def compile_model(q, model_file, compiled_file=None):
+    from sloika import layers
+    import tempfile
+    import theano
+
+    sys.setrecursionlimit(10000)
+    with open(model_file, 'r') as fh:
+        network = cPickle.load(fh)
+        if not isinstance(network, theano.compile.function_module.Function):
+            if not isinstance(network, layers.Layer):
+                sys.stderr.write("Model file is not a network description.\n")
+                exit(1)
+            with tempfile.NamedTemporaryFile(mode='wb', dir='', suffix='.pkl', delete=False) if compiled_file is None else open(compiled_file, 'wb') as fh:
+                compiled_file = fh.name
+                sys.stderr.write("Compiling network and writing to {}\n".format(compiled_file))
+                compiled_network = network.compile()
+                cPickle.dump(compiled_network, fh, protocol=cPickle.HIGHEST_PROTOCOL)
+        else:
+            compiled_file = args.model
+
+    q.put(compiled_file)
 
 
 def init_worker(model):
@@ -122,24 +143,14 @@ class SeqPrinter(object):
 
 
 if __name__ == '__main__':
-    sys.setrecursionlimit(10000)
     args = parser.parse_args()
 
-    # Compile model if necessary
-    with open(args.model, 'r') as fh:
-        network = cPickle.load(fh)
-        if not isinstance(network, theano.compile.function_module.Function):
-            if not isinstance(network, layers.Layer):
-                sys.stderr.write("Model file is not a network description.\n")
-                exit(1)
-            with tempfile.NamedTemporaryFile(mode='wb', dir='', suffix='.pkl', delete=False) if args.compile is None else open(args.compile, 'wb') as fh:
-                compiled_file = fh.name
-                sys.stderr.write("Compiling network and writing to {}\n".format(compiled_file))
-                compiled_network = network.compile()
-                cPickle.dump(compiled_network, fh, protocol=cPickle.HIGHEST_PROTOCOL)
-        else:
-            compiled_file = args.model
-
+    #  Model must be compiled in a separate thread, yuck.
+    q = Queue()
+    p = Process(target=compile_model, args=(q, args.model, args.compile))
+    p.start()
+    compiled_file = q.get()
+    p.join()
 
     seq_printer = SeqPrinter(args.kmer, transducer=args.transducer)
 
