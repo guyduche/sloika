@@ -76,10 +76,14 @@ if __name__ == '__main__':
 
     with h5py.File(args.output, 'w') as h5:
         with h5py.File(args.input, 'r') as h5in:
-            bad_ds = h5.create_dataset('bad', h5in['bad'].shape, dtype='i1')
-            chunk_ds = h5.create_dataset('chunks', h5in['chunks'].shape, dtype='f4')
-            label_ds = h5.create_dataset('labels', h5in['labels'].shape, dtype='i4')
-            path_ds = h5.create_dataset('paths', h5in['labels'].shape, dtype='i4')
+            bad_ds = h5.create_dataset('bad', h5in['bad'].shape, dtype='i1',
+                                       compression="gzip")
+            chunk_ds = h5.create_dataset('chunks', h5in['chunks'].shape,
+                                         dtype='f4', compression="gzip")
+            label_ds = h5.create_dataset('labels', h5in['labels'].shape,
+                                         dtype='i4', compression="gzip")
+            path_ds = h5.create_dataset('paths', h5in['labels'].shape,
+                                        dtype='i4', compression="gzip")
 
             h5['weights'] = h5in['weights'][()]
             h5['rotation'] = h5in['rotation'][()]

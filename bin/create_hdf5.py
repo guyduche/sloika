@@ -23,7 +23,7 @@ parser.add_argument('--kmer', default=5, metavar='length', type=Positive(int),
     help='Length of kmer to estimate')
 parser.add_argument('--limit', default=None, type=Maybe(Positive(int)),
     help='Limit number of reads to process.')
-parser.add_argument('--min_length', default=1200, metavar='events', 
+parser.add_argument('--min_length', default=1200, metavar='events',
     type=Positive(int), help='Minimum events in acceptable read')
 parser.add_argument('--normalise', default=True, action=AutoBool,
     help='Per-strand normalisation')
@@ -101,10 +101,14 @@ if __name__ == '__main__':
 
     print '* Writing out to HDF5'
     with h5py.File(args.output, 'w') as h5:
-        bad_ds = h5.create_dataset('bad', all_bad.shape, dtype='i1')
-        chunk_ds = h5.create_dataset('chunks', all_chunks.shape, dtype='f4')
-        label_ds = h5.create_dataset('labels', all_labels.shape, dtype='i4')
-        weight_ds = h5.create_dataset('weights', all_weights.shape, dtype='f4')
+        bad_ds = h5.create_dataset('bad', all_bad.shape, dtype='i1',
+                                   compression="gzip")
+        chunk_ds = h5.create_dataset('chunks', all_chunks.shape, dtype='f4',
+                                     compression="gzip")
+        label_ds = h5.create_dataset('labels', all_labels.shape, dtype='i4',
+                                     compression="gzip")
+        weight_ds = h5.create_dataset('weights', all_weights.shape, dtype='f4',
+                                      compression="gzip")
         bad_ds[:] = all_bad
         chunk_ds[:] = all_chunks
         label_ds[:] = all_labels
