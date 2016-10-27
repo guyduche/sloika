@@ -186,49 +186,6 @@ def alignment_to_call(trans1, trans2, alignment, rev=True):
     return states
 
 
-
-#  First four states encode stays, so all other states are offset by 3 relative
-# to transducer output.
-_STATE_TO_BASE = np.tile(range(4), 7)
-def decode_full_transducer(ltrans):
-    """  Decode a 'full transducer'
-
-    :param ltrans: A 3D :class:`nd.array` containing logarithm of transducer
-    probabilities.
-
-    :returns: A tuple containing score and path
-    """
-    nev = len(ltrans)
-    assert ltrans.shape == (nev, 4, 25), "Transducer has incorrect shape"
-
-    #  Viterbi forwards path
-    vitmat = np.empty((nev + 1, 4))
-    vitmat.fill(-5e8)  # Canary value
-    imat = np.empty((nev + 1, 4), dtype=np.int8)
-    imat.fill(-1) # Canary value
-    vitmat[0] = 0.0
-    for i in xrange(1, nev + 1):
-        for pre in xrange(4):
-            #  Stay state
-            vitmat[i, pre] = vitmat[i - 1, pre] + ltrans[i - 1, 0]
-            imat[i, pre] = pre
-        for pre in xrange(4):
-            for j in xrange(1, 25):
-                st = _STATE_TO_BASE[j + 3]
-                if vitmat[i - 1, pre] + ltrans[i - 1, j] > vitmat[i, st]:
-                    vitmat[i, st] = vitmat[i - 1, pre] + ltrans[i - 1, j]
-                    imat[i, st] = j + 3
-
-    #  Backtrace
-    path = np.empty(nev + 1, dtype=np.int8)
-    score = np.amax(vitmat[-1])
-    path[-1] = np.argmax(vitmat[-1])
-    for i in xrange(nev, 0, -1):
-        path[i - 1] = imat[i, _STATE_TO_BASE[path[i]]]
-        assert path[i - 1] >=0
-
-    return score, path
-
 def map_to_sequence(trans, sequence, slip=None, prior_initial=None, prior_final=None, log=True):
     """  Find Viterbi path through sequence for transducer
 
