@@ -8,7 +8,8 @@ import sys
 from sloika import batch, sloika_dtype
 from sloika.features import NFEATURES
 
-from untangled.cmdargs import (AutoBool, FileExists, Maybe, Positive, proportion)
+from untangled.cmdargs import (AutoBool, FileExists, Maybe, NonNegative,
+                               Positive, proportion)
 from untangled import fast5
 
 parser = argparse.ArgumentParser(
@@ -31,7 +32,7 @@ parser.add_argument('--section', default='template',
     choices=['template', 'complement'], help='Section to call')
 parser.add_argument('--strand_list', default=None, action=FileExists,
     help='strand summary file containing subset.')
-parser.add_argument('--trim', default=(500, 50), nargs=2, type=Positive(int),
+parser.add_argument('--trim', default=(500, 50), nargs=2, type=NonNegative(int),
     metavar=('beginning', 'end'),
     help='Number of events to trim off start and end')
 parser.add_argument('--use_scaled', default=False, action=AutoBool,
