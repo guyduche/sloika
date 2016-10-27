@@ -31,6 +31,7 @@ def sgd(network, loss, rate, momentum, clip=5.0):
 
     return updates
 
+
 def adam(network, loss, rate, decay, epsilon=1e-8, clip=5.0, mrate=0.0005):
     """  ADAMski optimiser
 
@@ -84,43 +85,6 @@ def adam(network, loss, rate, decay, epsilon=1e-8, clip=5.0, mrate=0.0005):
 
     return updates
 
-
-def edam(network, loss, rate, decay, epsilon=1e-8, clip=5.0):
-    """  Exponential Decay Adaptive Momentum
-    (similar to ADAM optimiser)
-
-    :param network: network to optimise
-    :param loss: loss function to optimise over
-    :param rate: rate (step size) for SGD
-    :param decay: decay for estimate of gradient and curvature
-
-
-    :returns: a dictionary containing update functions for Tensors
-    """
-    assert decay >= (0.0, 0.0), "Decay must be non-negative"
-    assert decay <= (1.0, 1.0), "Decay must be less-than or equal to one"
-
-
-    params = network.params()
-    updates = OrderedDict()
-    gradients = th.grad(loss, params)
-    for param, grad in zip(params, gradients):
-        val = param.get_value(borrow=True)
-        gr = th.shared(np.zeros(val.shape, dtype=val.dtype))
-        cu = th.shared(np.ones(val.shape, dtype=val.dtype))
-        n0 = th.shared(np.float32(0.0).astype(val.dtype))
-        n1 = th.shared(np.float32(1.0).astype(val.dtype))
-
-        grad_clip = T.clip(grad, -clip, clip)
-
-        updates[gr] = decay[0] * gr + grad_clip
-        updates[n0] = 1.0 + decay[0] * n0
-        updates[cu] = decay[1] * cu + T.square(grad_clip)
-        updates[n1] = 1.0 + decay[1] * n1
-        step = (updates[gr] / updates[n0]) / T.sqrt((updates[cu] / updates[n1]) + epsilon)
-        updates[param] = param - rate * step
-
-    return updates
 
 def param_sqr(network):
     """  Return sum of squares of network parameters
