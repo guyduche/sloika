@@ -9,7 +9,8 @@ import time
 
 from sloika import layers
 from untangled import bio
-from untangled.cmdargs import (AutoBool, FileExists, Maybe, proportion, Positive, Vector)
+from untangled.cmdargs import (AutoBool, FileExists, Maybe, NonNegative,
+                               proportion, Positive, Vector)
 from untangled import fast5
 from untangled.iterators import imap_mp
 
@@ -37,7 +38,7 @@ parser.add_argument('--transducer', default=True, action=AutoBool,
     help='Model is transducer')
 parser.add_argument('--trans', default=None, action=Vector(proportion), nargs=3,
     metavar=('stay', 'step', 'skip'), help='Base transition probabilities')
-parser.add_argument('--trim', default=(50, 1), nargs=2, type=Positive(int),
+parser.add_argument('--trim', default=(50, 1), nargs=2, type=NonNegative(int),
     metavar=('beginning', 'end'), help='Number of events to trim off start and end')
 parser.add_argument('model', action=FileExists, help='Pickled model file')
 parser.add_argument('input_folder', action=FileExists,
@@ -74,7 +75,9 @@ def basecall(args, fn):
 
     if len(ev) <= sum(args.trim):
         return None
-    ev = ev[args.trim[0] : -args.trim[1]]
+    begin, end = trim
+    end = None if end is 0 else -end
+    ev = ev[begin : end]
 
     inMat = features.from_events(ev, tag='')
     inMat = np.expand_dims(inMat, axis=1)

@@ -53,8 +53,6 @@ def _kmer_worker(fn, section, chunk_len, kmer_len, min_length, trim, use_scaled,
     :param normalise: Do per-strand normalisation
     """
     kmer_to_state = bio.kmer_mapping(kmer_len)
-    begin, end = trim
-    end = None if end is 0 else -end
 
     try:
         with fast5.Reader(fn) as f5:
@@ -64,6 +62,8 @@ def _kmer_worker(fn, section, chunk_len, kmer_len, min_length, trim, use_scaled,
 
     if len(ev) < sum(trim) + chunk_len or len(ev) < min_length:
         return fn, None, None, None
+    begin, end = trim
+    end = None if end is 0 else -end
     ev = ev[begin : end]
 
     new_inMat = features.from_events(ev, tag='' if use_scaled else 'scaled_',
