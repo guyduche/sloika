@@ -42,7 +42,7 @@ if __name__ == '__main__':
 
     #  Set some Theano options
     th.config.optimizer = 'fast_compile'
-    th.config.warn_float64 = 'warn'
+    th.config.warn_float64 = 'raise'
 
     try:
         netmodule = imp.load_source('netmodule', args.model)
@@ -56,4 +56,3 @@ if __name__ == '__main__':
     nparam = sum([p.get_value().size for p in network.params()])
     sys.stderr.write('Compilation of model {} succeeded\n'.format(os.path.basename(args.model)))
     sys.stderr.write('nparam = {}\n'.format(nparam))
-    exit(0)
