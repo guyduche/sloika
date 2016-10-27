@@ -39,17 +39,16 @@ def filter_by_rate(position, chunk, time=None, fact=3.0):
     return np.logical_and(bps < thresh, bps > -thresh)
 
 
-def _kmer_worker(fn, section, chunk_len, kmer_len, min_length, trim, use_scaled, normalise):
+def _kmer_worker(fn, section, chunk_len, kmer_len, min_length, trim, use_scaled,
+                 normalise):
     """  Worker for reading kmer-overlap data
 
     :param fn: A filename to read from.
     :param section: Section of read to process (template / complement)
     :param chunk_len: Length on each chunk
     :param kmer_len: Kmer length for training
-    :param min_length: Minumum number of events before read can be 
-    considered.
-    :param trim: Tuple (beginning, end) of number of events to trim from
-    read.
+    :param min_length: Minumum number of events before read can be considered.
+    :param trim: Tuple (beginning, end) of number of events to trim from read.
     :param use_scaled: Use prescaled event statistics
     :param normalise: Do per-strand normalisation
     """
@@ -89,7 +88,7 @@ def _kmer_worker(fn, section, chunk_len, kmer_len, min_length, trim, use_scaled,
     return fn, new_inMat, new_labels, new_bad
 
 
-def kmers(files, section, chunk_len, kmer_len, min_length=0, trim=(0, 0), 
+def kmers(files, section, chunk_len, kmer_len, min_length=0, trim=(0, 0),
           use_scaled=False, normalise=True):
     """ Batch data together for kmer training
 
@@ -97,10 +96,8 @@ def kmers(files, section, chunk_len, kmer_len, min_length=0, trim=(0, 0),
     :param section: Section of read to process (template / complement)
     :param chunk_len: Length on each chunk
     :param kmer_len: Kmer length for training
-    :param min_length: Minumum number of events before read can be 
-    considered.
-    :param trim: Tuple (beginning, end) of number of events to trim from
-    read.
+    :param min_length: Minumum number of events before read can be considered.
+    :param trim: Tuple (beginning, end) of number of events to trim from read.
     :param use_scaled: Use prescaled event statistics
     :param normalise: Do per-strand normalisation
 
