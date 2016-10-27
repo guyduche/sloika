@@ -17,12 +17,12 @@ class fast5Test(unittest.TestCase):
 
     def test_001_get_mapping_data(self):
         #  Interface used by batch.py
-        with fast5.Fast5(self.filename) as f5:
+        with fast5.Reader(self.filename) as f5:
             ev, _ = f5.get_any_mapping_data(self.section)
 
     def test_002_get_event_data(self):
         #  Interface used by basecall_network.py
-        with fast5.Fast5(self.filename) as f5:
+        with fast5.Reader(self.filename) as f5:
             ev = f5.get_section_events(self.section)
             sn = f5.filename_short
 
