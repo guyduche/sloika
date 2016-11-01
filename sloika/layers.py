@@ -343,7 +343,7 @@ class Recurrent(RNN):
         self.size = size
 
     def params(self):
-        return [self.W, self.b] if self.has_bias else [self.W]
+        return [self.iW, self.sW, self.b] if self.has_bias else [self.iW, self.sW]
 
     def json(self, params=False):
         res = OrderedDict([('type', "recurrent"),
