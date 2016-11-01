@@ -398,6 +398,8 @@ class SCRN(RNN):
         self.ffW = th.shared(init((fast_size, fast_size))) / np.sqrt(fast_size + fast_size)
         self.fun = fun
         self.insize = insize
+        self.fast_size = fast_size
+        self.slow_size = slow_size
         self.size = fast_size + slow_size
 
     def params(self):
