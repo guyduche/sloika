@@ -14,6 +14,7 @@ Release 1.1
 ### Minor changes
 
 * Changed default trimming from ends of sequence.
+* Fix to allow trimming of zero events
 * Minimum read length (in events) for chunking to take place.
 * Removed vestigial networks.py file that has been replaced by the contents of the models/ directory.
 * Seed for random number generator can be set on commandline of train_network.
