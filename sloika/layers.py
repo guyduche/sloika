@@ -392,10 +392,10 @@ class SCRN(RNN):
         # the option to learn the entries of this matrix could be added later
         self.alpha = alpha
         self.ssW = th.shared((alpha*np.identity(slow_size)).astype(sloika_dtype))
-        self.isW = th.shared(init((slow_size, insize))) / np.sqrt(slow_size + insize)
-        self.sfW = th.shared(init((fast_size, slow_size))) / np.sqrt(fast_size + slow_size)
-        self.ifW = th.shared(init((fast_size, insize))) / np.sqrt(fast_size + insize)
-        self.ffW = th.shared(init((fast_size, fast_size))) / np.sqrt(fast_size + fast_size)
+        self.isW = th.shared(init((slow_size, insize)) / np.sqrt(slow_size + insize))
+        self.sfW = th.shared(init((fast_size, slow_size)) / np.sqrt(fast_size + slow_size))
+        self.ifW = th.shared(init((fast_size, insize)) / np.sqrt(fast_size + insize))
+        self.ffW = th.shared(init((fast_size, fast_size)) / np.sqrt(fast_size + fast_size))
         self.fun = fun
         self.insize = insize
         self.fast_size = fast_size
