@@ -421,13 +421,13 @@ class SCRN(RNN):
         return res
 
     def set_params(self, values):
-        assert values['isW'].shape == (self.mem_size, self.insize)
+        assert values['isW'].shape == (self.slow_size, self.insize)
         self.isW = th.shared(values['isW'])
-        assert values['sfW'].shape == (self.size, self.mem_size)
+        assert values['sfW'].shape == (self.fast_size, self.slow_size)
         self.sfW = th.shared(values['sfW'])
-        assert values['ifW'].shape == (self.size, self.insize)
+        assert values['ifW'].shape == (self.fast_size, self.insize)
         self.ifW = th.shared(values['ifW'])
-        assert values['ffW'].shape == (self.size, self.size)
+        assert values['ffW'].shape == (self.fast_size, self.fast_size)
         self.ffW = th.shared(values['ffW'])
 
     def step(self, in_vec, in_state):
