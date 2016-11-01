@@ -30,6 +30,14 @@ def L1mL2(x):
 def Fair(x):
     return x / (1.0 + T.abs_(x) / 1.3998)
 
+def Retu(x):
+    """ Rectifying activation followed by Tanh
+
+    Inspired by more biological neural activation, see figure 1
+    http://jmlr.org/proceedings/papers/v15/glorot11a/glorot11a.pdf
+    """
+    return T.tanh(T.nnet.relu(x))
+
 
 #  Bounded and redescending
 def sin(x):
