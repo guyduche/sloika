@@ -403,7 +403,7 @@ class SCRN(RNN):
         self.size = fast_size + slow_size
 
     def params(self):
-        return [self.imW, self.msW, self.isW, self.ssW]
+        return [self.isW, self.sfW, self.ifW, self.ffW]
 
     def json(self, params=False):
         res = OrderedDict([('type', "SCRN"),
