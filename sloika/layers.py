@@ -429,8 +429,8 @@ class SCRN(RNN):
         self.ffW = th.shared(values['ffW'])
 
     def step(self, in_vec, in_state):
-        in_fast = in_state[:fast_size]
-        in_slow = in_state[fast_size:]
+        in_fast = in_state[:self.fast_size]
+        in_slow = in_state[self.fast_size:]
         iU = T.tensordot(in_vec, self.isW, axes=(1, 1))
         sU = T.tensordot(in_slow, self.ssW, axes=(1, 1))
         slow_out = iU + sU
