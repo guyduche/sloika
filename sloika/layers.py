@@ -372,6 +372,73 @@ class Recurrent(RNN):
         state_out = self.fun(iV + sV + self.b)
         return state_out
 
+class SCRN(RNN):
+    """ Structurally Constrained Recurrent Network as described in
+    https://arxiv.org/pdf/1412.7753.pdf (equations 4, 5 and 6)
+        Step:  slow_new = (1 - a) * (input_new B) + a * slow_old
+               fast_new = fun( [fast_old, slow_new, input_new] W )
+               output_new = fast_new
+
+    :params insize: Size of input to layer
+    :params fast_size: Number of fast hidden units in layer
+    :params slow_size: Number of slow units in hidden layer
+    :params alpha: Decay coefficient for memory units
+    :params init: function to initialise tensors with
+    :param fun: The activation function.  Must accept a numpy array as input.
+    """
+    def __init__(self, insize, fast_size, slow_size, init=zeros, alpha=0.95,
+                 fun=activation.sigmoid):
+        # mmW is the (non-learned) memory unit decay matrix
+        # the option to learn the entries of this matrix could be added later
+        self.alpha = alpha
+        self.ssW = th.shared((alpha*np.identity(slow_size)).astype(sloika_dtype))
+        self.isW = th.shared(init((slow_size, insize))) / np.sqrt(slow_size + insize)
+        self.sfW = th.shared(init((fast_size, slow_size))) / np.sqrt(fast_size + slow_size)
+        self.ifW = th.shared(init((fast_size, insize))) / np.sqrt(fast_size + insize)
+        self.ffW = th.shared(init((fast_size, fast_size))) / np.sqrt(fast_size + fast_size)
+        self.fun = fun
+        self.insize = insize
+        self.size = fast_size + slow_size
+
+    def params(self):
+        return [self.imW, self.msW, self.isW, self.ssW]
+
+    def json(self, params=False):
+        res = OrderedDict([('type', "SCRN"),
+                           ('activation', self.fun.func_name),
+                           ('size', self.size),
+                           ('fast_size', self.fast_size),
+                           ('slow_size', self.slow_size),
+                           ('alpha', self.alpha),
+                           ('insize', self.insize),])
+        if params:
+            res['params'] = OrderedDict([('isW', _extract(self.isW)),
+                                         ('sfW', _extract(self.sfW)),
+                                         ('ifW', _extract(self.ifW)),
+                                         ('ffW', _extract(self.ffW)),])
+        return res
+
+    def set_params(self, values):
+        assert values['isW'].shape == (self.mem_size, self.insize)
+        self.isW = th.shared(values['isW'])
+        assert values['sfW'].shape == (self.size, self.mem_size)
+        self.sfW = th.shared(values['sfW'])
+        assert values['ifW'].shape == (self.size, self.insize)
+        self.ifW = th.shared(values['ifW'])
+        assert values['ffW'].shape == (self.size, self.size)
+        self.ffW = th.shared(values['ffW'])
+
+    def step(self, in_vec, in_state):
+        in_fast = in_state[:fast_size]
+        in_slow = in_state[fast_size:]
+        iU = T.tensordot(in_vec, self.isW, axes=(1, 1))
+        sU = T.tensordot(in_slow, self.ssW, axes=(1, 1))
+        slow_out = iU + sU
+        sV = T.tensordot(slow_out, self.sfW, axes=(1, 1))
+        iV = T.tensordot(in_vec, self.ifW, axes=(1, 1))
+        fV = T.tensordot(in_fast, self.ffW, axes=(1, 1))
+        fast_out = self.fun(sV + iV + sV)
+        return T.join(1, fast_out, slow_out)
 
 class Lstm(RNN):
     """ LSTM layer with peepholes.  Implementation is to be consistent with
