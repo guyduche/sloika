@@ -917,7 +917,7 @@ class Mut1(RNN):
         if self.embed is "pad":
             _in = T.join(1, in_vec, np.zeros((1,self.size-self.insize), dtype=sloika_dtype))
         if self.embed is "learn":
-            _in = T.tensortdot(in_vec, self.E, axes=(1,1))
+            _in = T.tensordot(in_vec, self.E, axes=(1,1))
         vI = T.tensordot(_in, self.iW, axes=(1,1))
         vS = T.tensordot(in_state, self.sW, axes=(1,1))
         vT = vI + self.b
@@ -1005,12 +1005,12 @@ class Mut2(RNN):
         if self.embed is "pad":
             _in = T.join(1, in_vec, np.zeros((1, self.size - self.insize), dtype=sloika_dtype))
         if self.embed is "learn":
-            _in = T.tensortdot(in_vec, self.E, axes=(1,1))
+            _in = T.tensordot(in_vec, self.E, axes=(1,1))
         z = activation.sigmoid(T.tensordot(_in, self.W_xz, axes=(1,1))
                                 + T.tensordot(in_state, self.W_hz, axes=(1,1)) + self.b_z)
         r = activation.sigmoid(_in + T.tensordot(in_state, self.W_hr, axes=(1,1)) + self.b_r)
         y = T.tensordot(r * in_state, self.W_hh, axes=(1,1))
-        u = T.tensortdor(in_vec, self.W_hr, axes=(1,1))
+        u = T.tensordot(in_vec, self.W_hr, axes=(1,1))
         state = self.fun(y + u + self.b_h) * z + (1 - z) * in_state
         return state
 
@@ -1093,12 +1093,12 @@ class Mut3(RNN):
         if self.embed is "pad":
             _in = T.join(1, in_vec, np.zeros((1, self.size - self.insize), dtype=sloika_dtype))
         if self.embed is "learn":
-            _in = T.tensortdot(in_vec, self.E, axes=(1,1))
+            _in = T.tensordot(in_vec, self.E, axes=(1,1))
         z = activation.sigmoid(T.tensordot(_in, self.W_xz, axes=(1,1))
                                 + T.tensordot(self.fun(in_state), self.W_hz, axes=(1,1)) + self.b_z)
         r = activation.sigmoid(_in + T.tensordot(in_state, self.W_hr, axes=(1,1)) + self.b_r)
         y = T.tensordot(r * in_state, self.W_hh, axes=(1,1))
-        u = T.tensortdor(in_vec, self.W_hr, axes=(1,1))
+        u = T.tensordot(in_vec, self.W_hr, axes=(1,1))
         state = self.fun(y + u + self.b_h) * z + (1 - z) * in_state
         return state
 
