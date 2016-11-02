@@ -6,7 +6,7 @@ import os
 import sqlite3
 import subprocess
 import time
-from untangled.cmdargs import FileExists, Maybe, NonNegative, Positive, proportion
+from untangled.cmdargs import FileExists, Maybe, NonNegative, Positive
 
 _PENDING = 0
 _RUNNING = 1
