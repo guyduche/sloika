@@ -6,7 +6,7 @@ import os
 import sqlite3
 import subprocess
 import time
-from untangled.cmdargs import FileExists, Maybe, NonNegative, Positive
+from untangled.cmdargs import FileExists, Maybe, NonNegative, Positive, proportion
 
 _PENDING = 0
 _RUNNING = 1
@@ -90,6 +90,8 @@ def run_job(args):
                args["output_directory"],
                args["training_data"]
                ]
+    if args["training_parameters"] is not None:
+        arglist += args["training_parameters"].split()
     if args["transducer"] > 0:
         arglist.append("--transducer")
     else:
