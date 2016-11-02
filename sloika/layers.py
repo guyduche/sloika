@@ -866,15 +866,23 @@ class Mut1(RNN):
         assert embed in ["pad", "learn",]
         self.embed = embed
 
-        self.b = th.shared(has_bias * (init(2 * size)
-                                       + np.repeat([_FORGET_BIAS, 0],
-                                                   size).astype(sloika_dtype)))
-        self.b2 = th.shared(has_bias * init(size))
-        self.iW = th.shared(init((2 * size, insize)) / np.sqrt(insize + size))
-        self.sW = th.shared(init((size, size)) / np.sqrt(size + size))
-        self.sW2 = th.shared(init((size, size)) / np.sqrt(size + size))
+        self.b_z = th.shared(has_bias * (init(size) + _FORGET_BIAS).astype(sloika_dtype))
+        self.b_r = th.shared(has_bias * init(size))
+        self.b_h = th.shared(has_bias * init(size))
+        self.W_xz = th.shared(init((size, insize)) / np.sqrt(insize + size))
+        self.W_xr = th.shared(init((size, insize)) / np.sqrt(insize + size))
+        self.W_hr = th.shared(init((size, size)) / np.sqrt(size + size))
+        self.W_hh = th.shared(init((size, size)) / np.sqrt(size + size))
         if self.embed is "learn":
             self.E = th.shared(init((size, insize)) / np.sqrt(size + insize))
+
+    def params(self):
+        params =  [self.W_xz, self.W_xr, self.W_hr, self.W_hh]
+        if self.has_bias:
+            params += [self.b_r, self.b_z, self.b_h]
+        if self.embed is "learn":
+            params += [self.E]
+        return params
 
     def params(self):
         params =  [self.iW, self.sW, self.sW2]
@@ -892,42 +900,37 @@ class Mut1(RNN):
                            ('bias', self.has_bias),
                            ('input_embedding', self.embed)])
         if params:
-            res['params'] = OrderedDict([('iW', _extract(self.iW, (2, self.size, self.insize))),
-                                         ('sW', _extract(self.sW)),
-                                         ('sW2', _extract(self.sW2)),
-                                         ('b', _extarct(self.b, (2, self.size))),
-                                         ('b2', _extract(self.b2)),
-                                         ('E', _extract(self.E))])
+            res['params'] = OrderedDict([('W_xz', _extract(self.W_xz)),
+                                         ('W_xr', _extract(self.W_xr)),
+                                         ('W_hr', _extract(self.W_hr)),
+                                         ('W_hh', _extract(self.W_hh)),
+                                         ('b_z', _extract(self.b_z)),
+                                         ('b_h', _extract(self.b_h)),
+                                         ('b_r', _extract(self.b_r))])
         return res
 
     def set_params(self, values):
         if self.has_bias:
-            assert values['b'].shape == (2, self.size)
-            self.b = th.shared(values['b'].reshape(-1))
-            assert values['b2'].shape == (self.size)
-            self.b2 = th.shared(values['b2'].reshape(-1))
-        assert values['iW'].shape == (2, self.size, self.insize)
-        self.iW = th.shared(values['iW'].reshape((2 * self.size, self.insize)))
-        assert values['sW'].shape == (self.size, self.size)
-        self.sW = th.shared(values['sW'])
-        assert values['sW2'].shape == (self.size,  self.size)
-        self.sW2 = th.shared(values['sW2'])
+            check_set(self.b_r, values['b_r'], (self.size))
+            check_set(self.b_h, values['b_h'], (self.size))
+            check_set(self.b_z, values['b_z'], (self.size))
+        check_set(self.W_xz, values['W_xz'], (self.size, self.insize))
+        check_set(self.W_xr, values['W_xr'], (self.size, self.insize))
+        check_set(self.W_hr, values['W_hr'], (self.size, self.size))
+        check_set(self.W_hh, values['W_hh'], (self.size, self.size))
 
     def step(self, in_vec, in_state):
         if self.embed is "pad":
-            _in = T.join(1, in_vec, np.zeros((1,self.size-self.insize), dtype=sloika_dtype))
+            _in = T.join(1, in_vec, np.zeros((1, self.size - self.insize), dtype=sloika_dtype))
         if self.embed is "learn":
             _in = T.tensordot(in_vec, self.E, axes=(1,1))
-        vI = T.tensordot(_in, self.iW, axes=(1,1))
-        vS = T.tensordot(in_state, self.sW, axes=(1,1))
-        vT = vI + self.b
-        vT = vT.reshape((-1, 2, self.size))
-
-        z = activation.sigmoid(vT[:,0])
-        r = activation.sigmoid(vT[:,1] + vS)
-        y = T.tensordot(r * in_state, self.sW2, axes=(1,1))
-        state = self.fun(y + self.fun(_in) + self.b2) * (1 - z) + z * in_state
+        z = activation.sigmoid(T.tensordot(_in, self.W_xz, axes=(1,1)) + self.b_z)
+        r = activation.sigmoid(T.tensordot(in_vec, self.W_xr, axes=(1,1))
+                                + T.tensordot(in_state, self.W_hr, axes=(1,1)) + self.b_r)
+        y = T.tensordot(r * in_state, self.W_hh, axes=(1,1))
+        state = self.fun(y + self.fun(_in) + self.b_h) * z + (1 - z) * in_state
         return state
+
 
 class Mut2(RNN):
     """ MUT2 from Jozefowicz
