@@ -855,15 +855,15 @@ class Mut1(RNN):
     :params has_bias: Whether layer has bias
     :param fun: The activation function.  Must accept a numpy array as input.
     :param embed: Method for embedding input in R^size. Options are "pad" to
-        pad with zeros. This is the only option for now.
+        pad with zeros, or "learn" to learn an embedding.
     """
     def __init__(self, insize, size, init=zeros, has_bias=False,
-                 fun=activation.tanh, embed="pad"):
+                 fun=activation.tanh, embed="learn"):
         self.size = size
         self.insize = insize
         self.has_bias = has_bias
         self.fun = fun
-        assert embed in ["pad",]
+        assert embed in ["pad", "learn",]
         self.embed = embed
 
         self.b = th.shared(has_bias * (init(2 * size)
@@ -873,11 +873,15 @@ class Mut1(RNN):
         self.iW = th.shared(init((2 * size, insize)) / np.sqrt(insize + size))
         self.sW = th.shared(init((size, size)) / np.sqrt(size + size))
         self.sW2 = th.shared(init((size, size)) / np.sqrt(size + size))
+        if self.embed is "learn":
+            self.E = th.shared(init((size, insize)) / np.sqrt(size + insize))
 
     def params(self):
         params =  [self.iW, self.sW, self.sW2]
         if self.has_bias:
             params += [self.b, self.b2]
+        if self.embed is "learn":
+            params += [self.E]
         return params
 
     def json(self, params=False):
@@ -892,7 +896,8 @@ class Mut1(RNN):
                                          ('sW', _extract(self.sW)),
                                          ('sW2', _extract(self.sW2)),
                                          ('b', _extarct(self.b, (2, self.size))),
-                                         ('b2', _extract(self.b2))])
+                                         ('b2', _extract(self.b2)),
+                                         ('E', _extract(self.E))])
         return res
 
     def set_params(self, values):
@@ -911,6 +916,8 @@ class Mut1(RNN):
     def step(self, in_vec, in_state):
         if self.embed is "pad":
             _in = T.join(1, in_vec, np.zeros((1,self.size-self.insize), dtype=sloika_dtype))
+        if self.embed is "learn":
+            _in = T.tensortdot(in_vec, self.E, axes=(1,1))
         vI = T.tensordot(_in, self.iW, axes=(1,1))
         vS = T.tensordot(in_state, self.sW, axes=(1,1))
         vT = vI + self.b
@@ -936,15 +943,15 @@ class Mut2(RNN):
     :params has_bias: Whether layer has bias
     :param fun: The activation function.  Must accept a numpy array as input.
     :param embed: Method for embedding input in R^size. Options are "pad" to
-        pad with zeros. This is the only option for now.
+        pad with zeros, or "learn" to learn an embedding.
     """
     def __init__(self, insize, size, init=zeros, has_bias=False,
-                 fun=activation.tanh):
+                 fun=activation.tanh, embed="learn"):
         self.size = size
         self.insize = insize
         self.has_bias = has_bias
         self.fun = fun
-        assert embed in ["pad,"]
+        assert embed in ["pad", "learn",]
         self.embed = embed
 
         self.b_z = th.shared(has_bias * (init(size) + _FORGET_BIAS).astype(sloika_dtype))
@@ -955,11 +962,15 @@ class Mut2(RNN):
         self.W_hr = th.shared(init((size, size)) / np.sqrt(size + size))
         self.W_hh = th.shared(init((size, size)) / np.sqrt(size + size))
         self.W_xh = th.shared(init((size, insize)) / np.sqrt(size + size))
+        if self.embed is "learn":
+            self.E = th.shared(init((size, insize)) / np.sqrt(size + insize))
 
     def params(self):
         params =  [self.W_xz, self.W_hz, self.W_hr, self.W_hh, self.W_xh]
         if self.has_bias:
             params += [self.b_r, self.b_z, self.b_h]
+        if self.embed is "learn":
+            params += [self.E]
         return params
 
     def json(self, params=False):
@@ -993,6 +1004,8 @@ class Mut2(RNN):
     def step(self, in_vec, in_state):
         if self.embed is "pad":
             _in = T.join(1, in_vec, np.zeros((1, self.size - self.insize), dtype=sloika_dtype))
+        if self.embed is "learn":
+            _in = T.tensortdot(in_vec, self.E, axes=(1,1))
         z = activation.sigmoid(T.tensordot(_in, self.W_xz, axes=(1,1))
                                 + T.tensordot(in_state, self.W_hz, axes=(1,1)) + self.b_z)
         r = activation.sigmoid(_in + T.tensordot(in_state, self.W_hr, axes=(1,1)) + self.b_r)
@@ -1015,15 +1028,15 @@ class Mut3(RNN):
     :params has_bias: Whether layer has bias
     :param fun: The activation function.  Must accept a numpy array as input.
     :param embed: Method for embedding input in R^size. Options are "pad" to
-        pad with zeros. This is the only option for now.
+        pad with zeros, or "learn" to learn an embedding.
     """
     def __init__(self, insize, size, init=zeros, has_bias=False,
-                 fun=activation.tanh):
+                 fun=activation.tanh, embed="learn"):
         self.size = size
         self.insize = insize
         self.has_bias = has_bias
         self.fun = fun
-        assert embed in ["pad,"]
+        assert embed in ["pad", "learn",]
         self.embed = embed
 
         self.b_z = th.shared(has_bias * (init(size) + _FORGET_BIAS).astype(sloika_dtype))
@@ -1035,11 +1048,15 @@ class Mut3(RNN):
         self.W_hr = th.shared(init((size, size)) / np.sqrt(size + size))
         self.W_hh = th.shared(init((size, size)) / np.sqrt(size + size))
         self.W_xh = th.shared(init((size, insize)) / np.sqrt(size + size))
+        if self.embed is "learn":
+            self.E = th.shared(init((size, insize)) / np.sqrt(size + insize))
 
     def params(self):
         params =  [self.W_xz, self.W_hz, self.W_xr, self.W_hr, self.W_hh, self.W_xh]
         if self.has_bias:
             params += [self.b_r, self.b_z, self.b_h]
+        if self.embed is "learn":
+            params += [self.E]
         return params
 
     def json(self, params=False):
@@ -1075,6 +1092,8 @@ class Mut3(RNN):
     def step(self, in_vec, in_state):
         if self.embed is "pad":
             _in = T.join(1, in_vec, np.zeros((1, self.size - self.insize), dtype=sloika_dtype))
+        if self.embed is "learn":
+            _in = T.tensortdot(in_vec, self.E, axes=(1,1))
         z = activation.sigmoid(T.tensordot(_in, self.W_xz, axes=(1,1))
                                 + T.tensordot(self.fun(in_state), self.W_hz, axes=(1,1)) + self.b_z)
         r = activation.sigmoid(_in + T.tensordot(in_state, self.W_hr, axes=(1,1)) + self.b_r)
