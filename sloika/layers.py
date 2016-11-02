@@ -973,6 +973,7 @@ class Mut3(RNN):
             check_set(self.b_z, values['b_z'], (self.size))
         check_set(self.W_xz, values['W_xz'], (self.size, self.insize))
         check_set(self.W_hz, values['W_hz'], (self.size, self.size))
+        check_set(self.W_xr, values['W_hr'], (self.size, self.insize))
         check_set(self.W_hr, values['W_hr'], (self.size, self.size))
         check_set(self.W_hh, values['W_hh'], (self.size, self.size))
         check_set(self.W_xh, values['W_xh'], (self.size, self.insize))
