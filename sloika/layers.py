@@ -541,6 +541,100 @@ class Lstm(RNN):
                          outputs_info=T.zeros((nbatch, 2 * self.size)))
         return out[:,:,:self.size]
 
+class LstmCIFG(RNN):
+    """ LSTM layer with coupled input and forget gates.
+
+    Step:
+        v = [ input_new, output_old ]
+        Pforget = sigmoid( v W2 + b2 + state * p1)
+        Pupdate = 1 - Pforget
+        Update  = tanh( v W0 + b0 )
+        state_new = state_old * Pforget + Update * Pupdate
+        Poutput = sigmoid( v W3 + b3 + state * p2)
+        output_new = tanh(state) * Poutput
+
+    :Note: The inputs are arranged to maintain compatibilty it the older version
+    of the LSTM layer and several of the processing steps could be optimised out.
+
+    :params insize: Size of input to layer
+    :params size: Layer size
+    :params init: function to initialise tensors with
+    :params has_bias: Whether layer has bias
+    :params has_peep: Whether layer has peep
+    :param fun: The activation function.  Must accept a numpy array as input.
+    """
+    def __init__(self, insize, size, init=zeros, has_bias=False, has_peep=False,
+                 fun=activation.tanh):
+        self.size = size
+        self.insize = insize
+        self.has_bias = has_bias
+        self.has_peep = has_peep
+        self.fun = fun
+
+        self.b = th.shared(has_bias * (init(3 * size)
+                                       + np.repeat([0, _FORGET_BIAS, 0],
+                                                   size).astype(sloika_dtype)))
+        self.p = th.shared(has_peep * init((2, size)) / np.sqrt(size))
+        self.iW = th.shared(init((3 * size, insize)) / np.sqrt(insize + size))
+        self.sW = th.shared(init((3 * size, size)) / np.sqrt(size + size))
+
+    def params(self):
+        params =  [self.iW, self.sW]
+        if self.has_bias:
+            params += [self.b]
+        if self.has_peep:
+            params += [self.p]
+        return params
+
+    def json(self, params=False):
+        res = OrderedDict([('type', "LSTMCIFG"),
+                           ('activation', self.fun.func_name),
+                           ('size', self.size),
+                           ('insize', self.insize),
+                           ('bias', self.has_bias),
+                           ('peep', self.has_peep)])
+        if params:
+            res['params'] = OrderedDict([('iW', _extract(self.iW, (3, self.size, self.insize))),
+                                         ('sW', _extract(self.sW, (3, self.size, self.size))),
+                                         ('b', _extract(self.b, (3, self.size))),
+                                         ('p', _extract(self.p, (2, self.size)))])
+        return res
+
+
+    def set_params(self, values):
+        if self.has_bias:
+            assert values['b'].shape == (3, self.size)
+            self.b = th.shared(values['b'].transpose().reshape(-1))
+        if self.has_peep:
+            assert values['p'].shape == (2, self.size)
+            self.p = th.shared(values['p'])
+        assert values['iW'].shape == (3, self.size, self.insize)
+        self.iW = th.shared(values['iW'].reshape((self.size * 3, self.insize)))
+        assert values['sW'].shape == (3, self.size, self.size)
+        self.sW = th.shared(values['sW'].reshape((self.size * 3, self.size)))
+
+    def step(self, in_vec, in_state):
+        vW = T.tensordot(in_vec, self.iW, axes=(1, 1))
+        out_prev = in_state[:,:self.size]
+        state = in_state[:,self.size:]
+        outW = T.tensordot(out_prev, self.sW, axes=(1, 1))
+        sumW = vW + outW  + self.b
+        sumW = sumW.reshape((-1, self.size, 3))
+
+        #  Forget gate activation
+        forget = activation.sigmoid(sumW[:,:,1] + state * self.p[0])
+        out_state = state * forget
+        #  Update state with input
+        out_state += self.fun(sumW[:,:,0]) * (1 - forget)
+        #  Output gate activation
+        out = self.fun(out_state) * activation.sigmoid(sumW[:,:,2] + out_state * self.p[1])
+        return T.concatenate((out, out_state), axis=1)
+
+    def run(self, inMat):
+        nbatch = T.shape(inMat)[1]
+        out, _ = th.scan(self.step, sequences=inMat,
+                         outputs_info=T.zeros((nbatch, 2 * self.size)))
+        return out[:,:,:self.size]
 
 class LstmO(RNN):
     """ LSTM layer with peepholes but no output gate.
