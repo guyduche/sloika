@@ -14,7 +14,7 @@ _SUCCESS = 2
 _FAILURE = 3
 _SUSPEND = 4
 
-sloika_gitdir = "/home/ubuntu/git/sloika"
+sloika_gitdir = os.path.expanduser(os.path.join('~', 'git', 'sloika'))
 
 parser = argparse.ArgumentParser(
     description = 'server for model training',
