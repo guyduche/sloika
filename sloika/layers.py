@@ -916,7 +916,7 @@ class Mut1(RNN):
             _in = T.join(1, in_vec, np.zeros((1, self.size - self.insize), dtype=sloika_dtype))
         if self.embed is "learn":
             _in = T.tensordot(in_vec, self.E, axes=(1,1))
-        z = activation.sigmoid(T.tensordot(_in, self.W_xz, axes=(1,1)) + self.b_z)
+        z = activation.sigmoid(T.tensordot(in_vec, self.W_xz, axes=(1,1)) + self.b_z)
         r = activation.sigmoid(T.tensordot(in_vec, self.W_xr, axes=(1,1))
                                 + T.tensordot(in_state, self.W_hr, axes=(1,1)) + self.b_r)
         y = T.tensordot(r * in_state, self.W_hh, axes=(1,1))
