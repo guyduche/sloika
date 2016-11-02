@@ -884,14 +884,6 @@ class Mut1(RNN):
             params += [self.E]
         return params
 
-    def params(self):
-        params =  [self.iW, self.sW, self.sW2]
-        if self.has_bias:
-            params += [self.b, self.b2]
-        if self.embed is "learn":
-            params += [self.E]
-        return params
-
     def json(self, params=False):
         res = OrderedDict([('type', "MUT1"),
                            ('activation', self.fun.func_name),
