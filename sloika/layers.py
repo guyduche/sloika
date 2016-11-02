@@ -437,8 +437,7 @@ class SCRN(RNN):
         in_fast = in_state[:, :self.fast_size]
         in_slow = in_state[:, self.fast_size:]
         iU = T.tensordot(in_vec, self.isW, axes=(1, 1))
-        sU = T.tensordot(in_slow, self.ssW, axes=(1, 1))
-        slow_out = iU + sU
+        slow_out = ((1.0 - alpha) * iU) + (alpha * in_slow)
         sV = T.tensordot(slow_out, self.sfW, axes=(1, 1))
         iV = T.tensordot(in_vec, self.ifW, axes=(1, 1))
         fV = T.tensordot(in_fast, self.ffW, axes=(1, 1))
