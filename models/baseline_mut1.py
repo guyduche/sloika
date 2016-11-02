@@ -21,17 +21,17 @@ def network(klen, sd, nfeature=4, winlen=3, size=64):
     inlayer = smt.Window(winlen)
 
     fwd1 = smt.Mut1(insize, size, init=_prn, has_bias=True,
-                       has_peep=True, fun=rnn_act)
+                       fun=rnn_act)
     bwd1 = smt.Mut1(insize, size, init=_prn, has_bias=True,
-                       has_peep=True, fun=rnn_act)
+                       fun=rnn_act)
     layer1 = smt.birnn(fwd1, bwd1)
 
     layer2 = smt.FeedForward(2 * size, size, has_bias=True, fun=ff_act)
 
     fwd3 = smt.Mut1(size, size, init=_prn, has_bias=True,
-                       has_peep=True, fun=rnn_act)
+                       fun=rnn_act)
     bwd3 = smt.Mut1(size, size, init=_prn, has_bias=True,
-                       has_peep=True, fun=rnn_act)
+                       fun=rnn_act)
     layer3 = smt.birnn(fwd3, bwd3)
 
     layer4 = smt.FeedForward(2 * size, size, init=_prn, has_bias=True, fun=ff_act)
