@@ -28,7 +28,7 @@ parser.add_argument('--bad', default=True, action=AutoBool,
     help='Use bad events as a separate state')
 parser.add_argument('--batch', default=100, metavar='size', type=Positive(int),
     help='Batch size (number of chunks to run in parallel)')
-parser.add_argument('--drop', default=None, metavar='events', type=Positive(int),
+parser.add_argument('--drop', default=0, metavar='events', type=NonNegative(int),
     help='Drop a number of events from start and end of chunk before evaluating loss')
 parser.add_argument('--l2', default=0.0, metavar='penalty', type=NonNegative(float),
     help='L2 penalty on parameters')
@@ -62,10 +62,10 @@ def remove_blanks(labels):
                 lbl_ch[i] = lbl_ch[i - 1]
     return labels
 
-def wrap_network(network, l2=0.0, drop=None):
-    ldrop, udrop = drop, drop
-    if drop is not None:
-        udrop = - udrop
+def wrap_network(network, l2=0.0, drop=0):
+    ldrop, udrop = drop, -drop
+    if udrop == 0:
+        udrop = None
 
     x = T.tensor3()
     labels = T.imatrix()
