@@ -716,7 +716,7 @@ class Mut1(RNN):
             res['params'] = OrderedDict([('iW', _extract(self.iW, (2, self.size, self.insize))),
                                          ('sW', _extract(self.sW)),
                                          ('sW2', _extract(self.sW2)),
-                                         ('b', _extarct(self.b, (2, self.size))),
+                                         ('b', _extract(self.b, (2, self.size))),
                                          ('b2', _extract(self.b2))])
         return res
 
