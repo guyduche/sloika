@@ -23,6 +23,9 @@ def _extract(x, shape=None):
         xv = xv.reshape(shape)
     return xv.tolist()
 
+def check_set(var, val, shape):
+    assert val.shape == shape
+    var = th.shared(val)
 
 class Layer(object):
     __metaclass__ = abc.ABCMeta
@@ -745,21 +748,29 @@ class Gru(RNN):
 
 
 class Mut1(RNN):
-    """ MUT1 from Jozefowicz
+    """ Based on MUT1 from Jozefowicz
     http://jmlr.org/proceedings/papers/v37/jozefowicz15.pdf
+    However, MutN as described expects scalar inputs, whereas we have
+    1 < insize <= size. It is therefore necessary to embed inputs in size-dim
+    space (and apply any non-linearity on the input elementwise) to preserve
+    the MutN structure.
 
     :params insize: Size of input to layer
     :params size: Layer size
     :params init: function to initialise tensors with
     :params has_bias: Whether layer has bias
     :param fun: The activation function.  Must accept a numpy array as input.
+    :param embed: Method for embedding input in R^size. Options are "pad" to
+        pad with zeros. This is the only option for now.
     """
     def __init__(self, insize, size, init=zeros, has_bias=False,
-                 fun=activation.tanh):
+                 fun=activation.tanh, embed="pad"):
         self.size = size
         self.insize = insize
         self.has_bias = has_bias
         self.fun = fun
+        assert embed in ["pad",]
+        self.embed = embed
 
         self.b = th.shared(has_bias * (init(2 * size)
                                        + np.repeat([_FORGET_BIAS, 0],
@@ -780,7 +791,8 @@ class Mut1(RNN):
                            ('activation', self.fun.func_name),
                            ('size', self.size),
                            ('insize', self.insize),
-                           ('bias', self.has_bias)])
+                           ('bias', self.has_bias),
+                           ('input_embedding', self.embed)])
         if params:
             res['params'] = OrderedDict([('iW', _extract(self.iW, (2, self.size, self.insize))),
                                          ('sW', _extract(self.sW)),
@@ -803,7 +815,9 @@ class Mut1(RNN):
         self.sW2 = th.shared(values['sW2'])
 
     def step(self, in_vec, in_state):
-        vI = T.tensordot(in_vec, self.iW, axes=(1,1))
+        if self.embed is "pad":
+            _in = T.join(1, in_vec, np.zeros((1,self.size-self.insize), dtype=sloika_dtype))
+        vI = T.tensordot(_in, self.iW, axes=(1,1))
         vS = T.tensordot(in_state, self.sW, axes=(1,1))
         vT = vI + self.b
         vT = vT.reshape((-1, 2, self.size))
@@ -811,7 +825,82 @@ class Mut1(RNN):
         z = activation.sigmoid(vT[:,0])
         r = activation.sigmoid(vT[:,1] + vS)
         y = T.tensordot(r * in_state, self.sW2, axes=(1,1))
-        state = self.fun(y + self.fun(in_vec) + self.b2) * (1 - z) + z * in_state
+        state = self.fun(y + self.fun(_in) + self.b2) * (1 - z) + z * in_state
+        return state
+
+class Mut2(RNN):
+    """ MUT2 from Jozefowicz
+    http://jmlr.org/proceedings/papers/v37/jozefowicz15.pdf
+    However, MutN as described expects scalar inputs, whereas we have
+    1 < insize <= size. It is therefore necessary to embed inputs in size-dim
+    space (and apply any non-linearity on the input elementwise) to preserve
+    the MutN structure.
+
+    :params insize: Size of input to layer
+    :params size: Layer size
+    :params init: function to initialise tensors with
+    :params has_bias: Whether layer has bias
+    :param fun: The activation function.  Must accept a numpy array as input.
+    :param embed: Method for embedding input in R^size. Options are "pad" to
+        pad with zeros. This is the only option for now.
+    """
+    def __init__(self, insize, size, init=zeros, has_bias=False,
+                 fun=activation.tanh):
+        self.size = size
+        self.insize = insize
+        self.has_bias = has_bias
+        self.fun = fun
+        assert embed in ["pad,"]
+        self.embed = embed
+
+        self.b_z = th.shared(has_bias * (init(size) + _FORGET_BIAS).astype(sloika_dtype))
+        self.b_r = th.shared(has_bias * init(size))
+        self.b_h = th.shared(has_bias * init(size))
+        self.W_xz = th.shared(init((size, insize)) / np.sqrt(insize + size))
+        self.W_hz = th.shared(init((size, size)) / np.sqrt(size + size))
+        self.W_hr = th.shared(init((size, size)) / np.sqrt(size + size))
+        self.W_hh = th.shared(init((size, size)) / np.sqrt(size + size))
+        self.W_xh = th.shared(init((size, insize)) / np.sqrt(size + size))
+
+    def params(self):
+        params =  [self.W_xz, self.W_hz, self.W_hr, self.W_hh, self.W_xh]
+        if self.has_bias:
+            params += [self.b_r, self.b_z, self.b_h]
+        return params
+
+    def json(self, params=False):
+        res = OrderedDict([('type', "MUT2"),
+                           ('activation', self.fun.func_name),
+                           ('size', self.size),
+                           ('insize', self.insize),
+                           ('bias', self.has_bias)])
+        if params:
+            res['params'] = OrderedDict([('W_xz', _extract(self.W_xz)),
+                                         ('W_hz', _extract(self.W_hz)),
+                                         ('W_hr', _extract(self.W_hr)),
+                                         ('W_hh', _extract(self.W_hh)),
+                                         ('W_xh', _extract(self.W_xh))])
+        return res
+
+    def set_params(self, values):
+        if self.has_bias:
+            check_set(self.b_r, values['b_r'], (self.size))
+            check_set(self.b_h, values['b_h'], (self.size))
+            check_set(self.b_z, values['b_z'], (self.size))
+        check_set(self.W_xz, values['W_xz'], (self.size, self.insize))
+        check_set(self.W_hz, values['W_hz'], (self.size, self.size))
+        check_set(self.W_hr, values['W_hr'], (self.size, self.size))
+        check_set(self.W_hh, values['W_hh'], (self.size, self.size))
+        check_set(self.W_xh, values['W_xh'], (self.size, self.insize))
+
+    def step(self, in_vec, in_state):
+        if self.embed is "pad":
+            _in = T.join(1, in_vec, np.zeros((1, self.size - self.insize), dtype=sloika_dtype))
+        z = activation.sigmoid(T.tensordot(_in, self.W_xz, axes=(1,1)) + self.b_z)
+        r = activation.sigmoid(_in + T.tensordot(in_state, self.W_hr, axes=(1,1)) + self.b_r)
+        y = T.tensordot(r * in_state, self.W_hh, axes=(1,1))
+        u = T.tensortdor(in_vec, self.W_hr, axes=(1,1))
+        state = self.fun(y + u + self.b_h) * z + (1 - z) * in_state
         return state
 
 
