@@ -190,14 +190,15 @@ if __name__ == '__main__':
         all_labels[all_bad] = 0
 
     if args.ilf:
-        #  Calculate label weights using inverse frequency
+        #  Calculate frequency of labels and convert into inverse frequency
         label_weights = np.zeros(np.max(all_labels) + 1, dtype='f4')
         for i, lbls in enumerate(all_labels):
             label_weights += all_weights[i] * np.bincount(lbls, minlength=len(label_weights))
+        label_weights = np.reciprocal(label_weights)
+        label_weights /= np.mean(label_weights)
     else:
+        # Default equally weighted
         label_weights = np.ones(np.max(all_labels) + 1, dtype='f4')
-    label_weights = np.reciprocal(label_weights)
-    label_weights /= np.mean(label_weights)
 
     log.write('* Reading network from {}\n'.format(args.model))
     model_ext = os.path.splitext(args.model)[1]
