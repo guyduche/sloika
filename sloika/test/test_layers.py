@@ -1,4 +1,6 @@
+import abc
 import cPickle
+import json
 import numpy as np
 import tempfile
 import unittest
@@ -252,3 +254,79 @@ class ANNTest(unittest.TestCase):
         res = f(self.res)
 
         np.testing.assert_almost_equal(res, self.res)
+
+class LayerTest(object):
+    """Mixin abstract class for testing basic layer functionality"""
+    __metaclass__ = abc.ABCMeta
+
+    @abc.abstractproperty
+    def run_inputs(self):
+        """List of input arrays for testing layer.run"""
+        return []
+
+    @property
+    def init(self):
+        """Initialisation function for numpy arrays to be used in testing"""
+        return lambda dims: np.zeros(dims, dtype=sloika_dtype)
+
+    @abc.abstractmethod
+    def setUp(self):
+        """Create the layer as self.layer"""
+        return
+
+    def test_000_run(self):
+        outs = [self.layer.run(In) for In in self.run_inputs]
+
+    def test_001_compile(self):
+        out = self.layer.compile()
+
+    def test_002_json_dumps(self):
+        js = json.dumps(self.layer.json())
+
+    def test_003_json_decodes(self):
+        props = json.JSONDecoder().decode(json.dumps(self.layer.json()))
+
+    def test_004_get_set_params(self):
+        p0 = self.layer.json(params=True)["params"]
+        p0 = {p: np.array(v) for (p, v) in p0.items()}
+        self.layer.set_params(p0)
+        p1 = self.layer.json(params=True)["params"]
+        p1 = {p: np.array(v) for (p, v) in p1.items()}
+        self.assertTrue(all([np.allclose(p0[k], p1[k]) for k in p0.keys()]))
+
+class RNNTest(LayerTest):
+    """Mixin abstract class for testing basic RNN functionality"""
+    pass
+
+class RecurrentTest(RNNTest, unittest.TestCase):
+    def setUp(self):
+        self.layer = nn.Recurrent(12, 64)
+
+    @property
+    def run_inputs(self):
+        return [np.zeros((10, 20, 12))]
+
+class RecurrentBiasedTest(RNNTest, unittest.TestCase):
+    def setUp(self):
+        self.layer = nn.Recurrent(12, 64, has_bias=True)
+
+    @property
+    def run_inputs(self):
+        return [np.zeros((10, 20, 12)),]
+
+class LstmTest(RNNTest, unittest.TestCase):
+    def setUp(self):
+        self.layer = nn.Lstm(12, 64)
+
+    @property
+    def run_inputs(self):
+        return [np.zeros((10, 20, 12)),]
+
+class Mut1Test(RNNTest, unittest.TestCase):
+    def setUp(self):
+        self.layer = nn.Mut1(12, 64)
+
+    @property
+    def run_inputs(self):
+        return [np.zeros((10, 20, 12)),
+                np.random.uniform((10, 20, 12)),]
