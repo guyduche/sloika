@@ -348,3 +348,19 @@ class Mut3Test(RNNTest, unittest.TestCase):
     def run_inputs(self):
         return [np.zeros((10, 20, 12)),
                 np.random.uniform(size=(10, 20, 12)),]
+
+class GruTest(RNNTest, unittest.TestCase):
+    def setUp(self):
+        self.layer = nn.Gru(12, 64)
+
+    @property
+    def run_inputs(self):
+        return [np.zeros((10, 20, 12)),]
+
+class ScrnTest(RNNTest, unittest.TestCase):
+    def setUp(self):
+        self.layer = nn.SCRN(12, 48, 16)
+
+    @property
+    def run_inputs(self):
+        return [np.random.uniform(size=(10, 20, 12)),]
