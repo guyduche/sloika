@@ -322,6 +322,14 @@ class LstmTest(RNNTest, unittest.TestCase):
     def run_inputs(self):
         return [np.zeros((10, 20, 12)),]
 
+class LstmOTest(RNNTest, unittest.TestCase):
+    def setUp(self):
+        self.layer = nn.LstmO(12, 64)
+
+    @property
+    def run_inputs(self):
+        return [np.zeros((10, 20, 12)),]
+
 class Mut1Test(RNNTest, unittest.TestCase):
     def setUp(self):
         self.layer = nn.Mut1(12, 64)
