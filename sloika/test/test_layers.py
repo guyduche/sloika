@@ -329,4 +329,22 @@ class Mut1Test(RNNTest, unittest.TestCase):
     @property
     def run_inputs(self):
         return [np.zeros((10, 20, 12)),
-                np.random.uniform((10, 20, 12)),]
+                np.random.uniform(size=(10, 20, 12)),]
+
+class Mut2Test(RNNTest, unittest.TestCase):
+    def setUp(self):
+        self.layer = nn.Mut2(12, 64)
+
+    @property
+    def run_inputs(self):
+        return [np.zeros((10, 20, 12)),
+                np.random.uniform(size=(10, 20, 12)),]
+
+class Mut3Test(RNNTest, unittest.TestCase):
+    def setUp(self):
+        self.layer = nn.Mut3(12, 64)
+
+    @property
+    def run_inputs(self):
+        return [np.zeros((10, 20, 12)),
+                np.random.uniform(size=(10, 20, 12)),]
