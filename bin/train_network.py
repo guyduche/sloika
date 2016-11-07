@@ -138,10 +138,10 @@ if __name__ == '__main__':
         label_weights = np.zeros(np.max(all_labels) + 1, dtype='f4')
         for i, lbls in enumerate(all_labels):
             label_weights += all_weights[i] * np.bincount(lbls, minlength=len(label_weights))
-        else:
-            label_weights = np.ones(np.max(all_labels) + 1, dtype='f4')
-        label_weights = np.reciprocal(label_weights)
-        label_weights /= np.mean(label_weights)
+    else:
+        label_weights = np.ones(np.max(all_labels) + 1, dtype='f4')
+    label_weights = np.reciprocal(label_weights)
+    label_weights /= np.mean(label_weights)
 
 
     total_ev = 0
