@@ -32,7 +32,7 @@ parser.add_argument('--batch', default=100, metavar='size', type=Positive(int),
 parser.add_argument('--drop', default=0, metavar='events', type=NonNegative(int),
     help='Drop a number of events from start and end of chunk before evaluating loss')
 parser.add_argument('--ilf', default=False, action=AutoBool,
-    help='Weight objective function by inverse label frequency')
+    help='Weight objective function by Inverse Label Frequency')
 parser.add_argument('--l2', default=0.0, metavar='penalty', type=NonNegative(float),
     help='L2 penalty on parameters')
 parser.add_argument('--lrdecay', default=5000, metavar='batches', type=Positive(float),
