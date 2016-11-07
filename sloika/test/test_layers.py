@@ -341,6 +341,18 @@ class LstmTest(RNNTest, unittest.TestCase):
     def learned_parameter_names(self):
         return ['iW', 'sW',]
 
+class LstmCIFGTest(RNNTest, unittest.TestCase):
+    def setUp(self):
+        self.layer = nn.LstmCIFG(12, 64)
+
+    @property
+    def run_inputs(self):
+        return [np.random.uniform(size=(10, 20, 12)),]
+
+    @property
+    def learned_parameter_names(self):
+        return ['iW', 'sW',]
+
 class LstmOTest(RNNTest, unittest.TestCase):
     def setUp(self):
         self.layer = nn.LstmO(12, 64)
