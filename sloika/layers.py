@@ -96,10 +96,10 @@ class FeedForward(Layer):
     """  Basic feedforward layer
          out = f( inMat W + b )
 
-    :params insize: Size of input to layer
-    :params size: Layer size
-    :params init: function to initialise tensors with
-    :params has_bias: Whether layer has bias
+    :param insize: Size of input to layer
+    :param size: Layer size
+    :param init: function to initialise tensors with
+    :param has_bias: Whether layer has bias
     :param fun: The activation function.  Must accept a numpy array as input.
     """
     def __init__(self, insize, size, init=zeros, has_bias=False,
@@ -164,10 +164,10 @@ class Softmax(Layer):
          tmp = exp( inmat W + b )
          out = row_normalise( tmp )
 
-    :params insize: Size of input to layer
-    :params size: Layer size
-    :params init: function to initialise tensors with
-    :params has_bias: Whether layer has bias
+    :param insize: Size of input to layer
+    :param size: Layer size
+    :param init: function to initialise tensors with
+    :param has_bias: Whether layer has bias
     """
     def __init__(self, insize, size, init=zeros, has_bias=False):
         self.has_bias = has_bias
@@ -208,10 +208,10 @@ class SoftmaxOld(Layer):
          tmp = exp( inmat W + b )
          out = row_normalise( tmp )
 
-    :params insize: Size of input to layer
-    :params size: Layer size
-    :params init: function to initialise tensors with
-    :params has_bias: Whether layer has bias
+    :param insize: Size of input to layer
+    :param size: Layer size
+    :param init: function to initialise tensors with
+    :param has_bias: Whether layer has bias
     """
     def __init__(self, insize, size, init=zeros, has_bias=False):
         self.has_bias = has_bias
@@ -281,8 +281,8 @@ class Window(Layer):
 class Convolution(Layer):
     """ Create a 1D convolution over input
 
-    :params insize: Size of input to layer
-    :params size: Layer size (number of filters)
+    :param insize: Size of input to layer
+    :param size: Layer size (number of filters)
     :param w: Size of convolution
     """
     def __init__(self, insize, size, w, init=zeros, fun=activation.tanh):
@@ -329,10 +329,10 @@ class Recurrent(RNN):
         Step:  state_new = fun( [state_old, input_new] W + b )
                output_new = state_new
 
-    :params insize: Size of input to layer
-    :params size: Layer size
-    :params init: function to initialise tensors with
-    :params has_bias: Whether layer has bias
+    :param insize: Size of input to layer
+    :param size: Layer size
+    :param init: function to initialise tensors with
+    :param has_bias: Whether layer has bias
     :param fun: The activation function.  Must accept a numpy array as input.
     """
     def __init__(self, insize, size, init=zeros, has_bias=False,
@@ -382,11 +382,11 @@ class SCRN(RNN):
                fast_new = fun( [fast_old, slow_new, input_new] W )
                output_new = fast_new
 
-    :params insize: Size of input to layer
-    :params fast_size: Number of fast hidden units in layer
-    :params slow_size: Number of slow units in hidden layer
-    :params alpha: Decay coefficient for memory units
-    :params init: function to initialise tensors with
+    :param insize: Size of input to layer
+    :param fast_size: Number of fast hidden units in layer
+    :param slow_size: Number of slow units in hidden layer
+    :param alpha: Decay coefficient for memory units
+    :param init: function to initialise tensors with
     :param fun: The activation function.  Must accept a numpy array as input.
     """
     def __init__(self, insize, fast_size, slow_size, init=zeros, alpha=0.95,
@@ -461,11 +461,11 @@ class Lstm(RNN):
     :Note: The inputs are arranged to maintain compatibilty it the older version
     of the LSTM layer and several of the processing steps could be optimised out.
 
-    :params insize: Size of input to layer
-    :params size: Layer size
-    :params init: function to initialise tensors with
-    :params has_bias: Whether layer has bias
-    :params has_peep: Whether layer has bias
+    :param insize: Size of input to layer
+    :param size: Layer size
+    :param init: function to initialise tensors with
+    :param has_bias: Whether layer has bias
+    :param has_peep: Whether layer has bias
     :param fun: The activation function.  Must accept a numpy array as input.
     """
     def __init__(self, insize, size, init=zeros, has_bias=False, has_peep=False,
@@ -555,11 +555,11 @@ class LstmCIFG(RNN):
     :Note: The inputs are arranged to maintain compatibilty it the older version
     of the LSTM layer and several of the processing steps could be optimised out.
 
-    :params insize: Size of input to layer
-    :params size: Layer size
-    :params init: function to initialise tensors with
-    :params has_bias: Whether layer has bias
-    :params has_peep: Whether layer has peep
+    :param insize: Size of input to layer
+    :param size: Layer size
+    :param init: function to initialise tensors with
+    :param has_bias: Whether layer has bias
+    :param has_peep: Whether layer has peep
     :param fun: The activation function.  Must accept a numpy array as input.
     """
     def __init__(self, insize, size, init=zeros, has_bias=False, has_peep=False,
@@ -645,11 +645,11 @@ class LstmO(RNN):
         Update  = tanh( v W0 + b0 )
         state_new = tanh(state_old * Pforget + Update * Pupdate)
 
-    :params insize: Size of input to layer
-    :params size: Layer size
-    :params init: function to initialise tensors with
-    :params has_bias: Whether layer has bias
-    :params has_peep: Whether layer has bias
+    :param insize: Size of input to layer
+    :param size: Layer size
+    :param init: function to initialise tensors with
+    :param has_bias: Whether layer has bias
+    :param has_peep: Whether layer has bias
     :param fun: The activation function.  Must accept a numpy array as input.
     """
     def __init__(self, insize, size, init=zeros, has_bias=False, has_peep=False,
@@ -718,10 +718,10 @@ class LstmO(RNN):
 class Forget(RNN):
     """ Simple forget gate
 
-    :params insize: Size of input to layer
-    :params size: Layer size
-    :params init: function to initialise tensors with
-    :params has_bias: Whether layer has bias
+    :param insize: Size of input to layer
+    :param size: Layer size
+    :param init: function to initialise tensors with
+    :param has_bias: Whether layer has bias
     :param fun: The activation function.  Must accept a numpy array as input.
     """
     def __init__(self, insize, size, init=zeros, has_bias=False,
@@ -778,10 +778,10 @@ class Forget(RNN):
 class Gru(RNN):
     """ Gated Recurrent Unit
 
-    :params insize: Size of input to layer
-    :params size: Layer size
-    :params init: function to initialise tensors with
-    :params has_bias: Whether layer has bias
+    :param insize: Size of input to layer
+    :param size: Layer size
+    :param init: function to initialise tensors with
+    :param has_bias: Whether layer has bias
     :param fun: The activation function.  Must accept a numpy array as input.
     """
     def __init__(self, insize, size, init=zeros, has_bias=False,
@@ -848,10 +848,10 @@ class Mut1(RNN):
     space (and apply any non-linearity on the input elementwise) to preserve
     the MutN structure.
 
-    :params insize: Size of input to layer
-    :params size: Layer size
-    :params init: function to initialise tensors with
-    :params has_bias: Whether layer has bias
+    :param insize: Size of input to layer
+    :param size: Layer size
+    :param init: function to initialise tensors with
+    :param has_bias: Whether layer has bias
     :param fun: The activation function.  Must accept a numpy array as input.
     :param embed: Method for embedding input in R^size. Options are "pad" to
         pad with zeros, or "learn" to learn an embedding.
@@ -931,10 +931,10 @@ class Mut2(RNN):
     space (and apply any non-linearity on the input elementwise) to preserve
     the MutN structure.
 
-    :params insize: Size of input to layer
-    :params size: Layer size
-    :params init: function to initialise tensors with
-    :params has_bias: Whether layer has bias
+    :param insize: Size of input to layer
+    :param size: Layer size
+    :param init: function to initialise tensors with
+    :param has_bias: Whether layer has bias
     :param fun: The activation function.  Must accept a numpy array as input.
     :param embed: Method for embedding input in R^size. Options are "pad" to
         pad with zeros, or "learn" to learn an embedding.
@@ -1016,10 +1016,10 @@ class Mut3(RNN):
     space (and apply any non-linearity on the input elementwise) to preserve
     the MutN structure.
 
-    :params insize: Size of input to layer
-    :params size: Layer size
-    :params init: function to initialise tensors with
-    :params has_bias: Whether layer has bias
+    :param insize: Size of input to layer
+    :param size: Layer size
+    :param init: function to initialise tensors with
+    :param has_bias: Whether layer has bias
     :param fun: The activation function.  Must accept a numpy array as input.
     :param embed: Method for embedding input in R^size. Options are "pad" to
         pad with zeros, or "learn" to learn an embedding.
