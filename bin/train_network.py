@@ -31,6 +31,8 @@ parser.add_argument('--batch', default=100, metavar='size', type=Positive(int),
     help='Batch size (number of chunks to run in parallel)')
 parser.add_argument('--drop', default=0, metavar='events', type=NonNegative(int),
     help='Drop a number of events from start and end of chunk before evaluating loss')
+parser.add_argument('--ilf', default=False, action=AutoBool,
+    help='Weight objective function by Inverse Label Frequency')
 parser.add_argument('--l2', default=0.0, metavar='penalty', type=NonNegative(float),
     help='L2 penalty on parameters')
 parser.add_argument('--lrdecay', default=5000, metavar='batches', type=Positive(float),
@@ -72,16 +74,17 @@ def wrap_network(network, min_prob=0.0, l2=0.0, drop=0):
 
     x = T.tensor3()
     labels = T.imatrix()
+    weights = T.fmatrix()
     rate = T.scalar()
     post = min_prob + (1.0 - min_prob) * network.run(x)
     penalty = l2 * updates.param_sqr(network)
 
     loss_per_event, _ = th.map(T.nnet.categorical_crossentropy, sequences=[post, labels])
-    loss = penalty + T.mean(loss_per_event[ldrop : udrop])
+    loss = penalty + T.mean((weights * loss_per_event)[ldrop : udrop])
     ncorrect = T.sum(T.eq(T.argmax(post,  axis=2), labels))
     update_dict = updates.adam(network, loss, rate, (args.adam.decay1, args.adam.decay2))
 
-    fg = th.function([x, labels, rate], [loss, ncorrect], updates=update_dict)
+    fg = th.function([x, labels, weights, rate], [loss, ncorrect], updates=update_dict)
     return fg
 
 
@@ -123,10 +126,22 @@ if __name__ == '__main__':
             all_weights = np.ones(len(all_chunks))
 
     all_weights /= np.sum(all_weights)
+
     if not args.transducer:
         remove_blanks(all_labels)
+
     if args.bad:
         all_labels[all_bad] = 0
+
+    if args.ilf:
+        #  Calculate label weights using inverse frequency
+        label_weights = np.zeros(np.max(all_labels) + 1, dtype='f4')
+        for i, lbls in enumerate(all_labels):
+            label_weights += all_weights[i] * np.bincount(lbls, minlength=len(label_weights))
+    else:
+        label_weights = np.ones(np.max(all_labels) + 1, dtype='f4')
+    label_weights = np.reciprocal(label_weights)
+    label_weights /= np.mean(label_weights)
 
 
     total_ev = 0
@@ -143,8 +158,9 @@ if __name__ == '__main__':
                                        replace=False, p=all_weights))
         events = np.ascontiguousarray(all_chunks[idx].transpose((1, 0, 2)))
         labels = np.ascontiguousarray(all_labels[idx].transpose())
+        weights = label_weights[labels]
 
-        fval, ncorr = fg(events, labels, learning_rate)
+        fval, ncorr = fg(events, labels, weights, learning_rate)
         fval = float(fval)
         ncorr = float(ncorr)
         nev = np.size(labels)
