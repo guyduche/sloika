@@ -156,6 +156,28 @@ class Studentise(Layer):
         return (inMat - m) / T.sqrt(v + self.epsilon)
 
 
+class NormaliseL1(Layer):
+    """ Normal all features in batch
+
+    :param epsilon: Stabilsation layer
+    """
+    def __init__(self, epsilon=1e-4):
+        self.epsilon = epsilon
+
+    def params(self):
+        return []
+
+    def json(self, params=False):
+        return {'type' : "normaliseL1"}
+
+    def set_params(self, values):
+        return
+
+    def run(self, inMat):
+        f = self.epsilon + T.sum(T.abs_(inMat), axis=2)
+        return inMat / T.shape_padright(f)
+
+
 class Softmax(Layer):
     """  Softmax layer
          tmp = exp( inmat W + b )
