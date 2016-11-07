@@ -23,9 +23,9 @@ def _extract(x, shape=None):
         xv = xv.reshape(shape)
     return xv.tolist()
 
-def check_set(var, val, shape):
+def check_set(obj, name, val, shape):
     assert val.shape == shape
-    var = th.shared(val)
+    setattr(obj, name, th.shared(val))
 
 class Layer(object):
     __metaclass__ = abc.ABCMeta
@@ -393,7 +393,7 @@ class SCRN(RNN):
                  fun=activation.sigmoid):
         # mmW is the (non-learned) memory unit decay matrix
         # the option to learn the entries of this matrix could be added later
-        self.alpha = alpha
+        self.alpha = T.constant(alpha, dtype=sloika_dtype)
         self.ssW = th.shared((alpha*np.identity(slow_size)).astype(sloika_dtype))
         self.isW = th.shared(init((slow_size, insize)) / np.sqrt(slow_size + insize))
         self.sfW = th.shared(init((fast_size, slow_size)) / np.sqrt(fast_size + slow_size))
@@ -414,13 +414,13 @@ class SCRN(RNN):
                            ('size', self.size),
                            ('fast_size', self.fast_size),
                            ('slow_size', self.slow_size),
-                           ('alpha', self.alpha),
                            ('insize', self.insize),])
         if params:
             res['params'] = OrderedDict([('isW', _extract(self.isW)),
                                          ('sfW', _extract(self.sfW)),
                                          ('ifW', _extract(self.ifW)),
-                                         ('ffW', _extract(self.ffW)),])
+                                         ('ffW', _extract(self.ffW)),
+                                         ('alpha', self.alpha.flatten().eval()[0])])
         return res
 
     def set_params(self, values):
@@ -902,13 +902,13 @@ class Mut1(RNN):
 
     def set_params(self, values):
         if self.has_bias:
-            check_set(self.b_r, values['b_r'], (self.size))
-            check_set(self.b_h, values['b_h'], (self.size))
-            check_set(self.b_z, values['b_z'], (self.size))
-        check_set(self.W_xz, values['W_xz'], (self.size, self.insize))
-        check_set(self.W_xr, values['W_xr'], (self.size, self.insize))
-        check_set(self.W_hr, values['W_hr'], (self.size, self.size))
-        check_set(self.W_hh, values['W_hh'], (self.size, self.size))
+            check_set(self, 'b_r', values['b_r'], (self.size))
+            check_set(self, 'b_h', values['b_h'], (self.size))
+            check_set(self, 'b_z', values['b_z'], (self.size))
+        check_set(self, 'W_xz', values['W_xz'], (self.size, self.insize))
+        check_set(self, 'W_xr', values['W_xr'], (self.size, self.insize))
+        check_set(self, 'W_hr', values['W_hr'], (self.size, self.size))
+        check_set(self, 'W_hh', values['W_hh'], (self.size, self.size))
 
     def step(self, in_vec, in_state):
         if self.embed is "pad":
@@ -986,14 +986,14 @@ class Mut2(RNN):
 
     def set_params(self, values):
         if self.has_bias:
-            check_set(self.b_r, values['b_r'], (self.size))
-            check_set(self.b_h, values['b_h'], (self.size))
-            check_set(self.b_z, values['b_z'], (self.size))
-        check_set(self.W_xz, values['W_xz'], (self.size, self.insize))
-        check_set(self.W_hz, values['W_hz'], (self.size, self.size))
-        check_set(self.W_hr, values['W_hr'], (self.size, self.size))
-        check_set(self.W_hh, values['W_hh'], (self.size, self.size))
-        check_set(self.W_xh, values['W_xh'], (self.size, self.insize))
+            check_set(self, 'b_r', values['b_r'], (self.size))
+            check_set(self, 'b_h', values['b_h'], (self.size))
+            check_set(self, 'b_z', values['b_z'], (self.size))
+        check_set(self, 'W_xz', values['W_xz'], (self.size, self.insize))
+        check_set(self, 'W_hz', values['W_hz'], (self.size, self.size))
+        check_set(self, 'W_hr', values['W_hr'], (self.size, self.size))
+        check_set(self, 'W_hh', values['W_hh'], (self.size, self.size))
+        check_set(self, 'W_xh', values['W_xh'], (self.size, self.insize))
 
     def step(self, in_vec, in_state):
         if self.embed is "pad":
@@ -1073,15 +1073,15 @@ class Mut3(RNN):
 
     def set_params(self, values):
         if self.has_bias:
-            check_set(self.b_r, values['b_r'], (self.size))
-            check_set(self.b_h, values['b_h'], (self.size))
-            check_set(self.b_z, values['b_z'], (self.size))
-        check_set(self.W_xz, values['W_xz'], (self.size, self.insize))
-        check_set(self.W_hz, values['W_hz'], (self.size, self.size))
-        check_set(self.W_xr, values['W_xr'], (self.size, self.insize))
-        check_set(self.W_hr, values['W_hr'], (self.size, self.size))
-        check_set(self.W_hh, values['W_hh'], (self.size, self.size))
-        check_set(self.W_xh, values['W_xh'], (self.size, self.insize))
+            check_set(self, 'b_r', values['b_r'], (self.size))
+            check_set(self, 'b_h', values['b_h'], (self.size))
+            check_set(self, 'b_z', values['b_z'], (self.size))
+        check_set(self, 'W_xz', values['W_xz'], (self.size, self.insize))
+        check_set(self, 'W_hz', values['W_hz'], (self.size, self.size))
+        check_set(self, 'W_xr', values['W_xr'], (self.size, self.insize))
+        check_set(self, 'W_hr', values['W_hr'], (self.size, self.size))
+        check_set(self, 'W_hh', values['W_hh'], (self.size, self.size))
+        check_set(self, 'W_xh', values['W_xh'], (self.size, self.insize))
 
     def step(self, in_vec, in_state):
         if self.embed is "pad":
