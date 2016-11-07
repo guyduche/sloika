@@ -47,13 +47,15 @@ def retu(x):
 
 def tanh_pm(x):
     """  Poor man's tanh
+    Linear approximation by tangent at x=0.  Clip into valid range.
     """
     return T.clip(x, -1.0, 1.0)
 
 def sigmoid_pm(x):
     """ Poor man's sigmoid
+    Linear approximation by tangent at x=0.  Clip into valid range.
     """
-    return T.clip(x, 0.0, 1.0)
+    return T.clip(0.5 + 0.25 * x, 0.0, 1.0)
 
 
 #  Bounded and redescending
