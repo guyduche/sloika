@@ -12,8 +12,9 @@ import time
 import theano as th
 import theano.tensor as T
 
-from untangled.cmdargs import (AutoBool, display_version_and_exit, FileExists, Maybe,
-                               NonNegative, ParseToNamedTuple, Positive)
+from untangled.cmdargs import (AutoBool, display_version_and_exit, FileExists,
+                               Maybe, NonNegative, ParseToNamedTuple, Positive,
+                               proportion)
 
 from sloika import updates, __version__
 
@@ -28,12 +29,14 @@ parser.add_argument('--bad', default=True, action=AutoBool,
     help='Use bad events as a separate state')
 parser.add_argument('--batch', default=100, metavar='size', type=Positive(int),
     help='Batch size (number of chunks to run in parallel)')
-parser.add_argument('--drop', default=None, metavar='events', type=Positive(int),
+parser.add_argument('--drop', default=0, metavar='events', type=NonNegative(int),
     help='Drop a number of events from start and end of chunk before evaluating loss')
 parser.add_argument('--l2', default=0.0, metavar='penalty', type=NonNegative(float),
     help='L2 penalty on parameters')
 parser.add_argument('--lrdecay', default=5000, metavar='batches', type=Positive(float),
     help='Number of batches to halving of learning rate')
+parser.add_argument('--min_prob', default=0.0, metavar='p', type=proportion,
+    help='Minimum probability allowed for training')
 parser.add_argument('--niteration', metavar='batches', type=Positive(int), default=50000,
     help='Maximum number of batches to train for')
 parser.add_argument('--reweight', metavar='group', default='weights', type=Maybe(str),
@@ -62,15 +65,15 @@ def remove_blanks(labels):
                 lbl_ch[i] = lbl_ch[i - 1]
     return labels
 
-def wrap_network(network, l2=0.0, drop=None):
-    ldrop, udrop = drop, drop
-    if drop is not None:
-        udrop = - udrop
+def wrap_network(network, min_prob=0.0, l2=0.0, drop=0):
+    ldrop, udrop = drop, -drop
+    if udrop == 0:
+        udrop = None
 
     x = T.tensor3()
     labels = T.imatrix()
     rate = T.scalar()
-    post = network.run(x)
+    post = min_prob + (1.0 - min_prob) * network.run(x)
     penalty = l2 * updates.param_sqr(network)
 
     loss_per_event, _ = th.map(T.nnet.categorical_crossentropy, sequences=[post, labels])
@@ -107,7 +110,7 @@ if __name__ == '__main__':
     else:
         log.write('* Model is neither python file nor model pickle\n')
         exit(1)
-    fg = wrap_network(network, l2=args.l2, drop=args.drop)
+    fg = wrap_network(network, min_prob=args.min_prob, l2=args.l2, drop=args.drop)
 
     log.write('* Loading data from {}\n'.format(args.input))
     with h5py.File(args.input, 'r') as h5:
