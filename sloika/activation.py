@@ -14,7 +14,14 @@ def softplus(x):
 def relu(x):
     return T.nnet.relu(x)
 
-#  Bounded but monotonic
+def relu_smooth(x):
+    y = T.clip(x, 0.0, 1.0)
+    return T.square(y) - 2.0 * y + x + T.abs_(x)
+
+def exp(x):
+    return T.exp(x)
+
+#  Bounded and monotonic
 def tanh(x):
     return T.tanh(x)
 
@@ -27,10 +34,10 @@ def erf(x):
 def L1mL2(x):
     return x / T.sqrt(1.0 + 0.5 * T.sqr(x))
 
-def Fair(x):
+def fair(x):
     return x / (1.0 + T.abs_(x) / 1.3998)
 
-def Retu(x):
+def retu(x):
     """ Rectifying activation followed by Tanh
 
     Inspired by more biological neural activation, see figure 1
@@ -38,16 +45,26 @@ def Retu(x):
     """
     return T.tanh(T.nnet.relu(x))
 
+def tanh_pm(x):
+    """  Poor man's tanh
+    """
+    return T.clip(x, -1.0, 1.0)
+
+def sigmoid_pm(x):
+    """ Poor man's sigmoid
+    """
+    return T.clip(x, 0.0, 1.0)
+
 
 #  Bounded and redescending
 def sin(x):
     return T.sin(x)
 
-def Cauchy(x):
+def cauchy(x):
     return x / (1.0 + T.sqr(x / 2.3849))
 
-def GemanMcClure(x):
+def geman_mcclure(x):
     return x / T.sqr(1.0 + T.sqr(x))
 
-def Welsh(x):
+def welsh(x):
     return x * T.exp(-T.sqr(x / 2.9846))
