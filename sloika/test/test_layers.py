@@ -304,7 +304,7 @@ class RecurrentTest(RNNTest, unittest.TestCase):
 
     @property
     def run_inputs(self):
-        return [np.zeros((10, 20, 12))]
+        return [np.random.uniform(size=(10, 20, 12))]
 
 class RecurrentBiasedTest(RNNTest, unittest.TestCase):
     def setUp(self):
@@ -312,7 +312,7 @@ class RecurrentBiasedTest(RNNTest, unittest.TestCase):
 
     @property
     def run_inputs(self):
-        return [np.zeros((10, 20, 12)),]
+        return [np.random.uniform(size=(10, 20, 12)),]
 
 class LstmTest(RNNTest, unittest.TestCase):
     def setUp(self):
@@ -320,7 +320,7 @@ class LstmTest(RNNTest, unittest.TestCase):
 
     @property
     def run_inputs(self):
-        return [np.zeros((10, 20, 12)),]
+        return [np.random.uniform(size=(10, 20, 12)),]
 
 class LstmOTest(RNNTest, unittest.TestCase):
     def setUp(self):
@@ -328,7 +328,7 @@ class LstmOTest(RNNTest, unittest.TestCase):
 
     @property
     def run_inputs(self):
-        return [np.zeros((10, 20, 12)),]
+        return [np.random.uniform(size=(10, 20, 12)),]
 
 class Mut1Test(RNNTest, unittest.TestCase):
     def setUp(self):
@@ -363,7 +363,7 @@ class GruTest(RNNTest, unittest.TestCase):
 
     @property
     def run_inputs(self):
-        return [np.zeros((10, 20, 12)),]
+        return [np.random.uniform(size=(10, 20, 12)),]
 
 class ScrnTest(RNNTest, unittest.TestCase):
     def setUp(self):
