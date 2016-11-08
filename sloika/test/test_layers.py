@@ -259,15 +259,8 @@ class LayerTest(object):
     """Mixin abstract class for testing basic layer functionality"""
     __metaclass__ = abc.ABCMeta
 
-    @abc.abstractproperty
-    def run_inputs(self):
-        """List of input arrays for testing layer.run"""
-        return []
-
-    @abc.abstractproperty
-    def learned_parameter_names(self):
-        """List of names of learned parameters"""
-        return []
+    _INPUTS = None
+    _PARAMS = None
 
     @abc.abstractmethod
     def setUp(self):
@@ -275,7 +268,9 @@ class LayerTest(object):
         return
 
     def test_000_run(self):
-        outs = [self.layer.run(In).eval() for In in self.run_inputs]
+        if self._INPUTS is None:
+            raise NotImplementedError("Please specify layer inputs for testing, or explicitly skip this test.")
+        outs = [self.layer.run(In).eval() for In in self._INPUTS]
 
     def test_001_compile(self):
         out = self.layer.compile()
@@ -287,6 +282,8 @@ class LayerTest(object):
         props = json.JSONDecoder().decode(json.dumps(self.layer.json()))
 
     def test_004_get_set_params(self):
+        if self._PARAMS is None:
+            raise NotImplementedError("Please specify names of layer paramters, or explicitly set to [] if there are none.")
         p0 = self.layer.json(params=True)["params"]
         p0 = {p: np.array(v) for (p, v) in p0.items()}
         for (p, v) in p0.items():
@@ -294,131 +291,88 @@ class LayerTest(object):
         self.layer.set_params(p0)
         p1 = self.layer.json(params=True)["params"]
         p1 = {p: np.array(v) for (p, v) in p1.items()}
-        self.assertTrue(all([np.allclose(p0[k], p1[k]) for k in self.learned_parameter_names]))
+        self.assertTrue(all([np.allclose(p0[k], p1[k]) for k in self._PARAMS]))
 
 class RNNTest(LayerTest):
     """Mixin abstract class for testing basic RNN functionality"""
     pass
 
 class RecurrentTest(RNNTest, unittest.TestCase):
+    _INPUTS = [np.zeros((10, 20, 12)),
+               np.random.uniform(size=(10, 20, 12)),]
+    _PARAMS = ['iW', 'sW',]
+
     def setUp(self):
         self.layer = nn.Recurrent(12, 64)
 
-    @property
-    def run_inputs(self):
-        return [np.random.uniform(size=(10, 20, 12)),]
-
-    @property
-    def learned_parameter_names(self):
-        return ['iW', 'sW',]
-
 class RecurrentBiasedTest(RNNTest, unittest.TestCase):
+    _INPUTS = [np.zeros((10, 20, 12)),
+               np.random.uniform(size=(10, 20, 12)),]
+    _PARAMS = ['iW', 'sW', 'b',]
+
     def setUp(self):
         self.layer = nn.Recurrent(12, 64, has_bias=True)
 
-    @property
-    def run_inputs(self):
-        return [np.random.uniform(size=(10, 20, 12)),]
-
-    @property
-    def learned_parameter_names(self):
-        return ['iW', 'sW', 'b',]
-
 class LstmTest(RNNTest, unittest.TestCase):
+    _INPUTS = [np.zeros((10, 20, 12)),
+               np.random.uniform(size=(10, 20, 12)),]
+    _PARAMS = ['iW', 'sW',]
+
     def setUp(self):
         self.layer = nn.Lstm(12, 64)
 
-    @property
-    def run_inputs(self):
-        return [np.random.uniform(size=(10, 20, 12)),]
-
-    @property
-    def learned_parameter_names(self):
-        return ['iW', 'sW',]
-
 class LstmCIFGTest(RNNTest, unittest.TestCase):
+    _INPUTS = [np.zeros((10, 20, 12)),
+               np.random.uniform(size=(10, 20, 12)),]
+    _PARAMS = ['iW', 'sW',]
+
     def setUp(self):
         self.layer = nn.LstmCIFG(12, 64)
 
-    @property
-    def run_inputs(self):
-        return [np.random.uniform(size=(10, 20, 12)),]
-
-    @property
-    def learned_parameter_names(self):
-        return ['iW', 'sW',]
-
 class LstmOTest(RNNTest, unittest.TestCase):
+    _INPUTS = [np.zeros((10, 20, 12)),
+               np.random.uniform(size=(10, 20, 12)),]
+    _PARAMS = ['iW', 'sW',]
+
     def setUp(self):
         self.layer = nn.LstmO(12, 64)
 
-    @property
-    def run_inputs(self):
-        return [np.random.uniform(size=(10, 20, 12)),]
-
-    @property
-    def learned_parameter_names(self):
-        return ['iW', 'sW',]
-
 class Mut1Test(RNNTest, unittest.TestCase):
+    _INPUTS = [np.zeros((10, 20, 12)),
+               np.random.uniform(size=(10, 20, 12)),]
+    _PARAMS = ['W_xz', 'W_xr', 'W_hr', 'W_hh',]
+
     def setUp(self):
         self.layer = nn.Mut1(12, 64)
 
-    @property
-    def run_inputs(self):
-        return [np.zeros((10, 20, 12)),
-                np.random.uniform(size=(10, 20, 12)),]
-
-    @property
-    def learned_parameter_names(self):
-        return ['W_xz', 'W_xr', 'W_hr', 'W_hh',]
-
 class Mut2Test(RNNTest, unittest.TestCase):
+    _INPUTS = [np.zeros((10, 20, 12)),
+               np.random.uniform(size=(10, 20, 12)),]
+    _PARAMS = ['W_xz', 'W_hz', 'W_hr', 'W_hh', 'W_xh',]
+
     def setUp(self):
         self.layer = nn.Mut2(12, 64)
 
-    @property
-    def run_inputs(self):
-        return [np.zeros((10, 20, 12)),
-                np.random.uniform(size=(10, 20, 12)),]
-
-    @property
-    def learned_parameter_names(self):
-        return ['W_xz', 'W_hz', 'W_hr', 'W_hh', 'W_xh',]
-
 class Mut3Test(RNNTest, unittest.TestCase):
+    _INPUTS = [np.zeros((10, 20, 12)),
+               np.random.uniform(size=(10, 20, 12)),]
+    _PARAMS = ['W_xz', 'W_hz', 'W_xr', 'W_hr', 'W_hh', 'W_xh',]
+
     def setUp(self):
         self.layer = nn.Mut3(12, 64)
 
-    @property
-    def run_inputs(self):
-        return [np.zeros((10, 20, 12)),
-                np.random.uniform(size=(10, 20, 12)),]
-
-    @property
-    def learned_parameter_names(self):
-        return ['W_xz', 'W_hz', 'W_xr', 'W_hr', 'W_hh', 'W_xh',]
-
 class GruTest(RNNTest, unittest.TestCase):
+    _INPUTS = [np.zeros((10, 20, 12)),
+               np.random.uniform(size=(10, 20, 12)),]
+    _PARAMS = ['iW', 'sW', 'sW2',]
+
     def setUp(self):
         self.layer = nn.Gru(12, 64)
 
-    @property
-    def run_inputs(self):
-        return [np.random.uniform(size=(10, 20, 12)),]
-
-    @property
-    def learned_parameter_names(self):
-        return ['iW', 'sW', 'sW2',]
-
 class ScrnTest(RNNTest, unittest.TestCase):
+    _INPUTS = [np.zeros((10, 20, 12)),
+               np.random.uniform(size=(10, 20, 12)),]
+    _PARAMS = ['isW', 'sfW', 'ifW', 'ffW',]
+
     def setUp(self):
         self.layer = nn.SCRN(12, 48, 16)
-
-    @property
-    def run_inputs(self):
-        return [np.random.uniform(size=(10, 20, 12)),]
-
-    @property
-    def learned_parameter_names(self):
-        return ['isW', 'sfW', 'ifW', 'ffW',]
