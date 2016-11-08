@@ -269,11 +269,6 @@ class LayerTest(object):
         """List of names of learned parameters"""
         return []
 
-    @property
-    def init(self):
-        """Initialisation function for numpy arrays to be used in testing"""
-        return lambda dims: np.zeros(dims, dtype=sloika_dtype)
-
     @abc.abstractmethod
     def setUp(self):
         """Create the layer as self.layer"""
