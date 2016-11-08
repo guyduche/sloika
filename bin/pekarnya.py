@@ -14,7 +14,7 @@ _SUCCESS = 2
 _FAILURE = 3
 _SUSPEND = 4
 
-sloika_gitdir = "/home/ubuntu/git/sloika"
+sloika_gitdir = os.path.expanduser(os.path.join('~', 'git', 'sloika'))
 
 parser = argparse.ArgumentParser(
     description = 'server for model training',
@@ -90,6 +90,8 @@ def run_job(args):
                args["output_directory"],
                args["training_data"]
                ]
+    if args["training_parameters"] is not None:
+        arglist += args["training_parameters"].split()
     if args["transducer"] > 0:
         arglist.append("--transducer")
     else:

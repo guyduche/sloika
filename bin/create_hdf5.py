@@ -6,7 +6,6 @@ from scipy import linalg
 import sys
 
 from sloika import batch, sloika_dtype
-from sloika.features import NFEATURES
 
 from untangled.cmdargs import (AutoBool, FileExists, Maybe, NonNegative,
                                Positive, proportion)

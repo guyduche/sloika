@@ -100,7 +100,7 @@ class FeedForward(Layer):
     :param size: Layer size
     :param init: function to initialise tensors with
     :param has_bias: Whether layer has bias
-    :param fun: The activation function.  Must accept a numpy array as input.
+    :param fun: The activation function.
     """
     def __init__(self, insize, size, init=zeros, has_bias=False,
                  fun=activation.tanh):
@@ -141,8 +141,8 @@ class Studentise(Layer):
 
     :param epsilon: Stabilsation layer
     """
-    def __init__(self, epsilion=1e-4):
-        self.epsilion = epsilion
+    def __init__(self, epsilon=1e-4):
+        self.epsilon = epsilon
 
     def params(self):
         return []
@@ -156,7 +156,29 @@ class Studentise(Layer):
     def run(self, inMat):
         m = T.shape_padleft(T.mean(inMat, axis=(0, 1)), n_ones=2)
         v = T.shape_padleft(T.var(inMat, axis=(0, 1)), n_ones=2)
-        return (inMat - m) / T.sqrt(v + self.epsilion)
+        return (inMat - m) / T.sqrt(v + self.epsilon)
+
+
+class NormaliseL1(Layer):
+    """ Normal all features in batch
+
+    :param epsilon: Stabilsation layer
+    """
+    def __init__(self, epsilon=1e-4):
+        self.epsilon = epsilon
+
+    def params(self):
+        return []
+
+    def json(self, params=False):
+        return {'type' : "normaliseL1"}
+
+    def set_params(self, values):
+        return
+
+    def run(self, inMat):
+        f = self.epsilon + T.sum(T.abs_(inMat), axis=2)
+        return inMat / T.shape_padright(f)
 
 
 class Softmax(Layer):
@@ -249,6 +271,8 @@ class SoftmaxOld(Layer):
         return out / T.shape_padright(rowsum)
 
 
+
+
 class Window(Layer):
     """  Create a sliding window over input
 
@@ -333,7 +357,7 @@ class Recurrent(RNN):
     :param size: Layer size
     :param init: function to initialise tensors with
     :param has_bias: Whether layer has bias
-    :param fun: The activation function.  Must accept a numpy array as input.
+    :param fun: The activation function.
     """
     def __init__(self, insize, size, init=zeros, has_bias=False,
                  fun=activation.tanh):
@@ -346,7 +370,7 @@ class Recurrent(RNN):
         self.size = size
 
     def params(self):
-        return [self.W, self.b] if self.has_bias else [self.W]
+        return [self.iW, self.sW, self.b] if self.has_bias else [self.iW, self.sW]
 
     def json(self, params=False):
         res = OrderedDict([('type', "recurrent"),
@@ -451,12 +475,12 @@ class Lstm(RNN):
 
     Step:
         v = [ input_new, output_old ]
-        Pforget = sigmoid( v W2 + b2 + state * p1)
-        Pupdate = sigmoid( v W1 + b1 + state * p0)
-        Update  = tanh( v W0 + b0 )
+        Pforget = gatefun( v W2 + b2 + state * p1)
+        Pupdate = gatefun( v W1 + b1 + state * p0)
+        Update  = fun( v W0 + b0 )
         state_new = state_old * Pforget + Update * Pupdate
-        Poutput = sigmoid( v W3 + b3 + state * p2)
-        output_new = tanh(state) * Poutput
+        Poutput = gatefun( v W3 + b3 + state * p2)
+        output_new = fun(state) * Poutput
 
     :Note: The inputs are arranged to maintain compatibilty it the older version
     of the LSTM layer and several of the processing steps could be optimised out.
@@ -466,15 +490,18 @@ class Lstm(RNN):
     :param init: function to initialise tensors with
     :param has_bias: Whether layer has bias
     :param has_peep: Whether layer has bias
-    :param fun: The activation function.  Must accept a numpy array as input.
+    :param fun: The activation function.
+    :param gatefun: The activation function for gates.  Generally a monotone
+    mapping from (-inf, inf) -> [0, 1]
     """
     def __init__(self, insize, size, init=zeros, has_bias=False, has_peep=False,
-                 fun=activation.tanh):
+                 fun=activation.tanh, gatefun=activation.sigmoid):
         self.size = size
         self.insize = insize
         self.has_bias = has_bias
         self.has_peep = has_peep
         self.fun = fun
+        self.gatefun = gatefun
 
         self.b = th.shared(has_bias * (init(4 * size)
                                        + np.repeat([0, 0, _FORGET_BIAS, 0],
@@ -494,6 +521,7 @@ class Lstm(RNN):
     def json(self, params=False):
         res = OrderedDict([('type', "LSTM"),
                            ('activation', self.fun.func_name),
+                           ('gate', self.gatefun.func_name),
                            ('size', self.size),
                            ('insize', self.insize),
                            ('bias', self.has_bias),
@@ -527,11 +555,11 @@ class Lstm(RNN):
         sumW = sumW.reshape((-1, self.size, 4))
 
         #  Forget gate activation
-        out_state = state * activation.sigmoid(sumW[:,:,2] + state * self.p[1])
+        out_state = state * self.gatefun(sumW[:,:,2] + state * self.p[1])
         #  Update state with input
-        out_state += self.fun(sumW[:,:,0]) * activation.sigmoid(sumW[:,:,1] + state * self.p[0])
+        out_state += self.fun(sumW[:,:,0]) * self.gatefun(sumW[:,:,1] + state * self.p[0])
         #  Output gate activation
-        out = self.fun(out_state) * activation.sigmoid(sumW[:,:,3] + out_state * self.p[2])
+        out = self.fun(out_state) * self.gatefun(sumW[:,:,3] + out_state * self.p[2])
         return T.concatenate((out, out_state), axis=1)
 
     def run(self, inMat):
@@ -640,25 +668,28 @@ class LstmO(RNN):
 
     Step:
         v = [ input_new, output_old ]
-        Pforget = sigmoid( v W2 + b2 + state * p1)
-        Pupdate = sigmoid( v W1 + b1 + state * p0)
-        Update  = tanh( v W0 + b0 )
-        state_new = tanh(state_old * Pforget + Update * Pupdate)
+        Pforget = gatefun( v W2 + b2 + state * p1)
+        Pupdate = gatefun( v W1 + b1 + state * p0)
+        Update  = fun( v W0 + b0 )
+        state_new = fun(state_old * Pforget + Update * Pupdate)
 
     :param insize: Size of input to layer
     :param size: Layer size
     :param init: function to initialise tensors with
     :param has_bias: Whether layer has bias
     :param has_peep: Whether layer has bias
-    :param fun: The activation function.  Must accept a numpy array as input.
+    :param fun: The activation function.
+    :param gatefun: The activation function for gates.  Generally a monotone
+    mapping from (-inf, inf) -> [0, 1]
     """
     def __init__(self, insize, size, init=zeros, has_bias=False, has_peep=False,
-                 fun=activation.tanh):
+                 fun=activation.tanh, gatefun=activation.sigmoid):
         self.size = size
         self.insize = insize
         self.has_bias = has_bias
         self.has_peep = has_peep
         self.fun = fun
+        self.gatefun = gatefun
 
         self.b = th.shared(has_bias * (init(3 * size)
                                        + np.repeat([0, 0, _FORGET_BIAS],
@@ -678,6 +709,7 @@ class LstmO(RNN):
     def json(self, params=False):
         res = OrderedDict([('type', "LSTM-O"),
                            ('activation', self.fun.func_name),
+                           ('gate', self.gatefun.func_name),
                            ('size', self.size),
                            ('insize', self.insize),
                            ('bias', self.has_bias),
@@ -709,9 +741,9 @@ class LstmO(RNN):
         sumW = sumW.reshape((-1, 3, self.size))
 
         #  Forget gate activation
-        state = in_state * activation.sigmoid(sumW[:,2] + in_state * self.p[2])
+        state = in_state * self.gatefun(sumW[:,2] + in_state * self.p[2])
         #  Update state with input
-        state += self.fun(sumW[:,0] + in_state * self.p[0]) * activation.sigmoid(sumW[:,1] + in_state * self.p[1])
+        state += self.fun(sumW[:,0] + in_state * self.p[0]) * self.gatefun(sumW[:,1] + in_state * self.p[1])
         return state
 
 
@@ -722,14 +754,17 @@ class Forget(RNN):
     :param size: Layer size
     :param init: function to initialise tensors with
     :param has_bias: Whether layer has bias
-    :param fun: The activation function.  Must accept a numpy array as input.
+    :param fun: The activation function.
+    :param gatefun: The activation function for gates.  Generally a monotone
+    mapping from (-inf, inf) -> [0, 1]
     """
     def __init__(self, insize, size, init=zeros, has_bias=False,
-                 fun=activation.tanh):
+                 fun=activation.tanh, gatefun=activation.sigmoid):
         self.size = size
         self.insize = insize
         self.has_bias = has_bias
         self.fun = fun
+        self.gatefun
 
         self.b = th.shared(has_bias * (init(2 * size)
                                        + np.repeat([_FORGET_BIAS, 0],
@@ -746,6 +781,7 @@ class Forget(RNN):
     def json(self, params=False):
         res = OrderedDict([('type', "forget gate"),
                            ('activation',self.fun.func_name),
+                           ('gate', self.gatefun.func_name),
                            ('size', self.size),
                            ('insize', self.insize),
                            ('bias', self.has_bias)])
@@ -770,7 +806,7 @@ class Forget(RNN):
         vT = vI + vS + self.b
         vT = vT.reshape((-1, 2, self.size))
 
-        forget = activation.sigmoid(vT[:,0])
+        forget = self.gatefun(vT[:,0])
         state = in_state * forget + (1.0 - forget) * self.fun(vT[:,1])
         return state
 
@@ -782,14 +818,17 @@ class Gru(RNN):
     :param size: Layer size
     :param init: function to initialise tensors with
     :param has_bias: Whether layer has bias
-    :param fun: The activation function.  Must accept a numpy array as input.
+    :param fun: The activation function.
+    :param gatefun: The activation function for gates.  Generally a monotone
+    mapping from (-inf, inf) -> [0, 1]
     """
     def __init__(self, insize, size, init=zeros, has_bias=False,
-                 fun=activation.tanh):
+                 fun=activation.tanh, gatefun=activation.sigmoid):
         self.size = size
         self.insize = insize
         self.has_bias = has_bias
         self.fun = fun
+        self.gatefun = gatefun
 
         self.b = th.shared(has_bias * init(3 * size))
         self.iW = th.shared(init((3 * size, insize)) / np.sqrt(insize + size))
@@ -805,6 +844,7 @@ class Gru(RNN):
     def json(self, params=False):
         res = OrderedDict([('type', "GRU"),
                            ('activation', self.fun.func_name),
+                           ('gate', self.gatefun.func_name),
                            ('size', self.size),
                            ('insize', self.insize),
                            ('bias', self.has_bias)])
@@ -832,8 +872,8 @@ class Gru(RNN):
         vT = vI[:, :2 * self.size] + vS
         vT = vT.reshape((-1, 2, self.size))
 
-        z = activation.sigmoid(vT[:,0])
-        r = activation.sigmoid(vT[:,1])
+        z = self.gatefun(vT[:,0])
+        r = self.gatefun(vT[:,1])
         y = T.tensordot(r * in_state, self.sW2, axes=(1,1))
         hbar = self.fun(vI[:, 2 * self.size:] + y)
         state = z * in_state + (1 - z) * hbar
@@ -852,16 +892,19 @@ class Mut1(RNN):
     :param size: Layer size
     :param init: function to initialise tensors with
     :param has_bias: Whether layer has bias
-    :param fun: The activation function.  Must accept a numpy array as input.
+    :param fun: The activation function.
+    :param gatefun: The activation function for gates.  Generally a monotone
+        mapping from (-inf, inf) -> [0, 1]
     :param embed: Method for embedding input in R^size. Options are "pad" to
         pad with zeros, or "learn" to learn an embedding.
     """
     def __init__(self, insize, size, init=zeros, has_bias=False,
-                 fun=activation.tanh, embed="learn"):
+                 fun=activation.tanh, gatefun=activation.sigmoid, embed="learn"):
         self.size = size
         self.insize = insize
         self.has_bias = has_bias
         self.fun = fun
+        self.gatefun = gatefun
         assert embed in ["pad", "learn",]
         self.embed = embed
 
@@ -886,6 +929,7 @@ class Mut1(RNN):
     def json(self, params=False):
         res = OrderedDict([('type', "MUT1"),
                            ('activation', self.fun.func_name),
+                           ('gate', self.gatefun.func_name),
                            ('size', self.size),
                            ('insize', self.insize),
                            ('bias', self.has_bias),
@@ -915,8 +959,8 @@ class Mut1(RNN):
             _in = T.join(1, in_vec, np.zeros((1, self.size - self.insize), dtype=sloika_dtype))
         if self.embed is "learn":
             _in = T.tensordot(in_vec, self.E, axes=(1,1))
-        z = activation.sigmoid(T.tensordot(in_vec, self.W_xz, axes=(1,1)) + self.b_z)
-        r = activation.sigmoid(T.tensordot(in_vec, self.W_xr, axes=(1,1))
+        z = self.gatefun(T.tensordot(in_vec, self.W_xz, axes=(1,1)) + self.b_z)
+        r = self.gatefun(T.tensordot(in_vec, self.W_xr, axes=(1,1))
                                 + T.tensordot(in_state, self.W_hr, axes=(1,1)) + self.b_r)
         y = T.tensordot(r * in_state, self.W_hh, axes=(1,1))
         state = self.fun(y + self.fun(_in) + self.b_h) * z + (1 - z) * in_state
@@ -936,15 +980,18 @@ class Mut2(RNN):
     :param init: function to initialise tensors with
     :param has_bias: Whether layer has bias
     :param fun: The activation function.  Must accept a numpy array as input.
+    :param gatefun: The activation function for gates.  Generally a monotone
+        mapping from (-inf, inf) -> [0, 1]
     :param embed: Method for embedding input in R^size. Options are "pad" to
         pad with zeros, or "learn" to learn an embedding.
     """
     def __init__(self, insize, size, init=zeros, has_bias=False,
-                 fun=activation.tanh, embed="learn"):
+                 fun=activation.tanh, gatefun=activation.sigmoid, embed="learn"):
         self.size = size
         self.insize = insize
         self.has_bias = has_bias
         self.fun = fun
+        self.gatefun = gatefun
         assert embed in ["pad", "learn",]
         self.embed = embed
 
@@ -1000,9 +1047,9 @@ class Mut2(RNN):
             _in = T.join(1, in_vec, np.zeros((1, self.size - self.insize), dtype=sloika_dtype))
         if self.embed is "learn":
             _in = T.tensordot(in_vec, self.E, axes=(1,1))
-        z = activation.sigmoid(T.tensordot(in_vec, self.W_xz, axes=(1,1))
+        z = self.gatefun(T.tensordot(in_vec, self.W_xz, axes=(1,1))
                                 + T.tensordot(in_state, self.W_hz, axes=(1,1)) + self.b_z)
-        r = activation.sigmoid(_in + T.tensordot(in_state, self.W_hr, axes=(1,1)) + self.b_r)
+        r = self.gatefun(_in + T.tensordot(in_state, self.W_hr, axes=(1,1)) + self.b_r)
         y = T.tensordot(r * in_state, self.W_hh, axes=(1,1))
         u = T.tensordot(in_vec, self.W_xh, axes=(1,1))
         state = self.fun(y + u + self.b_h) * z + (1 - z) * in_state
@@ -1021,15 +1068,18 @@ class Mut3(RNN):
     :param init: function to initialise tensors with
     :param has_bias: Whether layer has bias
     :param fun: The activation function.  Must accept a numpy array as input.
+    :param gatefun: The activation function for gates.  Generally a monotone
+        mapping from (-inf, inf) -> [0, 1]
     :param embed: Method for embedding input in R^size. Options are "pad" to
         pad with zeros, or "learn" to learn an embedding.
     """
     def __init__(self, insize, size, init=zeros, has_bias=False,
-                 fun=activation.tanh, embed="learn"):
+                 fun=activation.tanh, gatefun=activation.sigmoid, embed="learn"):
         self.size = size
         self.insize = insize
         self.has_bias = has_bias
         self.fun = fun
+        self.gatefun = gatefun
         assert embed in ["pad", "learn",]
         self.embed = embed
 
@@ -1088,9 +1138,9 @@ class Mut3(RNN):
             _in = T.join(1, in_vec, np.zeros((1, self.size - self.insize), dtype=sloika_dtype))
         if self.embed is "learn":
             _in = T.tensordot(in_vec, self.E, axes=(1,1))
-        z = activation.sigmoid(T.tensordot(in_vec, self.W_xz, axes=(1,1))
+        z = self.gatefun(T.tensordot(in_vec, self.W_xz, axes=(1,1))
                                 + T.tensordot(self.fun(in_state), self.W_hz, axes=(1,1)) + self.b_z)
-        r = activation.sigmoid(_in + T.tensordot(in_state, self.W_hr, axes=(1,1)) + self.b_r)
+        r = self.gatefun(_in + T.tensordot(in_state, self.W_hr, axes=(1,1)) + self.b_r)
         y = T.tensordot(r * in_state, self.W_hh, axes=(1,1))
         u = T.tensordot(in_vec, self.W_xh, axes=(1,1))
         state = self.fun(y + u + self.b_h) * z + (1 - z) * in_state
