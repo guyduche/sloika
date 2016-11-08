@@ -256,11 +256,24 @@ class ANNTest(unittest.TestCase):
         np.testing.assert_almost_equal(res, self.res)
 
 class LayerTest(object):
-    """Mixin abstract class for testing basic layer functionality"""
+    """Mixin abstract class for testing basic layer functionality
+    Writing a TestCase for a new layer is easy, for example:
+
+    class RecurrentTest(LayerTest, unittest.TestCase):
+        # Inputs for testing the Layer.run() method
+        _INPUTS = [np.zeros((10, 20, 12)),
+                   np.random.uniform(size=(10, 20, 12)),]
+        # Names of the learned parameters of the layer
+        _PARAMS = ['iW', 'sW',]
+
+        # The setUp method should instantiate the layer
+        def setUp(self):
+            self.layer = nn.Recurrent(12, 64)
+    """
     __metaclass__ = abc.ABCMeta
 
-    _INPUTS = None
-    _PARAMS = None
+    _INPUTS = None # List of input matrices for testing the layer's run method
+    _PARAMS = None # List of names for the learned parameters of the layer
 
     @abc.abstractmethod
     def setUp(self):
@@ -293,11 +306,7 @@ class LayerTest(object):
         p1 = {p: np.array(v) for (p, v) in p1.items()}
         self.assertTrue(all([np.allclose(p0[k], p1[k]) for k in self._PARAMS]))
 
-class RNNTest(LayerTest):
-    """Mixin abstract class for testing basic RNN functionality"""
-    pass
-
-class RecurrentTest(RNNTest, unittest.TestCase):
+class RecurrentTest(LayerTest, unittest.TestCase):
     _INPUTS = [np.zeros((10, 20, 12)),
                np.random.uniform(size=(10, 20, 12)),]
     _PARAMS = ['iW', 'sW',]
@@ -305,7 +314,7 @@ class RecurrentTest(RNNTest, unittest.TestCase):
     def setUp(self):
         self.layer = nn.Recurrent(12, 64)
 
-class RecurrentBiasedTest(RNNTest, unittest.TestCase):
+class RecurrentBiasedTest(LayerTest, unittest.TestCase):
     _INPUTS = [np.zeros((10, 20, 12)),
                np.random.uniform(size=(10, 20, 12)),]
     _PARAMS = ['iW', 'sW', 'b',]
@@ -313,7 +322,7 @@ class RecurrentBiasedTest(RNNTest, unittest.TestCase):
     def setUp(self):
         self.layer = nn.Recurrent(12, 64, has_bias=True)
 
-class LstmTest(RNNTest, unittest.TestCase):
+class LstmTest(LayerTest, unittest.TestCase):
     _INPUTS = [np.zeros((10, 20, 12)),
                np.random.uniform(size=(10, 20, 12)),]
     _PARAMS = ['iW', 'sW',]
@@ -321,7 +330,7 @@ class LstmTest(RNNTest, unittest.TestCase):
     def setUp(self):
         self.layer = nn.Lstm(12, 64)
 
-class LstmCIFGTest(RNNTest, unittest.TestCase):
+class LstmCIFGTest(LayerTest, unittest.TestCase):
     _INPUTS = [np.zeros((10, 20, 12)),
                np.random.uniform(size=(10, 20, 12)),]
     _PARAMS = ['iW', 'sW',]
@@ -329,7 +338,7 @@ class LstmCIFGTest(RNNTest, unittest.TestCase):
     def setUp(self):
         self.layer = nn.LstmCIFG(12, 64)
 
-class LstmOTest(RNNTest, unittest.TestCase):
+class LstmOTest(LayerTest, unittest.TestCase):
     _INPUTS = [np.zeros((10, 20, 12)),
                np.random.uniform(size=(10, 20, 12)),]
     _PARAMS = ['iW', 'sW',]
@@ -337,7 +346,7 @@ class LstmOTest(RNNTest, unittest.TestCase):
     def setUp(self):
         self.layer = nn.LstmO(12, 64)
 
-class Mut1Test(RNNTest, unittest.TestCase):
+class Mut1Test(LayerTest, unittest.TestCase):
     _INPUTS = [np.zeros((10, 20, 12)),
                np.random.uniform(size=(10, 20, 12)),]
     _PARAMS = ['W_xz', 'W_xr', 'W_hr', 'W_hh',]
@@ -345,7 +354,7 @@ class Mut1Test(RNNTest, unittest.TestCase):
     def setUp(self):
         self.layer = nn.Mut1(12, 64)
 
-class Mut2Test(RNNTest, unittest.TestCase):
+class Mut2Test(LayerTest, unittest.TestCase):
     _INPUTS = [np.zeros((10, 20, 12)),
                np.random.uniform(size=(10, 20, 12)),]
     _PARAMS = ['W_xz', 'W_hz', 'W_hr', 'W_hh', 'W_xh',]
@@ -353,7 +362,7 @@ class Mut2Test(RNNTest, unittest.TestCase):
     def setUp(self):
         self.layer = nn.Mut2(12, 64)
 
-class Mut3Test(RNNTest, unittest.TestCase):
+class Mut3Test(LayerTest, unittest.TestCase):
     _INPUTS = [np.zeros((10, 20, 12)),
                np.random.uniform(size=(10, 20, 12)),]
     _PARAMS = ['W_xz', 'W_hz', 'W_xr', 'W_hr', 'W_hh', 'W_xh',]
@@ -361,7 +370,7 @@ class Mut3Test(RNNTest, unittest.TestCase):
     def setUp(self):
         self.layer = nn.Mut3(12, 64)
 
-class GruTest(RNNTest, unittest.TestCase):
+class GruTest(LayerTest, unittest.TestCase):
     _INPUTS = [np.zeros((10, 20, 12)),
                np.random.uniform(size=(10, 20, 12)),]
     _PARAMS = ['iW', 'sW', 'sW2',]
@@ -369,7 +378,7 @@ class GruTest(RNNTest, unittest.TestCase):
     def setUp(self):
         self.layer = nn.Gru(12, 64)
 
-class ScrnTest(RNNTest, unittest.TestCase):
+class ScrnTest(LayerTest, unittest.TestCase):
     _INPUTS = [np.zeros((10, 20, 12)),
                np.random.uniform(size=(10, 20, 12)),]
     _PARAMS = ['isW', 'sfW', 'ifW', 'ffW',]
