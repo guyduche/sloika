@@ -450,6 +450,7 @@ class Lstm(RNN):
     def json(self, params=False):
         res = OrderedDict([('type', "LSTM"),
                            ('activation', self.fun.func_name),
+                           ('gate', self.gatefun.func_name),
                            ('size', self.size),
                            ('insize', self.insize),
                            ('bias', self.has_bias),
@@ -543,6 +544,7 @@ class LstmO(RNN):
     def json(self, params=False):
         res = OrderedDict([('type', "LSTM-O"),
                            ('activation', self.fun.func_name),
+                           ('gate', self.gatefun.func_name),
                            ('size', self.size),
                            ('insize', self.insize),
                            ('bias', self.has_bias),
@@ -614,6 +616,7 @@ class Forget(RNN):
     def json(self, params=False):
         res = OrderedDict([('type', "forget gate"),
                            ('activation',self.fun.func_name),
+                           ('gate', self.gatefun.func_name),
                            ('size', self.size),
                            ('insize', self.insize),
                            ('bias', self.has_bias)])
@@ -676,6 +679,7 @@ class Gru(RNN):
     def json(self, params=False):
         res = OrderedDict([('type', "GRU"),
                            ('activation', self.fun.func_name),
+                           ('gate', self.gatefun.func_name),
                            ('size', self.size),
                            ('insize', self.insize),
                            ('bias', self.has_bias)])
@@ -747,6 +751,7 @@ class Mut1(RNN):
     def json(self, params=False):
         res = OrderedDict([('type', "MUT1"),
                            ('activation', self.fun.func_name),
+                           ('gate', self.gatefun.func_name),
                            ('size', self.size),
                            ('insize', self.insize),
                            ('bias', self.has_bias)])
