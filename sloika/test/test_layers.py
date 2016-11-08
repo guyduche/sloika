@@ -280,7 +280,7 @@ class LayerTest(object):
         return
 
     def test_000_run(self):
-        outs = [self.layer.run(In) for In in self.run_inputs]
+        outs = [self.layer.run(In).eval() for In in self.run_inputs]
 
     def test_001_compile(self):
         out = self.layer.compile()
