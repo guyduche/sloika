@@ -973,10 +973,15 @@ class Mut1(RNN):
 class Mut2(RNN):
     """ MUT2 from Jozefowicz
     http://jmlr.org/proceedings/papers/v37/jozefowicz15.pdf
-    However, MutN as described expects scalar inputs, whereas we have
-    1 < insize <= size. It is therefore necessary to embed inputs in size-dim
-    space (and apply any non-linearity on the input elementwise) to preserve
-    the MutN structure.
+    However, MutN as described expects scalar inputs, whereas we may have
+    insize > 1. Where Josefowicz applied a non-linearity to a scaler input, we
+    replace this with a feed-forward layer u.
+
+    Step:
+        u = fun(x W_xu + B_u)
+        r = gatefun(u + state W_hr + b_r)
+        z = gatefun(x W_xz + state W_hz + b_z)
+        state_new = fun((r * state) W_hh + x W_xh + b_h) * z + state * (1 - z)
 
     :param insize: Size of input to layer
     :param size: Layer size
@@ -985,36 +990,30 @@ class Mut2(RNN):
     :param fun: The activation function.  Must accept a numpy array as input.
     :param gatefun: The activation function for gates.  Generally a monotone
         mapping from (-inf, inf) -> [0, 1]
-    :param embed: Method for embedding input in R^size. Options are "pad" to
-        pad with zeros, or "learn" to learn an embedding.
     """
     def __init__(self, insize, size, init=zeros, has_bias=False,
-                 fun=activation.tanh, gatefun=activation.sigmoid, embed="learn"):
+                 fun=activation.tanh, gatefun=activation.sigmoid):
         self.size = size
         self.insize = insize
         self.has_bias = has_bias
         self.fun = fun
         self.gatefun = gatefun
-        assert embed in ["pad", "learn",]
-        self.embed = embed
 
         self.b_z = th.shared(has_bias * (init(size) + _FORGET_BIAS).astype(sloika_dtype))
         self.b_r = th.shared(has_bias * init(size))
         self.b_h = th.shared(has_bias * init(size))
+        self.b_u = th.shared(has_bias * init(size))
+        self.W_xu = th.shared(init((size, insize)) / np.sqrt(insize + size))
         self.W_xz = th.shared(init((size, insize)) / np.sqrt(insize + size))
         self.W_hz = th.shared(init((size, size)) / np.sqrt(size + size))
         self.W_hr = th.shared(init((size, size)) / np.sqrt(size + size))
         self.W_hh = th.shared(init((size, size)) / np.sqrt(size + size))
         self.W_xh = th.shared(init((size, insize)) / np.sqrt(size + size))
-        if self.embed is "learn":
-            self.E = th.shared(init((size, insize)) / np.sqrt(size + insize))
 
     def params(self):
-        params =  [self.W_xz, self.W_hz, self.W_hr, self.W_hh, self.W_xh]
+        params =  [self.W_xu, self.W_xz, self.W_hz, self.W_hr, self.W_hh, self.W_xh]
         if self.has_bias:
-            params += [self.b_r, self.b_z, self.b_h]
-        if self.embed is "learn":
-            params += [self.E]
+            params += [self.b_u, self.b_r, self.b_z, self.b_h]
         return params
 
     def json(self, params=False):
@@ -1024,11 +1023,13 @@ class Mut2(RNN):
                            ('insize', self.insize),
                            ('bias', self.has_bias)])
         if params:
-            res['params'] = OrderedDict([('W_xz', _extract(self.W_xz)),
+            res['params'] = OrderedDict([('W_xu', _extract(self.W_xu)),
+                                         ('W_xz', _extract(self.W_xz)),
                                          ('W_hz', _extract(self.W_hz)),
                                          ('W_hr', _extract(self.W_hr)),
                                          ('W_hh', _extract(self.W_hh)),
                                          ('W_xh', _extract(self.W_xh)),
+                                         ('b_u', _extract(self.b_z)),
                                          ('b_z', _extract(self.b_z)),
                                          ('b_h', _extract(self.b_h)),
                                          ('b_r', _extract(self.b_r))])
@@ -1039,6 +1040,8 @@ class Mut2(RNN):
             check_set(self, 'b_r', values['b_r'], (self.size))
             check_set(self, 'b_h', values['b_h'], (self.size))
             check_set(self, 'b_z', values['b_z'], (self.size))
+            check_set(self, 'b_u', values['b_u'], (self.size))
+        check_set(self, 'W_xu', values['W_xu'], (self.size, self.insize))
         check_set(self, 'W_xz', values['W_xz'], (self.size, self.insize))
         check_set(self, 'W_hz', values['W_hz'], (self.size, self.size))
         check_set(self, 'W_hr', values['W_hr'], (self.size, self.size))
@@ -1046,25 +1049,27 @@ class Mut2(RNN):
         check_set(self, 'W_xh', values['W_xh'], (self.size, self.insize))
 
     def step(self, in_vec, in_state):
-        if self.embed is "pad":
-            _in = T.join(1, in_vec, np.zeros((1, self.size - self.insize), dtype=sloika_dtype))
-        if self.embed is "learn":
-            _in = T.tensordot(in_vec, self.E, axes=(1,1))
+        u = self.fun(T.tensordot(in_vec, self.W_xu, axes=(1,1)) + self.b_u)
         z = self.gatefun(T.tensordot(in_vec, self.W_xz, axes=(1,1))
                                 + T.tensordot(in_state, self.W_hz, axes=(1,1)) + self.b_z)
-        r = self.gatefun(_in + T.tensordot(in_state, self.W_hr, axes=(1,1)) + self.b_r)
+        r = self.gatefun(u + T.tensordot(in_state, self.W_hr, axes=(1,1)) + self.b_r)
         y = T.tensordot(r * in_state, self.W_hh, axes=(1,1))
-        u = T.tensordot(in_vec, self.W_xh, axes=(1,1))
-        state = self.fun(y + u + self.b_h) * z + (1 - z) * in_state
+        v = T.tensordot(in_vec, self.W_xh, axes=(1,1))
+        state = self.fun(y + v + self.b_h) * z + (1 - z) * in_state
         return state
 
 class Mut3(RNN):
     """ Based on MUT3 from Jozefowicz
     http://jmlr.org/proceedings/papers/v37/jozefowicz15.pdf
-    However, MutN as described expects scalar inputs, whereas we have
-    1 < insize <= size. It is therefore necessary to embed inputs in size-dim
-    space (and apply any non-linearity on the input elementwise) to preserve
-    the MutN structure.
+    However, MutN as described expects scalar inputs, whereas we may have
+    insize > 1. Where Josefowicz applied a non-linearity to a scaler input, we
+    replace this with a feed-forward layer u.
+
+    Step:
+        u = fun(x W_xu + B_u)
+        r = gatefun(x W_xr + state W_hr + b_r)
+        z = gatefun(x W_xz + fun(state) W_hz + b_z)
+        state_new = fun((r * state) W_hh + x W_xh + b_h) * z + state * (1 - z)
 
     :param insize: Size of input to layer
     :param size: Layer size
@@ -1073,8 +1078,6 @@ class Mut3(RNN):
     :param fun: The activation function.  Must accept a numpy array as input.
     :param gatefun: The activation function for gates.  Generally a monotone
         mapping from (-inf, inf) -> [0, 1]
-    :param embed: Method for embedding input in R^size. Options are "pad" to
-        pad with zeros, or "learn" to learn an embedding.
     """
     def __init__(self, insize, size, init=zeros, has_bias=False,
                  fun=activation.tanh, gatefun=activation.sigmoid, embed="learn"):
@@ -1083,27 +1086,23 @@ class Mut3(RNN):
         self.has_bias = has_bias
         self.fun = fun
         self.gatefun = gatefun
-        assert embed in ["pad", "learn",]
-        self.embed = embed
 
         self.b_z = th.shared(has_bias * (init(size) + _FORGET_BIAS).astype(sloika_dtype))
         self.b_r = th.shared(has_bias * init(size))
         self.b_h = th.shared(has_bias * init(size))
+        self.b_u = th.shared(has_bias * init(size))
+        self.W_xu = th.shared(init((size, insize)) / np.sqrt(insize + size))
         self.W_xz = th.shared(init((size, insize)) / np.sqrt(insize + size))
         self.W_hz = th.shared(init((size, size)) / np.sqrt(size + size))
         self.W_xr = th.shared(init((size, insize)) / np.sqrt(insize + size))
         self.W_hr = th.shared(init((size, size)) / np.sqrt(size + size))
         self.W_hh = th.shared(init((size, size)) / np.sqrt(size + size))
         self.W_xh = th.shared(init((size, insize)) / np.sqrt(size + size))
-        if self.embed is "learn":
-            self.E = th.shared(init((size, insize)) / np.sqrt(size + insize))
 
     def params(self):
-        params =  [self.W_xz, self.W_hz, self.W_xr, self.W_hr, self.W_hh, self.W_xh]
+        params =  [self.W_xu, self.W_xz, self.W_hz, self.W_xr, self.W_hr, self.W_hh, self.W_xh]
         if self.has_bias:
-            params += [self.b_r, self.b_z, self.b_h]
-        if self.embed is "learn":
-            params += [self.E]
+            params += [self.b_u, self.b_r, self.b_z, self.b_h]
         return params
 
     def json(self, params=False):
@@ -1113,12 +1112,14 @@ class Mut3(RNN):
                            ('insize', self.insize),
                            ('bias', self.has_bias)])
         if params:
-            res['params'] = OrderedDict([('W_xz', _extract(self.W_xz)),
+            res['params'] = OrderedDict([('W_xu', _extract(self.W_xu)),
+                                         ('W_xz', _extract(self.W_xz)),
                                          ('W_hz', _extract(self.W_hz)),
                                          ('W_xr', _extract(self.W_xr)),
                                          ('W_hr', _extract(self.W_hr)),
                                          ('W_hh', _extract(self.W_hh)),
                                          ('W_xh', _extract(self.W_xh)),
+                                         ('b_u', _extract(self.b_z)),
                                          ('b_z', _extract(self.b_z)),
                                          ('b_h', _extract(self.b_h)),
                                          ('b_r', _extract(self.b_r))])
@@ -1129,6 +1130,8 @@ class Mut3(RNN):
             check_set(self, 'b_r', values['b_r'], (self.size))
             check_set(self, 'b_h', values['b_h'], (self.size))
             check_set(self, 'b_z', values['b_z'], (self.size))
+            check_set(self, 'b_u', values['b_u'], (self.size))
+        check_set(self, 'W_xu', values['W_xu'], (self.size, self.insize))
         check_set(self, 'W_xz', values['W_xz'], (self.size, self.insize))
         check_set(self, 'W_hz', values['W_hz'], (self.size, self.size))
         check_set(self, 'W_xr', values['W_xr'], (self.size, self.insize))
@@ -1137,16 +1140,14 @@ class Mut3(RNN):
         check_set(self, 'W_xh', values['W_xh'], (self.size, self.insize))
 
     def step(self, in_vec, in_state):
-        if self.embed is "pad":
-            _in = T.join(1, in_vec, np.zeros((1, self.size - self.insize), dtype=sloika_dtype))
-        if self.embed is "learn":
-            _in = T.tensordot(in_vec, self.E, axes=(1,1))
+        u = self.fun(T.tensordot(in_vec, self.W_xu, axes=(1,1)) + self.b_u)
         z = self.gatefun(T.tensordot(in_vec, self.W_xz, axes=(1,1))
                                 + T.tensordot(self.fun(in_state), self.W_hz, axes=(1,1)) + self.b_z)
-        r = self.gatefun(_in + T.tensordot(in_state, self.W_hr, axes=(1,1)) + self.b_r)
+        r = self.gatefun(T.tensordot(in_vec, self.W_xr, axes=(1,1))
+                                + T.tensordot(in_state, self.W_hr, axes=(1,1)) + self.b_r)
         y = T.tensordot(r * in_state, self.W_hh, axes=(1,1))
-        u = T.tensordot(in_vec, self.W_xh, axes=(1,1))
-        state = self.fun(y + u + self.b_h) * z + (1 - z) * in_state
+        v = T.tensordot(in_vec, self.W_xh, axes=(1,1))
+        state = self.fun(y + v + self.b_h) * z + (1 - z) * in_state
         return state
 
 class Reverse(Layer):
