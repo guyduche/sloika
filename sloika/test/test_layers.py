@@ -272,6 +272,10 @@ class LayerTest(object):
     """
     __metaclass__ = abc.ABCMeta
 
+    @classmethod
+    def setUpClass(cls):
+        print "* " + cls.__name__
+
     _INPUTS = None # List of input matrices for testing the layer's run method
     _PARAMS = None # List of names for the learned parameters of the layer
 
