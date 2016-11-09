@@ -589,14 +589,17 @@ class LstmCIFG(RNN):
     :param has_bias: Whether layer has bias
     :param has_peep: Whether layer has peep
     :param fun: The activation function.  Must accept a numpy array as input.
+    :param gatefun: The activation function for gates.  Generally a monotone
+    mapping from (-inf, inf) -> [0, 1]
     """
     def __init__(self, insize, size, init=zeros, has_bias=False, has_peep=False,
-                 fun=activation.tanh):
+                 fun=activation.tanh, gatefun=activation.sigmoid):
         self.size = size
         self.insize = insize
         self.has_bias = has_bias
         self.has_peep = has_peep
         self.fun = fun
+        self.gatefun = gatefun
 
         self.b = th.shared(has_bias * (init(3 * size)
                                        + np.repeat([0, _FORGET_BIAS, 0],
@@ -616,6 +619,7 @@ class LstmCIFG(RNN):
     def json(self, params=False):
         res = OrderedDict([('type', "LSTMCIFG"),
                            ('activation', self.fun.func_name),
+                           ('gate', self.gatefun.func_name),
                            ('size', self.size),
                            ('insize', self.insize),
                            ('bias', self.has_bias),
@@ -649,12 +653,12 @@ class LstmCIFG(RNN):
         sumW = sumW.reshape((-1, self.size, 3))
 
         #  Forget gate activation
-        forget = activation.sigmoid(sumW[:,:,1] + state * self.p[0])
+        forget = self.gatefun(sumW[:,:,1] + state * self.p[0])
         out_state = state * forget
         #  Update state with input
         out_state += self.fun(sumW[:,:,0]) * (1 - forget)
         #  Output gate activation
-        out = self.fun(out_state) * activation.sigmoid(sumW[:,:,2] + out_state * self.p[1])
+        out = self.fun(out_state) * self.gatefun(sumW[:,:,2] + out_state * self.p[1])
         return T.concatenate((out, out_state), axis=1)
 
     def run(self, inMat):
