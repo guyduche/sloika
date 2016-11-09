@@ -287,12 +287,8 @@ class LayerTest(object):
     def test_000_run(self):
         if self._INPUTS is None:
             raise NotImplementedError("Please specify layer inputs for testing, or explicitly skip this test.")
-        outs = [self.layer.run(In).eval() for In in self._INPUTS]
-
-    def test_001_compile(self):
-        if self._INPUTS is None:
-            raise NotImplementedError("Please specify layer inputs for testing, or explicitly skip this test.")
-        outs = [self.layer.compile()(In) for In in self._INPUTS]
+        f = self.layer.compile()
+        outs = [f(In).eval() for In in self._INPUTS]
 
     def test_002_json_dumps(self):
         js = json.dumps(self.layer.json())
