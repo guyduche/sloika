@@ -291,6 +291,7 @@ class LayerTest(object):
 
     def test_001_compile(self):
         out = self.layer.compile()
+        outs = [out(In) for In in self._INPUTS]
 
     def test_002_json_dumps(self):
         js = json.dumps(self.layer.json())
@@ -300,7 +301,7 @@ class LayerTest(object):
 
     def test_004_get_set_params(self):
         if self._PARAMS is None:
-            raise NotImplementedError("Please specify names of layer paramters, or explicitly set to [] if there are none.")
+            raise NotImplementedError("Please specify names of layer parameters, or explicitly set to [] if there are none.")
         p0 = self.layer.json(params=True)["params"]
         p0 = {p: np.array(v) for (p, v) in p0.items()}
         for (p, v) in p0.items():
@@ -388,4 +389,4 @@ class ScrnTest(LayerTest, unittest.TestCase):
     _PARAMS = ['isW', 'sfW', 'ifW', 'ffW',]
 
     def setUp(self):
-        self.layer = nn.SCRN(12, 48, 16)
+        self.layer = nn.Scrn(12, 48, 16)

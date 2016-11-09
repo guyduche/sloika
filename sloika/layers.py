@@ -395,7 +395,7 @@ class Recurrent(RNN):
         state_out = self.fun(iV + sV + self.b)
         return state_out
 
-class SCRN(RNN):
+class Scrn(RNN):
     """ Structurally Constrained Recurrent Network as described in
     https://arxiv.org/pdf/1412.7753.pdf (equations 4, 5 and 6)
         Step:  slow_new = (1 - a) * (input_new B) + a * slow_old
@@ -613,7 +613,7 @@ class LstmCIFG(RNN):
         return params
 
     def json(self, params=False):
-        res = OrderedDict([('type', "LSTMCIFG"),
+        res = OrderedDict([('type', "LSTM-CIFG"),
                            ('activation', self.fun.func_name),
                            ('gate', self.gatefun.func_name),
                            ('size', self.size),
