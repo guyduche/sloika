@@ -462,7 +462,7 @@ class Scrn(RNN):
         iV = T.tensordot(in_vec, self.ifW, axes=(1, 1))
         fV = T.tensordot(in_fast, self.ffW, axes=(1, 1))
         fast_out = self.fun(sV + iV + sV)
-        return T.join(1, fast_out, slow_out)
+        return T.concatenate([fast_out, slow_out], 1)
 
 class Lstm(RNN):
     """ LSTM layer with peepholes.  Implementation is to be consistent with
