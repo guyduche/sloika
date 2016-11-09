@@ -353,7 +353,7 @@ class LstmOTest(LayerTest, unittest.TestCase):
 class Mut1Test(LayerTest, unittest.TestCase):
     _INPUTS = [np.zeros((10, 20, 12)),
                np.random.uniform(size=(10, 20, 12)),]
-    _PARAMS = ['W_xz', 'W_xr', 'W_hr', 'W_hh',]
+    _PARAMS = ['W_xu', 'W_xz', 'W_xr', 'W_hr', 'W_hh',]
 
     def setUp(self):
         self.layer = nn.Mut1(12, 64)
@@ -361,7 +361,7 @@ class Mut1Test(LayerTest, unittest.TestCase):
 class Mut2Test(LayerTest, unittest.TestCase):
     _INPUTS = [np.zeros((10, 20, 12)),
                np.random.uniform(size=(10, 20, 12)),]
-    _PARAMS = ['W_xz', 'W_hz', 'W_hr', 'W_hh', 'W_xh',]
+    _PARAMS = ['W_xu', 'W_xz', 'W_hz', 'W_hr', 'W_hh', 'W_xh',]
 
     def setUp(self):
         self.layer = nn.Mut2(12, 64)
@@ -369,7 +369,7 @@ class Mut2Test(LayerTest, unittest.TestCase):
 class Mut3Test(LayerTest, unittest.TestCase):
     _INPUTS = [np.zeros((10, 20, 12)),
                np.random.uniform(size=(10, 20, 12)),]
-    _PARAMS = ['W_xz', 'W_hz', 'W_xr', 'W_hr', 'W_hh', 'W_xh',]
+    _PARAMS = ['W_xu', 'W_xz', 'W_hz', 'W_xr', 'W_hr', 'W_hh', 'W_xh',]
 
     def setUp(self):
         self.layer = nn.Mut3(12, 64)

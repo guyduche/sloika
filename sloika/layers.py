@@ -23,10 +23,6 @@ def _extract(x, shape=None):
         xv = xv.reshape(shape)
     return xv.tolist()
 
-def check_set(obj, name, val, shape):
-    assert val.shape == shape
-    setattr(obj, name, th.shared(val))
-
 class Layer(object):
     __metaclass__ = abc.ABCMeta
 
@@ -128,9 +124,9 @@ class FeedForward(Layer):
     def set_params(self, values):
         if self.has_bias:
             assert values['b'].shape[0] == self.size
-            self.b = th.shared(values['b'])
+            self.b.set_value(values['b'])
         assert values['W'].shape == (self.size, self.insize)
-        self.W = th.shared(values['W'])
+        self.W.set_value(values['W'])
 
     def run(self, inMat):
         return self.fun(T.tensordot(inMat, self.W, axes=(2, 1)) + self.b)
@@ -214,9 +210,9 @@ class Softmax(Layer):
     def set_params(self, values):
         if self.has_bias:
             assert values['b'].shape[0] == self.size
-            self.b = th.shared(values['b'])
+            self.b.set_value(values['b'])
         assert values['W'].shape == (self.size, self.insize)
-        self.W = th.shared(values['W'])
+        self.W.set_value(values['W'])
 
 
     def run(self, inMat):
@@ -259,9 +255,9 @@ class SoftmaxOld(Layer):
     def set_params(self, values):
         if self.has_bias:
             assert values['b'].shape[0] == self.size
-            self.b = th.shared(values['b'])
+            self.b.set_value(values['b'])
         assert values['W'].shape == (self.size, self.insize)
-        self.W = th.shared(values['W'])
+        self.W.set_value(values['W'])
 
     def run(self, inMat):
         tmp =  T.tensordot(inMat, self.W, axes=(2,1)) + self.b
@@ -333,7 +329,7 @@ class Convolution(Layer):
 
     def set_params(self, values):
         assert values['flt'].shape == (self.size, self.insize, 1, self.w)
-        self.flt = th.shared(values['flt'])
+        self.flt.set_value(values['flt'])
 
     def run(self, inMat):
         # Input to convolution is (batch x channels x row x column)
@@ -387,11 +383,11 @@ class Recurrent(RNN):
     def set_params(self, values):
         if self.has_bias:
             assert values['b'].shape[0] == self.size
-            self.b = th.shared(values['b'])
+            self.b.set_value(values['b'])
         assert values['iW'].shape == (self.size, self.insize)
-        self.iW = th.shared(values['iW'])
+        self.iW.set_value(values['iW'])
         assert values['sW'].shape == (self.size, self.size)
-        self.sW = th.shared(values['sW'])
+        self.sW.set_value(values['sW'])
 
     def step(self, in_vec, in_state):
         iV = T.tensordot(in_vec, self.iW, axes=(1, 1))
@@ -449,13 +445,13 @@ class SCRN(RNN):
 
     def set_params(self, values):
         assert values['isW'].shape == (self.slow_size, self.insize)
-        self.isW = th.shared(values['isW'])
+        self.isW.set_value(values['isW'])
         assert values['sfW'].shape == (self.fast_size, self.slow_size)
-        self.sfW = th.shared(values['sfW'])
+        self.sfW.set_value(values['sfW'])
         assert values['ifW'].shape == (self.fast_size, self.insize)
-        self.ifW = th.shared(values['ifW'])
+        self.ifW.set_value(values['ifW'])
         assert values['ffW'].shape == (self.fast_size, self.fast_size)
-        self.ffW = th.shared(values['ffW'])
+        self.ffW.set_value(values['ffW'])
 
     def step(self, in_vec, in_state):
         in_fast = in_state[:, :self.fast_size]
@@ -537,14 +533,14 @@ class Lstm(RNN):
     def set_params(self, values):
         if self.has_bias:
             assert values['b'].shape == (4, self.size)
-            self.b = th.shared(values['b'].transpose().reshape(-1))
+            self.b.set_value(values['b'].transpose().reshape(-1))
         if self.has_peep:
             assert values['p'].shape == (3, self.size)
-            self.p = th.shared(values['p'])
+            self.p.set_value(values['p'])
         assert values['iW'].shape == (4, self.size, self.insize)
-        self.iW = th.shared(values['iW'].reshape((self.size * 4, self.insize)))
+        self.iW.set_value(values['iW'].reshape((self.size * 4, self.insize)))
         assert values['sW'].shape == (4, self.size, self.size)
-        self.sW = th.shared(values['sW'].reshape((self.size * 4, self.size)))
+        self.sW.set_value(values['sW'].reshape((self.size * 4, self.size)))
 
     def step(self, in_vec, in_state):
         vW = T.tensordot(in_vec, self.iW, axes=(1, 1))
@@ -635,14 +631,14 @@ class LstmCIFG(RNN):
     def set_params(self, values):
         if self.has_bias:
             assert values['b'].shape == (3, self.size)
-            self.b = th.shared(values['b'].transpose().reshape(-1))
+            self.b.set_value(values['b'].transpose().reshape(-1))
         if self.has_peep:
             assert values['p'].shape == (2, self.size)
-            self.p = th.shared(values['p'])
+            self.p.set_value(values['p'])
         assert values['iW'].shape == (3, self.size, self.insize)
-        self.iW = th.shared(values['iW'].reshape((self.size * 3, self.insize)))
+        self.iW.set_value(values['iW'].reshape((self.size * 3, self.insize)))
         assert values['sW'].shape == (3, self.size, self.size)
-        self.sW = th.shared(values['sW'].reshape((self.size * 3, self.size)))
+        self.sW.set_value(values['sW'].reshape((self.size * 3, self.size)))
 
     def step(self, in_vec, in_state):
         vW = T.tensordot(in_vec, self.iW, axes=(1, 1))
@@ -728,14 +724,14 @@ class LstmO(RNN):
     def set_params(self, values):
         if self.has_bias:
             assert values['b'].shape == (3, self.size)
-            self.b = th.shared(values['b'].reshape(-1))
+            self.b.set_value(values['b'].reshape(-1))
         if self.has_peep:
             assert values['p'].shape == (3, self.size)
-            self.p = th.shared(values['p'])
+            self.p.set_value(values['p'])
         assert values['iW'].shape == (3, self.size, self.insize)
-        self.iW = th.shared(values['iW'].reshape((3 * self.size, self.insize)))
+        self.iW.set_value(values['iW'].reshape((3 * self.size, self.insize)))
         assert values['sW'].shape == (3, self.size, self.size)
-        self.sW = th.shared(values['sW'].reshape((3 * self.size, self.size)))
+        self.sW.set_value(values['sW'].reshape((3 * self.size, self.size)))
 
 
     def step(self, in_vec, in_state):
@@ -798,11 +794,11 @@ class Forget(RNN):
     def set_params(self, values):
         if self.has_bias:
             assert values['b'].shape == (2, self.size)
-            self.b = th.shared(values['b'].reshape(-1))
+            self.b.set_value(values['b'].reshape(-1))
         assert values['iW'].shape == (2, self.size, self.insize)
-        self.iW = th.shared(values['iW'].reshape((2 * self.size, self.insize)))
+        self.iW.set_value(values['iW'].reshape((2 * self.size, self.insize)))
         assert values['sW'].shape == (2, self.size, self.size)
-        self.sW = th.shared(values['sW'].reshape((2 * self.size, self.size)))
+        self.sW.set_value(values['sW'].reshape((2 * self.size, self.size)))
 
     def step(self, in_vec, in_state):
         vI = T.tensordot(in_vec, self.iW, axes=(1,1))
@@ -862,13 +858,13 @@ class Gru(RNN):
     def set_params(self, values):
         if self.has_bias:
             assert values['b'].shape == (3, self.size)
-            self.b = th.shared(values['b'].reshape(-1))
+            self.b.set_value(values['b'].reshape(-1))
         assert values['iW'].shape == (3, self.size, self.insize)
-        self.iW = th.shared(values['iW'].reshape((3 * self.size, self.insize)))
+        self.iW.set_value(values['iW'].reshape((3 * self.size, self.insize)))
         assert values['sW'].shape == (2, self.size, self.size)
-        self.sW = th.shared(values['sW'].reshape((2 * self.size, self.size)))
+        self.sW.set_value(values['sW'].reshape((2 * self.size, self.size)))
         assert values['sW2'].shape == (self.size,  self.size)
-        self.sW2 = th.shared(values['sW2'])
+        self.sW2.set_value(values['sW2'])
 
     def step(self, in_vec, in_state):
         vI = T.tensordot(in_vec, self.iW, axes=(1,1)) + self.b
@@ -950,15 +946,24 @@ class Mut1(RNN):
 
     def set_params(self, values):
         if self.has_bias:
-            check_set(self, 'b_u', values['b_u'], (self.size))
-            check_set(self, 'b_r', values['b_r'], (self.size))
-            check_set(self, 'b_h', values['b_h'], (self.size))
-            check_set(self, 'b_z', values['b_z'], (self.size))
-        check_set(self, 'W_xu', values['W_xu'], (self.size, self.insize))
-        check_set(self, 'W_xz', values['W_xz'], (self.size, self.insize))
-        check_set(self, 'W_xr', values['W_xr'], (self.size, self.insize))
-        check_set(self, 'W_hr', values['W_hr'], (self.size, self.size))
-        check_set(self, 'W_hh', values['W_hh'], (self.size, self.size))
+            assert values['b_u'].shape == (self.size)
+            self.b_u.set_value(values['b_u'])
+            assert values['b_r'].shape == (self.size)
+            self.b_u.set_value(values['b_r'])
+            assert values['b_h'].shape == (self.size)
+            self.b_u.set_value(values['b_h'])
+            assert values['b_z'].shape == (self.size)
+            self.b_u.set_value(values['b_z'])
+        assert values['W_xu'].shape == (self.size, self.insize)
+        self.W_xu.set_value(values['W_xu'])
+        assert values['W_xz'].shape == (self.size, self.insize)
+        self.W_xz.set_value(values['W_xz'])
+        assert values['W_xr'].shape == (self.size, self.insize)
+        self.W_xr.set_value(values['W_xr'])
+        assert values['W_hr'].shape == (self.size, self.size)
+        self.W_hr.set_value(values['W_hr'])
+        assert values['W_hh'].shape == (self.size, self.size)
+        self.W_hh.set_value(values['W_hh'])
 
     def step(self, in_vec, in_state):
         u = self.fun(T.tensordot(in_vec, self.W_xu, axes=(1,1)) + self.b_u)
@@ -1029,7 +1034,7 @@ class Mut2(RNN):
                                          ('W_hr', _extract(self.W_hr)),
                                          ('W_hh', _extract(self.W_hh)),
                                          ('W_xh', _extract(self.W_xh)),
-                                         ('b_u', _extract(self.b_z)),
+                                         ('b_u', _extract(self.b_u)),
                                          ('b_z', _extract(self.b_z)),
                                          ('b_h', _extract(self.b_h)),
                                          ('b_r', _extract(self.b_r))])
@@ -1037,16 +1042,26 @@ class Mut2(RNN):
 
     def set_params(self, values):
         if self.has_bias:
-            check_set(self, 'b_r', values['b_r'], (self.size))
-            check_set(self, 'b_h', values['b_h'], (self.size))
-            check_set(self, 'b_z', values['b_z'], (self.size))
-            check_set(self, 'b_u', values['b_u'], (self.size))
-        check_set(self, 'W_xu', values['W_xu'], (self.size, self.insize))
-        check_set(self, 'W_xz', values['W_xz'], (self.size, self.insize))
-        check_set(self, 'W_hz', values['W_hz'], (self.size, self.size))
-        check_set(self, 'W_hr', values['W_hr'], (self.size, self.size))
-        check_set(self, 'W_hh', values['W_hh'], (self.size, self.size))
-        check_set(self, 'W_xh', values['W_xh'], (self.size, self.insize))
+            assert values['b_u'].shape == (self.size)
+            self.b_u.set_value(values['b_u'])
+            assert values['b_r'].shape == (self.size)
+            self.b_u.set_value(values['b_r'])
+            assert values['b_h'].shape == (self.size)
+            self.b_u.set_value(values['b_h'])
+            assert values['b_z'].shape == (self.size)
+            self.b_u.set_value(values['b_z'])
+        assert values['W_xu'].shape == (self.size, self.insize)
+        self.W_xu.set_value(values['W_xu'])
+        assert values['W_xz'].shape == (self.size, self.insize)
+        self.W_xz.set_value(values['W_xz'])
+        assert values['W_xh'].shape == (self.size, self.insize)
+        self.W_xh.set_value(values['W_xh'])
+        assert values['W_hr'].shape == (self.size, self.size)
+        self.W_hr.set_value(values['W_hr'])
+        assert values['W_hh'].shape == (self.size, self.size)
+        self.W_hh.set_value(values['W_hh'])
+        assert values['W_hz'].shape == (self.size, self.size)
+        self.W_hz.set_value(values['W_hz'])
 
     def step(self, in_vec, in_state):
         u = self.fun(T.tensordot(in_vec, self.W_xu, axes=(1,1)) + self.b_u)
@@ -1106,7 +1121,7 @@ class Mut3(RNN):
         return params
 
     def json(self, params=False):
-        res = OrderedDict([('type', "MUT2"),
+        res = OrderedDict([('type', "MUT3"),
                            ('activation', self.fun.func_name),
                            ('size', self.size),
                            ('insize', self.insize),
@@ -1119,7 +1134,7 @@ class Mut3(RNN):
                                          ('W_hr', _extract(self.W_hr)),
                                          ('W_hh', _extract(self.W_hh)),
                                          ('W_xh', _extract(self.W_xh)),
-                                         ('b_u', _extract(self.b_z)),
+                                         ('b_u', _extract(self.b_u)),
                                          ('b_z', _extract(self.b_z)),
                                          ('b_h', _extract(self.b_h)),
                                          ('b_r', _extract(self.b_r))])
@@ -1127,17 +1142,28 @@ class Mut3(RNN):
 
     def set_params(self, values):
         if self.has_bias:
-            check_set(self, 'b_r', values['b_r'], (self.size))
-            check_set(self, 'b_h', values['b_h'], (self.size))
-            check_set(self, 'b_z', values['b_z'], (self.size))
-            check_set(self, 'b_u', values['b_u'], (self.size))
-        check_set(self, 'W_xu', values['W_xu'], (self.size, self.insize))
-        check_set(self, 'W_xz', values['W_xz'], (self.size, self.insize))
-        check_set(self, 'W_hz', values['W_hz'], (self.size, self.size))
-        check_set(self, 'W_xr', values['W_xr'], (self.size, self.insize))
-        check_set(self, 'W_hr', values['W_hr'], (self.size, self.size))
-        check_set(self, 'W_hh', values['W_hh'], (self.size, self.size))
-        check_set(self, 'W_xh', values['W_xh'], (self.size, self.insize))
+            assert values['b_u'].shape == (self.size)
+            self.b_u.set_value(values['b_u'])
+            assert values['b_r'].shape == (self.size)
+            self.b_u.set_value(values['b_r'])
+            assert values['b_h'].shape == (self.size)
+            self.b_u.set_value(values['b_h'])
+            assert values['b_z'].shape == (self.size)
+            self.b_u.set_value(values['b_z'])
+        assert values['W_xu'].shape == (self.size, self.insize)
+        self.W_xu.set_value(values['W_xu'])
+        assert values['W_xz'].shape == (self.size, self.insize)
+        self.W_xz.set_value(values['W_xz'])
+        assert values['W_xh'].shape == (self.size, self.insize)
+        self.W_xh.set_value(values['W_xh'])
+        assert values['W_xr'].shape == (self.size, self.insize)
+        self.W_xr.set_value(values['W_xr'])
+        assert values['W_hr'].shape == (self.size, self.size)
+        self.W_hr.set_value(values['W_hr'])
+        assert values['W_hh'].shape == (self.size, self.size)
+        self.W_hh.set_value(values['W_hh'])
+        assert values['W_hz'].shape == (self.size, self.size)
+        self.W_hz.set_value(values['W_hz'])
 
     def step(self, in_vec, in_state):
         u = self.fun(T.tensordot(in_vec, self.W_xu, axes=(1,1)) + self.b_u)
