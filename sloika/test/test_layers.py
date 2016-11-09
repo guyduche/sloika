@@ -295,9 +295,11 @@ class LayerTest(object):
 
     def test_002_json_dumps(self):
         js = json.dumps(self.layer.json())
+        js2 = json.dumps(self.layer.json(params=True))
 
     def test_003_json_decodes(self):
         props = json.JSONDecoder().decode(json.dumps(self.layer.json()))
+        props = json.JSONDecoder().decode(json.dumps(self.layer.json(params=True)))
 
     def test_004_get_set_params(self):
         if self._PARAMS is None:
