@@ -290,8 +290,9 @@ class LayerTest(object):
         outs = [self.layer.run(In).eval() for In in self._INPUTS]
 
     def test_001_compile(self):
-        out = self.layer.compile()
-        outs = [out(In) for In in self._INPUTS]
+        if self._INPUTS is None:
+            raise NotImplementedError("Please specify layer inputs for testing, or explicitly skip this test.")
+        outs = [self.layer.compile()(In) for In in self._INPUTS]
 
     def test_002_json_dumps(self):
         js = json.dumps(self.layer.json())
@@ -299,7 +300,7 @@ class LayerTest(object):
 
     def test_003_json_decodes(self):
         props = json.JSONDecoder().decode(json.dumps(self.layer.json()))
-        props = json.JSONDecoder().decode(json.dumps(self.layer.json(params=True)))
+        props2 = json.JSONDecoder().decode(json.dumps(self.layer.json(params=True)))
 
     def test_004_get_set_params(self):
         if self._PARAMS is None:
