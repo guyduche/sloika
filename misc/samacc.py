@@ -41,5 +41,5 @@ if __name__ == '__main__':
             print(ref_name[read.reference_id], read.qname,
                   STRAND[read.flag], bins[0], mismatch, bins[1], bins[2],
                   coverage,
-                  float(bins[0]) / alnlen,
+                  float(correct) / float(bins[0]),
                   float(correct) / alnlen)
