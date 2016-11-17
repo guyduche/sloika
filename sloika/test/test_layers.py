@@ -1,4 +1,6 @@
+import abc
 import cPickle
+import json
 import numpy as np
 import tempfile
 import unittest
@@ -252,3 +254,138 @@ class ANNTest(unittest.TestCase):
         res = f(self.res)
 
         np.testing.assert_almost_equal(res, self.res)
+
+class LayerTest(object):
+    """Mixin abstract class for testing basic layer functionality
+    Writing a TestCase for a new layer is easy, for example:
+
+    class RecurrentTest(LayerTest, unittest.TestCase):
+        # Inputs for testing the Layer.run() method
+        _INPUTS = [np.zeros((10, 20, 12)),
+                   np.random.uniform(size=(10, 20, 12)),]
+        # Names of the learned parameters of the layer
+        _PARAMS = ['iW', 'sW',]
+
+        # The setUp method should instantiate the layer
+        def setUp(self):
+            self.layer = nn.Recurrent(12, 64)
+    """
+    __metaclass__ = abc.ABCMeta
+
+    @classmethod
+    def setUpClass(cls):
+        print "* LayerTest: " + cls.__name__
+
+    _INPUTS = None # List of input matrices for testing the layer's run method
+    _PARAMS = None # List of names for the learned parameters of the layer
+
+    @abc.abstractmethod
+    def setUp(self):
+        """Create the layer as self.layer"""
+        return
+
+    def test_000_run(self):
+        if self._INPUTS is None:
+            raise NotImplementedError("Please specify layer inputs for testing, or explicitly skip this test.")
+        f = self.layer.compile()
+        outs = [f(In) for In in self._INPUTS]
+
+    def test_002_json_dumps(self):
+        js = json.dumps(self.layer.json())
+        js2 = json.dumps(self.layer.json(params=True))
+
+    def test_003_json_decodes(self):
+        props = json.JSONDecoder().decode(json.dumps(self.layer.json()))
+        props2 = json.JSONDecoder().decode(json.dumps(self.layer.json(params=True)))
+
+    def test_004_get_set_params(self):
+        if self._PARAMS is None:
+            raise NotImplementedError("Please specify names of layer parameters, or explicitly set to [] if there are none.")
+        p0 = self.layer.json(params=True)["params"]
+        p0 = {p: np.array(v) for (p, v) in p0.items()}
+        for (p, v) in p0.items():
+            p0[p] = v + np.random.uniform(size=v.shape)
+        self.layer.set_params(p0)
+        p1 = self.layer.json(params=True)["params"]
+        p1 = {p: np.array(v) for (p, v) in p1.items()}
+        self.assertTrue(all([np.allclose(p0[k], p1[k]) for k in self._PARAMS]))
+
+class RecurrentTest(LayerTest, unittest.TestCase):
+    _INPUTS = [np.zeros((10, 20, 12)),
+               np.random.uniform(size=(10, 20, 12)),]
+    _PARAMS = ['iW', 'sW',]
+
+    def setUp(self):
+        self.layer = nn.Recurrent(12, 64)
+
+class RecurrentBiasedTest(LayerTest, unittest.TestCase):
+    _INPUTS = [np.zeros((10, 20, 12)),
+               np.random.uniform(size=(10, 20, 12)),]
+    _PARAMS = ['iW', 'sW', 'b',]
+
+    def setUp(self):
+        self.layer = nn.Recurrent(12, 64, has_bias=True)
+
+class LstmTest(LayerTest, unittest.TestCase):
+    _INPUTS = [np.zeros((10, 20, 12)),
+               np.random.uniform(size=(10, 20, 12)),]
+    _PARAMS = ['iW', 'sW',]
+
+    def setUp(self):
+        self.layer = nn.Lstm(12, 64)
+
+class LstmCIFGTest(LayerTest, unittest.TestCase):
+    _INPUTS = [np.zeros((10, 20, 12)),
+               np.random.uniform(size=(10, 20, 12)),]
+    _PARAMS = ['iW', 'sW',]
+
+    def setUp(self):
+        self.layer = nn.LstmCIFG(12, 64)
+
+class LstmOTest(LayerTest, unittest.TestCase):
+    _INPUTS = [np.zeros((10, 20, 12)),
+               np.random.uniform(size=(10, 20, 12)),]
+    _PARAMS = ['iW', 'sW',]
+
+    def setUp(self):
+        self.layer = nn.LstmO(12, 64)
+
+class Mut1Test(LayerTest, unittest.TestCase):
+    _INPUTS = [np.zeros((10, 20, 12)),
+               np.random.uniform(size=(10, 20, 12)),]
+    _PARAMS = ['W_xu', 'W_xz', 'W_xr', 'W_hr', 'W_hh',]
+
+    def setUp(self):
+        self.layer = nn.Mut1(12, 64)
+
+class Mut2Test(LayerTest, unittest.TestCase):
+    _INPUTS = [np.zeros((10, 20, 12)),
+               np.random.uniform(size=(10, 20, 12)),]
+    _PARAMS = ['W_xu', 'W_xz', 'W_hz', 'W_hr', 'W_hh', 'W_xh',]
+
+    def setUp(self):
+        self.layer = nn.Mut2(12, 64)
+
+class Mut3Test(LayerTest, unittest.TestCase):
+    _INPUTS = [np.zeros((10, 20, 12)),
+               np.random.uniform(size=(10, 20, 12)),]
+    _PARAMS = ['W_xu', 'W_xz', 'W_hz', 'W_xr', 'W_hr', 'W_hh', 'W_xh',]
+
+    def setUp(self):
+        self.layer = nn.Mut3(12, 64)
+
+class GruTest(LayerTest, unittest.TestCase):
+    _INPUTS = [np.zeros((10, 20, 12)),
+               np.random.uniform(size=(10, 20, 12)),]
+    _PARAMS = ['iW', 'sW', 'sW2',]
+
+    def setUp(self):
+        self.layer = nn.Gru(12, 64)
+
+class ScrnTest(LayerTest, unittest.TestCase):
+    _INPUTS = [np.zeros((10, 20, 12)),
+               np.random.uniform(size=(10, 20, 12)),]
+    _PARAMS = ['isW', 'sfW', 'ifW', 'ffW',]
+
+    def setUp(self):
+        self.layer = nn.Scrn(12, 48, 16)
