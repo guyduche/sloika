@@ -7,6 +7,11 @@ from untangled.maths import med_mad
 
 _NBASE = 4
 
+def remove_same(arr):
+    """Replace repeated elements in 1d array with 0"""
+    arr[np.ediff1d(arr, to_begin=1) == 0] = 0
+    return arr
+
 def filter_by_rate(position, chunk, time=None, fact=3.0):
     """  Filter chunks using sequencing rate from mapping
 
@@ -78,9 +83,8 @@ def _kmer_worker(fn, section, chunk_len, kmer_len, min_length, trim, use_scaled,
     ku = kl + kmer_len
     new_labels = 1 + np.array(map(lambda k: kmer_to_state[k[kl : ku]],
                                   ev['kmer'][:ub]), dtype=np.int32)
-
-    new_labels[np.ediff1d(ev['seq_pos'][:ub], to_begin=1) == 0] = 0
     new_labels = new_labels.reshape((ml, chunk_len))
+    new_labels = np.apply_along_axis(remove_same, 1, new_labels)
 
     new_bad  = np.logical_not(ev['good_emission'][:ub])
     new_bad = new_bad.reshape(ml, chunk_len)
