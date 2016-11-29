@@ -3,12 +3,13 @@ from __future__ import print_function
 import argparse
 import numpy as np
 import pysam
+from untangled.cmdargs import proportion
 
 
 parser = argparse.ArgumentParser(
     description='Output match statistics from SAM',
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-parser.add_argument('--coverage', metavar='proportion', default=0.8,
+parser.add_argument('--coverage', metavar='proportion', default=0.8, type=proportion,
     help='Minimum coverage')
 parser.add_argument('sam')
 
@@ -41,5 +42,5 @@ if __name__ == '__main__':
             print(ref_name[read.reference_id], read.qname,
                   STRAND[read.flag], bins[0], mismatch, bins[1], bins[2],
                   coverage,
-                  float(bins[0]) / alnlen,
+                  float(correct) / float(bins[0]),
                   float(correct) / alnlen)
