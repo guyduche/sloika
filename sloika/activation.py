@@ -57,6 +57,11 @@ def sigmoid_pm(x):
     """
     return T.clip(0.5 + 0.25 * x, 0.0, 1.0)
 
+def bounded_linear(x):
+    """ Linear activation clipped into -1, 1
+    """
+    return T.clip(x, -1.0, 1.0)
+
 
 #  Bounded and redescending
 def sin(x):
