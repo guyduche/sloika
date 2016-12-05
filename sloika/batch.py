@@ -79,8 +79,10 @@ def _kmer_worker(fn, section, chunk_len, kmer_len, min_length, trim, use_scaled,
     new_labels = 1 + np.array(map(lambda k: kmer_to_state[k[kl : ku]],
                                   ev['kmer'][:ub]), dtype=np.int32)
 
-    new_labels[np.ediff1d(ev['seq_pos'][:ub], to_begin=1) == 0] = 0
     new_labels = new_labels.reshape((ml, chunk_len))
+    change = ev['seq_pos'][:ub].reshape((ml, chunk_len))
+    change = np.apply_along_axis(np.ediff1d, 1, change, to_begin=1)
+    new_labels[change == 0] = 0
 
     new_bad  = np.logical_not(ev['good_emission'][:ub])
     new_bad = new_bad.reshape(ml, chunk_len)
