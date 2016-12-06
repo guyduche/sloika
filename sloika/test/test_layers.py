@@ -331,6 +331,9 @@ class LayerTest(object):
         p1 = {p: np.array(v) for (p, v) in p1.items()}
         self.assertTrue(all([np.allclose(p0[k], p1[k]) for k in self._PARAMS]))
 
+    def test_005_params(self):
+        plist = self.layer.params()
+
 
 class RecurrentTest(LayerTest, unittest.TestCase):
     _INPUTS = [np.zeros((10, 20, 12)),
