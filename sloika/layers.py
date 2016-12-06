@@ -1219,7 +1219,7 @@ class Genmut(RNN):
     def params(self):
         params =  [self.xW, self.sW, self.sW2]
         if self.has_bias:
-            params += [self.b, self.b1]
+            params += [self.b, self.b2]
         return params
 
     def json(self, params=False):
