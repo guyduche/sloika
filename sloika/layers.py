@@ -413,7 +413,7 @@ class Scrn(RNN):
                  fun=activation.sigmoid):
         # mmW is the (non-learned) memory unit decay matrix
         # the option to learn the entries of this matrix could be added later
-        self.alpha = T.constant(alpha, dtype=sloika_dtype)
+        self.alpha = T.constant(alpha)
         self.ssW = th.shared((alpha*np.identity(slow_size)).astype(sloika_dtype))
         self.isW = th.shared(init((slow_size, insize)) / np.sqrt(slow_size + insize))
         self.sfW = th.shared(init((fast_size, slow_size)) / np.sqrt(fast_size + slow_size))
@@ -434,13 +434,13 @@ class Scrn(RNN):
                            ('size', self.size),
                            ('fast_size', self.fast_size),
                            ('slow_size', self.slow_size),
-                           ('insize', self.insize),])
+                           ('insize', self.insize),
+                           ('alpha', float(self.alpha.get_scalar_constant_value()))])
         if params:
             res['params'] = OrderedDict([('isW', _extract(self.isW)),
                                          ('sfW', _extract(self.sfW)),
                                          ('ifW', _extract(self.ifW)),
-                                         ('ffW', _extract(self.ffW)),
-                                         ('alpha', self.alpha.flatten().eval()[0])])
+                                         ('ffW', _extract(self.ffW))])
         return res
 
     def set_params(self, values):
@@ -882,6 +882,7 @@ class Gru(RNN):
 
 class Mut1(RNN):
     """ Based on MUT1 from Jozefowicz
+
     http://jmlr.org/proceedings/papers/v37/jozefowicz15.pdf
     However, MutN as described expects scalar inputs, whereas we may have
     insize > 1. Where Josefowicz applied a non-linearity to a scaler input, we
@@ -977,6 +978,7 @@ class Mut1(RNN):
 
 class Mut2(RNN):
     """ MUT2 from Jozefowicz
+
     http://jmlr.org/proceedings/papers/v37/jozefowicz15.pdf
     However, MutN as described expects scalar inputs, whereas we may have
     insize > 1. Where Josefowicz applied a non-linearity to a scaler input, we
@@ -1075,6 +1077,7 @@ class Mut2(RNN):
 
 class Mut3(RNN):
     """ Based on MUT3 from Jozefowicz
+
     http://jmlr.org/proceedings/papers/v37/jozefowicz15.pdf
     However, MutN as described expects scalar inputs, whereas we may have
     insize > 1. Where Josefowicz applied a non-linearity to a scaler input, we
@@ -1176,6 +1179,91 @@ class Mut3(RNN):
         state = self.fun(y + v + self.b_h) * z + (1 - z) * in_state
         return state
 
+
+class Genmut(RNN):
+    """ Generalisation of MUT1 from Jozefowicz
+
+    http://jmlr.org/proceedings/papers/v37/jozefowicz15.pdf
+    However, MutN as described expects scalar inputs, whereas we may have
+    insize > 1. Where Josefowicz applied a non-linearity to a scaler input, we
+    replace this with a feed-forward layer u.
+
+    Step:
+        u = fun(x W_xu + state W_hu + b_u)
+        r = gatefun(x W_xr + state W_hr + b_r)
+        z = gatefun(x W_xz + state W_hz + b_z)
+        state_new = fun((r * state) W_hh + u + b_h) * z + state * (1 - z)
+
+    :param insize: Size of input to layer
+    :param size: Layer size
+    :param init: function to initialise tensors with
+    :param has_bias: Whether layer has bias
+    :param fun: The activation function.
+    :param gatefun: The activation function for gates.  Generally a monotone
+        mapping from (-inf, inf) -> [0, 1]
+    """
+    def __init__(self, insize, size, init=zeros, has_bias=False,
+                 fun=activation.tanh, gatefun=activation.sigmoid):
+        self.size = size
+        self.insize = insize
+        self.has_bias = has_bias
+        self.fun = fun
+        self.gatefun = gatefun
+
+        self.b = th.shared(has_bias * init(3 * size))
+        self.xW = th.shared(init((3 * size, insize)) / np.sqrt(insize + size))
+        self.sW = th.shared(init((3 * size, size)) / np.sqrt(size + size))
+        self.sW2 = th.shared(init((size, size)) / np.sqrt(size + size))
+        self.b2 = th.shared(has_bias * init(size))
+
+    def params(self):
+        params =  [self.xW, self.sW, self.sW2]
+        if self.has_bias:
+            params += [self.b, self.b2]
+        return params
+
+    def json(self, params=False):
+        res = OrderedDict([('type', "Genmut"),
+                           ('activation', self.fun.func_name),
+                           ('gate', self.gatefun.func_name),
+                           ('size', self.size),
+                           ('insize', self.insize),
+                           ('bias', self.has_bias)])
+        if params:
+            res['params'] = OrderedDict([('xW', _extract(self.xW, (3, self.size, self.insize))),
+                                         ('sW', _extract(self.sW, (3, self.size, self.size))),
+                                         ('sW2', _extract(self.sW2)),
+                                         ('b', _extract(self.b, (3, self.size))),
+                                         ('b2', _extract(self.b2))])
+        return res
+
+    def set_params(self, values):
+        if self.has_bias:
+            assert values['b'].shape == (3, self.size)
+            self.b.set_value(values['b'].reshape(-1))
+            assert values['b2'].shape == (self.size)
+            self.b2.set_value(values['b2'])
+        assert values['xW'].shape == (3, self.size, self.insize)
+        self.xW.set_value(values['xW'].reshape((3 * self.size, self.insize)))
+        assert values['sW'].shape == (3, self.size, self.size)
+        self.sW.set_value(values['sW'].reshape((3 * self.size, self.size)))
+        assert values['sW2'].shape == (self.size, self.size)
+        self.sW2.set_value(values['sW2'])
+
+    def step(self, in_vec, in_state):
+        iT = ( T.tensordot(in_vec, self.xW, axes=(1, 1))
+             + T.tensordot(in_state, self.sW, axes=(1, 1))
+             + self.b)
+        iT = iT.reshape((-1, 3, self.size))
+
+        u = self.fun(iT[:, 0])
+        r = self.gatefun(iT[:, 1])
+        z = self.gatefun(iT[:, 2])
+        y = T.tensordot(r * in_state, self.sW2, axes=(1, 1))
+        state = self.fun(y + u + self.b2) * z + (1 - z) * in_state
+        return state
+
+
 class Reverse(Layer):
     """  Runs a recurrent layer in reverse time (backwards)
     """
@@ -1238,14 +1326,17 @@ class Serial(Layer):
             tmp = layer.run(tmp)
         return tmp
 
-
+_NBASE = 4
 class Decode(RNN):
     """ Forward pass of a Viterbi decoder
     """
     def __init__(self, k):
-        self.size = _NBASE ** k
-        self.rstep = _NBASE ** (k - 1)
-        self.rskip = _NBASE ** (k - 2)
+        self._NBASE = T.constant(_NBASE, dtype='int32')
+        self._NSTEP = T.constant(_NBASE, dtype='int32')
+        self._NSKIP = T.constant(_NBASE * _NBASE, dtype='int32')
+        self.size = T.constant(_NBASE ** k, dtype='int32')
+        self.rstep = T.constant(_NBASE ** (k - 1), dtype='int32')
+        self.rskip = T.constant(_NBASE ** (k - 2), dtype='int32')
 
     def params(self):
         return []
@@ -1261,19 +1352,19 @@ class Decode(RNN):
         # Stay
         score = pscore
         iscore = T.zeros_like(score)
-        iscore += T.arange(0, stop=self.size)
+        iscore += T.arange(0.0, stop=self.size)
         # Step
-        pscore = pscore.reshape((-1, _NSTEP, self.rstep))
-        score2 = T.repeat(T.max(pscore, axis=1), _NSTEP)
-        iscore2 = T.repeat(self.rstep * T.argmax(pscore, axis=1) + T.arange(0, stop=self.rstep, dtype=sloika_dtype), _NSTEP)
+        pscore = pscore.reshape((-1, self._NSTEP, self.rstep))
+        score2 = T.repeat(T.max(pscore, axis=1), self._NSTEP)
+        iscore2 = T.repeat(self.rstep * T.argmax(pscore, axis=1) + T.arange(0.0, stop=self.rstep, dtype=sloika_dtype), self._NSTEP)
         iscore2 = iscore2.reshape((-1, self.size))
         score2 = score2.reshape((-1, self.size))
         iscore = T.switch(T.gt(score, score2), iscore, iscore2)
         score = T.maximum(score, score2)
         # Skip
-        pscore = pscore.reshape((-1, _NSKIP, self.rskip))
-        score2 = T.repeat(T.max(pscore, axis=1), _NSKIP)
-        iscore2 = T.repeat(self.rstep * T.argmax(pscore, axis=1) + T.arange(0, stop=self.rskip), _NSKIP)
+        pscore = pscore.reshape((-1, self._NSKIP, self.rskip))
+        score2 = T.repeat(T.max(pscore, axis=1), self._NSKIP)
+        iscore2 = T.repeat(self.rstep * T.argmax(pscore, axis=1) + T.arange(0.0, stop=self.rskip), self._NSKIP)
         iscore2 = iscore2.reshape((-1, self.size))
         score2 = score2.reshape((-1, self.size))
         iscore = T.switch(T.gt(score, score2), iscore, iscore2)
