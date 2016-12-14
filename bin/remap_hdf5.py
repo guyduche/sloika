@@ -45,7 +45,7 @@ def compress_labels(labels, klen):
     kmer_to_state = bio.kmer_mapping(klen)
 
     label_kmers = [state_to_kmer[s - 1] for s in labels if s > 0]
-    seq = bio.kmers_to_sequence(label_kmers, homopolymer_step=True)
+    seq = bio.kmers_to_sequence(label_kmers, always_move=True)
     seq_kmers = bio.seq_to_kmers(seq, klen)
     label_vec = np.array([kmer_to_state[k] for k in seq_kmers])
 
