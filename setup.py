@@ -23,7 +23,7 @@ else:
 requires=[
     'numpy',
     'Theano',
-    'untangled >= 0.3.1'
+    'untangled >= 0.4.0'
 ]
 
 setup(
