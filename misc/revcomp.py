@@ -5,9 +5,9 @@ from Bio import SeqIO
 from untangled.cmdargs import AutoBool
 
 parser = argparse.ArgumentParser('Reverse complements fasta or fastq files')
-parser,add_argument('--complement', default=True, action=AutoBool, help='Complement input')
+parser.add_argument('--complement', default=True, action=AutoBool, help='Complement input')
 parser.add_argument('--fastq', default=False, action=AutoBool, help='Input is fastq')
-parser,add_argument('--reverse', default=True, action=AutoBool, help='Reverse input')
+parser.add_argument('--reverse', default=True, action=AutoBool, help='Reverse input')
 parser.add_argument('fasta', metavar='fasta', nargs='+', help='Files to read from')
 
 if __name__ == '__main__':
