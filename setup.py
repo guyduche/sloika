@@ -18,8 +18,6 @@ else:
 
 
 
-# To ensure that we can build .debs with adequate dependencies,
-#    .gitlab-ci.yml should contain package versions of these.
 requires=[]
 
 setup(
