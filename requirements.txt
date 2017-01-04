@@ -2,3 +2,4 @@ Cython==0.25.2
 Theano==0.8.2
 numpy>=1.7.1
 h5py==2.6.0
+untangled>=0.4.0
