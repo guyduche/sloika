@@ -2,14 +2,14 @@
 import argparse
 import cPickle
 import sys
-from untangled.cmdargs import AutoBool, FileExists
+from untangled.cmdargs import Maybe, FileExists
 from sloika.layers import Layer
 from theano.tensor.sharedvar import TensorSharedVariable
 from theano.sandbox.cuda.var import CudaNdarraySharedVariable
 import theano as th
 
 parser = argparse.ArgumentParser('Converts pickled sloika model between CPU and GPU (CUDA) versions')
-parser.add_argument('--target', default='cpu', action=AutoBool,
+parser.add_argument('--target', default='cpu', action=Maybe(str),
     help='Target device (cpu or gpu)')
 parser.add_argument('model', metavar='model.pkl', action=FileExists,
     help='Pickled sloika model to convert')
