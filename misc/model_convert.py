@@ -37,6 +37,8 @@ def move_shared_recursive(obj, target, depth=0, max_depth=5):
             elif isinstance(x, Layer):
                 move_shared_recursive(x, target, 0, max_depth=max_depth)
             elif isinstance(x, list):
+                # This handles the layers attribute of layers.Serial and
+                # layers.Parallel. Max_depth guards against runaway recursion.
                 if depth < max_depth:
                     for item in x:
                         move_shared_recursive(item, target, depth + 1,
