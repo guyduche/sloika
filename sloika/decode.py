@@ -24,6 +24,16 @@ def ishomopolymer(idx, klen):
     return idx in hidx
 
 
+def prepare_post(post, min_prob=1e-5, drop_bad=False):
+    post = np.squeeze(post, axis=1)
+    if drop_bad:
+        maxcall = np.argmax(post, axis=1)
+        post = post[maxcall > 0, 1:]
+        weight = np.sum(post, axis=1, keepdims=True)
+        post /= weight
+    return min_prob + (1.0 - min_prob) * post
+
+
 def viterbi(post, klen, skip_pen=0.0, log=False):
     """  Viterbi decoding of a kmer transducer
 

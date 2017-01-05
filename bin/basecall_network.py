@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 import argparse
 import cPickle
-from multiprocessing import Process, Queue
 import numpy as np
 import sys
 import time
@@ -45,39 +44,6 @@ parser.add_argument('input_folder', action=FileExists,
 _ETA = 1e-10
 
 
-def prepare_post(post, min_prob=1e-5, drop_bad=False):
-    post = np.squeeze(post, axis=1)
-    if drop_bad:
-        maxcall = np.argmax(post, axis=1)
-        post = post[maxcall > 0, 1:]
-        weight = np.sum(post, axis=1, keepdims=True)
-        post /= weight
-    return min_prob + (1.0 - min_prob) * post
-
-
-def compile_model(q, model_file, compiled_file=None):
-    from sloika import layers
-    import tempfile
-    import theano
-
-    sys.setrecursionlimit(10000)
-    with open(model_file, 'r') as fh:
-        network = cPickle.load(fh)
-        if not isinstance(network, theano.compile.function_module.Function):
-            if not isinstance(network, layers.Layer):
-                sys.stderr.write("Model file is not a network description.\n")
-                exit(1)
-            with tempfile.NamedTemporaryFile(mode='wb', dir='', suffix='.pkl', delete=False) if compiled_file is None else open(compiled_file, 'wb') as fh:
-                compiled_file = fh.name
-                sys.stderr.write("Compiling network and writing to {}\n".format(compiled_file))
-                compiled_network = network.compile()
-                cPickle.dump(compiled_network, fh, protocol=cPickle.HIGHEST_PROTOCOL)
-        else:
-            compiled_file = args.model
-
-    q.put(compiled_file)
-
-
 def init_worker(model):
     import cPickle
     global calc_post
@@ -103,7 +69,7 @@ def basecall(args, fn):
     inMat = features.from_events(ev, tag='')
     inMat = np.expand_dims(inMat, axis=1)
 
-    post = prepare_post(calc_post(inMat), min_prob=args.min_prob, drop_bad=(not args.transducer))
+    post = decode.prepare_post(calc_post(inMat), min_prob=args.min_prob, drop_bad=(not args.transducer))
 
     if args.transducer:
         score, call = decode.viterbi(post, args.kmer, skip_pen=args.skip)
@@ -145,12 +111,11 @@ class SeqPrinter(object):
 if __name__ == '__main__':
     args = parser.parse_args()
 
-    #  Model must be compiled in a separate thread, yuck.
-    q = Queue()
-    p = Process(target=compile_model, args=(q, args.model, args.compile))
-    p.start()
-    compiled_file = q.get()
-    p.join()
+    compiled_file = helpers.compile_model(args.model)
+    if args.compile is not None:
+        os.rename(compiled_file, args.compile)
+        compiled_file = args.compile
+
 
     seq_printer = SeqPrinter(args.kmer, transducer=args.transducer)
 
