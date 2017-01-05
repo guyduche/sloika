@@ -2,7 +2,7 @@
 import argparse
 import cPickle
 import sys
-from untangled.cmdargs import AutoBool
+from untangled.cmdargs import AutoBool, FileExists
 from sloika.layers import Layer
 from theano.tensor.sharedvar import TensorSharedVariable
 from theano.sandbox.cuda.var import CudaNdarraySharedVariable
