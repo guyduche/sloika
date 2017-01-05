@@ -1,5 +1,6 @@
 import numpy as np
-from sloika import viterbi_helpers, sloika_dtype
+from sloika import viterbi_helpers
+from sloika.config import sloika_dtype
 
 _NEG_LARGE = -50000.0
 _STAY = 0
