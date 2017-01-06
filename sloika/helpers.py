@@ -1,5 +1,7 @@
 import cPickle
-from multiprocessing import Process, SimpleQueue
+from multiprocessing import Process
+from multiprocessing.queues import SimpleQueue
+import shutil
 import sys
 import tempfile
 
