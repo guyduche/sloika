@@ -9,12 +9,11 @@ from theano.sandbox.cuda.var import CudaNdarraySharedVariable
 import theano as th
 
 parser = argparse.ArgumentParser('Converts pickled sloika model between CPU and GPU (CUDA) versions')
-parser.add_argument('--target', default='cpu', type=Maybe(str),
-    help='Target device (cpu or gpu)')
-parser.add_argument('model', metavar='model.pkl', action=FileExists,
+parser.add_argument('--target', default='swap', type=str,
+    choices=('cpu', 'gpu', 'swap'), help='Target device (cpu, gpu or swap)')
+parser.add_argument('model', action=FileExists,
     help='Pickled sloika model to convert')
-parser.add_argument('output', metavar='output.pkl',
-    help='Output file to write to')
+parser.add_argument('output', help='Output file to write to')
 
 def move_shared_recursive(obj, target, depth=0, max_depth=5):
     """Move Theano shared variables in object to target device
@@ -22,7 +21,7 @@ def move_shared_recursive(obj, target, depth=0, max_depth=5):
     Hackety hack hack! Wee!!
 
     :param obj: object to traverse (depth first) looking for shared variables
-    :param target: 'cpu' or 'gpu'
+    :param target: 'cpu', 'gpu' or None meaning to swap between cpu and gpu
     :param depth: depth of recursion so far
     :param max_depth: maximum recursion depth within any Layer instance
     """
@@ -31,9 +30,11 @@ def move_shared_recursive(obj, target, depth=0, max_depth=5):
         try:
             x = getattr(obj, n)
             if isinstance(x, TensorSharedVariable):
-                setattr(obj, n, th.shared(x.get_value(), target=target))
+                t = target or 'gpu'
+                setattr(obj, n, th.shared(x.get_value(), target=t))
             elif isinstance(x, CudaNdarraySharedVariable):
-                setattr(obj, n, th.shared(x.get_value(), target=target))
+                t = target or 'cpu'
+                setattr(obj, n, th.shared(x.get_value(), target=t))
             elif isinstance(x, Layer):
                 move_shared_recursive(x, target, 0, max_depth=max_depth)
             elif isinstance(x, list):
