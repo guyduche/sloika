@@ -7,3 +7,5 @@ export BUILD_DIR="${ROOT_DIR}/build"
 export SLOIKA_DEV_DIR="${BUILD_DIR}/sloika"
 
 export SLOIKA_VIRTUALENV_DIR="${BUILD_DIR}/env"
+
+export ACTIVATE="${SLOIKA_VIRTUALENV_DIR}/bin/activate"
