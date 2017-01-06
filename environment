@@ -1,8 +1,9 @@
+#!/bin/bash -ex
+
+export ROOT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
 export BUILD_DIR="${ROOT_DIR}/build"
 
 export SLOIKA_DEV_DIR="${BUILD_DIR}/sloika"
+
 export SLOIKA_VIRTUALENV_DIR="${BUILD_DIR}/env"
-
-export SLOIKA_SITE_PACKAGES="${SLOIKA_DEV_DIR}/lib/python2.7/site-packages"
-
-export PYTHONPATH="${SLOIKA_DEV_DIR}/lib/python2.7/site-packages"
