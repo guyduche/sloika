@@ -12,11 +12,15 @@ from untangled.cmdargs import (AutoBool, FileExists, Maybe, NonNegative,
 from untangled import fast5
 from untangled.iterators import imap_mp
 
+_NBASE = 4
+
 
 # This is here, not in main to allow documentation to be built
 parser = argparse.ArgumentParser(
     description='1D basecaller for RNNs',
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+parser.add_argument('--bad', default=True, action=AutoBool,
+    help='Model emits bad events as a separate state')
 parser.add_argument('--compile', default=None, type=Maybe(str),
     help='File output compiled model')
 parser.add_argument('--jobs', default=4, metavar='n', type=Positive(int),
@@ -103,7 +107,10 @@ def basecall(args, fn):
     inMat = features.from_events(ev, tag='')
     inMat = np.expand_dims(inMat, axis=1)
 
-    post = prepare_post(calc_post(inMat), min_prob=args.min_prob, drop_bad=(not args.transducer))
+    post = calc_post(inMat)
+    assert post.shape[2] == _NBASE ** args.kmer + (args.transducer or args.bad)
+    post = prepare_post(post, min_prob=args.min_prob,
+                        drop_bad=args.bad and not args.transducer)
 
     if args.transducer:
         score, call = decode.viterbi(post, args.kmer, skip_pen=args.skip)
