@@ -1,6 +1,6 @@
 from functools import partial
 from scipy.stats import truncnorm
-from sloika import sloika_dtype
+from sloika.config import sloika_dtype
 from sloika.activation import *
 from sloika.layers import *
 from sloika.variables import *

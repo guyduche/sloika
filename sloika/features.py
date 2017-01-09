@@ -1,5 +1,5 @@
 import numpy as np
-from sloika import sloika_dtype
+from sloika.config import sloika_dtype
 from untangled.maths import studentise
 
 
