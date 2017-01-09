@@ -108,7 +108,7 @@ def basecall(args, fn):
     inMat = np.expand_dims(inMat, axis=1)
 
     post = calc_post(inMat)
-    assert post.shape[2] == sv.nstate(args.kmer, transducer=args.transducer, bad_state=args.bad)
+    assert post.shape[2] == nstate(args.kmer, transducer=args.transducer, bad_state=args.bad)
     post = prepare_post(post, min_prob=args.min_prob,
                         drop_bad=args.bad and not args.transducer)
 
