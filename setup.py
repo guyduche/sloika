@@ -2,27 +2,38 @@ import re
 from glob import glob
 import numpy as np
 import os
+import yaml
+import subprocess
 from setuptools import setup, find_packages
 from Cython.Build import cythonize
 
-# Get the version number from __init__.py
 package_name = 'sloika'
 package_dir = os.path.join(os.path.dirname(__file__), package_name)
-verstrline = open('{}/__init__.py'.format(package_name), 'r').read()
-vsre = r"^__version__ = ['\"]([^'\"]*)['\"]"
-mo = re.search(vsre, verstrline, re.M)
-if mo:
-    verstr = mo.group(1)
+
+if os.environ.has_key('CI'):
+    version_template = '%(major)s.%(minor)s.%(patch)s'
 else:
-    raise RuntimeError('Unable to find version string in "{}/__init__.py".'.format(package_name))
+    version_template = '%(major)s.%(minor)s.dev%(patch)s'
 
+cmd = 'git rev-list --all --count'
+out, err = subprocess.Popen(cmd.split(),stdout=subprocess.PIPE).communicate()
+patch = int(out)
 
+with open("version.yaml", 'r') as stream:
+    try:
+	D = yaml.load(stream)
+	D['patch'] = patch
+        version = version_template%D
+    except yaml.YAMLError as exc:
+        print(exc)
+
+open('sloika/sloika_version.py','w').write("__version__ = '%s'\n"%version)
 
 requires=[]
 
 setup(
     name='sloika',
-    version=verstr,
+    version=version,
     description='Theano RNN library',
     maintainer='Tim Massingham',
     maintainer_email='tim.massingham@nanoporetech.com',
