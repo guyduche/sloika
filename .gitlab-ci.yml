@@ -15,16 +15,11 @@ before_script:
     - apt-get install -y cython python-pip python-all-dev python-setuptools ont-ca-certs
     - pip install pip --upgrade
 
-# TODO(semen): not all dependencies were captured by setup.py and I see some of these are maintained here. make requirements.txt the source of authority on that and call a setup script here that will use it
 do_testing:
     stage: test
     script:
-        #  Simple test of Python project.  Could be e.g. `make test`
-        - /usr/local/bin/pip install --trusted-host=pypi.oxfordnanolabs.local --extra-index-url=https://pypi.oxfordnanolabs.local/simple untangled
-        - /usr/local/bin/pip install Theano
-        - python setup.py test
+        - make testFromScratch
     except:
-        #  Don't test tags (just branches)
         - tags
 
 #

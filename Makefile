@@ -3,12 +3,9 @@ SHELL=/bin/bash
 pwd:=$(shell pwd)/
 bin:=${pwd}bin/
 
-#
-# TODO(semen): currently setup-dev-env.sh creates a link but sloika is not picked up when running create_hdf5 below
-#
-.PHONY: train
-train:
-	${bin}create_hdf5.py --chunk 500 --kmer 5 --section template --strand_list train_strand_list.txt  fast5_directory dataset_train.hdf5
+.PHONY: testFromScratch
+testFromScratch: cleanVirtualenv
+	(source environment && source $${ACTIVATE} && python setup.py test)
 
 .PHONY: test
 test:
@@ -23,10 +20,23 @@ test:
 test_parallel:
 	(source environment && source $${ACTIVATE} && NOSE_PROCESSES=2 nosetests .)
 
-.PHONY: newEnv
-newEnv: clean
+.PHONY: cleanDevEnv
+cleanDevEnv: cleanVirtualenv
 	./setup-dev-env.sh
+
+.PHONY: cleanVirtualenv
+cleanVirtualenv: clean
+	./setup-virtualenv.sh
 
 .PHONY: clean
 clean:
-	(source environment && rm -rf ${BUILD_DIR})
+	(source environment && rm -rf $${BUILD_DIR})
+
+.PHONY: wheel
+wheel:
+	pip wheel .
+
+.PHONY: wheeldeps
+wheeldeps:
+	pip wheel -r requirements.txt --trusted-host pypi.oxfordnanolabs.local \
+	   -i https://pypi.oxfordnanolabs.local/simple/
