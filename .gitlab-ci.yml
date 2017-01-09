@@ -30,9 +30,6 @@ do_release:
         - eval $(ssh-agent -s)
         - ssh-add <(set +x; echo "$PYPI_KEY")
         - scp -o StrictHostKeyChecking=no dist/* gitlab-ci-pypi@${PYPI_HOST}:/opt/ont-pypi/site-packages/
-    only:
-        #  Only do a release of tags marked explicit as release (match this regular expression)
-        - /^release_.*$/
     except:
         #  Do look for tags in branches
         - branches
