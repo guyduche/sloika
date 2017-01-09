@@ -8,7 +8,8 @@ import unittest
 import theano as th
 import theano.tensor as T
 
-from sloika import activation, sloika_dtype
+from sloika import activation
+from sloika.config import sloika_dtype
 import sloika.layers as nn
 
 class ANNTest(unittest.TestCase):

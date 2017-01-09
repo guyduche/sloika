@@ -1,6 +1,5 @@
 import numpy as np
-
-_NBASE = 4
+import sloika.variables as sv
 
 def argmax(post, zero_is_blank=True):
     """  Argmax decoding of simple transducer
@@ -19,9 +18,19 @@ def argmax(post, zero_is_blank=True):
 
 
 def ishomopolymer(idx, klen):
-    base = (_NBASE ** klen - 1) / (klen - 1)
+    base = (sv.nkmer(klen) - 1) / (klen - 1)
     hidx = np.arange(4) * base + 1
     return idx in hidx
+
+
+def prepare_post(post, min_prob=1e-5, drop_bad=False):
+    post = np.squeeze(post, axis=1)
+    if drop_bad:
+        maxcall = np.argmax(post, axis=1)
+        post = post[maxcall > 0, 1:]
+        weight = np.sum(post, axis=1, keepdims=True)
+        post /= weight
+    return min_prob + (1.0 - min_prob) * post
 
 
 def viterbi(post, klen, skip_pen=0.0, log=False):
@@ -35,9 +44,11 @@ def viterbi(post, klen, skip_pen=0.0, log=False):
     """
     _ETA = 1e-10
     nev, nst = post.shape
-    nkmer = _NBASE ** klen
-    assert klen > 0
-    assert nkmer + 1 == nst
+    assert klen >= 3, "Kmer not long enough to apply Viterbi with skips"
+    nkmer = sv.nkmer(klen)
+    assert sv.nstate(klen, transducer=True) == nst
+    nstep = sv.NBASE
+    nskip = sv.NBASE ** 2
 
     lpost = np.log(post + _ETA) if not log else post
     vscore = lpost[0][1:].copy()
@@ -48,15 +59,15 @@ def viterbi(post, klen, skip_pen=0.0, log=False):
         pscore, vscore = vscore, pscore
 
         #  Step
-        pscore = pscore.reshape(4, -1)
+        pscore = pscore.reshape(nstep, -1)
         nrem = pscore.shape[1]
-        score_step = np.repeat(np.amax(pscore, axis=0), 4)
-        from_step = np.repeat(nrem * np.argmax(pscore, axis=0) + range(nrem), 4)
+        score_step = np.repeat(np.amax(pscore, axis=0), nstep)
+        from_step = np.repeat(nrem * np.argmax(pscore, axis=0) + range(nrem), nstep)
         #  Skip
-        pscore = pscore.reshape(16, -1)
+        pscore = pscore.reshape(nskip, -1)
         nrem = pscore.shape[1]
-        score_skip = np.repeat(np.amax(pscore, axis=0), 16) - skip_pen
-        from_skip = np.repeat(nrem * np.argmax(pscore, axis=0) + range(nrem), 16)
+        score_skip = np.repeat(np.amax(pscore, axis=0), nskip) - skip_pen
+        from_skip = np.repeat(nrem * np.argmax(pscore, axis=0) + range(nrem), nskip)
         #  Best score for step and skip
         vscore = lpost[i][1:] + np.maximum(score_step, score_skip)
         traceback[i] = np.where(score_step > score_skip, from_step, from_skip)

@@ -1,10 +1,9 @@
 from functools import partial
 from scipy.stats import truncnorm
-from sloika import sloika_dtype
+from sloika.config import sloika_dtype
 from sloika.activation import *
 from sloika.layers import *
-
-_NBASE = 4
+from sloika.variables import *
 
 def _rn(size, sd):
     #  Truncated normal for Xavier style initiation
