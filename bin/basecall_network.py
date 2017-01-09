@@ -7,14 +7,13 @@ import sys
 import time
 
 from sloika import helpers
+from sloika.variables import nstate
 
 from untangled import bio
 from untangled.cmdargs import (AutoBool, FileExists, Maybe, NonNegative,
                                proportion, Positive, Vector)
 from untangled import fast5
 from untangled.iterators import imap_mp
-
-_NBASE = 4
 
 
 # This is here, not in main to allow documentation to be built
@@ -77,7 +76,7 @@ def basecall(args, fn):
     inMat = np.expand_dims(inMat, axis=1)
 
     post = calc_post(inMat)
-    assert post.shape[2] == _NBASE ** args.kmer + (args.transducer or args.bad)
+    assert post.shape[2] == nstate(args.kmer, transducer=args.transducer, bad_state=args.bad)
     post = decode.prepare_post(post, min_prob=args.min_prob,
                                drop_bad=args.bad and not args.transducer)
 

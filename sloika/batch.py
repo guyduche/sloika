@@ -5,7 +5,6 @@ from untangled import bio, fast5
 from untangled.iterators import imap_mp
 from untangled.maths import med_mad
 
-_NBASE = 4
 
 def filter_by_rate(position, chunk, time=None, fact=3.0):
     """  Filter chunks using sequencing rate from mapping
