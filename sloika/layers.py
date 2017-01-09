@@ -5,12 +5,13 @@ import theano.tensor as T
 import numpy as np
 
 from sloika import activation, sloika_dtype
+from sloika.variables import NBASE, nkmer
+
 
 """  Convention: inMat row major (C ordering) as (time, batch, state)
 """
-_NBASE = 4
-_NSTEP = _NBASE
-_NSKIP = _NBASE * _NBASE
+_NSTEP = NBASE
+_NSKIP = NBASE * NBASE
 _FORGET_BIAS = 2.0
 _INDENT = ' ' * 4
 
@@ -1326,17 +1327,16 @@ class Serial(Layer):
             tmp = layer.run(tmp)
         return tmp
 
-_NBASE = 4
 class Decode(RNN):
     """ Forward pass of a Viterbi decoder
     """
     def __init__(self, k):
-        self._NBASE = T.constant(_NBASE, dtype='int32')
-        self._NSTEP = T.constant(_NBASE, dtype='int32')
-        self._NSKIP = T.constant(_NBASE * _NBASE, dtype='int32')
-        self.size = T.constant(_NBASE ** k, dtype='int32')
-        self.rstep = T.constant(_NBASE ** (k - 1), dtype='int32')
-        self.rskip = T.constant(_NBASE ** (k - 2), dtype='int32')
+        self._NBASE = T.constant(NBASE, dtype='int32')
+        self._NSTEP = T.constant(_NSTEP, dtype='int32')
+        self._NSKIP = T.constant(_NSKIP, dtype='int32')
+        self.size = T.constant(nkmer(k), dtype='int32')
+        self.rstep = T.constant(NBASE ** (k - 1), dtype='int32')
+        self.rskip = T.constant(NBASE ** (k - 2), dtype='int32')
 
     def params(self):
         return []
