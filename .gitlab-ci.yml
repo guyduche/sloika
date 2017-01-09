@@ -9,8 +9,8 @@ stages:
 
 # TODO(semen): move these installation steps into a script so that user can run them on a clean box
 before_script:
-    #  Addition setup for machine image.  Here install a few packages
     - apt-get update
+    - apt-get install -y python-virtualenv
     - apt-get install -y python-numpy python-h5py python-scipy python-docutils 
     - apt-get install -y cython python-pip python-all-dev python-setuptools ont-ca-certs
     - pip install pip --upgrade
