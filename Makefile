@@ -32,6 +32,14 @@ cleanVirtualenv: clean
 clean:
 	(source environment && rm -rf $${BUILD_DIR})
 
+.PHONY: deps
+deps:
+	apt-get update
+	apt-get install -y python-virtualenv python-pip python-setuptools ont-ca-certs
+
+
+# unused / experimental targets follow
+#
 .PHONY: wheel
 wheel:
 	pip wheel .
