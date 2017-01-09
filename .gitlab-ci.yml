@@ -14,6 +14,7 @@ before_script:
 do_testing:
     stage: test
     script:
+        - git rev-list --all --count
         - CI=True make testFromScratch
     except:
         - tags
