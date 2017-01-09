@@ -142,7 +142,7 @@ if __name__ == '__main__':
 
     jobs = create_jobs(args.database, sleep=args.sleep, limit=args.limit)
     pool = multiprocessing.Pool(args.jobs)
-    for res in imap_unordered(pool, run_job, jobs, fix_args=args):
+    for res in imap_unordered(pool, run_job, jobs, fix_args=[args]):
         continue
     pool.close()
     pool.join()
