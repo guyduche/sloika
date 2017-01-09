@@ -51,7 +51,8 @@ clean:
 deps:
 	apt-get update
 	apt-get install -y \
-	    python-virtualenv python-pip python-setuptools ont-ca-certs git
+	    python-virtualenv python-pip python-setuptools ont-ca-certs git \
+	    python-yaml
 
 .PHONY: wheel
 wheel: ${whlFile}
