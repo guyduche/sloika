@@ -77,7 +77,8 @@ def imap_unordered(pool, f, iterable):
 
 
 def _set_init_args(args):
-    global clargs = args
+    global clargs
+    clargs = args
 
 def run_job(args):
     if args is None:
