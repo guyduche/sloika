@@ -14,7 +14,6 @@ before_script:
     - apt-get install -y python-virtualenv
     - apt-get install -y python-numpy python-h5py python-scipy python-docutils 
     - apt-get install -y cython python-pip python-all-dev python-setuptools ont-ca-certs
-    - pip install pip --upgrade
 
 do_testing:
     stage: test
