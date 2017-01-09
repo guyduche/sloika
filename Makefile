@@ -50,9 +50,9 @@ deps:
 	    python-virtualenv python-pip python-setuptools ont-ca-certs
 
 .PHONY: wheel
-wheel:  ${whlFile}
-${whlFile}:
-	python setup.py bdist_wheel
+wheel: ${whlFile}
+${whlFile}: setup.py Makefile
+	(source environment && source $${ACTIVATE} && python setup.py bdist_wheel)
 
 .PHONY: install
 install: ${whlFile}
