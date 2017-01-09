@@ -1,7 +1,8 @@
+#
 #  Yaml CI config for Gitlab See. http://docs.gitlab.com/ce/ci/yaml/README.html
-#  Machine image on which to build, test etc
-# TODO(semen): any chance we can exercise 16.04 image here?
-image: docker-registry.oxfordnanolabs.local:5000/ont-base-ubuntu:14.04
+#
+
+image: docker-registry.oxfordnanolabs.local:5000/ont-base-ubuntu:16.04
 
 stages:
     - test
