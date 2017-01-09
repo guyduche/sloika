@@ -36,7 +36,7 @@ def viterbi(post, klen, skip_pen=0.0, log=False):
     _ETA = 1e-10
     nev, nst = post.shape
     nkmer = _NBASE ** klen
-    assert klen > 0
+    assert klen > 3
     assert nkmer + 1 == nst
 
     lpost = np.log(post + _ETA) if not log else post
