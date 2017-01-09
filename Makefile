@@ -38,8 +38,7 @@ clean:
 deps:
 	apt-get update
 	apt-get install -y \
-	    python-virtualenv python-pip python-setuptools ont-ca-certs \
-	    python-nose2
+	    python-virtualenv python-pip python-setuptools ont-ca-certs
 
 
 # unused / experimental targets follow
