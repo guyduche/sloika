@@ -8,6 +8,8 @@ import subprocess
 import time
 from untangled.cmdargs import FileExists, Maybe, NonNegative, Positive
 
+clargs = None
+
 _PENDING = 0
 _RUNNING = 1
 _SUCCESS = 2
@@ -74,7 +76,10 @@ def imap_unordered(pool, f, iterable):
                 yield res
 
 
-def run_job(clargs, args):
+def _set_init_args(args):
+    global clargs = args
+
+def run_job(args):
     if args is None:
         return None
 
@@ -141,8 +146,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     jobs = create_jobs(args.database, sleep=args.sleep, limit=args.limit)
-    pool = multiprocessing.Pool(args.jobs)
-    for res in imap_unordered(pool, run_job, jobs, fix_args=[args]):
+    pool = multiprocessing.Pool(args.jobs, initializer=_set_init_args, initargs=args)
+    for res in imap_unordered(pool, run_job, jobs):
         continue
     pool.close()
     pool.join()
