@@ -147,7 +147,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     jobs = create_jobs(args.database, sleep=args.sleep, limit=args.limit)
-    pool = multiprocessing.Pool(args.jobs, initializer=_set_init_args, initargs=args)
+    pool = multiprocessing.Pool(args.jobs, initializer=_set_init_args, initargs=[args])
     for res in imap_unordered(pool, run_job, jobs):
         continue
     pool.close()
