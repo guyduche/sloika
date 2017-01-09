@@ -14,9 +14,7 @@ before_script:
 do_testing:
     stage: test
     script:
-        - make cleanVirtualenv
-        - make install
-        - make test
+        - make testFromScratch
     except:
         - tags
 

@@ -6,6 +6,9 @@ bin:=${pwd}bin/
 # TODO(semen): sort out versioning
 whlFile:=dist/sloika-1.1.dev0-cp27-cp27mu-linux_x86_64.whl
 
+# this target can only be run in serial
+.PHONY: testFromScratch
+testFromScratch: cleanVirtualenv install test
 
 #
 # TODO: can't run tests reliably from the tree where source directory is named sloika
