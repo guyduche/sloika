@@ -13,7 +13,7 @@ def network(klen, sd, nfeature=4, winlen=3, size=64):
     :returns: a `class`:layer.Layer:
     """
     _prn = smt.partial(smt._rn, sd=sd)
-    nstate = (smt._NBASE ** klen) + 1
+    nstate = smt.nstate(klen)
     gru_act = smt.tanh_pm
     ff_act = smt.tanh_pm
     gate_act = smt.sigmoid_pm
