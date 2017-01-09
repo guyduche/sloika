@@ -3,13 +3,18 @@ SHELL=/bin/bash
 pwd:=$(shell pwd)/
 bin:=${pwd}bin/
 
-.PHONY: testFromScratch
-testFromScratch: cleanVirtualenv
-	(source environment && source $${ACTIVATE} && nose2)
+# TODO(semen): sort out versioning
+whlFile:=dist/sloika-1.1.dev0-cp27-cp27mu-linux_x86_64.whl
 
+
+#
+# TODO: can't run tests reliably from the tree where source directory is named sloika
+#
 .PHONY: test
 test:
-	(source environment && source $${ACTIVATE} && nose2)
+	(source environment && rm -rf $${BUILD_DIR}/test)
+	(source environment && cp -r sloika/test $${BUILD_DIR})
+	(source environment && source $${ACTIVATE} && cd $${BUILD_DIR}/test && nose2)
 
 #
 # TODO(semen): fix parallel test runs
@@ -21,6 +26,10 @@ test:
 .PHONY: test_parallel
 test_parallel:
 	(source environment && source $${ACTIVATE} && NOSE_PROCESSES=2 nosetests .)
+
+.PHONY: cleanCiEnv
+cleanCiEnv: cleanVirtualenv ${whlFile}
+	(source environment && source $${ACTIVATE} && pip install ${whlFile})
 
 .PHONY: cleanDevEnv
 cleanDevEnv: cleanVirtualenv
@@ -40,14 +49,11 @@ deps:
 	apt-get install -y \
 	    python-virtualenv python-pip python-setuptools ont-ca-certs
 
-
-# unused / experimental targets follow
-#
 .PHONY: wheel
-wheel:
-	pip wheel .
+wheel:  ${whlFile}
+${whlFile}:
+	python setup.py bdist_wheel
 
-.PHONY: wheeldeps
-wheeldeps:
-	pip wheel -r requirements.txt --trusted-host pypi.oxfordnanolabs.local \
-	   -i https://pypi.oxfordnanolabs.local/simple/
+.PHONY: install
+install: ${whlFile}
+	(source environment && source $${ACTIVATE} && pip install ${whlFile})

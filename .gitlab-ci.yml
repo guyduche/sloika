@@ -14,13 +14,11 @@ before_script:
 do_testing:
     stage: test
     script:
-        - make testFromScratch
+        - make cleanVirtualenv
+        - make install
+        - make test
     except:
         - tags
-
-#
-# TODO(semen): there's a general problem with this build script: we should build the tarball and upload it to the server and then test target should pick it up and exercise it, rather than the other way around. If the tests pass then the tarball should be marked as releasable. Otherwise it is easy to end up in the state we are in now: the deployable that do_release scp'es is not installable.
-#
 
 do_release:
     stage: release
