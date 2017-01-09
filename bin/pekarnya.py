@@ -80,7 +80,7 @@ def run_job(clargs, args):
 
     # Split jobs cyclically among GPU by process ID.  NB: process IDs are 1-based
     pid = int(multiprocessing.current_process().name.split('-')[-1])
-    gpu = (pid - 1) %% clargs.ngpu
+    gpu = (pid - 1) % clargs.ngpu
     pmem = 0.8 * min(clargs.ngpu / float(clargs.jobs), 1)
     # Theano flags
     env = os.environ.copy()
