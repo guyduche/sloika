@@ -4,7 +4,8 @@ import theano as th
 import theano.tensor as T
 import numpy as np
 
-from sloika import activation, sloika_dtype
+from sloika import activation
+from sloika.config import sloika_dtype
 
 """  Convention: inMat row major (C ordering) as (time, batch, state)
 """
