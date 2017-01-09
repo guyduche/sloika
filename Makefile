@@ -5,16 +5,18 @@ bin:=${pwd}bin/
 
 .PHONY: testFromScratch
 testFromScratch: cleanVirtualenv
-	(source environment && source $${ACTIVATE} && python setup.py test)
+	(source environment && source $${ACTIVATE} && nose2)
 
 .PHONY: test
 test:
-	(source environment && source $${ACTIVATE} && python setup.py test)
+	(source environment && source $${ACTIVATE} && nose2)
 
 #
 # TODO(semen): fix parallel test runs
 #              currently does not work because tests step on each other
 #              in Theano intermediate directory
+#
+# TODO(semen): upgrade to nose2
 #
 .PHONY: test_parallel
 test_parallel:
@@ -35,7 +37,9 @@ clean:
 .PHONY: deps
 deps:
 	apt-get update
-	apt-get install -y python-virtualenv python-pip python-setuptools ont-ca-certs
+	apt-get install -y \
+	    python-virtualenv python-pip python-setuptools ont-ca-certs \
+	    python-nose2
 
 
 # unused / experimental targets follow
