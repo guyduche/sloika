@@ -46,6 +46,7 @@ cleanVirtualenv: clean
 .PHONY: clean
 clean:
 	(source environment && rm -rf $${BUILD_DIR})
+	rm -rf dist
 
 .PHONY: deps
 deps:
