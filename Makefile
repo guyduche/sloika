@@ -7,9 +7,10 @@ bin:=${pwd}bin/
 version:=$(shell python scripts/version.py)
 whlFile:=dist/sloika-${version}-cp27-cp27mu-linux_x86_64.whl
 
-# this target can only be run in serial
-.PHONY: testFromScratch
+# these targets can only be run in serial
+.PHONY: testFromScratch testFromScratchInParallel
 testFromScratch: cleanVirtualenv install test
+testFromScratchInParallel: cleanVirtualenv install testInParallel
 
 #
 # TODO: can't run tests reliably from the tree where source directory is named sloika
@@ -27,9 +28,11 @@ test:
 #
 # TODO(semen): upgrade to nose2
 #
-.PHONY: test_parallel
-test_parallel:
-	(source environment && source $${ACTIVATE} && NOSE_PROCESSES=2 nosetests .)
+.PHONY: testInParallel
+testInParallel:
+	(source environment && rm -rf $${BUILD_DIR}/test)
+	(source environment && cp -r sloika/test $${BUILD_DIR})
+	(source environment && source $${ACTIVATE} && cd $${BUILD_DIR}/test && NOSE_PROCESSES=2 nosetests)
 
 .PHONY: cleanCiEnv
 cleanCiEnv: cleanVirtualenv ${whlFile}
