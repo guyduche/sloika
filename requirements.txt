@@ -3,5 +3,3 @@ Theano==0.8.2
 numpy>=1.7.1
 h5py==2.6.0
 untangled>=0.4.1
-nose2==0.6.5
-pyyaml==3.12

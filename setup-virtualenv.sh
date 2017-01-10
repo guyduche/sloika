@@ -11,5 +11,9 @@ source ${SLOIKA_VIRTUALENV_DIR}/bin/activate
 # need a version of pip that supports --trusted-host option
 pip install pip --upgrade
 
-pip install -r requirements.txt --trusted-host pypi.oxfordnanolabs.local \
+pip install \
+    -r scripts/requirements.txt \
+    -r sloika/test/requirements.txt \
+    -r requirements.txt \
+    --trusted-host pypi.oxfordnanolabs.local \
     --index-url https://pypi.oxfordnanolabs.local/simple/
