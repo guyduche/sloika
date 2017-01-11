@@ -13,8 +13,7 @@ from untangled.cmdargs import (AutoBool, display_version_and_exit, FileExists,
                                NonNegative, Positive, Maybe)
 from untangled.iterators import imap_mp, izip
 
-from sloika import helpers
-from sloika import features, transducer, __version__
+from sloika import features, helpers, transducer, __version__
 
 
 # This is here, not in main to allow documentation to be built
