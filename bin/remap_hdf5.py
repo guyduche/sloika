@@ -9,8 +9,8 @@ import sys
 import time
 
 from untangled import bio, fast5
-from untangled.cmdargs import (AutoBool, display_version_and_exit, FileExists,
-                               NonNegative, Positive, Maybe)
+from untangled.cmdargs import (AutoBool, display_version_and_exit, FileAbsent,
+                               FileExists, NonNegative, Positive, Maybe)
 from untangled.iterators import imap_mp, izip
 
 from sloika import features, helpers, transducer, __version__
@@ -22,7 +22,7 @@ parser = argparse.ArgumentParser(
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('--batch', metavar='size', default=1000, type=Positive(int),
     help='Number of posterior matrices to calculate simulataneously on GPU')
-parser.add_argument('--compile', default=None, type=Maybe(str),
+parser.add_argument('--compile', default=None, action=FileAbsent,
     help='File output compiled model')
 parser.add_argument('--jobs', default=8, type=Positive(int),
     help='Number of jobs to run in parallel')
