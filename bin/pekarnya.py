@@ -23,8 +23,7 @@ parser.add_argument('--limit', metavar='jobs', default=None, type=Maybe(Positive
     help='Maximum number of jobs')
 parser.add_argument('--sleep', metavar='seconds', default=30, type=NonNegative(int),
     help='Time between polling database')
-parser.add_argument('database', metavar='file.db', action=FileExists,
-    help='')
+parser.add_argument('database', action=FileExists, help='Database.db file')
 
 
 def get_git_commit(gitdir):
