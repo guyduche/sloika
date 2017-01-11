@@ -31,8 +31,8 @@ parser.add_argument('--slip', default=None, metavar='penalty', type=Maybe(NonNeg
 parser.add_argument('--version', nargs=0, action=display_version_and_exit, metavar=__version__,
     help='Display version information.')
 parser.add_argument('model', action=FileExists, help='Pickled model file')
-parser.add_argument('input', help='HDF5 file for input')
-parser.add_argument('output', help='HDF5 for output')
+parser.add_argument('input', action=FileExists, help='HDF5 file for input')
+parser.add_argument('output', action=FileAbsent, help='HDF5 for output')
 
 def compress_labels(labels, klen):
     """ Make sequece from labels
