@@ -53,7 +53,7 @@ parser.add_argument('--transducer', default=True, action=AutoBool,
     help='Train a transducer based model')
 parser.add_argument('--version', nargs=0, action=display_version_and_exit, metavar=__version__,
     help='Display version information.')
-parser.add_argument('model', metavar='file.py', action=FileExists,
+parser.add_argument('model', action=FileExists,
     help='File to read python model description from')
 parser.add_argument('output', help='Prefix for output files')
 parser.add_argument('input', action=FileExists,

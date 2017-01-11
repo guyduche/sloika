@@ -26,9 +26,9 @@ parser.add_argument('--transducer', default=True, action=AutoBool,
     help='Model is a transducer')
 parser.add_argument('--version', nargs=0, action=display_version_and_exit, metavar=__version__,
     help='Display version information.')
-parser.add_argument('model', metavar='file.npy', action=FileExists,
+parser.add_argument('model', action=FileExists,
     help='File to read model description from')
-parser.add_argument('input', metavar='hdf5', action=FileExists,
+parser.add_argument('input', action=FileExists,
     help='HDF5 file containing chunks')
 
 

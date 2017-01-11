@@ -22,7 +22,7 @@ parser.add_argument('--sd', default=0.5, metavar='value', type=Positive(float),
     help='Standard deviation to initialise with')
 parser.add_argument('--version', nargs=0, action=display_version_and_exit,
     metavar=__version__, help='Display version information.')
-parser.add_argument('model', metavar='file.py', action=FileExists,
+parser.add_argument('model', action=FileExists,
     help='File to read python model description from')
 
 
