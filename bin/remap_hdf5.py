@@ -75,10 +75,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     #  Compile model file if necessary and read in compiled model
-    compiled_file = helpers.compile_model(args.model)
-    if args.compile is not None:
-        os.rename(compiled_file, args.compile)
-        compiled_file = args.compile
+    compiled_file = helpers.compile_model(args.model, args.compile)
     with open(compiled_file, 'r') as fh:
         calc_post = cPickle.load(fh)
 
