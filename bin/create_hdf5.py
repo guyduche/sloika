@@ -7,8 +7,8 @@ import sys
 
 from sloika import batch, sloika_dtype
 
-from untangled.cmdargs import (AutoBool, FileExists, Maybe, NonNegative,
-                               Positive, proportion)
+from untangled.cmdargs import (AutoBool, FileAbsent, FileExists, Maybe,
+                               NonNegative, Positive, proportion)
 from untangled import fast5
 
 parser = argparse.ArgumentParser(
@@ -40,7 +40,7 @@ parser.add_argument('--use_scaled', default=False, action=AutoBool,
     help='Train from scaled event statistics')
 parser.add_argument('input_folder', action=FileExists,
     help='Directory containing single-read fast5 files.')
-parser.add_argument('output', help='Output HDF5 file')
+parser.add_argument('output', action=FileAbsent, help='Output HDF5 file')
 
 
 

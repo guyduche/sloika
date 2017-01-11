@@ -12,9 +12,9 @@ import time
 import theano as th
 import theano.tensor as T
 
-from untangled.cmdargs import (AutoBool, display_version_and_exit, FileExists,
-                               Maybe, NonNegative, ParseToNamedTuple, Positive,
-                               proportion)
+from untangled.cmdargs import (AutoBool, display_version_and_exit, FileAbsent,
+                               FileExists, Maybe, NonNegative, ParseToNamedTuple,
+                               Positive, proportion)
 
 from sloika import updates, __version__
 
@@ -55,7 +55,7 @@ parser.add_argument('--version', nargs=0, action=display_version_and_exit, metav
     help='Display version information.')
 parser.add_argument('model', metavar='file.py', action=FileExists,
     help='File to read python model description from')
-parser.add_argument('output', help='Prefix for output files')
+parser.add_argument('output', action=FileAbsent, help='Prefix for output files')
 parser.add_argument('input', action=FileExists,
     help='HDF5 file containing chunks')
 

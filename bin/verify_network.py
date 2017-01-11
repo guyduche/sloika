@@ -7,8 +7,7 @@ import sys
 import theano as th
 import theano.tensor as T
 
-from untangled.cmdargs import (display_version_and_exit, FileExists,
-                               Positive)
+from untangled.cmdargs import (display_version_and_exit, FileExists, Positive)
 
 from sloika import __version__
 
