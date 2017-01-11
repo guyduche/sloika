@@ -2,7 +2,6 @@
 import argparse
 import cPickle
 import numpy as np
-import os
 import sys
 import time
 
@@ -10,8 +9,8 @@ from sloika import helpers
 from sloika.variables import nstate
 
 from untangled import bio
-from untangled.cmdargs import (AutoBool, FileExists, Maybe, NonNegative,
-                               proportion, Positive, Vector)
+from untangled.cmdargs import (AutoBool, FileAbsent, FileExists, Maybe,
+                               NonNegative, proportion, Positive, Vector)
 from untangled import fast5
 from untangled.iterators import imap_mp
 
@@ -22,7 +21,7 @@ parser = argparse.ArgumentParser(
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('--bad', default=True, action=AutoBool,
     help='Model emits bad events as a separate state')
-parser.add_argument('--compile', default=None, type=Maybe(str),
+parser.add_argument('--compile', default=None, action=FileAbsent,
     help='File output compiled model')
 parser.add_argument('--jobs', default=4, metavar='n', type=Positive(int),
     help='Number of jobs to run in parallel')
@@ -120,11 +119,7 @@ class SeqPrinter(object):
 if __name__ == '__main__':
     args = parser.parse_args()
 
-    compiled_file = helpers.compile_model(args.model)
-    if args.compile is not None:
-        os.rename(compiled_file, args.compile)
-        compiled_file = args.compile
-
+    compiled_file = helpers.compile_model(args.model, args.compile)
 
     seq_printer = SeqPrinter(args.kmer, transducer=args.transducer)
 
