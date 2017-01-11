@@ -4,7 +4,6 @@ import cPickle
 import h5py
 import numpy as np
 import numpy.lib.recfunctions as nprf
-import os
 import sys
 import time
 

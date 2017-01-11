@@ -2,7 +2,6 @@
 import argparse
 import cPickle
 import numpy as np
-import os
 import sys
 import time
 
