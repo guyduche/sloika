@@ -4,6 +4,7 @@ import cPickle
 import h5py
 import numpy as np
 import numpy.lib.recfunctions as nprf
+import os
 import sys
 import time
 
@@ -12,6 +13,7 @@ from untangled.cmdargs import (AutoBool, display_version_and_exit, FileExists,
                                NonNegative, Positive, Maybe)
 from untangled.iterators import imap_mp, izip
 
+from sloika import helpers
 from sloika import features, transducer, __version__
 
 
@@ -21,6 +23,8 @@ parser = argparse.ArgumentParser(
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('--batch', metavar='size', default=1000, type=Positive(int),
     help='Number of posterior matrices to calculate simulataneously on GPU')
+parser.add_argument('--compile', default=None, type=Maybe(str),
+    help='File output compiled model')
 parser.add_argument('--jobs', default=8, type=Positive(int),
     help='Number of jobs to run in parallel')
 parser.add_argument('--slip', default=None, metavar='penalty', type=Maybe(NonNegative(float)),
@@ -71,7 +75,12 @@ def map_transducer(args, fargs):
 if __name__ == '__main__':
     args = parser.parse_args()
 
-    with open(args.model, 'r') as fh:
+    #  Compile model file if necessary and read in compiled model
+    compiled_file = helpers.compile_model(args.model)
+    if args.compile is not None:
+        os.rename(compiled_file, args.compile)
+        compiled_file = args.compile
+    with open(compiled_file, 'r') as fh:
         calc_post = cPickle.load(fh)
 
     with h5py.File(args.output, 'w') as h5:
