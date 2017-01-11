@@ -28,5 +28,5 @@ do_release:
         - CI=True make cleanVirtualenv wheel
         - ssh-add <(set +x; echo "$PYPI_KEY")
         - scp -o StrictHostKeyChecking=no dist/* gitlab-ci-pypi@${PYPI_HOST}:/opt/ont-pypi/site-packages/
-    except:
-        - branches
+    only:
+        - /^dev$/
