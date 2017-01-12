@@ -5,7 +5,8 @@ import numpy as np
 from scipy import linalg
 import sys
 
-from sloika import batch, sloika_dtype
+from sloika import batch
+from sloika.config import sloika_dtype
 
 from untangled.cmdargs import (AutoBool, FileAbsent, FileExists, Maybe,
                                NonNegative, Positive, proportion)
