@@ -12,6 +12,10 @@ whlFile:=dist/sloika-${version}-cp27-cp27mu-linux_x86_64.whl
 unitTestFromScratch: cleanVirtualenv install unitTest
 unitTestFromScratchInParallel: cleanVirtualenv install testInParallel
 
+.PHONY: acceptanceTest
+acceptanceTest:
+	(source environment && source $${ACTIVATE} && cd test/acceptance && nose2)
+
 #
 # TODO: can't run tests reliably from the tree where source directory is named sloika
 #
