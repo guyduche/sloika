@@ -11,14 +11,14 @@ stages:
 before_script:
     - make deps
 
-do_testing:
+unit_test:
     stage: test
     script:
-        - CI=True make testFromScratch
+        - CI=True make unitTestFromScratch
     except:
         - tags
 
-do_release:
+build_and_upload_artefact:
     stage: release
     script:
         - apt-get install -y openssh-client
