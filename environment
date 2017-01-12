@@ -4,7 +4,14 @@ export ROOT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 export BUILD_DIR="${ROOT_DIR}/build"
 
+#
+# TODO(semen): move scripts into scripts dir
+#
+export SCRIPTS_DIR="${ROOT_DIR}/bin"
+
 export SLOIKA_DEV_DIR="${BUILD_DIR}/sloika"
+
+export ACCTEST_WORK_DIR="${BUILD_DIR}/acceptance"
 
 export SLOIKA_VIRTUALENV_DIR="${BUILD_DIR}/env"
 

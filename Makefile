@@ -8,15 +8,21 @@ version:=$(shell python scripts/version.py)
 whlFile:=dist/sloika-${version}-cp27-cp27mu-linux_x86_64.whl
 
 # these targets can only be run in serial
-.PHONY: testFromScratch testFromScratchInParallel
-testFromScratch: cleanVirtualenv install test
-testFromScratchInParallel: cleanVirtualenv install testInParallel
+.PHONY: unitTestFromScratch acceptanceTestFromScratch unitTestFromScratchInParallel
+unitTestFromScratch: cleanVirtualenv install unitTest
+acceptanceTestFromScratch: cleanVirtualenv install acceptanceTest
+unitTestFromScratchInParallel: cleanVirtualenv install testInParallel
+
+.PHONY: acceptanceTest acctest
+acceptanceTest: acctest
+acctest:
+	(source environment && source $${ACTIVATE} && cd test/acceptance && nose2)
 
 #
 # TODO: can't run tests reliably from the tree where source directory is named sloika
 #
-.PHONY: test
-test:
+.PHONY: unitTest
+unitTest:
 	(source environment && rm -rf $${BUILD_DIR}/test)
 	(source environment && cp -r sloika/test $${BUILD_DIR})
 	(source environment && source $${ACTIVATE} && cd $${BUILD_DIR}/test && nose2)
