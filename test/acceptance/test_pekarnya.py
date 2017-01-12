@@ -11,7 +11,7 @@ class AcceptanceTest(unittest.TestCase):
     def setUpClass(self):
         self.test_directory = os.path.splitext(__file__)[0]
         self.test_name = os.path.basename(self.test_directory)
-        self.script = os.path.join( os.environ["SCRIPTS_DIR"], "create_hdf5.py" )
+        self.script = os.path.join( os.environ["SCRIPTS_DIR"], "pekarnya.py" )
 
         self.work_dir = os.path.join(os.environ["ACCTEST_WORK_DIR"], self.test_name)
         if not os.path.exists(self.work_dir):
