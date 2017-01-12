@@ -18,6 +18,13 @@ unit_test:
     except:
         - tags
 
+acceptance_test:
+    stage: test
+    script:
+        - CI=True make acceptanceTestFromScratch
+    except:
+        - tags
+
 build_and_upload_artefact:
     stage: release
     script:
