@@ -13,8 +13,9 @@ unitTestFromScratch: cleanVirtualenv install unitTest
 acceptanceTestFromScratch: cleanVirtualenv install acceptanceTest
 unitTestFromScratchInParallel: cleanVirtualenv install testInParallel
 
-.PHONY: acceptanceTest
-acceptanceTest:
+.PHONY: acceptanceTest acctest
+acceptanceTest: acctest
+acctest:
 	(source environment && source $${ACTIVATE} && cd test/acceptance && nose2)
 
 #
