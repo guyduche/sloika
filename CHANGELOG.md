@@ -1,10 +1,11 @@
 Release 1.1
 ===========
-* Activation functions have been separated into their own module and many new functions have been added. 
-    See (https://wiki/display/~tmassingham/2016/10/17/Activation+functions)  
+* Activation functions have been separated into their own module and many new functions have been added.  
+    See https://wiki/display/~tmassingham/2016/10/17/Activation+functions  
     Note: this rearrangement breaks compatability with older model pickle files.
-* Refactoring of NBASE constant. 
-    Now a single source of responsibility `sloika/variables.py`.  Models importing `_NBASE` from `sloika/module_tools.py` should now import `NBASE` instead.
+* Refactoring of NBASE constant.  
+    Now a single source of responsibility `sloika/variables.py`.  
+    Models importing `_NBASE` from `sloika/module_tools.py` should now import `NBASE` instead.
 * Default for training and basecalling are transducer based models.
 * Compilation of networks is handled automatically by `basecall_network.py`
   * Compiled network may be saved for future use.  
