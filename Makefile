@@ -64,6 +64,11 @@ deps:
 	    python-virtualenv python-pip python-setuptools ont-ca-certs git \
 	    python-yaml
 
+.PHONY: checkout
+checkout:
+	git submodule init
+	git submodule update
+
 .PHONY: wheel
 wheel: ${whlFile}
 ${whlFile}: setup.py Makefile
