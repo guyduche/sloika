@@ -12,7 +12,36 @@ from sloika import activation
 from sloika.config import sloika_dtype
 import sloika.layers as nn
 
+
+def rvs(dim):
+    '''
+    Draw random samples from SO(N)
+
+    Taken from
+
+    http://stackoverflow.com/questions/38426349/how-to-create-random-orthonormal-matrix-in-python-numpy
+    '''
+    random_state = np.random
+    H = np.eye(dim)
+    D = np.ones((dim,))
+    for n in range(1, dim):
+        x = random_state.normal(size=(dim - n + 1,))
+        D[n - 1] = np.sign(x[0])
+        x[0] -= D[n - 1] * np.sqrt((x * x).sum())
+        # Householder transformation
+        Hx = (np.eye(dim - n + 1) - 2. * np.outer(x, x) / (x * x).sum())
+        mat = np.eye(dim)
+        mat[n - 1:, n - 1:] = Hx
+        H = np.dot(H, mat)
+        # Fix the last sign such that the determinant is 1
+    D[-1] = (-1)**(1 - (dim % 2)) * D.prod()
+    # Equivalent to np.dot(np.diag(D), H) but faster, apparently
+    H = (D * H.T).T
+    return H
+
+
 class ANNTest(unittest.TestCase):
+
     @classmethod
     def setUpClass(self):
         print '* Layers'
@@ -27,33 +56,29 @@ class ANNTest(unittest.TestCase):
         self.x = np.random.normal(size=(self._NSTEP, self._NBATCH, self._NFEATURES)).astype(sloika_dtype)
         self.res = self.x.dot(self.W.transpose()) + self.b
 
-
     def test_000_single_layer_linear(self):
         network = nn.FeedForward(self._NFEATURES, self._SIZE, has_bias=True,
                                  fun=activation.linear)
-        network.set_params({ 'W': self.W, 'b': self.b})
+        network.set_params({'W': self.W, 'b': self.b})
         f = network.compile()
         np.testing.assert_almost_equal(f(self.x), self.res, decimal=5)
 
-
     def test_001_single_layer_tanh(self):
         network = nn.FeedForward(self._NFEATURES, self._SIZE, has_bias=True)
-        network.set_params({ 'W': self.W, 'b': self.b})
+        network.set_params({'W': self.W, 'b': self.b})
         f = network.compile()
         np.testing.assert_almost_equal(f(self.x), np.tanh(self.res), decimal=5)
 
-
     def test_002_parallel_layers(self):
         l1 = nn.FeedForward(self._NFEATURES, self._SIZE, has_bias=True)
-        l1.set_params({ 'W': self.W, 'b': self.b})
+        l1.set_params({'W': self.W, 'b': self.b})
         l2 = nn.FeedForward(self._NFEATURES, self._SIZE, has_bias=True)
-        l2.set_params({ 'W': self.W, 'b': self.b})
+        l2.set_params({'W': self.W, 'b': self.b})
         network = nn.Parallel([l1, l2])
         f = network.compile()
 
         res = f(self.x)
-        np.testing.assert_almost_equal(res[:,:,:self._SIZE], res[:,:,self._SIZE:])
-
+        np.testing.assert_almost_equal(res[:, :, :self._SIZE], res[:, :, self._SIZE:])
 
     def test_003_simple_serial(self):
         W2 = np.random.normal(size=(self._SIZE, self._SIZE)).astype(sloika_dtype)
@@ -61,18 +86,17 @@ class ANNTest(unittest.TestCase):
 
         l1 = nn.FeedForward(self._NFEATURES, self._SIZE, has_bias=True,
                             fun=activation.linear)
-        l1.set_params({ 'W': self.W, 'b': self.b})
+        l1.set_params({'W': self.W, 'b': self.b})
         l2 = nn.FeedForward(self._SIZE, self._SIZE, fun=activation.linear)
-        l2.set_params({ 'W': W2})
+        l2.set_params({'W': W2})
         network = nn.Serial([l1, l2])
         f = network.compile()
 
         np.testing.assert_almost_equal(f(self.x), res, decimal=4)
 
-
     def test_004_reverse(self):
         network1 = nn.FeedForward(self._NFEATURES, self._SIZE, has_bias=True)
-        network1.set_params({ 'W': self.W, 'b': self.b})
+        network1.set_params({'W': self.W, 'b': self.b})
         f1 = network1.compile()
         res1 = f1(self.x)
         network2 = nn.Reverse(network1)
@@ -81,57 +105,52 @@ class ANNTest(unittest.TestCase):
 
         np.testing.assert_almost_equal(res1, res2)
 
-
     def test_005_poormans_birnn(self):
         layer1 = nn.FeedForward(self._NFEATURES, self._SIZE, has_bias=True)
-        layer1.set_params({ 'W': self.W, 'b': self.b})
+        layer1.set_params({'W': self.W, 'b': self.b})
         layer2 = nn.FeedForward(self._NFEATURES, self._SIZE, has_bias=True)
-        layer2.set_params({ 'W': self.W, 'b': self.b})
+        layer2.set_params({'W': self.W, 'b': self.b})
         network = nn.birnn(layer1, layer2)
         f = network.compile()
 
         res = f(self.x)
-        np.testing.assert_almost_equal(res[:,:,:self._SIZE], res[:,:,self._SIZE:])
-
+        np.testing.assert_almost_equal(res[:, :, :self._SIZE], res[:, :, self._SIZE:])
 
     def test_006_softmax(self):
         network = nn.Softmax(self._NFEATURES, self._SIZE, has_bias=True)
-        network.set_params({ 'W': self.W, 'b': self.b})
+        network.set_params({'W': self.W, 'b': self.b})
         f = network.compile()
 
         res = f(self.x)
         res_sum = res.sum(axis=2)
         self.assertTrue(np.allclose(res_sum, 1.0))
 
-
     def test_007_rnn_no_state(self):
         sW = np.zeros((self._SIZE, self._SIZE), dtype=sloika_dtype)
         network = nn.Recurrent(self._NFEATURES, self._SIZE, has_bias=True,
                                fun=activation.linear)
-        network.set_params({ 'iW': self.W, 'sW': sW, 'b': self.b})
+        network.set_params({'iW': self.W, 'sW': sW, 'b': self.b})
         f = network.compile()
 
         res = f(self.x)
         np.testing.assert_almost_equal(res, self.res, decimal=5)
 
-
     def test_008_rnn_no_input(self):
         iW = np.zeros((self._SIZE, self._NFEATURES), dtype=sloika_dtype)
         sW = np.random.normal(size=(self._SIZE, self._SIZE)).astype(sloika_dtype)
         network = nn.Recurrent(self._NFEATURES, self._SIZE)
-        network.set_params({ 'iW': iW, 'sW': sW})
+        network.set_params({'iW': iW, 'sW': sW})
         f = network.compile()
 
         res = f(self.x)
         np.testing.assert_almost_equal(res, 0.0)
 
-
     def test_009_rnn_no_input_with_bias(self):
         iW = np.zeros((self._SIZE, self._NFEATURES), dtype=sloika_dtype)
-        sW = np.random.normal(size=(self._SIZE, self._SIZE)).astype(sloika_dtype)
+        sW = rvs(self._SIZE).astype(sloika_dtype)
         network = nn.Recurrent(self._NFEATURES, self._SIZE, has_bias=True,
                                fun=activation.linear)
-        network.set_params({ 'iW': iW, 'sW': sW, 'b': self.b})
+        network.set_params({'iW': iW, 'sW': sW, 'b': self.b})
         f = network.compile()
 
         res = f(self.x)
@@ -140,23 +159,21 @@ class ANNTest(unittest.TestCase):
             res2 = res2.dot(sW.transpose()) + self.b
             np.testing.assert_almost_equal(res[i], res2)
 
-
     def test_010_birnn_no_input_with_bias(self):
         iW = np.zeros((self._SIZE, self._NFEATURES), dtype=sloika_dtype)
         sW = np.random.normal(size=(self._SIZE, self._SIZE)).astype(sloika_dtype)
         layer1 = nn.Recurrent(self._NFEATURES, self._SIZE, has_bias=True,
                               fun=activation.linear)
-        layer1.set_params({ 'iW': iW, 'sW': sW, 'b': self.b})
+        layer1.set_params({'iW': iW, 'sW': sW, 'b': self.b})
         layer2 = nn.Recurrent(self._NFEATURES, self._SIZE, has_bias=True,
                               fun=activation.linear)
-        layer2.set_params({ 'iW': iW, 'sW': sW, 'b': self.b})
+        layer2.set_params({'iW': iW, 'sW': sW, 'b': self.b})
         network = nn.birnn(layer1, layer2)
 
         f = network.compile()
 
         res = f(self.x)
-        np.testing.assert_almost_equal(res[:,:,:self._SIZE], res[::-1,:,self._SIZE:])
-
+        np.testing.assert_almost_equal(res[:, :, :self._SIZE], res[::-1, :, self._SIZE:])
 
     def test_012_simple_derivative(self):
         network = nn.FeedForward(self._NFEATURES, self._SIZE,
@@ -173,7 +190,6 @@ class ANNTest(unittest.TestCase):
         self.assertEqual(theano_grad.shape, (self._SIZE, self._NFEATURES))
         for i in xrange(self._NFEATURES):
             np.testing.assert_almost_equal(theano_grad[i], analytic_grad, decimal=3)
-
 
     def test_013_simple_derivative_with_bias(self):
         network = nn.FeedForward(self._NFEATURES, self._SIZE, has_bias=True,
@@ -193,7 +209,6 @@ class ANNTest(unittest.TestCase):
             np.testing.assert_almost_equal(theano_grad[0][i], W_grad, decimal=3)
             np.testing.assert_almost_equal(theano_grad[1][i], self._NBATCH * self._NSTEP)
 
-
     def test_014_complex_derivative(self):
         iW = np.random.normal(size=(4, self._SIZE, self._NFEATURES)).astype(sloika_dtype)
         sW = np.random.normal(size=(4, self._SIZE, self._SIZE)).astype(sloika_dtype)
@@ -208,7 +223,6 @@ class ANNTest(unittest.TestCase):
         f = th.function([x], grad)
 
         theano_grad = f(self.x)[0]
-
 
     def test_015_save_then_load(self):
         network = nn.FeedForward(self._NFEATURES, self._SIZE,
@@ -230,7 +244,6 @@ class ANNTest(unittest.TestCase):
         self.assertEqual(theano_grad2.shape, (self._SIZE, self._NFEATURES))
         np.testing.assert_almost_equal(theano_grad, theano_grad2, decimal=3)
 
-
     def test_016_window(self):
         _WINLEN = 3
         network = nn.Window(_WINLEN)
@@ -238,19 +251,19 @@ class ANNTest(unittest.TestCase):
         res = f(self.x)
         #  Window is now 'SAME' not 'VALID'. Trim
         wh = _WINLEN // 2
-        res = res[wh : -wh]
+        res = res[wh: -wh]
         for j in xrange(self._NBATCH):
             for i in xrange(_WINLEN - 1):
                 try:
-                    np.testing.assert_almost_equal(res[: ,j ,i * _WINLEN : (i + 1) * _WINLEN], self.x[i : 1 + i - _WINLEN, j])
+                    np.testing.assert_almost_equal(
+                        res[:, j, i * _WINLEN: (i + 1) * _WINLEN], self.x[i: 1 + i - _WINLEN, j])
                 except:
-                    print "Window max: {}".format(np.amax(np.fabs(res[:,:,i * _WINLEN : (i + 1) * _WINLEN] - self.x[ i : 1 + i - _WINLEN])))
+                    print "Window max: {}".format(np.amax(np.fabs(res[:, :, i * _WINLEN: (i + 1) * _WINLEN] - self.x[i: 1 + i - _WINLEN])))
                     raise
-            np.testing.assert_almost_equal(res[: ,j ,_WINLEN  * (_WINLEN - 1) :], self.x[_WINLEN - 1 :, j])
+            np.testing.assert_almost_equal(res[:, j, _WINLEN * (_WINLEN - 1):], self.x[_WINLEN - 1:, j])
             #  Test first and last rows explicitly
             np.testing.assert_almost_equal(self.x[:_WINLEN, j].ravel(), res[0, j].transpose().ravel())
             np.testing.assert_almost_equal(self.x[-_WINLEN:, j].ravel(), res[-1, j].transpose().ravel())
-
 
     @unittest.skip('Decoding needs fixing')
     def test_017_decode_simple(self):
@@ -259,7 +272,6 @@ class ANNTest(unittest.TestCase):
         f = network.compile()
         res = f(self.res)
 
-
     def test_018_studentise(self):
         network = nn.Studentise()
         f = network.compile()
@@ -267,7 +279,6 @@ class ANNTest(unittest.TestCase):
 
         np.testing.assert_almost_equal(np.mean(res, axis=(0, 1)), 0.0)
         np.testing.assert_almost_equal(np.std(res, axis=(0, 1)), 1.0, decimal=4)
-
 
     def test_019_identity(self):
         network = nn.Identity()
@@ -298,8 +309,8 @@ class LayerTest(object):
     def setUpClass(cls):
         print "* LayerTest: " + cls.__name__
 
-    _INPUTS = None # List of input matrices for testing the layer's run method
-    _PARAMS = None # List of names for the learned parameters of the layer
+    _INPUTS = None  # List of input matrices for testing the layer's run method
+    _PARAMS = None  # List of names for the learned parameters of the layer
 
     @abc.abstractmethod
     def setUp(self):
@@ -322,7 +333,8 @@ class LayerTest(object):
 
     def test_004_get_set_params(self):
         if self._PARAMS is None:
-            raise NotImplementedError("Please specify names of layer parameters, or explicitly set to [] if there are none.")
+            raise NotImplementedError(
+                "Please specify names of layer parameters, or explicitly set to [] if there are none.")
         p0 = self.layer.json(params=True)["params"]
         p0 = {p: np.array(v, dtype=sloika_dtype) for (p, v) in p0.items()}
         for (p, v) in p0.items():
@@ -338,8 +350,8 @@ class LayerTest(object):
 
 class RecurrentTest(LayerTest, unittest.TestCase):
     _INPUTS = [np.zeros((10, 20, 12)),
-               np.random.uniform(size=(10, 20, 12)),]
-    _PARAMS = ['iW', 'sW',]
+               np.random.uniform(size=(10, 20, 12)), ]
+    _PARAMS = ['iW', 'sW', ]
 
     def setUp(self):
         self.layer = nn.Recurrent(12, 64)
@@ -347,8 +359,8 @@ class RecurrentTest(LayerTest, unittest.TestCase):
 
 class RecurrentBiasedTest(LayerTest, unittest.TestCase):
     _INPUTS = [np.zeros((10, 20, 12)),
-               np.random.uniform(size=(10, 20, 12)),]
-    _PARAMS = ['iW', 'sW', 'b',]
+               np.random.uniform(size=(10, 20, 12)), ]
+    _PARAMS = ['iW', 'sW', 'b', ]
 
     def setUp(self):
         self.layer = nn.Recurrent(12, 64, has_bias=True)
@@ -356,8 +368,8 @@ class RecurrentBiasedTest(LayerTest, unittest.TestCase):
 
 class LstmTest(LayerTest, unittest.TestCase):
     _INPUTS = [np.zeros((10, 20, 12)),
-               np.random.uniform(size=(10, 20, 12)),]
-    _PARAMS = ['iW', 'sW',]
+               np.random.uniform(size=(10, 20, 12)), ]
+    _PARAMS = ['iW', 'sW', ]
 
     def setUp(self):
         self.layer = nn.Lstm(12, 64)
@@ -365,8 +377,8 @@ class LstmTest(LayerTest, unittest.TestCase):
 
 class LstmCIFGTest(LayerTest, unittest.TestCase):
     _INPUTS = [np.zeros((10, 20, 12)),
-               np.random.uniform(size=(10, 20, 12)),]
-    _PARAMS = ['iW', 'sW',]
+               np.random.uniform(size=(10, 20, 12)), ]
+    _PARAMS = ['iW', 'sW', ]
 
     def setUp(self):
         self.layer = nn.LstmCIFG(12, 64)
@@ -374,8 +386,8 @@ class LstmCIFGTest(LayerTest, unittest.TestCase):
 
 class LstmOTest(LayerTest, unittest.TestCase):
     _INPUTS = [np.zeros((10, 20, 12)),
-               np.random.uniform(size=(10, 20, 12)),]
-    _PARAMS = ['iW', 'sW',]
+               np.random.uniform(size=(10, 20, 12)), ]
+    _PARAMS = ['iW', 'sW', ]
 
     def setUp(self):
         self.layer = nn.LstmO(12, 64)
@@ -383,8 +395,8 @@ class LstmOTest(LayerTest, unittest.TestCase):
 
 class Mut1Test(LayerTest, unittest.TestCase):
     _INPUTS = [np.zeros((10, 20, 12)),
-               np.random.uniform(size=(10, 20, 12)),]
-    _PARAMS = ['W_xu', 'W_xz', 'W_xr', 'W_hr', 'W_hh',]
+               np.random.uniform(size=(10, 20, 12)), ]
+    _PARAMS = ['W_xu', 'W_xz', 'W_xr', 'W_hr', 'W_hh', ]
 
     def setUp(self):
         self.layer = nn.Mut1(12, 64)
@@ -392,8 +404,8 @@ class Mut1Test(LayerTest, unittest.TestCase):
 
 class Mut2Test(LayerTest, unittest.TestCase):
     _INPUTS = [np.zeros((10, 20, 12)),
-               np.random.uniform(size=(10, 20, 12)),]
-    _PARAMS = ['W_xu', 'W_xz', 'W_hz', 'W_hr', 'W_hh', 'W_xh',]
+               np.random.uniform(size=(10, 20, 12)), ]
+    _PARAMS = ['W_xu', 'W_xz', 'W_hz', 'W_hr', 'W_hh', 'W_xh', ]
 
     def setUp(self):
         self.layer = nn.Mut2(12, 64)
@@ -401,8 +413,8 @@ class Mut2Test(LayerTest, unittest.TestCase):
 
 class Mut3Test(LayerTest, unittest.TestCase):
     _INPUTS = [np.zeros((10, 20, 12)),
-               np.random.uniform(size=(10, 20, 12)),]
-    _PARAMS = ['W_xu', 'W_xz', 'W_hz', 'W_xr', 'W_hr', 'W_hh', 'W_xh',]
+               np.random.uniform(size=(10, 20, 12)), ]
+    _PARAMS = ['W_xu', 'W_xz', 'W_hz', 'W_xr', 'W_hr', 'W_hh', 'W_xh', ]
 
     def setUp(self):
         self.layer = nn.Mut3(12, 64)
@@ -410,8 +422,8 @@ class Mut3Test(LayerTest, unittest.TestCase):
 
 class GruTest(LayerTest, unittest.TestCase):
     _INPUTS = [np.zeros((10, 20, 12)),
-               np.random.uniform(size=(10, 20, 12)),]
-    _PARAMS = ['iW', 'sW', 'sW2',]
+               np.random.uniform(size=(10, 20, 12)), ]
+    _PARAMS = ['iW', 'sW', 'sW2', ]
 
     def setUp(self):
         self.layer = nn.Gru(12, 64)
@@ -419,8 +431,8 @@ class GruTest(LayerTest, unittest.TestCase):
 
 class ScrnTest(LayerTest, unittest.TestCase):
     _INPUTS = [np.zeros((10, 20, 12)),
-               np.random.uniform(size=(10, 20, 12)),]
-    _PARAMS = ['isW', 'sfW', 'ifW', 'ffW',]
+               np.random.uniform(size=(10, 20, 12)), ]
+    _PARAMS = ['isW', 'sfW', 'ifW', 'ffW', ]
 
     def setUp(self):
         self.layer = nn.Scrn(12, 48, 16)
@@ -428,7 +440,7 @@ class ScrnTest(LayerTest, unittest.TestCase):
 
 class GenmutTest(LayerTest, unittest.TestCase):
     _INPUTS = [np.zeros((10, 20, 12)),
-               np.random.uniform(size=(10, 20, 12)),]
+               np.random.uniform(size=(10, 20, 12)), ]
     _PARAMS = ['xW', 'sW', 'sW2']
 
     def setUp(self):
