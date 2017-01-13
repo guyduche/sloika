@@ -4,6 +4,8 @@ export ROOT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 export BUILD_DIR="${ROOT_DIR}/build"
 
+export DATA_DIR="${ROOT_DIR}/data"
+
 #
 # TODO(semen): move scripts into scripts dir
 #
