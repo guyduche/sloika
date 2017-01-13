@@ -138,7 +138,7 @@ class ANNTest(unittest.TestCase):
         res2 = np.zeros((self._NBATCH, self._SIZE), dtype=sloika_dtype)
         for i in xrange(self._NSTEP):
             res2 = res2.dot(sW.transpose()) + self.b
-            np.testing.assert_allclose(res[i], res2, 0.01)
+            np.testing.assert_almost_equal(res[i], res2)
 
 
     def test_010_birnn_no_input_with_bias(self):
