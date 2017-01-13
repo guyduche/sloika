@@ -7,10 +7,10 @@ class fast5Test(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         print '* Fast5'
-        self.readdir = os.path.join(os.path.dirname(__file__), 'data', 'reads')
+        self.readdir = os.path.join(os.environ['DATA_DIR'], 'reads')
         self.filename = os.path.join(self.readdir, 'read03.fast5')
         self.section ='template'
-        self.strand_list = os.path.join(os.path.dirname(__file__), 'data',
+        self.strand_list = os.path.join(os.environ['DATA_DIR'],
                                         'strands.txt')
         self.strands = set(map(lambda r: os.path.join(self.readdir, r),
                                ['read03.fast5', 'read16.fast5']))
