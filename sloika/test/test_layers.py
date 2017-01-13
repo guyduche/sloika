@@ -12,6 +12,33 @@ from sloika import activation
 from sloika.config import sloika_dtype
 import sloika.layers as nn
 
+
+def rvs(dim):
+    '''
+    Draw random samples from SO(N)
+
+    Taken from
+
+    http://stackoverflow.com/questions/38426349/how-to-create-random-orthonormal-matrix-in-python-numpy
+    '''
+    random_state = np.random
+    H = np.eye(dim)
+    D = np.ones((dim,))
+    for n in range(1, dim):
+        x = random_state.normal(size=(dim - n + 1,))
+        D[n - 1] = np.sign(x[0])
+        x[0] -= D[n - 1] * np.sqrt((x * x).sum())
+        # Householder transformation
+        Hx = (np.eye(dim - n + 1) - 2. * np.outer(x, x) / (x * x).sum())
+        mat = np.eye(dim)
+        mat[n - 1:, n - 1:] = Hx
+        H = np.dot(H, mat)
+        # Fix the last sign such that the determinant is 1
+    D[-1] = (-1)**(1 - (dim % 2)) * D.prod()
+    # Equivalent to np.dot(np.diag(D), H) but faster, apparently
+    H = (D * H.T).T
+    return H
+
 class ANNTest(unittest.TestCase):
     @classmethod
     def setUpClass(self):
@@ -128,7 +155,7 @@ class ANNTest(unittest.TestCase):
 
     def test_009_rnn_no_input_with_bias(self):
         iW = np.zeros((self._SIZE, self._NFEATURES), dtype=sloika_dtype)
-        sW = np.random.normal(size=(self._SIZE, self._SIZE)).astype(sloika_dtype)
+        sW = rvs(self._SIZE).astype(sloika_dtype)
         network = nn.Recurrent(self._NFEATURES, self._SIZE, has_bias=True,
                                fun=activation.linear)
         network.set_params({ 'iW': iW, 'sW': sW, 'b': self.b})
