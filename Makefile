@@ -16,7 +16,7 @@ unitTestFromScratchInParallel: cleanVirtualenv install testInParallel
 .PHONY: acceptanceTest acctest
 acceptanceTest: acctest
 acctest:
-	(source environment && source $${ACTIVATE} && cd test/acceptance && nose2)
+	(source environment && source $${ACTIVATE} && cd test/acceptance && THEANO_FLAGS=$${THEANO_TEST_FLAGS} nose2)
 
 #
 # TODO: can't run tests reliably from the tree where source directory is named sloika
@@ -25,7 +25,7 @@ acctest:
 unitTest:
 	(source environment && rm -rf $${BUILD_DIR}/test)
 	(source environment && cp -r sloika/test $${BUILD_DIR})
-	(source environment && source $${ACTIVATE} && cd $${BUILD_DIR}/test && nose2)
+	(source environment && source $${ACTIVATE} && cd $${BUILD_DIR}/test && THEANO_FLAGS=$${THEANO_TEST_FLAGS} nose2)
 
 #
 # TODO(semen): fix parallel test runs

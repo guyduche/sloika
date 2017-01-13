@@ -16,3 +16,5 @@ export ACCTEST_WORK_DIR="${BUILD_DIR}/acceptance"
 export SLOIKA_VIRTUALENV_DIR="${BUILD_DIR}/env"
 
 export ACTIVATE="${SLOIKA_VIRTUALENV_DIR}/bin/activate"
+
+export THEANO_TEST_FLAGS="floatX=float32,warn_float64=warn,optimizer=fast_run,nvcc.fastmath=True,device=cpu,scan.allow_gc=False,lib.cnmem=0.4"
