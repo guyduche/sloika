@@ -22,9 +22,7 @@ class AcceptanceTest(unittest.TestCase):
 
     def test_usage(self):
         cmd = [self.script]
-        return_code, stdout, stderr = run_cmd(cmd)
-        self.assertEqual(return_code, 2)
-        self.assertTrue(stderr.startswith(u"usage"))
+        run_cmd(self, cmd).return_code(2).stderr(lambda o: o.startswith(u"usage"))
 
     def test_number_of_models(self):
         self.assertEqual(len(self.model_files), 16)
@@ -32,5 +30,4 @@ class AcceptanceTest(unittest.TestCase):
     @parameterized.expand(model_files)
     def test_sequence(self, model_file):
         cmd = [self.script, "--kmer", "5", model_file]
-        return_code, stdout, stderr = run_cmd(cmd)
-        self.assertEqual(return_code, 0)
+        run_cmd(self, cmd).return_code(0)

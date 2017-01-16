@@ -24,9 +24,7 @@ class AcceptanceTest(unittest.TestCase):
 
     def test_usage(self):
         cmd = [self.script]
-        return_code, stdout, stderr = run_cmd(cmd)
-        self.assertEqual(return_code, 2)
-        self.assertTrue(stderr.startswith(u"usage"))
+        run_cmd(self, cmd).return_code(2).stderr(lambda o: o.startswith(u"usage"))
 
     def test_functionality(self):
         strand_list_file = os.path.join(self.data_dir, "na12878_train.txt")
@@ -42,8 +40,7 @@ class AcceptanceTest(unittest.TestCase):
         cmd = [self.script, "--use_scaled", "--chunk", "500", "--kmer", "5",
                "--section", "template", "--strand_list", strand_list_file,
                reads_dir, output_file]
-        return_code, stdout, stderr = run_cmd(cmd)
-        self.assertEqual(return_code, 0)
+        run_cmd(self, cmd).return_code(0)
 
         with h5py.File(output_file, 'r') as fh:
             top_level_items = []
