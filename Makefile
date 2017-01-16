@@ -3,9 +3,11 @@ SHELL=/bin/bash
 pwd:=$(shell pwd)/
 bin:=${pwd}bin/
 
-# TODO(semen): sort out versioning
-version:=$(shell python scripts/version.py)
-whlFile:=dist/sloika-${version}-cp27-cp27mu-linux_x86_64.whl
+sloikaVersion:=$(shell ./scripts/version.sh)
+ifndef sloikaVersion
+$(error $${sloikaVersion} is empty (not set))
+endif
+whlFile:=dist/sloika-${sloikaVersion}-cp27-cp27mu-linux_x86_64.whl
 
 # these targets can only be run in serial
 .PHONY: testFromScratch unitTestFromScratch acceptanceTestFromScratch unitTestFromScratchInParallel
@@ -62,7 +64,7 @@ deps:
 	apt-get update
 	apt-get install -y \
 	    python-virtualenv python-pip python-setuptools ont-ca-certs git \
-	    python-yaml libblas3 libblas-dev
+	    libblas3 libblas-dev
 
 .PHONY: checkout
 checkout:
