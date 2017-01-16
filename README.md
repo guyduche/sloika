@@ -1,5 +1,17 @@
-# Getting Sloika to run for the first time
+# Installation of system prerequisites
 
-To setup development environment on a clean box run
+    sudo make deps
 
-    ./setup-dev-env.sh
+# Getting Sloika
+
+After checking out sloika itself, check out and initialise submodules
+
+    make checkout
+
+# Running unit and acceptance tests
+
+    make
+
+# Setting up clean development environment
+
+    make cleanDevEnv
