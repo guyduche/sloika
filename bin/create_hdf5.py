@@ -13,41 +13,39 @@ from untangled.cmdargs import (AutoBool, FileAbsent, FileExists, Maybe,
 from untangled import fast5
 
 parser = argparse.ArgumentParser(
-    description = 'Create HDF file of a dataset',
+    description='Create HDF file of a dataset',
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
 parser.add_argument('--blanks', metavar='proportion', default=0.7,
-    type=proportion, help='Maximum proportion of blanks in labels')
+                    type=proportion, help='Maximum proportion of blanks in labels')
 parser.add_argument('--chunk', default=500, metavar='events', type=Positive(int),
-    help='Length of each read chunk')
+                    help='Length of each read chunk')
 parser.add_argument('--kmer', default=5, metavar='length', type=Positive(int),
-    help='Length of kmer to estimate')
+                    help='Length of kmer to estimate')
 parser.add_argument('--limit', default=None, type=Maybe(Positive(int)),
-    help='Limit number of reads to process.')
+                    help='Limit number of reads to process.')
 parser.add_argument('--min_length', default=1200, metavar='events',
-    type=Positive(int), help='Minimum events in acceptable read')
+                    type=Positive(int), help='Minimum events in acceptable read')
 parser.add_argument('--normalise', default=True, action=AutoBool,
-    help='Per-strand normalisation')
+                    help='Per-strand normalisation')
 parser.add_argument('--orthogonal', default=False, action=AutoBool,
-    help='Make input features orthogonal')
+                    help='Make input features orthogonal')
 parser.add_argument('--section', default='template',
-    choices=['template', 'complement'], help='Section to call')
+                    choices=['template', 'complement'], help='Section to call')
 parser.add_argument('--strand_list', default=None, action=FileExists,
-    help='strand summary file containing subset.')
+                    help='strand summary file containing subset.')
 parser.add_argument('--trim', default=(50, 10), nargs=2, type=NonNegative(int),
-    metavar=('beginning', 'end'),
-    help='Number of events to trim off start and end')
+                    metavar=('beginning', 'end'),
+                    help='Number of events to trim off start and end')
 parser.add_argument('--use_scaled', default=False, action=AutoBool,
-    help='Train from scaled event statistics')
+                    help='Train from scaled event statistics')
 parser.add_argument('input_folder', action=FileExists,
-    help='Directory containing single-read fast5 files.')
+                    help='Directory containing single-read fast5 files.')
 parser.add_argument('output', action=FileAbsent, help='Output HDF5 file')
-
 
 
 if __name__ == '__main__':
     args = parser.parse_args()
-
 
     fast5_files = set(fast5.iterate_fast5(args.input_folder, paths=True,
                                           limit=args.limit,
@@ -78,7 +76,6 @@ if __name__ == '__main__':
     nblank = np.sum(all_labels == 0, axis=1)
     max_blanks = int(all_labels.shape[1] * args.blanks)
     all_weights = nblank < max_blanks
-
 
     rotation = np.identity(all_chunks.shape[-1])
     centre = np.zeros(all_chunks.shape[-1])

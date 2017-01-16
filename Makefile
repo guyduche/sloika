@@ -8,7 +8,8 @@ version:=$(shell python scripts/version.py)
 whlFile:=dist/sloika-${version}-cp27-cp27mu-linux_x86_64.whl
 
 # these targets can only be run in serial
-.PHONY: unitTestFromScratch acceptanceTestFromScratch unitTestFromScratchInParallel
+.PHONY: testFromScratch unitTestFromScratch acceptanceTestFromScratch unitTestFromScratchInParallel
+testFromScratch: cleanVirtualenv install unitTest acceptanceTest
 unitTestFromScratch: cleanVirtualenv install unitTest
 acceptanceTestFromScratch: cleanVirtualenv install acceptanceTest
 unitTestFromScratchInParallel: cleanVirtualenv install testInParallel
