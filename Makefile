@@ -13,6 +13,9 @@ unitTestFromScratch: cleanVirtualenv install unitTest
 acceptanceTestFromScratch: cleanVirtualenv install acceptanceTest
 unitTestFromScratchInParallel: cleanVirtualenv install testInParallel
 
+.PHONY: test
+test: unitTest acceptanceTest
+
 .PHONY: acceptanceTest acctest
 acceptanceTest: acctest
 acctest:
