@@ -3,7 +3,7 @@ SHELL=/bin/bash
 pwd:=$(shell pwd)/
 bin:=${pwd}bin/
 
-sloikaVersion:=$(shell ./scripts/version.sh)
+sloikaVersion:=$(shell ./scripts/show-version.sh)
 ifndef sloikaVersion
 $(error $${sloikaVersion} is empty (not set))
 endif

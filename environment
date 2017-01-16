@@ -22,6 +22,4 @@ export PYTHONDONTWRITEBYTECODE="no .pyc files please"
 
 export ACCTEST_THEANO_FLAGS="floatX=float32,warn_float64=warn,optimizer=fast_run,nvcc.fastmath=True,device=cpu,scan.allow_gc=False,lib.cnmem=0.4"
 
-echo -n Sloika v
-source ${SCRIPTS_DIR}/version.sh
-echo
+source ${SCRIPTS_DIR}/version-env.sh

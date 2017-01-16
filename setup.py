@@ -9,9 +9,8 @@ from Cython.Build import cythonize
 package_name = 'sloika'
 package_dir = os.path.join(os.path.dirname(__file__), package_name)
 
-cmd = './scripts/version.sh'
-out, err = subprocess.Popen(cmd.split(),stdout=subprocess.PIPE).communicate()
-version = out.strip()
+cmd = './scripts/show-version.sh'
+version, err = subprocess.Popen(cmd.split(),stdout=subprocess.PIPE).communicate()
 open('sloika/sloika_version.py','w').write("__version__ = '%s'\n"%version)
 
 requires=[]
