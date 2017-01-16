@@ -1,1 +1,2 @@
 h5py==2.6.0
+nose-parameterized==0.5.0

@@ -20,7 +20,7 @@ test: unitTest acceptanceTest
 .PHONY: acceptanceTest acctest
 acceptanceTest: acctest
 acctest:
-	(source environment && source $${ACTIVATE} && cd test/acceptance && nose2)
+	(source environment && source $${ACTIVATE} && cd test/acceptance && THEANO_FLAGS=$${ACCTEST_TF} nose2)
 
 .PHONY: unitTest unit
 unit: unitTest
