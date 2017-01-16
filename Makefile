@@ -18,14 +18,10 @@ acceptanceTest: acctest
 acctest:
 	(source environment && source $${ACTIVATE} && cd test/acceptance && nose2)
 
-#
-# TODO: can't run tests reliably from the tree where source directory is named sloika
-#
-.PHONY: unitTest
+.PHONY: unitTest unit
+unit: unitTest
 unitTest:
-	(source environment && rm -rf $${BUILD_DIR}/test)
-	(source environment && cp -r sloika/test $${BUILD_DIR})
-	(source environment && source $${ACTIVATE} && cd $${BUILD_DIR}/test && nose2)
+	(source environment && source $${ACTIVATE} && cd test/unit && nose2)
 
 #
 # TODO(semen): fix parallel test runs
