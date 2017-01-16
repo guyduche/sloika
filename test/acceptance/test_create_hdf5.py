@@ -5,7 +5,7 @@ import h5py
 
 import numpy as np
 
-from utils import run_cmd
+from utils import run_cmd, isclose
 
 
 class AcceptanceTest(unittest.TestCase):
@@ -53,8 +53,6 @@ class AcceptanceTest(unittest.TestCase):
             self.assertEqual(top_level_items, [u'bad', u'centre', u'chunks', u'labels', u'rotation', u'weights'])
 
             self.assertEqual(fh['chunks'].shape, (182, 500, 4))
-            reference = [0.89778966, -0.84117562, -0.48878181, -0.75077647]
-            if not np.allclose(fh['chunks'][0, 1], reference):
-                print fh['chunks'][0, 1]
-                print reference
-                self.assertTrue(np.allclose(fh['chunks'][0, 1], reference))
+            chunks = fh['chunks'][:]
+            self.assertTrue(isclose(chunks.min(), -2.8844583, 1e-5))
+            self.assertTrue(isclose(chunks.max(), 14.225174, 1e-5))
