@@ -11,11 +11,16 @@ source ${SLOIKA_VIRTUALENV_DIR}/bin/activate
 # need a version of pip that supports --trusted-host option
 pip install pip --upgrade
 
+# install prerequisites of setup.py first
+pip install \
+    -r scripts/requirements.txt \
+    --trusted-host pypi.oxfordnanolabs.local \
+    --index-url https://pypi.oxfordnanolabs.local/simple/
+
 #
 # TODO(semen): take care when installing non-sloika deps into environment that is used in acctests
 #
 pip install \
-    -r scripts/requirements.txt \
     -r test/unit/requirements.txt \
     -r test/acceptance/requirements.txt \
     -r requirements.txt \

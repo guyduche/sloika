@@ -18,8 +18,6 @@ export SLOIKA_VIRTUALENV_DIR="${BUILD_DIR}/env"
 
 export TMP_VIRTUALENV_DIR="${BUILD_DIR}/tmpenv"
 
-export ACTIVATE="${SLOIKA_VIRTUALENV_DIR}/bin/activate"
-
 export PYTHONDONTWRITEBYTECODE="no .pyc files please"
 
 export ACCTEST_THEANO_FLAGS="floatX=float32,warn_float64=warn,optimizer=fast_run,nvcc.fastmath=True,device=cpu,scan.allow_gc=False,lib.cnmem=0.4"

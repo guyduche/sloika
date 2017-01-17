@@ -13,7 +13,12 @@ cmd = './scripts/show-version.sh'
 version, err = subprocess.Popen(cmd.split(),stdout=subprocess.PIPE).communicate()
 open('sloika/sloika_version.py','w').write("__version__ = '%s'\n"%version)
 
-requires=[]
+install_requires = [
+'h5py==2.6.0',
+'numpy>=1.7.1',
+'Theano==0.8.2',
+'untangled>=0.4.1',
+]
 
 setup(
     name='sloika',
@@ -28,8 +33,8 @@ setup(
     exclude_package_data={'': ['*.hdf', '*.c', '*.h']},
     ext_modules = cythonize(os.path.join(package_dir, "viterbi_helpers.pyx")),
     include_dirs=[np.get_include()],
-    tests_require=requires,
-    install_requires=requires,
+    tests_require=[],
+    install_requires=install_requires,
     dependency_links=[],
     zip_safe=False,
     test_suite='discover_tests',
