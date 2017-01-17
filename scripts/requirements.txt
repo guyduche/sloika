@@ -1,5 +1,2 @@
 Cython==0.25.2
-pyyaml==3.12
 wheel==0.29.0
-pep8==1.7.0
-autopep8==1.2.4

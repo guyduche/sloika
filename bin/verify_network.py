@@ -16,13 +16,13 @@ parser = argparse.ArgumentParser(
     description='Train a simple transducer neural network',
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('--kmer', default=5, metavar='length', type=Positive(int),
-    help='Length of kmer')
+                    help='Length of kmer')
 parser.add_argument('--sd', default=0.5, metavar='value', type=Positive(float),
-    help='Standard deviation to initialise with')
+                    help='Standard deviation to initialise with')
 parser.add_argument('--version', nargs=0, action=display_version_and_exit,
-    metavar=__version__, help='Display version information.')
+                    metavar=__version__, help='Display version information.')
 parser.add_argument('model', action=FileExists,
-    help='File to read python model description from')
+                    help='File to read python model description from')
 
 
 def wrap_network(network):
