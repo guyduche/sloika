@@ -53,5 +53,3 @@ build_and_upload_artefact:
         #  PYPI_KEY is private key produced by ssh-keygen
         - ssh-add <(set +x; echo "$PYPI_KEY")
         - scp -o StrictHostKeyChecking=no dist/* gitlab-ci-pypi@${PYPI_HOST}:/opt/ont-pypi/site-packages/
-    only:
-        - /^dev$/
