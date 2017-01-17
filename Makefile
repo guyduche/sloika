@@ -71,10 +71,17 @@ checkout:
 	git submodule init
 	git submodule update
 
-.PHONY: wheel
+.PHONY: wheel ${whlFile}
 wheel: ${whlFile}
 ${whlFile}: setup.py Makefile
-	(source environment && source $${ACTIVATE} && python setup.py bdist_wheel)
+	source environment && rm -rf $${TMP_VIRTUALENV_DIR} && virtualenv $${TMP_VIRTUALENV_DIR}
+	source environment && source $${TMP_VIRTUALENV_DIR}/bin/activate && \
+	    pip install pip --upgrade && \
+	    pip install -r scripts/requirements.txt \
+	                -r requirements.txt \
+	                --trusted-host pypi.oxfordnanolabs.local \
+	                --index-url https://pypi.oxfordnanolabs.local/simple/
+	source environment && source $${TMP_VIRTUALENV_DIR}/bin/activate && python setup.py bdist_wheel
 
 .PHONY: install
 install: ${whlFile}

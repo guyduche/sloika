@@ -16,6 +16,8 @@ export ACCTEST_WORK_DIR="${BUILD_DIR}/acceptance"
 
 export SLOIKA_VIRTUALENV_DIR="${BUILD_DIR}/env"
 
+export TMP_VIRTUALENV_DIR="${BUILD_DIR}/tmpenv"
+
 export ACTIVATE="${SLOIKA_VIRTUALENV_DIR}/bin/activate"
 
 export PYTHONDONTWRITEBYTECODE="no .pyc files please"
