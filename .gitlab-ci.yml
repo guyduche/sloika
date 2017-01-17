@@ -19,7 +19,7 @@ wheel:
         - CI=True make wheel
     except:
         - tags
-	artifacts:
+    artifacts:
         paths:
             - dist
 
