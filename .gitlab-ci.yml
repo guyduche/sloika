@@ -5,12 +5,23 @@
 image: docker-registry.oxfordnanolabs.local:5000/ont-base-ubuntu:16.04
 
 stages:
+    - build
     - test
     - release
 
 before_script:
     - make deps
     - make checkout
+
+wheel:
+    stage: build
+    script:
+        - CI=True make wheel
+    except:
+        - tags
+    artifacts:
+        paths:
+            - dist
 
 unit_test:
     stage: test
@@ -40,7 +51,6 @@ build_and_upload_artefact:
         - eval $(ssh-agent -s)
         #  PYPI_KEY and PYPI_HOST should set up as project variables on Gitlab
         #  PYPI_KEY is private key produced by ssh-keygen
-        - CI=True make cleanVirtualenv wheel
         - ssh-add <(set +x; echo "$PYPI_KEY")
         - scp -o StrictHostKeyChecking=no dist/* gitlab-ci-pypi@${PYPI_HOST}:/opt/ont-pypi/site-packages/
     only:
