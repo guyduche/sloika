@@ -24,7 +24,7 @@ export COMMON_THEANO_FLAGS_FOR_TRAINING="floatX=float32,warn_float64=warn,optimi
 
 export COMMON_THEANO_FLAGS_FOR_BASECALLING="device=cpu,floatX=float32,warn_float64=warn,OMP_NUM_THREADS=1"
 
-export THEANO_FLAGS_FOR_ACCTEST="device=cpu:${COMMON_THEANO_FLAGS_FOR_TRAINING}"
+export THEANO_FLAGS_FOR_ACCTEST="device=cpu,${COMMON_THEANO_FLAGS_FOR_TRAINING}"
 
 export PATH="/usr/local/cuda/bin:${PATH}"
 
