@@ -28,7 +28,7 @@ unitTest:
 unitTestFromScratch: cleanTmpEnvWithSloika
 	${inTmpEnv} ${unitTestCmd}
 
-acceptanceTestCmd:=${pipInstall} -r test/acceptance/requirements.txt && cd test/acceptance && THEANO_FLAGS=$${ACCTEST_THEANO_FLAGS} nose2
+acceptanceTestCmd:=${pipInstall} -r test/acceptance/requirements.txt && cd test/acceptance && THEANO_FLAGS=$${THEANO_FLAGS_FOR_ACCTEST} nose2
 .PHONY: acceptanceTest acceptanceTestFromScratch
 acceptanceTest:
 	${inSloikaEnv} ${acceptanceTestCmd}
@@ -93,4 +93,3 @@ testInParallel:
 	(source environment && rm -rf $${BUILD_DIR}/test)
 	(source environment && cp -r sloika/test $${BUILD_DIR})
 	(source environment && source $${SLOIKA_VIRTUALENV_DIR}/bin/activate && cd $${BUILD_DIR}/test && NOSE_PROCESSES=2 nosetests)
-

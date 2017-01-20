@@ -20,7 +20,9 @@ export TMP_VIRTUALENV_DIR="${BUILD_DIR}/tmpenv"
 
 export PYTHONDONTWRITEBYTECODE="no .pyc files please"
 
-export ACCTEST_THEANO_FLAGS="floatX=float32,warn_float64=warn,optimizer=fast_run,nvcc.fastmath=True,device=cpu,scan.allow_gc=False,lib.cnmem=0.4"
+export COMMON_THEANO_FLAGS_FOR_TRAINING="floatX=float32,warn_float64=warn,optimizer=fast_run,nvcc.fastmath=True,scan.allow_gc=False,lib.cnmem=0.4"
+
+export THEANO_FLAGS_FOR_ACCTEST="device=cpu:${COMMON_THEANO_FLAGS_FOR_TRAINING}"
 
 export PATH="/usr/local/cuda/bin:${PATH}"
 
