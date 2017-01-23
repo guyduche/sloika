@@ -93,3 +93,21 @@ testInParallel:
 	(source environment && rm -rf $${BUILD_DIR}/test)
 	(source environment && cp -r sloika/test $${BUILD_DIR})
 	(source environment && source $${SLOIKA_VIRTUALENV_DIR}/bin/activate && cd $${BUILD_DIR}/test && NOSE_PROCESSES=2 nosetests)
+
+
+workDir?=run0/
+fast5Dir:=/mnt/data/human/training/reads
+.PHONY: prepare
+prepare:
+	${inSloikaEnv} create_hdf5.py --chunk 500 --kmer 5 --section template --use_scaled \
+	    --strand_list /mnt/data/human/training/na12878_train.txt \
+	    ${fast5Dir} ${workDir}dataset_train.hdf5
+	${inSloikaEnv} create_hdf5.py --chunk 500 --kmer 5 --section template --use_scaled \
+	    --strand_list /mnt/data/human/training/na12878_validation.txt \
+	    ${fast5Dir} ${workDir}dataset_validate.hdf5
+
+.PHONY: train
+train:
+	${inSloikaEnv} THEANO_FLAGS="device=gpu${gpu},$${COMMON_THEANO_FLAGS_FOR_TRAINING}" \
+	    train_network.py --batch 100 --niteration 50000 --save_every 5000 --lrdecay 5000 --bad \
+	    models/baseline_gru.py ${workDir}/output ${workDir}dataset_train.hdf5
