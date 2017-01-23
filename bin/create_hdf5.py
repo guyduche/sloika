@@ -101,7 +101,7 @@ if __name__ == '__main__':
     print '* Writing out to HDF5'
 
     output_dir = os.path.dirname(args.output)
-    if not os.path.exists(output_dir):
+    if output_dir and not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
     with h5py.File(args.output, 'w') as h5:
