@@ -104,7 +104,7 @@ def kmers(files, section, chunk_len, kmer_len, min_length=0, trim=(0, 0),
 
     :yields: A tuple containing a 3D :class:`ndarray` of size
     (X, chunk_len, nfeatures) containing the features for the batch
-    and a 2D :class`ndarray` of size (X, chunk_len) containing the
+    and a 2D :class:`ndarray` of size (X, chunk_len) containing the
     associated labels.  1 <= X <= batch_size.
     """
 
