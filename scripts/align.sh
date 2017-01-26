@@ -11,8 +11,8 @@ MISMATCH=${CHIMAERA}/data/model/mismatch_scores.txt
 for FA in $@
 do
 	PREF=${FA%%.fa}
-	stdbuf -o 0 -e 0 -i 0 bwa mem -x ont2d -t 32 -A 1 -B 2 -O 2 -E 1 ${GENOME} ${FA} > ${PREF}.sam 
-	${SLOIKA}/misc/samacc.py ${PREF}.sam > ${PREF}.samacc
+	stdbuf -o 0 -e 0 -i 0 bwa mem -t 16 -A 1 -B 2 -O 2 -E 1 ${GENOME} ${FA} > ${PREF}.sam 
+	${SLOIKA}/misc/samacc.py --coverage 0.6  ${PREF}.sam > ${PREF}.samacc
 	R --slave --vanilla -e "
 pref = commandArgs(trailingOnly=T)[1]; \
 a = read.table(paste(pref, '.samacc', sep=''), h=T); \
