@@ -120,7 +120,7 @@ testPrepare:
 train:
 	${inSloikaEnv} THEANO_FLAGS="device=gpu${gpu},$${COMMON_THEANO_FLAGS_FOR_TRAINING}" \
 	    train_network.py --batch 100 --niteration 50000 --save_every 5000 --lrdecay 5000 --bad \
-	    models/baseline_gru.py ${workDir}/output ${workDir}dataset_train.hdf5
+	    models/baseline_gru.py ${workDir}output ${workDir}dataset_train.hdf5
 
 .PHONY: validate
 validate:

@@ -91,7 +91,7 @@ def wrap_network(network, min_prob=0.0, l2=0.0, drop=0):
 
 def saveModel(log, network, output, index):
     log.write('C')
-    with open(os.path.join(args.output, 'model_checkpoint_{:05d}.pkl'.format((i + 1) // args.save_every)), 'wb') as fh:
+    with open(os.path.join(output, 'model_checkpoint_{:05d}.pkl'.format(index)), 'wb') as fh:
         cPickle.dump(network, fh, protocol=cPickle.HIGHEST_PROTOCOL)
 
 if __name__ == '__main__':
