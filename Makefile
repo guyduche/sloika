@@ -77,7 +77,9 @@ cleanTmpEnvWithSloika: emptyTmpEnv
 	${inTmpEnv} ${pipInstall} ${whlFile}
 
 
-
+.PHONY: autopep8
+autopep8:
+	${inSloikaEnv} autopep8 $f -i --max-line-length=120
 
 
 
