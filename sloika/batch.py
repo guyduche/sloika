@@ -103,9 +103,10 @@ def kmers(files, section, chunk_len, kmer_len, min_length=0, trim=(0, 0),
     :param normalise: Do per-strand normalisation
 
     :yields: A tuple containing a 3D :class:`ndarray` of size
-    (X, chunk_len, nfeatures) containing the features for the batch
-    and a 2D :class:`ndarray` of size (X, chunk_len) containing the
-    associated labels.  1 <= X <= batch_size.
+    (X, chunk_len, nfeatures) containing the features for the batch,
+    a 2D :class:`ndarray` of size (X, chunk_len) containing the
+    associated labels, and a 2D :class:`ndarray` of size (X, chunk_len)
+    containing bad events.  1 <= X <= batch_size.
     """
 
     pfiles = list(files)
