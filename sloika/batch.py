@@ -22,7 +22,7 @@ def filter_by_rate(position, chunk, time=None, fact=3.0):
     :returns: A :class:`ndarray` contain a boolean of whether chunk is good
     """
     assert time is None or len(position) == len(time)
-    nchunk = len(position)  // chunk
+    nchunk = len(position) // chunk
     chunk_idx = chunk * np.arange(nchunk)
     delta_pos = position[chunk_idx + chunk - 1] - position[chunk_idx]
     if time is None:
@@ -63,7 +63,7 @@ def _kmer_worker(fn, section, chunk_len, kmer_len, min_length, trim, use_scaled,
         return fn, None, None, None
     begin, end = trim
     end = None if end is 0 else -end
-    ev = ev[begin : end]
+    ev = ev[begin: end]
 
     new_inMat = features.from_events(ev, tag='' if use_scaled else 'scaled_',
                                      normalise=normalise)
@@ -75,7 +75,7 @@ def _kmer_worker(fn, section, chunk_len, kmer_len, min_length, trim, use_scaled,
     # Use rightmost middle kmer
     kl = (model_kmer_len - kmer_len + 1) // 2
     ku = kl + kmer_len
-    new_labels = 1 + np.array(map(lambda k: kmer_to_state[k[kl : ku]],
+    new_labels = 1 + np.array(map(lambda k: kmer_to_state[k[kl: ku]],
                                   ev['kmer'][:ub]), dtype=np.int32)
 
     new_labels = new_labels.reshape((ml, chunk_len))
@@ -83,7 +83,7 @@ def _kmer_worker(fn, section, chunk_len, kmer_len, min_length, trim, use_scaled,
     change = np.apply_along_axis(np.ediff1d, 1, change, to_begin=1)
     new_labels[change == 0] = 0
 
-    new_bad  = np.logical_not(ev['good_emission'][:ub])
+    new_bad = np.logical_not(ev['good_emission'][:ub])
     new_bad = new_bad.reshape(ml, chunk_len)
 
     return fn, new_inMat, new_labels, new_bad
@@ -111,14 +111,14 @@ def kmers(files, section, chunk_len, kmer_len, min_length=0, trim=(0, 0),
 
     pfiles = list(files)
 
-    wargs = {'chunk_len' : chunk_len,
-             'kmer_len' : kmer_len,
-             'min_length' : min_length,
-             'normalise' : normalise,
-             'section' : section,
-             'trim' : trim,
-             'use_scaled' : use_scaled
-            }
+    wargs = {'chunk_len': chunk_len,
+             'kmer_len': kmer_len,
+             'min_length': min_length,
+             'normalise': normalise,
+             'section': section,
+             'trim': trim,
+             'use_scaled': use_scaled
+             }
 
     for fn, chunks, labels, bad_ev in imap_mp(_kmer_worker, pfiles, threads=8,
                                               fix_kwargs=wargs):
