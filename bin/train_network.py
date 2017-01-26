@@ -87,6 +87,10 @@ def wrap_network(network, min_prob=0.0, l2=0.0, drop=0):
     fg = th.function([x, labels, weights, rate], [loss, ncorrect], updates=update_dict)
     return fg
 
+def saveModel(log, network, output, index):
+    log.write('C')
+    with open(os.path.join(args.output, 'model_checkpoint_{:05d}.pkl'.format((i + 1) // args.save_every)), 'wb') as fh:
+        cPickle.dump(network, fh, protocol=cPickle.HIGHEST_PROTOCOL)
 
 if __name__ == '__main__':
     args = parser.parse_args()
@@ -152,6 +156,7 @@ if __name__ == '__main__':
 
     t0 = time.time()
     log.write('* Training\n')
+    saveModel(log, network, args.output, 0)
     for i in xrange(args.niteration):
         learning_rate = args.adam.rate / (1.0 + i * lrfactor)
         idx = np.sort(np.random.choice(len(all_chunks), size=args.batch,
@@ -170,12 +175,8 @@ if __name__ == '__main__':
         wscore = 1.0 + SMOOTH * wscore
         wacc = 1.0 + SMOOTH * wacc
 
-
-        # Save model
         if (i + 1) % args.save_every == 0:
-            log.write('C')
-            with open(os.path.join(args.output, 'model_checkpoint_{:05d}.pkl'.format((i + 1) // args.save_every)), 'wb') as fh:
-                cPickle.dump(network, fh, protocol=cPickle.HIGHEST_PROTOCOL)
+            saveModel(log, network, args.output, (i + 1) // args.save_every)
         else:
             log.write('.')
 
