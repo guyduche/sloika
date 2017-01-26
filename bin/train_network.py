@@ -157,7 +157,6 @@ if __name__ == '__main__':
 
     t0 = time.time()
     log.write('* Training\n')
-    saveModel(log, network, args.output, 0)
     for i in xrange(args.niteration):
         learning_rate = args.adam.rate / (1.0 + i * lrfactor)
         idx = np.sort(np.random.choice(len(all_chunks), size=args.batch,
@@ -176,7 +175,7 @@ if __name__ == '__main__':
         wscore = 1.0 + SMOOTH * wscore
         wacc = 1.0 + SMOOTH * wacc
 
-        if (i + 1) % args.save_every == 0:
+        if i == 0 or (i + 1) % args.save_every == 0:
             saveModel(log, network, args.output, (i + 1) // args.save_every)
         else:
             log.write('.')
