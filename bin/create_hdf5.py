@@ -98,7 +98,7 @@ if __name__ == '__main__':
 
         all_chunks = all_chunks.reshape(chunk_shape)
 
-    print '* Writing out to HDF5'
+    print '\n* Writing out to HDF5'
 
     output_dir = os.path.dirname(args.output)
     if output_dir and not os.path.exists(output_dir):
