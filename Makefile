@@ -98,15 +98,23 @@ testInParallel:
 
 
 workDir?=run0/
-fast5Dir:=/mnt/data/human/training/reads
+fast5Dir?=/mnt/data/human/training/reads
+strandTrain?=/mnt/data/human/training/na12878_train.txt
+strandValidate?=/mnt/data/human/training/na12878_validation.txt
 .PHONY: prepare
 prepare:
 	${inSloikaEnv} create_hdf5.py --chunk 500 --kmer 5 --section template --use_scaled \
-	    --strand_list /mnt/data/human/training/na12878_train.txt \
+	    --strand_list ${strandTrain} \
 	    ${fast5Dir} ${workDir}dataset_train.hdf5
 	${inSloikaEnv} create_hdf5.py --chunk 500 --kmer 5 --section template --use_scaled \
-	    --strand_list /mnt/data/human/training/na12878_validation.txt \
+	    --strand_list ${strandValidate} \
 	    ${fast5Dir} ${workDir}dataset_validate.hdf5
+
+.PHONY: testPrepare
+testPrepare:
+	${inSloikaEnv} ${MAKE} prepare workDir:=$${BUILD_DIR}/prepare/ fast5Dir:=data/test_create_hdf5/reads/ \
+	    strandTrain:=data/test_create_hdf5/na12878_train.txt \
+	    strandValidate:=data/test_create_hdf5/na12878_train.txt
 
 .PHONY: train
 train:
