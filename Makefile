@@ -96,8 +96,8 @@ testInParallel:
 	(source environment && cp -r sloika/test $${BUILD_DIR})
 	(source environment && source $${SLOIKA_VIRTUALENV_DIR}/bin/activate && cd $${BUILD_DIR}/test && NOSE_PROCESSES=2 nosetests)
 
-
-workDir?=run0/
+n?=0
+workDir?=run/$n/
 fast5Dir?=/mnt/data/human/training/reads
 strandTrain?=/mnt/data/human/training/na12878_train.txt
 strandValidate?=/mnt/data/human/training/na12878_validation.txt
