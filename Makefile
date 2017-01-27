@@ -29,7 +29,7 @@ unitTest:
 unitTestFromScratch: cleanTmpEnvWithSloika
 	${inTmpEnv} ${unitTestCmd}
 
-acceptanceTestCmd:=${pipInstall} -r test/acceptance/requirements.txt && cd test/acceptance && THEANO_FLAGS=$${THEANO_FLAGS_FOR_ACCTEST} py.test -n auto
+acceptanceTestCmd:=${pipInstall} -r test/acceptance/requirements.txt && cd test/acceptance && py.test -n auto
 .PHONY: acceptanceTest acceptanceTestFromScratch
 acceptanceTest:
 	${inSloikaEnv} ${acceptanceTestCmd}
