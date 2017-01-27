@@ -116,11 +116,21 @@ testPrepare:
 	    strandTrain:=data/test_create_hdf5/na12878_train.txt \
 	    strandValidate:=data/test_create_hdf5/na12878_train.txt
 
+niteration?=50000
+device?=gpu${gpu}
+model?=models/baseline_gru.py
+extraFlags?=
 .PHONY: train
 train:
-	${inSloikaEnv} THEANO_FLAGS="device=gpu${gpu},$${COMMON_THEANO_FLAGS_FOR_TRAINING}" \
-	    train_network.py --batch 100 --niteration 50000 --save_every 5000 --lrdecay 5000 --bad \
-	    models/baseline_gru.py ${workDir}output ${workDir}dataset_train.hdf5
+	${inSloikaEnv} THEANO_FLAGS="${extraFlags}device=${device},$${COMMON_THEANO_FLAGS_FOR_TRAINING}" \
+	    train_network.py --batch 100 --niteration ${niteration} --save_every 5000 --lrdecay 5000 --bad \
+	    ${model} ${workDir}output ${workDir}dataset_train.hdf5
+
+.PHONY: testTrain
+testTrain:
+	${inSloikaEnv} rm -rf $${BUILD_DIR}/prepare/output/
+	${inSloikaEnv} ${MAKE} train workDir:=$${BUILD_DIR}/prepare/ \
+	    niteration:=1 device:=cpu extraFlags:=profile=True, model:=models/tiny_gru.py
 
 .PHONY: validate
 validate:
