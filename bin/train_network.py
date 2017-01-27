@@ -94,6 +94,17 @@ def saveModel(log, network, output, index):
     with open(os.path.join(output, 'model_checkpoint_{:05d}.pkl'.format(index)), 'wb') as fh:
         cPickle.dump(network, fh, protocol=cPickle.HIGHEST_PROTOCOL)
 
+class Logger:
+
+    def __init__(self, log_file_name):
+        self.fh = open(log_file_name, 'w', 0)
+
+    def write(self, message):
+        self.fh.write(message)
+        sys.stdout.write(message)
+        sys.stdout.flush()
+
+
 if __name__ == '__main__':
     args = parser.parse_args()
     np.random.seed(args.seed)
@@ -101,7 +112,7 @@ if __name__ == '__main__':
     os.mkdir(args.output)
     copyfile(args.model, os.path.join(args.output, 'model.py'))
 
-    log = open(os.path.join(args.output, 'model.log'), 'w', 0)
+    log = Logger(os.path.join(args.output, 'model.log'))
 
     log.write('* Command line\n')
     log.write(' '.join(sys.argv) + '\n')
