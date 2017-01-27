@@ -8,7 +8,6 @@ def network(klen, sd, nfeature=4, winlen=3, size=64):
     :param nfeature: Number of features per time-step
     :param winlen: Length of window over data
     :param size: size of hidden recurrent layers
-    :param fun: activation function
 
     :returns: a `class`:layer.Layer:
     """
