@@ -8,3 +8,4 @@ dist
 sloika/viterbi_helpers.c
 sloika/sloika_version.py
 run
+.cache

@@ -2,6 +2,7 @@ SHELL=/bin/bash
 
 pwd:=$(shell pwd)/
 bin:=${pwd}bin/
+nproc:=$(shell nproc)
 
 sloikaVersion:=$(shell ./scripts/show-version.sh)
 ifndef sloikaVersion
@@ -21,14 +22,14 @@ test: unitTest acceptanceTest
 # TODO(semen): not ideal that test requirements are installed into the same env where sloika is
 #
 
-unitTestCmd:=${pipInstall} -r test/unit/requirements.txt && cd test/unit && nose2
+unitTestCmd:=${pipInstall} -r test/unit/requirements.txt && cd test/unit && py.test -n auto
 .PHONY: unitTest unitTestFromScratch
 unitTest:
 	${inSloikaEnv} ${unitTestCmd}
 unitTestFromScratch: cleanTmpEnvWithSloika
 	${inTmpEnv} ${unitTestCmd}
 
-acceptanceTestCmd:=${pipInstall} -r test/acceptance/requirements.txt && cd test/acceptance && THEANO_FLAGS=$${THEANO_FLAGS_FOR_ACCTEST} nose2
+acceptanceTestCmd:=${pipInstall} -r test/acceptance/requirements.txt && cd test/acceptance && THEANO_FLAGS=$${THEANO_FLAGS_FOR_ACCTEST} py.test -n auto
 .PHONY: acceptanceTest acceptanceTestFromScratch
 acceptanceTest:
 	${inSloikaEnv} ${acceptanceTestCmd}
@@ -81,57 +82,10 @@ cleanTmpEnvWithSloika: emptyTmpEnv
 autopep8:
 	${inSloikaEnv} autopep8 $f -i --max-line-length=120
 
+cmd?=echo "Set 'cmd' to command to run in Sloika env"
+.PHONY: runInEnv
+runInEnv:
+	@${inSloikaEnv} ${cmd}
 
 
-#
-# TODO(semen): fix parallel test runs
-#              currently does not work because tests step on each other
-#              in Theano intermediate directory
-#
-# TODO(semen): upgrade to nose2
-#
-.PHONY: testInParallel
-testInParallel:
-	(source environment && rm -rf $${BUILD_DIR}/test)
-	(source environment && cp -r sloika/test $${BUILD_DIR})
-	(source environment && source $${SLOIKA_VIRTUALENV_DIR}/bin/activate && cd $${BUILD_DIR}/test && NOSE_PROCESSES=2 nosetests)
-
-n?=0
-workDir?=run/$n/
-fast5Dir?=/mnt/data/human/training/reads
-strandTrain?=/mnt/data/human/training/na12878_train.txt
-strandValidate?=/mnt/data/human/training/na12878_validation.txt
-.PHONY: prepare
-prepare:
-	${inSloikaEnv} create_hdf5.py --chunk 500 --kmer 5 --section template --use_scaled \
-	    --strand_list ${strandTrain} \
-	    ${fast5Dir} ${workDir}dataset_train.hdf5
-	${inSloikaEnv} create_hdf5.py --chunk 500 --kmer 5 --section template --use_scaled \
-	    --strand_list ${strandValidate} \
-	    ${fast5Dir} ${workDir}dataset_validate.hdf5
-
-.PHONY: testPrepare
-testPrepare:
-	${inSloikaEnv} ${MAKE} prepare workDir:=$${BUILD_DIR}/prepare/ fast5Dir:=data/test_create_hdf5/reads/ \
-	    strandTrain:=data/test_create_hdf5/na12878_train.txt \
-	    strandValidate:=data/test_create_hdf5/na12878_train.txt
-
-niteration?=50000
-device?=gpu${gpu}
-model?=models/baseline_gru.py
-extraFlags?=
-.PHONY: train
-train:
-	${inSloikaEnv} THEANO_FLAGS="${extraFlags}device=${device},$${COMMON_THEANO_FLAGS_FOR_TRAINING}" \
-	    train_network.py --batch 100 --niteration ${niteration} --save_every 5000 --lrdecay 5000 --bad \
-	    ${model} ${workDir}output ${workDir}dataset_train.hdf5
-
-.PHONY: testTrain
-testTrain:
-	${inSloikaEnv} rm -rf $${BUILD_DIR}/prepare/output/
-	${inSloikaEnv} ${MAKE} train workDir:=$${BUILD_DIR}/prepare/ \
-	    niteration:=1 device:=cpu extraFlags:=profile=True, model:=models/tiny_gru.py
-
-.PHONY: validate
-validate:
-	${inSloikaEnv} validate_network.py --bad --batch 200 ${model} ${workDir}dataset_validate.hdf5
+include Makefile.res
