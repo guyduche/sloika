@@ -52,7 +52,7 @@ class Result:
 
 def run_cmd(test_case, cmd, cwd=None):
     env_with_theano_flags = os.environ.copy()
-    base_compiledir = os.path.join(test_case.test_directory, '.theano')
+    base_compiledir = os.path.join(test_case.work_dir, '.theano')
     env_with_theano_flags["THEANO_FLAGS"] = "base_compiledir={},".format(
         base_compiledir) + os.environ["THEANO_FLAGS_FOR_ACCTEST"]
 
