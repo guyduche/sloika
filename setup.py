@@ -2,27 +2,27 @@ import re
 from glob import glob
 import numpy as np
 import os
+import subprocess
 from setuptools import setup, find_packages
 from Cython.Build import cythonize
 
-# Get the version number from __init__.py
 package_name = 'sloika'
 package_dir = os.path.join(os.path.dirname(__file__), package_name)
-verstrline = open('{}/__init__.py'.format(package_name), 'r').read()
-vsre = r"^__version__ = ['\"]([^'\"]*)['\"]"
-mo = re.search(vsre, verstrline, re.M)
-if mo:
-    verstr = mo.group(1)
-else:
-    raise RuntimeError('Unable to find version string in "{}/__init__.py".'.format(package_name))
 
+cmd = './scripts/show-version.sh'
+version, err = subprocess.Popen(cmd.split(),stdout=subprocess.PIPE).communicate()
+open('sloika/sloika_version.py','w').write("__version__ = '%s'\n"%version)
 
-
-requires=[]
+install_requires = [
+'h5py==2.6.0',
+'numpy>=1.7.1',
+'Theano==0.8.2',
+'untangled>=0.4.1',
+]
 
 setup(
     name='sloika',
-    version=verstr,
+    version=version,
     description='Theano RNN library',
     maintainer='Tim Massingham',
     maintainer_email='tim.massingham@nanoporetech.com',
@@ -33,8 +33,8 @@ setup(
     exclude_package_data={'': ['*.hdf', '*.c', '*.h']},
     ext_modules = cythonize(os.path.join(package_dir, "viterbi_helpers.pyx")),
     include_dirs=[np.get_include()],
-    tests_require=requires,
-    install_requires=requires,
+    tests_require=[],
+    install_requires=install_requires,
     dependency_links=[],
     zip_safe=False,
     test_suite='discover_tests',

@@ -1,1 +1,1 @@
-__version__ = '1.1.dev0'
+from sloika_version import __version__

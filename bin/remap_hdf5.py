@@ -8,11 +8,11 @@ import sys
 import time
 
 from untangled import bio, fast5
-from untangled.cmdargs import (AutoBool, display_version_and_exit, FileExists,
-                               NonNegative, Positive, Maybe)
+from untangled.cmdargs import (AutoBool, display_version_and_exit, FileAbsent,
+                               FileExists, NonNegative, Positive, Maybe)
 from untangled.iterators import imap_mp, izip
 
-from sloika import features, transducer, __version__
+from sloika import features, helpers, transducer, __version__
 
 
 # This is here, not in main to allow documentation to be built
@@ -21,6 +21,8 @@ parser = argparse.ArgumentParser(
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('--batch', metavar='size', default=1000, type=Positive(int),
     help='Number of posterior matrices to calculate simulataneously on GPU')
+parser.add_argument('--compile', default=None, action=FileAbsent,
+    help='File output compiled model')
 parser.add_argument('--jobs', default=8, type=Positive(int),
     help='Number of jobs to run in parallel')
 parser.add_argument('--slip', default=None, metavar='penalty', type=Maybe(NonNegative(float)),
@@ -28,8 +30,8 @@ parser.add_argument('--slip', default=None, metavar='penalty', type=Maybe(NonNeg
 parser.add_argument('--version', nargs=0, action=display_version_and_exit, metavar=__version__,
     help='Display version information.')
 parser.add_argument('model', action=FileExists, help='Pickled model file')
-parser.add_argument('input', help='HDF5 file for input')
-parser.add_argument('output', help='HDF5 for output')
+parser.add_argument('input', action=FileExists, help='HDF5 file for input')
+parser.add_argument('output', action=FileAbsent, help='HDF5 for output')
 
 def compress_labels(labels, klen):
     """ Make sequece from labels
@@ -71,7 +73,9 @@ def map_transducer(args, fargs):
 if __name__ == '__main__':
     args = parser.parse_args()
 
-    with open(args.model, 'r') as fh:
+    #  Compile model file if necessary and read in compiled model
+    compiled_file = helpers.compile_model(args.model, args.compile)
+    with open(compiled_file, 'r') as fh:
         calc_post = cPickle.load(fh)
 
     with h5py.File(args.output, 'w') as h5:

@@ -1,8 +1,25 @@
+#!/bin/bash -ex
+
+export ROOT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
 export BUILD_DIR="${ROOT_DIR}/build"
 
+export DATA_DIR="${ROOT_DIR}/data"
+
+export SCRIPTS_DIR="${ROOT_DIR}/scripts"
+
+export BIN_DIR="${ROOT_DIR}/bin"
+
 export SLOIKA_DEV_DIR="${BUILD_DIR}/sloika"
+
+export ACCTEST_WORK_DIR="${BUILD_DIR}/acceptance"
+
 export SLOIKA_VIRTUALENV_DIR="${BUILD_DIR}/env"
 
-export SLOIKA_SITE_PACKAGES="${SLOIKA_DEV_DIR}/lib/python2.7/site-packages"
+export TMP_VIRTUALENV_DIR="${BUILD_DIR}/tmpenv"
 
-export PYTHONPATH="${SLOIKA_DEV_DIR}/lib/python2.7/site-packages"
+export PYTHONDONTWRITEBYTECODE="no .pyc files please"
+
+export ACCTEST_THEANO_FLAGS="floatX=float32,warn_float64=warn,optimizer=fast_run,nvcc.fastmath=True,device=cpu,scan.allow_gc=False,lib.cnmem=0.4"
+
+source ${SCRIPTS_DIR}/version-env.sh
