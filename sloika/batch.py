@@ -44,9 +44,9 @@ def _kmer_worker(fn, section, chunk_len, kmer_len, min_length, trim, use_scaled,
 
     :param fn: A filename to read from.
     :param section: Section of read to process (template / complement)
-    :param chunk_len: Length on each chunk
+    :param chunk_len: Length of each chunk
     :param kmer_len: Kmer length for training
-    :param min_length: Minumum number of events before read can be considered.
+    :param min_length: Minimum number of events before read can be considered.
     :param trim: Tuple (beginning, end) of number of events to trim from read.
     :param use_scaled: Use prescaled event statistics
     :param normalise: Do per-strand normalisation
@@ -95,7 +95,7 @@ def kmers(files, section, chunk_len, kmer_len, min_length=0, trim=(0, 0),
 
     :param files: A `set` of files to read
     :param section: Section of read to process (template / complement)
-    :param chunk_len: Length on each chunk
+    :param chunk_len: Length of each chunk
     :param kmer_len: Kmer length for training
     :param min_length: Minumum number of events before read can be considered.
     :param trim: Tuple (beginning, end) of number of events to trim from read.
