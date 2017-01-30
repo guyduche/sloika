@@ -29,8 +29,7 @@ parser.add_argument('--ngpu', metavar='n', default=4, type=Positive(int),
     help='Number of gpus')
 parser.add_argument('--sleep', metavar='seconds', default=30, type=NonNegative(int),
     help='Time between polling database')
-parser.add_argument('database', metavar='file.db', action=FileExists,
-    help='')
+parser.add_argument('database', action=FileExists, help='Database.db file')
 
 
 def get_git_commit(gitdir):
@@ -48,6 +47,9 @@ def create_jobs(dbname, sleep=30, limit=None):
             c.execute('select * from runs where status = ? order by priority limit 1', (_PENDING,))
             res = c.fetchone()
             if res is not None:
+                runid = res['runid']
+                c.execute('update runs set status = ? where runid = ?', (_RUNNING, runid))
+                conn.commit()
                 njobs += 1
                 yield dict(res)
             else:
@@ -109,8 +111,8 @@ def run_job(args):
         # Update database
         commit = get_git_commit(sloika_gitdir)
         c = conn.cursor()
-        c.execute('update runs set status = ?, sloika_commit = ? where runid = ?',
-                  (_RUNNING, commit, args['runid']))
+        c.execute('update runs set sloika_commit = ? where runid = ?',
+                  (commit, args['runid']))
 
     proc = subprocess.Popen(arglist, env=env)
     proc.wait()
@@ -138,9 +140,8 @@ def run_job(args):
         with open(os.path.join(args["output_directory"], "model_final.validate"), "w") as fh:
             proc = subprocess.Popen(arglist, env=env, stdout=fh)
             proc.wait()
-        returncode2 = proc.returncode
 
-    return args["runid"], returncode, returncode2
+    return args["runid"], returncode
 
 
 if __name__ == '__main__':
