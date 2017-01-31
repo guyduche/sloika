@@ -24,33 +24,32 @@ from untangled.iterators import imap_mp
 parser = ArgumentParser(description='Map reads using trasducer network',
                         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('--compile', default=None, type=Maybe(str),
-    help='File output compiled model')
+                    help='File output compiled model')
 parser.add_argument('--jobs', default=4, metavar='n', type=Positive(int),
-    help='Number of jobs to run in parallel')
+                    help='Number of jobs to run in parallel')
 parser.add_argument('--kmer', default=5, metavar='length', type=Positive(int),
-    help='Length of kmer')
+                    help='Length of kmer')
 parser.add_argument('--limit', default=None, metavar='reads',
-    type=Maybe(Positive(int)), help='Limit number of reads to process.')
+                    type=Maybe(Positive(int)), help='Limit number of reads to process.')
 parser.add_argument('--min_prob', metavar='proportion', default=1e-5,
-    type=proportion, help='Minimum allowed probabiility for basecalls')
-parser.add_argument('--prior', nargs=2, metavar=('start', 'end'), default=(25.0,25.0),
-    type=Maybe(NonNegative(float)), help='Mean of start and end positions')
+                    type=proportion, help='Minimum allowed probabiility for basecalls')
+parser.add_argument('--prior', nargs=2, metavar=('start', 'end'), default=(25.0, 25.0),
+                    type=Maybe(NonNegative(float)), help='Mean of start and end positions')
 parser.add_argument('--slip', default=5.0, type=Maybe(NonNegative(float)),
-    help='Slip penalty')
+                    help='Slip penalty')
 parser.add_argument('--strand_list', default=None, action=FileExists,
-    help='strand summary file containing subset.')
+                    help='strand summary file containing subset.')
 parser.add_argument('--transducer', default=True, action=AutoBool,
-    help='Model is transducer')
+                    help='Model is transducer')
 parser.add_argument('--trim', default=(200, 200), nargs=2, type=NonNegative(int),
-    metavar=('beginning', 'end'), help='Number of events to trim off start and end')
+                    metavar=('beginning', 'end'), help='Number of events to trim off start and end')
 parser.add_argument('model', action=FileExists, help='Pickled model file')
 parser.add_argument('references', action=FileExists,
-    help='Reference sequences in fasta format')
+                    help='Reference sequences in fasta format')
 parser.add_argument('input_folder', action=FileExists,
-    help='Directory containing single-read fast5 files.')
+                    help='Directory containing single-read fast5 files.')
 
 _ETA = 1e-10
-
 
 
 def init_worker(model, fasta, kmer_len):
@@ -108,6 +107,7 @@ def compile_model(q, model_file, compiled_file=None):
             compiled_file = args.model
 
     q.put(compiled_file)
+
 
 def mapread(args, fn):
     from sloika import decode, features, transducer
@@ -183,9 +183,7 @@ def mapread(args, fn):
             del h5[fs]
         h5.create_dataset(fs, data=refdat)
 
-
     return sn + '.fast5', score, len(ev), path, seq
-
 
 
 if __name__ == '__main__':
