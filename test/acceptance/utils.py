@@ -66,7 +66,7 @@ def run_cmd(test_case, cmd, cwd=None):
     return Result(test_case, cmd, cwd, return_code, stdout, stderr)
 
 
-def isclose(a, b, rel_tol=1e-09, abs_tol=0.0):
+def is_close(a, b, rel_tol=1e-09, abs_tol=0.0):
     return abs(a - b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
 
 def maybe_create_dir(directory_name):

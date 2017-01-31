@@ -5,7 +5,7 @@ import h5py
 
 import numpy as np
 
-from utils import run_cmd, isclose, maybe_create_dir
+from utils import run_cmd, is_close, maybe_create_dir
 
 
 class AcceptanceTest(unittest.TestCase):
@@ -50,5 +50,5 @@ class AcceptanceTest(unittest.TestCase):
 
             self.assertEqual(fh['chunks'].shape, (182, 500, 4))
             chunks = fh['chunks'][:]
-            self.assertTrue(isclose(chunks.min(), -2.8844583, 1e-5))
-            self.assertTrue(isclose(chunks.max(), 14.225174, 1e-5))
+            self.assertTrue(is_close(chunks.min(), -2.8844583, 1e-5))
+            self.assertTrue(is_close(chunks.max(), 14.225174, 1e-5))
