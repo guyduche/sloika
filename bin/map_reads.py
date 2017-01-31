@@ -10,14 +10,14 @@ import time
 
 from Bio import SeqIO
 
-from sloika import helpers
-from sloika.util import geometric_prior
-
 from untangled import bio
 from untangled.cmdargs import (AutoBool, FileExists, Maybe, NonNegative,
                                proportion, Positive, Vector)
 from untangled import fast5
 from untangled.iterators import imap_mp
+
+from sloika import helpers
+from sloika.util import geometric_prior
 
 
 # This is here, not in main to allow documentation to be built
@@ -124,11 +124,12 @@ def mapread(args, fn):
         read_ref = references[sn]
     except:
         sys.stderr.write('No reference found for {}.\n'.format(fn))
-        return
+        return None
 
     if len(ev) <= sum(args.trim):
         sys.stderr.write('{} with {} events is too short.\n'.format(fn, len(ev)))
         return None
+
     begin, end = args.trim
     end = None if end is 0 else -end
     ev = ev[begin : end]
@@ -148,7 +149,7 @@ def mapread(args, fn):
 
     #  Write out
     with h5py.File(fn, 'r+') as h5:
-        #  AS lot of messy and somewhat unnecessary work to make compatible with fast5 reader
+        #  A lot of messy and somewhat unnecessary work to make compatible with fast5 reader
         ds = '/Analyses/AlignToRef_000/CurrentSpaceMapped_template/Events'
         gs = '/Analyses/AlignToRef_000/Summary/current_space_map_template'
         gs2 = '/Analyses/Alignment_000/Summary/genome_mapping_template'
