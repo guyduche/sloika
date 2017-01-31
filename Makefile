@@ -80,7 +80,7 @@ cleanTmpEnvWithSloika: emptyTmpEnv
 
 .PHONY: autopep8
 autopep8:
-	${inSloikaEnv} autopep8 $f -i --max-line-length=120
+	${inSloikaEnv} $${SCRIPTS_DIR}/autopep8.py $f --ignore E203 -i --max-line-length=120
 
 cmd?=echo "Set 'cmd' to command to run in Sloika env"
 .PHONY: runInEnv
