@@ -81,7 +81,7 @@ def wrap_network(network, min_prob=0.0, l2=0.0, drop=0):
     penalty = l2 * updates.param_sqr(network)
 
     loss_per_event, _ = th.map(T.nnet.categorical_crossentropy, sequences=[post, labels])
-    loss = penalty + T.mean((weights * loss_per_event)[ldrop: udrop])
+    loss = penalty + T.mean((weights * loss_per_event)[ldrop : udrop])
     ncorrect = T.sum(T.eq(T.argmax(post,  axis=2), labels))
     update_dict = updates.adam(network, loss, rate, (args.adam.decay1, args.adam.decay2))
 

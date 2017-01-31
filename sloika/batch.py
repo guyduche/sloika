@@ -63,7 +63,7 @@ def _kmer_worker(fn, section, chunk_len, kmer_len, min_length, trim, use_scaled,
         return fn, None, None, None
     begin, end = trim
     end = None if end is 0 else -end
-    ev = ev[begin: end]
+    ev = ev[begin : end]
 
     new_inMat = features.from_events(ev, tag='' if use_scaled else 'scaled_',
                                      normalise=normalise)
@@ -75,7 +75,7 @@ def _kmer_worker(fn, section, chunk_len, kmer_len, min_length, trim, use_scaled,
     # Use rightmost middle kmer
     kl = (model_kmer_len - kmer_len + 1) // 2
     ku = kl + kmer_len
-    new_labels = 1 + np.array(map(lambda k: kmer_to_state[k[kl: ku]],
+    new_labels = 1 + np.array(map(lambda k: kmer_to_state[k[kl : ku]],
                                   ev['kmer'][:ub]), dtype=np.int32)
 
     new_labels = new_labels.reshape((ml, chunk_len))
