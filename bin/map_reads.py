@@ -69,23 +69,6 @@ def init_worker(model, fasta, kmer_len):
     kmer_to_state = bio.kmer_mapping(kmer_len)
 
 
-def geometric_prior(n, m, rev=False):
-    """ Make a vec
-
-    :param n: length of vector
-    :param m: mean of distribution.
-    :param rev: Reverse distribution
-
-    :returns: A 1D :class:`ndarray` containing log probabilities
-    """
-    p = 1.0 / (1.0 + m)
-    prior = np.repeat(np.log(p), n)
-    prior[1:] += np.arange(1, n) * np.log1p(-p)
-    if rev:
-        prior = prior[::-1]
-    return prior
-
-
 def compile_model(q, model_file, compiled_file=None):
     from sloika import layers
     import tempfile
