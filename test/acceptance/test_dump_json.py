@@ -2,7 +2,7 @@ import unittest
 import os
 import shutil
 
-from utils import run_cmd
+from utils import run_cmd, maybe_create_dir
 
 
 class AcceptanceTest(unittest.TestCase):
@@ -14,8 +14,7 @@ class AcceptanceTest(unittest.TestCase):
         self.script = os.path.join(os.environ["BIN_DIR"], "dump_json.py")
 
         self.work_dir = os.path.join(os.environ["ACCTEST_WORK_DIR"], self.test_name)
-        if not os.path.exists(self.work_dir):
-            os.makedirs(self.work_dir)
+	maybe_create_dir(self.work_dir)
 
     def test_usage(self):
         cmd = [self.script]
