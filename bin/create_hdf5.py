@@ -102,7 +102,7 @@ if __name__ == '__main__':
 
     output_dir = os.path.dirname(args.output)
     if output_dir and not os.path.exists(output_dir):
-        os.makedirs(output_dir)
+        os.makedirs(os.path.normpath(output_dir))
 
     with h5py.File(args.output, 'w') as h5:
         bad_ds = h5.create_dataset('bad', all_bad.shape, dtype='i1',

@@ -89,8 +89,7 @@ def wrap_network(network, min_prob=0.0, l2=0.0, drop=0):
     return fg
 
 
-def saveModel(log, network, output, index):
-    log.write('C')
+def saveModel(network, output, index):
     with open(os.path.join(output, 'model_checkpoint_{:05d}.pkl'.format(index)), 'wb') as fh:
         cPickle.dump(network, fh, protocol=cPickle.HIGHEST_PROTOCOL)
 
@@ -166,6 +165,9 @@ if __name__ == '__main__':
     SMOOTH = 0.8
     lrfactor = 0.0 if args.lrdecay is None else (1.0 / args.lrdecay)
 
+    log.write('* Dumping initial model\n')
+    saveModel(network, args.output, 0)
+
     t0 = time.time()
     log.write('* Training\n')
     for i in xrange(args.niteration):
@@ -186,8 +188,9 @@ if __name__ == '__main__':
         wscore = 1.0 + SMOOTH * wscore
         wacc = 1.0 + SMOOTH * wacc
 
-        if i == 0 or (i + 1) % args.save_every == 0:
-            saveModel(log, network, args.output, (i + 1) // args.save_every)
+        if (i + 1) % args.save_every == 0:
+            saveModel(network, args.output, (i + 1) // args.save_every)
+            log.write('C')
         else:
             log.write('.')
 

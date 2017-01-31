@@ -5,7 +5,7 @@ import h5py
 
 import numpy as np
 
-from utils import run_cmd, isclose
+from utils import run_cmd, is_close, maybe_create_dir
 
 
 class AcceptanceTest(unittest.TestCase):
@@ -17,10 +17,7 @@ class AcceptanceTest(unittest.TestCase):
         self.script = os.path.join(os.environ["BIN_DIR"], "create_hdf5.py")
 
         self.work_dir = os.path.join(os.environ["ACCTEST_WORK_DIR"], self.test_name)
-        try:
-            os.makedirs(self.work_dir)
-        except OSError:
-            pass
+	maybe_create_dir(self.work_dir)
 
         self.data_dir = os.path.join(os.environ["DATA_DIR"], self.test_name)
 
@@ -53,5 +50,5 @@ class AcceptanceTest(unittest.TestCase):
 
             self.assertEqual(fh['chunks'].shape, (182, 500, 4))
             chunks = fh['chunks'][:]
-            self.assertTrue(isclose(chunks.min(), -2.8844583, 1e-5))
-            self.assertTrue(isclose(chunks.max(), 14.225174, 1e-5))
+            self.assertTrue(is_close(chunks.min(), -2.8844583, 1e-5))
+            self.assertTrue(is_close(chunks.max(), 14.225174, 1e-5))
