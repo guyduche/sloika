@@ -1,6 +1,6 @@
 import sloika.module_tools as smt
 
-def network(klen, sd, nfeature=4, winlen=3, size=64):
+def network(klen, sd, nfeature=4, winlen=3, size=4):
     """ Create standard Nanonet with GRU units
 
     :param klen: Length of kmer
@@ -26,12 +26,6 @@ def network(klen, sd, nfeature=4, winlen=3, size=64):
 
     layer2 = smt.FeedForward(2 * size, size, has_bias=True, fun=ff_act)
 
-    fwd3 = smt.Gru(size, size, init=_prn, has_bias=True, fun=gru_act)
-    bwd3 = smt.Gru(size, size, init=_prn, has_bias=True, fun=gru_act)
-    layer3 = smt.birnn(fwd3, bwd3)
-
-    layer4 = smt.FeedForward(2 * size, size, init=_prn, has_bias=True, fun=ff_act)
-
     outlayer = smt.Softmax(size, nstate, init=_prn, has_bias=True)
 
-    return smt.Serial([inlayer, layer1, layer2, layer3, layer4, outlayer])
+    return smt.Serial([inlayer, layer1, layer2, outlayer])

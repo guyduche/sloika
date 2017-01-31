@@ -8,7 +8,7 @@ def from_events(ev, tag='scaled_', normalise=True, nanonet=False):
 
     :param ev: A :class:`ndrecarray` with fields 'mean', 'stdv' and 'length'
     :param tag: Prefix of which fields to read
-    :param normalised: Perform normalisation (Studentisation) of features.
+    :param normalise: Perform normalisation (Studentisation) of features.
     :param nanonet: Use Nanonet-like features
 
     :returns: A :class:`ndarray` with studentised features

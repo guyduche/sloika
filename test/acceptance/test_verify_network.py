@@ -25,7 +25,10 @@ class AcceptanceTest(unittest.TestCase):
         run_cmd(self, cmd).return_code(2).stderr(lambda o: o.startswith(u"usage"))
 
     def test_number_of_models(self):
-        self.assertEqual(len(self.model_files), 16)
+        '''
+        Check we've found at least one model
+	'''
+        self.assertTrue(len(self.model_files) > 0)
 
     @parameterized.expand(model_files)
     def test_sequence(self, model_file):

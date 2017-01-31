@@ -2,6 +2,7 @@ SHELL=/bin/bash
 
 pwd:=$(shell pwd)/
 bin:=${pwd}bin/
+nproc:=$(shell nproc)
 
 sloikaVersion:=$(shell ./scripts/show-version.sh)
 ifndef sloikaVersion
@@ -21,14 +22,14 @@ test: unitTest acceptanceTest
 # TODO(semen): not ideal that test requirements are installed into the same env where sloika is
 #
 
-unitTestCmd:=${pipInstall} -r test/unit/requirements.txt && cd test/unit && nose2
+unitTestCmd:=${pipInstall} -r test/unit/requirements.txt && cd test/unit && py.test -n auto
 .PHONY: unitTest unitTestFromScratch
 unitTest:
 	${inSloikaEnv} ${unitTestCmd}
 unitTestFromScratch: cleanTmpEnvWithSloika
 	${inTmpEnv} ${unitTestCmd}
 
-acceptanceTestCmd:=${pipInstall} -r test/acceptance/requirements.txt && cd test/acceptance && THEANO_FLAGS=$${ACCTEST_THEANO_FLAGS} nose2
+acceptanceTestCmd:=${pipInstall} -r test/acceptance/requirements.txt && cd test/acceptance && py.test -n auto
 .PHONY: acceptanceTest acceptanceTestFromScratch
 acceptanceTest:
 	${inSloikaEnv} ${acceptanceTestCmd}
@@ -77,20 +78,14 @@ cleanTmpEnvWithSloika: emptyTmpEnv
 	${inTmpEnv} ${pipInstall} ${whlFile}
 
 
+.PHONY: autopep8
+autopep8:
+	${inSloikaEnv} autopep8 $f -i --max-line-length=120
+
+cmd?=echo "Set 'cmd' to command to run in Sloika env"
+.PHONY: runInEnv
+runInEnv:
+	@${inSloikaEnv} ${cmd}
 
 
-
-
-#
-# TODO(semen): fix parallel test runs
-#              currently does not work because tests step on each other
-#              in Theano intermediate directory
-#
-# TODO(semen): upgrade to nose2
-#
-.PHONY: testInParallel
-testInParallel:
-	(source environment && rm -rf $${BUILD_DIR}/test)
-	(source environment && cp -r sloika/test $${BUILD_DIR})
-	(source environment && source $${SLOIKA_VIRTUALENV_DIR}/bin/activate && cd $${BUILD_DIR}/test && NOSE_PROCESSES=2 nosetests)
-
+include Makefile.res

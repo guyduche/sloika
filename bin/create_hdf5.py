@@ -4,6 +4,7 @@ import h5py
 import numpy as np
 from scipy import linalg
 import sys
+import os
 
 from sloika import batch
 from sloika.config import sloika_dtype
@@ -97,7 +98,12 @@ if __name__ == '__main__':
 
         all_chunks = all_chunks.reshape(chunk_shape)
 
-    print '* Writing out to HDF5'
+    print '\n* Writing out to HDF5'
+
+    output_dir = os.path.dirname(args.output)
+    if output_dir and not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
     with h5py.File(args.output, 'w') as h5:
         bad_ds = h5.create_dataset('bad', all_bad.shape, dtype='i1',
                                    compression="gzip")

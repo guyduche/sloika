@@ -22,7 +22,7 @@ def filter_by_rate(position, chunk, time=None, fact=3.0):
     :returns: A :class:`ndarray` contain a boolean of whether chunk is good
     """
     assert time is None or len(position) == len(time)
-    nchunk = len(position)  // chunk
+    nchunk = len(position) // chunk
     chunk_idx = chunk * np.arange(nchunk)
     delta_pos = position[chunk_idx + chunk - 1] - position[chunk_idx]
     if time is None:
@@ -83,7 +83,7 @@ def _kmer_worker(fn, section, chunk_len, kmer_len, min_length, trim, use_scaled,
     change = np.apply_along_axis(np.ediff1d, 1, change, to_begin=1)
     new_labels[change == 0] = 0
 
-    new_bad  = np.logical_not(ev['good_emission'][:ub])
+    new_bad = np.logical_not(ev['good_emission'][:ub])
     new_bad = new_bad.reshape(ml, chunk_len)
 
     return fn, new_inMat, new_labels, new_bad
@@ -103,21 +103,22 @@ def kmers(files, section, chunk_len, kmer_len, min_length=0, trim=(0, 0),
     :param normalise: Do per-strand normalisation
 
     :yields: A tuple containing a 3D :class:`ndarray` of size
-    (X, chunk_len, nfeatures) containing the features for the batch
-    and a 2D :class`ndarray` of size (X, chunk_len) containing the
-    associated labels.  1 <= X <= batch_size.
+    (X, chunk_len, nfeatures) containing the features for the batch,
+    a 2D :class:`ndarray` of size (X, chunk_len) containing the
+    associated labels, and a 2D :class:`ndarray` of size (X, chunk_len)
+    containing bad events.  1 <= X <= batch_size.
     """
 
     pfiles = list(files)
 
-    wargs = {'chunk_len' : chunk_len,
-             'kmer_len' : kmer_len,
-             'min_length' : min_length,
-             'normalise' : normalise,
-             'section' : section,
-             'trim' : trim,
-             'use_scaled' : use_scaled
-            }
+    wargs = {'chunk_len': chunk_len,
+             'kmer_len': kmer_len,
+             'min_length': min_length,
+             'normalise': normalise,
+             'section': section,
+             'trim': trim,
+             'use_scaled': use_scaled
+             }
 
     for fn, chunks, labels, bad_ev in imap_mp(_kmer_worker, pfiles, threads=8,
                                               fix_kwargs=wargs):

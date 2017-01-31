@@ -44,7 +44,7 @@ dev_env_test:
     except:
         - tags
 
-build_and_upload_artefact:
+upload_artefact:
     stage: release
     script:
         - apt-get install -y openssh-client

@@ -1,3 +1,5 @@
+import os
+
 from io import StringIO
 from subprocess import Popen, PIPE
 
@@ -49,7 +51,12 @@ class Result:
 
 
 def run_cmd(test_case, cmd, cwd=None):
-    proc = Popen(cmd, stdout=PIPE, stderr=PIPE, cwd=cwd)
+    env_with_theano_flags = os.environ.copy()
+    base_compiledir = os.path.join(test_case.work_dir, '.theano')
+    env_with_theano_flags["THEANO_FLAGS"] = "base_compiledir={},".format(
+        base_compiledir) + os.environ["THEANO_FLAGS_FOR_ACCTEST"]
+
+    proc = Popen(cmd, env=env_with_theano_flags, stdout=PIPE, stderr=PIPE, cwd=cwd)
     stdout, stderr = proc.communicate(StringIO())
 
     return_code = proc.returncode
