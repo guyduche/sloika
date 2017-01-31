@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from argparse import ArgumentParser
+import argparse
 import cPickle
 import h5py
 import numpy as np
@@ -21,7 +21,7 @@ from sloika.util import geometric_prior
 
 
 # This is here, not in main to allow documentation to be built
-parser = ArgumentParser(description='Map reads using trasducer network',
+parser = argparse.ArgumentParser(description='Map reads using trasducer network',
                         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('--compile', default=None, type=Maybe(str),
                     help='File output compiled model')
