@@ -19,13 +19,18 @@ def main(argv):
         print('\t'+'\n\t'.join(sorted(scripts.keys())))
     else:
         command_name = argv[1]
+        try:
+             command_function = scripts[command_name]
+        except:
+            print('Unsupported command {!r}'.format(command_name))
+            sys.exit(1)
+
         command_arguments = argv[1:]
-        command_function = scripts[command_name]
 
         try:
             return command_function(command_arguments)
         except:
-            print('Exception when running {!r}'.format(command_name))
+            print('Exception when running command {!r}'.format(command_name))
             raise
 
 

@@ -34,6 +34,10 @@ class AcceptanceTest(unittest.TestCase):
         cmd = [self.script, command_name]
         run_cmd(self, cmd).return_code(2).stderr(lambda o: o.startswith(u"usage:"))
 
+    def test_unsupported_command(self):
+        cmd = [self.script, "hehe"]
+        run_cmd(self, cmd).return_code(1).stdout(lambda o: o.startswith(u"Unsupported command 'hehe'"))
+
     def test_functionality(self):
         strand_list_file = os.path.join(self.data_dir, "na12878_train.txt")
         self.assertTrue(os.path.exists(strand_list_file))
