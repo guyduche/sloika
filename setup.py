@@ -13,13 +13,8 @@ cmd = './scripts/show-version.sh'
 version, err = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE).communicate()
 open('sloika/sloika_version.py', 'w').write("__version__ = '%s'\n" % version)
 
-install_requires = [
-    'h5py==2.6.0',
-    'numpy>=1.7.1',
-    'Theano==0.8.2',
-    'untangled>=0.5.1',
-    'biopython==1.68',
-]
+with open('requirements.txt') as f:
+    install_requires = f.read().splitlines()
 
 setup(
     name='sloika',
