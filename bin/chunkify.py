@@ -3,15 +3,15 @@ from __future__ import print_function
 
 import sys
 
-from sloika.tools.create_hdf5 import create_hdf5_main
-from sloika.tools.create_hdf5_with_remap import create_hdf5_with_remap_main
+from sloika.tools.chunkify import chunkify_main
+from sloika.tools.chunkify_with_remap import chunkify_with_remap_main
 
 
 def main(argv):
 
     scripts = {
-        'orig': create_hdf5_main,
-        'remap': create_hdf5_with_remap_main,
+        'identity': chunkify_main,
+        'remap': chunkify_with_remap_main,
     }
 
     if 1 == len(argv):

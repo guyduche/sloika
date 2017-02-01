@@ -15,7 +15,7 @@ from untangled.cmdargs import (AutoBool, FileAbsent, FileExists, Maybe,
 from untangled import fast5
 
 
-def create_hdf5_main(argv):
+def chunkify_main(argv):
     program_name = ' '.join(sys.argv[:2])
 
     parser = argparse.ArgumentParser(prog=program_name,

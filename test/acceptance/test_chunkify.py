@@ -14,7 +14,7 @@ class AcceptanceTest(unittest.TestCase):
     def setUpClass(self):
         self.test_directory = os.path.splitext(__file__)[0]
         self.test_name = os.path.basename(self.test_directory)
-        self.script = os.path.join(os.environ["BIN_DIR"], "create_hdf5.py")
+        self.script = os.path.join(os.environ["BIN_DIR"], "chunkify.py")
 
         self.work_dir = os.path.join(os.environ["ACCTEST_WORK_DIR"], self.test_name)
 	maybe_create_dir(self.work_dir)
@@ -36,7 +36,7 @@ class AcceptanceTest(unittest.TestCase):
         if os.path.exists(output_file):
             os.remove(output_file)
 
-        cmd = [self.script, "orig", "--use_scaled", "--chunk", "500", "--kmer", "5",
+        cmd = [self.script, "identity", "--use_scaled", "--chunk", "500", "--kmer", "5",
                "--section", "template", "--strand_list", strand_list_file,
                reads_dir, output_file]
         run_cmd(self, cmd).return_code(0)

@@ -139,7 +139,7 @@ def mapread(args, fn):
     return sn + '.fast5', score, len(ev), path, seq
 
 
-def create_hdf5_with_remap_main(argv):
+def chunkify_with_remap_main(argv):
     program_name = ' '.join(sys.argv[:2])
 
     parser = argparse.ArgumentParser(prog=program_name, description='Map reads using trasducer network',
