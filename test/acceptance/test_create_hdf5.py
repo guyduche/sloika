@@ -46,7 +46,7 @@ class AcceptanceTest(unittest.TestCase):
             for item in fh:
                 top_level_items.append(item)
             top_level_items.sort()
-            self.assertEqual(top_level_items, [u'bad', u'centre', u'chunks', u'labels', u'rotation', u'weights'])
+            self.assertEqual(top_level_items, [u'bad', u'chunks', u'labels', u'weights'])
 
             self.assertEqual(fh['chunks'].shape, (182, 500, 4))
             chunks = fh['chunks'][:]
