@@ -10,15 +10,15 @@ package_name = 'sloika'
 package_dir = os.path.join(os.path.dirname(__file__), package_name)
 
 cmd = './scripts/show-version.sh'
-version, err = subprocess.Popen(cmd.split(),stdout=subprocess.PIPE).communicate()
-open('sloika/sloika_version.py','w').write("__version__ = '%s'\n"%version)
+version, err = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE).communicate()
+open('sloika/sloika_version.py', 'w').write("__version__ = '%s'\n" % version)
 
 install_requires = [
-'h5py==2.6.0',
-'numpy>=1.7.1',
-'Theano==0.8.2',
-'untangled>=0.5.1',
-'biopython==1.68',
+    'h5py==2.6.0',
+    'numpy>=1.7.1',
+    'Theano==0.8.2',
+    'untangled>=0.5.1',
+    'biopython==1.68',
 ]
 
 setup(
@@ -30,9 +30,9 @@ setup(
     url='http://www.nanoporetech.com',
     long_description="""Something to do with sheep""",
     packages=find_packages(exclude=["*.test", "*.test.*", "test.*", "test", "bin"]),
-    package_data={'configs':'data/configs/*'},
+    package_data={'configs': 'data/configs/*'},
     exclude_package_data={'': ['*.hdf', '*.c', '*.h']},
-    ext_modules = cythonize(os.path.join(package_dir, "viterbi_helpers.pyx")),
+    ext_modules=cythonize(os.path.join(package_dir, "viterbi_helpers.pyx")),
     include_dirs=[np.get_include()],
     tests_require=[],
     install_requires=install_requires,
