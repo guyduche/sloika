@@ -39,5 +39,5 @@ setup(
     dependency_links=[],
     zip_safe=False,
     test_suite='discover_tests',
-    scripts=[x for x in glob('bin/*.py') if x != 'bin/__init__.py'],
+    scripts=[x for x in glob('bin/*.py')],
 )
