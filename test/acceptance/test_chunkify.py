@@ -5,10 +5,14 @@ import h5py
 
 import numpy as np
 
+from nose_parameterized import parameterized
+
+
 from utils import run_cmd, is_close, maybe_create_dir
 
 
 class AcceptanceTest(unittest.TestCase):
+    known_commands = ["identity", "remap"]
 
     @classmethod
     def setUpClass(self):
@@ -21,9 +25,14 @@ class AcceptanceTest(unittest.TestCase):
 
         self.data_dir = os.path.join(os.environ["DATA_DIR"], self.test_name)
 
-    def test_usage(self):
+    def test_commands(self):
         cmd = [self.script]
         run_cmd(self, cmd).return_code(0).stdout(lambda o: o.startswith(u"Available commands:"))
+
+    @parameterized.expand(known_commands)
+    def test_usage(self, command_name):
+        cmd = [self.script, command_name]
+        run_cmd(self, cmd).return_code(2).stderr(lambda o: o.startswith(u"usage:"))
 
     def test_functionality(self):
         strand_list_file = os.path.join(self.data_dir, "na12878_train.txt")
