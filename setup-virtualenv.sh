@@ -17,12 +17,8 @@ pip install \
     --trusted-host pypi.oxfordnanolabs.local \
     --index-url https://pypi.oxfordnanolabs.local/simple/
 
-#
-# TODO(semen): take care when installing non-sloika deps into environment that is used in acctests
-#
+# install Sloika's dependencies
 pip install \
-    -r test/unit/requirements.txt \
-    -r test/acceptance/requirements.txt \
     -r requirements.txt \
     --trusted-host pypi.oxfordnanolabs.local \
     --index-url https://pypi.oxfordnanolabs.local/simple/

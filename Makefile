@@ -19,7 +19,7 @@ inSloikaEnv:=source environment && source $${SLOIKA_VIRTUALENV_DIR}/bin/activate
 test: unitTest acceptanceTest
 
 #
-# TODO(semen): not ideal that test requirements are installed into the same env where sloika is
+# TODO(semen): do not install unit and acctest deps into the same env where sloika is
 #
 
 unitTestCmd:=${pipInstall} -r test/unit/requirements.txt && cd test/unit && py.test -n auto
