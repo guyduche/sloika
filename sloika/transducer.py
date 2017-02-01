@@ -211,9 +211,9 @@ def map_to_sequence(trans, sequence, slip=None, prior_initial=None, prior_final=
     cscore = np.zeros(npos, dtype=sloika_dtype)
 
     # Initialisation
-    pscore = ltrans[0][sequence]
     if prior_initial is not None:
         pscore += prior_initial
+    pscore += np.fmax(ltrans[0][sequence], ltrans[0][_STAY])
 
     # Main loop
     for i in xrange(1, nev):
