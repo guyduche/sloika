@@ -23,7 +23,7 @@ class AcceptanceTest(unittest.TestCase):
 
     def test_usage(self):
         cmd = [self.script]
-        run_cmd(self, cmd).return_code(2).stderr(lambda o: o.startswith(u"usage"))
+        run_cmd(self, cmd).return_code(0).stdout(lambda o: o.startswith(u"Available commands:"))
 
     def test_functionality(self):
         strand_list_file = os.path.join(self.data_dir, "na12878_train.txt")
@@ -36,7 +36,7 @@ class AcceptanceTest(unittest.TestCase):
         if os.path.exists(output_file):
             os.remove(output_file)
 
-        cmd = [self.script, "--use_scaled", "--chunk", "500", "--kmer", "5",
+        cmd = [self.script, "orig", "--use_scaled", "--chunk", "500", "--kmer", "5",
                "--section", "template", "--strand_list", strand_list_file,
                reads_dir, output_file]
         run_cmd(self, cmd).return_code(0)

@@ -1,4 +1,5 @@
-#!/usr/bin/env python
+from __future__ import print_function
+
 import argparse
 import cPickle
 import h5py
@@ -18,38 +19,6 @@ from untangled.iterators import imap_mp
 
 from sloika import helpers
 from sloika.util import geometric_prior
-
-
-# This is here, not in main to allow documentation to be built
-parser = argparse.ArgumentParser(description='Map reads using trasducer network',
-                        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-parser.add_argument('--compile', default=None, type=Maybe(str),
-                    help='File output compiled model')
-parser.add_argument('--jobs', default=4, metavar='n', type=Positive(int),
-                    help='Number of jobs to run in parallel')
-parser.add_argument('--kmer', default=5, metavar='length', type=Positive(int),
-                    help='Length of kmer')
-parser.add_argument('--limit', default=None, metavar='reads',
-                    type=Maybe(Positive(int)), help='Limit number of reads to process.')
-parser.add_argument('--min_prob', metavar='proportion', default=1e-5,
-                    type=proportion, help='Minimum allowed probabiility for basecalls')
-parser.add_argument('--prior', nargs=2, metavar=('start', 'end'), default=(25.0, 25.0),
-                    type=Maybe(NonNegative(float)), help='Mean of start and end positions')
-parser.add_argument('--slip', default=5.0, type=Maybe(NonNegative(float)),
-                    help='Slip penalty')
-parser.add_argument('--strand_list', default=None, action=FileExists,
-                    help='strand summary file containing subset.')
-parser.add_argument('--transducer', default=True, action=AutoBool,
-                    help='Model is transducer')
-parser.add_argument('--trim', default=(200, 200), nargs=2, type=NonNegative(int),
-                    metavar=('beginning', 'end'), help='Number of events to trim off start and end')
-parser.add_argument('model', action=FileExists, help='Pickled model file')
-parser.add_argument('references', action=FileExists,
-                    help='Reference sequences in fasta format')
-parser.add_argument('input_folder', action=FileExists,
-                    help='Directory containing single-read fast5 files.')
-
-_ETA = 1e-10
 
 
 def init_worker(model, fasta, kmer_len):
@@ -170,8 +139,37 @@ def mapread(args, fn):
     return sn + '.fast5', score, len(ev), path, seq
 
 
-if __name__ == '__main__':
-    args = parser.parse_args()
+def create_hdf5_with_remap_main(argv):
+
+    parser = argparse.ArgumentParser(description='Map reads using trasducer network',
+                            formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument('--compile', default=None, type=Maybe(str),
+                        help='File output compiled model')
+    parser.add_argument('--jobs', default=4, metavar='n', type=Positive(int),
+                        help='Number of jobs to run in parallel')
+    parser.add_argument('--kmer', default=5, metavar='length', type=Positive(int),
+                        help='Length of kmer')
+    parser.add_argument('--limit', default=None, metavar='reads',
+                        type=Maybe(Positive(int)), help='Limit number of reads to process.')
+    parser.add_argument('--min_prob', metavar='proportion', default=1e-5,
+                        type=proportion, help='Minimum allowed probabiility for basecalls')
+    parser.add_argument('--prior', nargs=2, metavar=('start', 'end'), default=(25.0, 25.0),
+                        type=Maybe(NonNegative(float)), help='Mean of start and end positions')
+    parser.add_argument('--slip', default=5.0, type=Maybe(NonNegative(float)),
+                        help='Slip penalty')
+    parser.add_argument('--strand_list', default=None, action=FileExists,
+                        help='strand summary file containing subset.')
+    parser.add_argument('--transducer', default=True, action=AutoBool,
+                        help='Model is transducer')
+    parser.add_argument('--trim', default=(200, 200), nargs=2, type=NonNegative(int),
+                        metavar=('beginning', 'end'), help='Number of events to trim off start and end')
+    parser.add_argument('model', action=FileExists, help='Pickled model file')
+    parser.add_argument('references', action=FileExists,
+                        help='Reference sequences in fasta format')
+    parser.add_argument('input_folder', action=FileExists,
+                        help='Directory containing single-read fast5 files.')
+
+    args = parser.parse_args(argv[1:])
 
     #  Model must be compiled in a separate thread, yuck.
     q = Queue()
@@ -180,7 +178,7 @@ if __name__ == '__main__':
     compiled_file = q.get()
     p.join()
 
-    print '\t'.join(['filename', 'nev', 'score', 'nstay', 'seqlen', 'start', 'end'])
+    print('\t'.join(['filename', 'nev', 'score', 'nstay', 'seqlen', 'start', 'end']))
     files = fast5.iterate_fast5(args.input_folder, paths=True, limit=args.limit,
                                 strand_list=args.strand_list)
     for res in imap_mp(mapread, files, threads=args.jobs, fix_args=[args],
@@ -188,5 +186,5 @@ if __name__ == '__main__':
         if res is None:
             continue
         read, score, nev, path, seq = res
-        print '\t'.join(map(lambda x: str(x), [read, nev, -score / nev, np.sum(np.ediff1d(path, to_begin=1) == 0),
-                                               len(seq), min(path), max(path)]))
+        print('\t'.join(map(lambda x: str(x), [read, nev, -score / nev, np.sum(np.ediff1d(path, to_begin=1) == 0),
+                                               len(seq), min(path), max(path)])))
