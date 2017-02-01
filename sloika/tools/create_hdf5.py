@@ -16,9 +16,11 @@ from untangled import fast5
 
 
 def create_hdf5_main(argv):
-    parser = argparse.ArgumentParser(
-        description='Create HDF file of a dataset',
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    program_name = ' '.join(sys.argv[:2])
+
+    parser = argparse.ArgumentParser(prog=program_name,
+                                     description='Create HDF file of a dataset',
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     parser.add_argument('--blanks', metavar='proportion', default=0.7,
                         type=proportion, help='Maximum proportion of blanks in labels')

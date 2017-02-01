@@ -140,9 +140,10 @@ def mapread(args, fn):
 
 
 def create_hdf5_with_remap_main(argv):
+    program_name = ' '.join(sys.argv[:2])
 
-    parser = argparse.ArgumentParser(description='Map reads using trasducer network',
-                            formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser = argparse.ArgumentParser(prog=program_name, description='Map reads using trasducer network',
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--compile', default=None, type=Maybe(str),
                         help='File output compiled model')
     parser.add_argument('--jobs', default=4, metavar='n', type=Positive(int),
