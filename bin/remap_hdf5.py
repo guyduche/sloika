@@ -90,9 +90,6 @@ if __name__ == '__main__':
                                         dtype='i4', compression="gzip")
 
             h5['weights'] = h5in['weights'][()]
-            h5['rotation'] = h5in['rotation'][()]
-            if 'centre' in h5in:
-                h5['centre'] = h5in['centre'][()]
 
             for k, v in h5in.attrs.items():
                 h5.attrs[k] = v
