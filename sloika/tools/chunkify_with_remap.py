@@ -38,29 +38,6 @@ def init_worker(model, fasta, kmer_len):
     kmer_to_state = bio.kmer_mapping(kmer_len)
 
 
-def compile_model(q, model_file, compiled_file=None):
-    from sloika import layers
-    import tempfile
-    import theano
-
-    sys.setrecursionlimit(10000)
-    with open(model_file, 'r') as fh:
-        network = cPickle.load(fh)
-        if not isinstance(network, theano.compile.function_module.Function):
-            if not isinstance(network, layers.Layer):
-                sys.stderr.write("Model file is not a network description.\n")
-                exit(1)
-            with tempfile.NamedTemporaryFile(mode='wb', dir='', suffix='.pkl', delete=False) if compiled_file is None else open(compiled_file, 'wb') as fh:
-                compiled_file = fh.name
-                sys.stderr.write("Compiling network and writing to {}\n".format(compiled_file))
-                compiled_network = network.compile()
-                cPickle.dump(compiled_network, fh, protocol=cPickle.HIGHEST_PROTOCOL)
-        else:
-            compiled_file = args.model
-
-    q.put(compiled_file)
-
-
 def mapread(args, fn):
     from sloika import decode, features, transducer
 
@@ -172,12 +149,7 @@ def chunkify_with_remap_main(argv):
 
     args = parser.parse_args(argv[1:])
 
-    #  Model must be compiled in a separate thread, yuck.
-    q = Queue()
-    p = Process(target=compile_model, args=(q, args.model, args.compile))
-    p.start()
-    compiled_file = q.get()
-    p.join()
+    compiled_file = helpers.compile_model(args.model, args.compile)
 
     print('\t'.join(['filename', 'nev', 'score', 'nstay', 'seqlen', 'start', 'end']))
     files = fast5.iterate_fast5(args.input_folder, paths=True, limit=args.limit,
