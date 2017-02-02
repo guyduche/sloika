@@ -69,8 +69,8 @@ def mapread(args, fn):
 
     kmers = np.array(bio.seq_to_kmers(read_ref, args.kmer))
     seq = map(lambda k: kmer_to_state[k] + 1, kmers)
-    prior0 = make_prior(len(seq), args.prior[0]) if args.prior[0] is not None else None
-    prior1 = make_prior(len(seq), args.prior[1], rev=True) if args.prior[1] is not None else None
+    prior0 = None if args.prior[0] is None else geometric_prior(len(seq), args.prior[0])
+    prior1 = None if args.prior[1] is None else geometric_prior(len(seq), args.prior[1], rev=True)
 
     score, path = transducer.map_to_sequence(post, seq, slip=args.slip,
                                              prior_initial=prior0,
