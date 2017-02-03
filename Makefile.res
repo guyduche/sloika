@@ -6,18 +6,18 @@ strandValidate?=/mnt/data/human/training/na12878_validation.txt
 
 .PHONY: prepare
 prepare:
-	${inSloikaEnv} create_hdf5.py --chunk 500 --kmer 5 --section template --use_scaled \
+	${inSloikaEnv} $${BIN_DIR}/chunkify.py identity --chunk 500 --kmer 5 --section template --use_scaled \
 	    --strand_list ${strandTrain} \
 	    ${fast5Dir} ${workDir}dataset_train.hdf5
-	${inSloikaEnv} create_hdf5.py --chunk 500 --kmer 5 --section template --use_scaled \
+	${inSloikaEnv} $${BIN_DIR}/chunkify.py identity --chunk 500 --kmer 5 --section template --use_scaled \
 	    --strand_list ${strandValidate} \
 	    ${fast5Dir} ${workDir}dataset_validate.hdf5
 
 .PHONY: testPrepare
 testPrepare:
-	${inSloikaEnv} ${MAKE} prepare workDir:=$${BUILD_DIR}/prepare/ fast5Dir:=data/test_create_hdf5/reads/ \
-	    strandTrain:=data/test_create_hdf5/na12878_train.txt \
-	    strandValidate:=data/test_create_hdf5/na12878_train.txt
+	${inSloikaEnv} ${MAKE} prepare workDir:=$${BUILD_DIR}/prepare/ fast5Dir:=data/test_chunkify/reads/ \
+	    strandTrain:=data/test_chunkify/na12878_train.txt \
+	    strandValidate:=data/test_chunkify/na12878_train.txt
 
 niteration?=50000
 device?=gpu${gpu}
