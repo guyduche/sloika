@@ -165,3 +165,6 @@ def chunkify_with_remap_main(argv):
             read, score, nev, path, seq = res
             sl.write('\t'.join(map(lambda x: str(x), [
                      read, nev, -score / nev, np.sum(np.ediff1d(path, to_begin=1) == 0), len(seq), min(path), max(path)])) + '\n')
+
+    if compiled_file != args.compile:
+        os.remove(compiled_file)
