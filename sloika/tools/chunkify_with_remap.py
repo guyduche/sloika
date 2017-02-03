@@ -13,7 +13,7 @@ from Bio import SeqIO
 
 from untangled import bio
 from untangled.cmdargs import (AutoBool, FileExists, Maybe, NonNegative,
-                               proportion, Positive, Vector)
+                               proportion, Positive, Vector, FileAbsent)
 from untangled import fast5
 from untangled.iterators import imap_mp
 
@@ -135,12 +135,14 @@ def chunkify_with_remap_main(argv):
                         type=Maybe(NonNegative(float)), help='Mean of start and end positions')
     parser.add_argument('--slip', default=5.0, type=Maybe(NonNegative(float)),
                         help='Slip penalty')
-    parser.add_argument('--strand_list', default=None, action=FileExists,
+    parser.add_argument('--strand_input_list', default=None, action=FileExists,
                         help='strand summary file containing subset.')
     parser.add_argument('--transducer', default=True, action=AutoBool,
                         help='Model is transducer')
     parser.add_argument('--trim', default=(200, 200), nargs=2, type=NonNegative(int),
                         metavar=('beginning', 'end'), help='Number of events to trim off start and end')
+    parser.add_argument('--strand_output_list', default="strand_output_list.txt", action=FileAbsent,
+                        help='strand summary output file.')
     parser.add_argument('model', action=FileExists, help='Pickled model file')
     parser.add_argument('references', action=FileExists,
                         help='Reference sequences in fasta format')
@@ -151,13 +153,14 @@ def chunkify_with_remap_main(argv):
 
     compiled_file = helpers.compile_model(args.model, args.compile)
 
-    print('\t'.join(['filename', 'nev', 'score', 'nstay', 'seqlen', 'start', 'end']))
-    files = fast5.iterate_fast5(args.input_folder, paths=True, limit=args.limit,
-                                strand_list=args.strand_list)
-    for res in imap_mp(mapread, files, threads=args.jobs, fix_args=[args],
-                       unordered=True, init=init_worker, initargs=[compiled_file, args.references, args.kmer]):
-        if res is None:
-            continue
-        read, score, nev, path, seq = res
-        print('\t'.join(map(lambda x: str(x), [read, nev, -score / nev, np.sum(np.ediff1d(path, to_begin=1) == 0),
-                                               len(seq), min(path), max(path)])))
+    with open(args.strand_output_list, "w") as sl:
+        sl.write('\t'.join(['filename', 'nev', 'score', 'nstay', 'seqlen', 'start', 'end']) + '\n')
+        files = fast5.iterate_fast5(args.input_folder, paths=True, limit=args.limit,
+                                    strand_list=args.strand_input_list)
+        for res in imap_mp(mapread, files, threads=args.jobs, fix_args=[args],
+                           unordered=True, init=init_worker, initargs=[compiled_file, args.references, args.kmer]):
+            if res is None:
+                continue
+            read, score, nev, path, seq = res
+            sl.write('\t'.join(map(lambda x: str(x), [
+                     read, nev, -score / nev, np.sum(np.ediff1d(path, to_begin=1) == 0), len(seq), min(path), max(path)])) + '\n')
