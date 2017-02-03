@@ -21,7 +21,7 @@ class AcceptanceTest(unittest.TestCase):
         self.script = os.path.join(os.environ["BIN_DIR"], "chunkify.py")
 
         self.work_dir = os.path.join(os.environ["ACCTEST_WORK_DIR"], self.test_name)
-	maybe_create_dir(self.work_dir)
+        maybe_create_dir(self.work_dir)
 
         self.data_dir = os.path.join(os.environ["DATA_DIR"], self.test_name)
 

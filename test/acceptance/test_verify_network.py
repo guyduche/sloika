@@ -17,7 +17,7 @@ class AcceptanceTest(unittest.TestCase):
         self.script = os.path.join(os.environ["BIN_DIR"], "verify_network.py")
 
         self.work_dir = os.path.join(os.environ["ACCTEST_WORK_DIR"], self.test_name)
-	maybe_create_dir(self.work_dir)
+        maybe_create_dir(self.work_dir)
 
     def test_usage(self):
         cmd = [self.script]
@@ -26,7 +26,7 @@ class AcceptanceTest(unittest.TestCase):
     def test_number_of_models(self):
         '''
         Check we've found at least one model
-	'''
+        '''
         self.assertTrue(len(self.model_files) > 0)
 
     @parameterized.expand(model_files)

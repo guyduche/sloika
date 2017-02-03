@@ -14,7 +14,7 @@ class AcceptanceTest(unittest.TestCase):
         self.script = os.path.join(os.environ["BIN_DIR"], "basecall_network.py")
 
         self.work_dir = os.path.join(os.environ["ACCTEST_WORK_DIR"], self.test_name)
-	maybe_create_dir(self.work_dir)
+        maybe_create_dir(self.work_dir)
 
     def test_usage(self):
         cmd = [self.script]
