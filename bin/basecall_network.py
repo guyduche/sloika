@@ -33,6 +33,8 @@ parser.add_argument('--min_prob', metavar='proportion', default=1e-5,
     type=proportion, help='Minimum allowed probabiility for basecalls')
 parser.add_argument('--section', default='template', choices=['template', 'complement'],
     help='Section to call')
+parser.add_argument('--segmentation', default=fast5.__default_segmentation_analysis__,
+    metavar='location', help='Location of segmentation information')
 parser.add_argument('--skip', default=0.0, type=Positive(float), help='Skip penalty')
 parser.add_argument('--strand_list', default=None, action=FileExists,
     help='strand summary file containing subset.')
@@ -60,7 +62,7 @@ def basecall(args, fn):
     from sloika import decode, features, olddecode
     try:
         with fast5.Reader(fn) as f5:
-            ev = f5.get_section_events(args.section)
+            ev = f5.get_section_events(args.section, analysis=args.segmentation)
             sn = f5.filename_short
     except:
         return None

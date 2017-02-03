@@ -17,7 +17,7 @@ install_requires = [
 'h5py==2.6.0',
 'numpy>=1.7.1',
 'Theano==0.8.2',
-'untangled>=0.4.1',
+'untangled>=0.5.0',
 ]
 
 setup(
