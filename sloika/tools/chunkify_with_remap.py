@@ -8,6 +8,7 @@ import numpy.lib.recfunctions as nprf
 import posixpath
 import sys
 import time
+import os
 
 from Bio import SeqIO
 
