@@ -6,7 +6,7 @@ from untangled.maths import med_mad
 
 
 def chunk_worker(fn, section, chunk_len, kmer_len, min_length, trim, use_scaled,
-                       normalise):
+                 normalise):
     """ Chunkifies data for training
 
     :param fn: A filename to read from.
@@ -37,26 +37,37 @@ def chunk_worker(fn, section, chunk_len, kmer_len, min_length, trim, use_scaled,
     end = None if end is 0 else -end
     ev = ev[begin : end]
 
+    ml = len(ev) // chunk_len
+    ub = ml * chunk_len
+
+    #
+    # we may pass bigger range to the function below than we would
+    # actually use later, so that features could be studentized using
+    # moments computed using this bigger range
+    #
     new_inMat = features.from_events(ev, tag='' if use_scaled else 'scaled_',
                                      normalise=normalise)
-    ml = len(new_inMat) // chunk_len
-    ub = chunk_len * ml
-    new_inMat = new_inMat[:ub].reshape((ml, chunk_len, -1))
+    ev = ev[0 : ub]
+    new_inMat = new_inMat[0 : ub].reshape((ml, chunk_len, -1))
 
+    #
+    # 'model' in the name 'model_kmer_len' refers to the model that was used
+    # to map the reads read from the fast5 file above
+    #
     model_kmer_len = len(ev['kmer'][0])
     # Use rightmost middle kmer
     kl = (model_kmer_len - kmer_len + 1) // 2
     ku = kl + kmer_len
     kmer_to_state = bio.kmer_mapping(kmer_len)
     new_labels = 1 + np.array(map(lambda k: kmer_to_state[k[kl : ku]],
-                                  ev['kmer'][:ub]), dtype=np.int32)
+                                  ev['kmer']), dtype=np.int32)
 
-    new_labels = new_labels.reshape((ml, chunk_len))
-    change = ev['seq_pos'][:ub].reshape((ml, chunk_len))
+    new_labels = new_labels.reshape(ml, chunk_len)
+    change = ev['seq_pos'].reshape(ml, chunk_len)
     change = np.apply_along_axis(np.ediff1d, 1, change, to_begin=1)
     new_labels[change == 0] = 0
 
-    new_bad = np.logical_not(ev['good_emission'][:ub])
+    new_bad = np.logical_not(ev['good_emission'])
     new_bad = new_bad.reshape(ml, chunk_len)
 
     assert util.is_contiguous(new_inMat)
