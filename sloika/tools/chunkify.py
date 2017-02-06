@@ -77,7 +77,7 @@ def chunkify_main(argv):
     bad_list = []
     chunk_list = []
     label_list = []
-    for chunks, labels, bad_ev in imap_mp(batch.batch_chunk_worker, fast5_files, threads=args.threads,
+    for chunks, labels, bad_ev in imap_mp(batch.chunk_worker, fast5_files, threads=args.threads,
                                           fix_kwargs=fix_kwargs):
         if chunks is not None and labels is not None:
             i = progress_report(i)

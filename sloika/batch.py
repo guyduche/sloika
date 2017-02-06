@@ -5,7 +5,7 @@ from untangled import bio, fast5
 from untangled.maths import med_mad
 
 
-def batch_chunk_worker(fn, section, chunk_len, kmer_len, min_length, trim, use_scaled,
+def chunk_worker(fn, section, chunk_len, kmer_len, min_length, trim, use_scaled,
                        normalise):
     """ Batcher and chunkifier of data for training
 
