@@ -154,17 +154,21 @@ def chunkify_with_remap_main(argv):
 
     compiled_file = helpers.compile_model(args.model, args.compile)
 
+    strands_list = []
+    files = fast5.iterate_fast5(args.input_folder, paths=True, limit=args.limit,
+                                strand_list=args.strand_input_list)
+    for res in imap_mp(mapread, files, threads=args.jobs, fix_args=[args],
+                       unordered=True, init=init_worker, initargs=[compiled_file, args.references, args.kmer]):
+        if res is not None:
+            read, score, nev, path, seq = res
+            strands_list.append([read, nev, -score / nev, np.sum(np.ediff1d(path, to_begin=1) == 0),
+                                 len(seq), min(path), max(path)])
+
+    strands_list.sort()
     with open(args.strand_output_list, "w") as sl:
         sl.write('\t'.join(['filename', 'nev', 'score', 'nstay', 'seqlen', 'start', 'end']) + '\n')
-        files = fast5.iterate_fast5(args.input_folder, paths=True, limit=args.limit,
-                                    strand_list=args.strand_input_list)
-        for res in imap_mp(mapread, files, threads=args.jobs, fix_args=[args],
-                           unordered=True, init=init_worker, initargs=[compiled_file, args.references, args.kmer]):
-            if res is None:
-                continue
-            read, score, nev, path, seq = res
-            sl.write('\t'.join(map(lambda x: str(x), [
-                     read, nev, -score / nev, np.sum(np.ediff1d(path, to_begin=1) == 0), len(seq), min(path), max(path)])) + '\n')
+        for strand_data in strands_list:
+            sl.write('\t'.join(map(lambda x: str(x), strand_data)) + '\n')
 
     if compiled_file != args.compile:
         os.remove(compiled_file)
