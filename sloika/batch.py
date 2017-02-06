@@ -7,7 +7,7 @@ from untangled.maths import med_mad
 
 def chunk_worker(fn, section, chunk_len, kmer_len, min_length, trim, use_scaled,
                        normalise):
-    """ Batcher and chunkifier of data for training
+    """ Chunkifies data for training
 
     :param fn: A filename to read from.
     :param section: Section of read to process (template / complement)
@@ -40,10 +40,10 @@ def chunk_worker(fn, section, chunk_len, kmer_len, min_length, trim, use_scaled,
     new_inMat = features.from_events(ev, tag='' if use_scaled else 'scaled_',
                                      normalise=normalise)
     ml = len(new_inMat) // chunk_len
-    new_inMat = new_inMat[:ml * chunk_len].reshape((ml, chunk_len, -1))
+    ub = chunk_len * ml
+    new_inMat = new_inMat[:ub].reshape((ml, chunk_len, -1))
 
     model_kmer_len = len(ev['kmer'][0])
-    ub = chunk_len * ml
     # Use rightmost middle kmer
     kl = (model_kmer_len - kmer_len + 1) // 2
     ku = kl + kmer_len

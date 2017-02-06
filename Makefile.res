@@ -6,10 +6,10 @@ strandValidate?=/mnt/data/human/training/na12878_validation.txt
 
 .PHONY: prepare
 prepare:
-	${inSloikaEnv} $${BIN_DIR}/chunkify.py identity --chunk 500 --kmer 5 --section template --use_scaled \
+	${inSloikaEnv} $${BIN_DIR}/chunkify.py identity --chunk 500 --kmer 5 --section template --use_scaled --threads 1 \
 	    --strand_list ${strandTrain} \
 	    ${fast5Dir} ${workDir}dataset_train.hdf5
-	${inSloikaEnv} $${BIN_DIR}/chunkify.py identity --chunk 500 --kmer 5 --section template --use_scaled \
+	${inSloikaEnv} $${BIN_DIR}/chunkify.py identity --chunk 500 --kmer 5 --section template --use_scaled --threads 1 \
 	    --strand_list ${strandValidate} \
 	    ${fast5Dir} ${workDir}dataset_validate.hdf5
 
