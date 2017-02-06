@@ -22,14 +22,16 @@ test: unitTest acceptanceTest
 # TODO(semen): do not install unit and acctest deps into the same env where sloika is
 #
 
-unitTestCmd:=${pipInstall} -r test/unit/requirements.txt && cd test/unit && py.test -n auto
+unitset?=
+unitTestCmd:=${pipInstall} -r test/unit/requirements.txt && cd test/unit && py.test -n auto ${unitset}
 .PHONY: unitTest unitTestFromScratch
 unitTest:
 	${inSloikaEnv} ${unitTestCmd}
 unitTestFromScratch: cleanTmpEnvWithSloika
 	${inTmpEnv} ${unitTestCmd}
 
-acceptanceTestCmd:=${pipInstall} -r test/acceptance/requirements.txt && cd test/acceptance && py.test -n auto
+accset?=
+acceptanceTestCmd:=${pipInstall} -r test/acceptance/requirements.txt && cd test/acceptance && py.test -n auto ${accset}
 .PHONY: acceptanceTest acceptanceTestFromScratch
 acceptanceTest:
 	${inSloikaEnv} ${acceptanceTestCmd}
