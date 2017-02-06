@@ -15,9 +15,9 @@ prepare:
 
 .PHONY: testPrepare
 testPrepare:
-	${inSloikaEnv} ${MAKE} prepare workDir:=$${BUILD_DIR}/prepare/ fast5Dir:=data/test_chunkify/reads/ \
-	    strandTrain:=data/test_chunkify/na12878_train.txt \
-	    strandValidate:=data/test_chunkify/na12878_train.txt
+	${inSloikaEnv} ${MAKE} prepare workDir:=$${BUILD_DIR}/prepare/ fast5Dir:=data/test_chunkify/identity/reads/ \
+	    strandTrain:=data/test_chunkify/identity/na12878_train.txt \
+	    strandValidate:=data/test_chunkify/identity/na12878_train.txt
 
 niteration?=50000
 device?=gpu${gpu}
