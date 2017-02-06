@@ -5,41 +5,6 @@ from untangled import bio, fast5
 from untangled.maths import med_mad
 
 
-#
-# TODO(semen): this function appears to be unused, but my notes suggest it should be
-#
-def filter_by_rate(position, chunk, time=None, fact=3.0):
-    """  Filter chunks using sequencing rate from mapping
-
-    Fits a linear regression through the mapping of events and indicates
-    whether any regions have a unusual bps
-
-    :param position: A :class:`ndarray` containing positions mapped to.
-    :param chunk:
-    :param time: A :class:`ndarray` with time of each event or None.  If None,
-    the index of the event is used.
-    :param fact: Number of standard deviations after which a slope will be
-    considered bad.
-
-    :returns: A :class:`ndarray` contain a boolean of whether chunk is good
-    """
-    assert time is None or len(position) == len(time)
-    nchunk = len(position) // chunk
-    chunk_idx = chunk * np.arange(nchunk)
-    delta_pos = position[chunk_idx + chunk - 1] - position[chunk_idx]
-    if time is None:
-        delta_time = chunk
-    else:
-        delta_time = time[chunk_idx + chunk - 1] - time[chunk_idx]
-
-    bps = delta_pos / delta_time
-    #  Determine accept / reject regions
-    centre, thresh = med_mad(bps)
-    bps -= centre
-    thresh *= fact
-    return np.logical_and(bps < thresh, bps > -thresh)
-
-
 def batch_chunk_worker(fn, section, chunk_len, kmer_len, min_length, trim, use_scaled,
                        normalise):
     """ Batcher and chunkifier of data for training
