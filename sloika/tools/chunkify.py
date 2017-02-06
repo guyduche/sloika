@@ -60,9 +60,9 @@ def chunkify_main(argv):
 
     args = parser.parse_args(argv[1:])
 
-    fast5_files = list(fast5.iterate_fast5(args.input_folder, paths=True,
-                                           limit=args.limit,
-                                           strand_list=args.strand_list))
+    fast5_files = fast5.iterate_fast5(args.input_folder, paths=True,
+                                      limit=args.limit,
+                                      strand_list=args.strand_list)
 
     print('* Processing data using', args.threads, 'threads')
     fix_kwargs = {'section': args.section,
