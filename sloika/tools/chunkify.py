@@ -15,6 +15,14 @@ from untangled.cmdargs import (AutoBool, FileAbsent, FileExists, Maybe,
 from untangled import fast5
 
 
+def progress_report(i):
+    sys.stderr.write('.')
+    i += 1
+    if i % 50 == 0:
+        print('{:8d}'.format(i))
+    return i
+
+
 def chunkify_main(argv):
     program_name = ' '.join(sys.argv[:2])
 
@@ -57,15 +65,15 @@ def chunkify_main(argv):
     chunk_list = []
     label_list = []
     print('* Reading in data')
-    for i, (chunks, labels, bad) in enumerate(batch.kmers(fast5_files, args.section,
-                                                          args.chunk, args.kmer,
-                                                          min_length=args.min_length,
-                                                          trim=args.trim,
-                                                          use_scaled=args.use_scaled,
-                                                          normalise=args.normalise)):
-        sys.stderr.write('.')
-        if (i + 1) % 50 == 0:
-            print('{:8d}'.format(i + 1))
+    i = 0
+    for (chunks, labels, bad) in batch.kmers(fast5_files, args.section,
+                                             args.chunk, args.kmer,
+                                             min_length=args.min_length,
+                                             trim=args.trim,
+                                             use_scaled=args.use_scaled,
+                                             normalise=args.normalise):
+
+        i = progress_report(i)
         chunk_list.append(chunks)
         label_list.append(labels)
         bad_list.append(bad)
