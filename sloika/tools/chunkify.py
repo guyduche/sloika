@@ -83,12 +83,9 @@ def chunkify_main(argv):
                                           fix_kwargs=fix_kwargs):
         if chunks is not None and labels is not None:
             i = progress_report(i)
-            #
-            # TODO(semen): do we need ascontiguousarray below?
-            #
-            chunk_list.append(np.ascontiguousarray(chunks))
-            label_list.append(np.ascontiguousarray(labels))
-            bad_list.append(np.ascontiguousarray(bad_ev))
+            chunk_list.append(chunks)
+            label_list.append(labels)
+            bad_list.append(bad_ev)
 
     all_chunks = np.vstack(chunk_list)
     all_labels = np.vstack(label_list)

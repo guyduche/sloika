@@ -1,6 +1,6 @@
 from __future__ import print_function
 import numpy as np
-from sloika import features
+from sloika import features, util
 from untangled import bio, fast5
 from untangled.maths import med_mad
 
@@ -59,5 +59,9 @@ def batch_chunk_worker(fn, section, chunk_len, kmer_len, min_length, trim, use_s
 
     new_bad = np.logical_not(ev['good_emission'][:ub])
     new_bad = new_bad.reshape(ml, chunk_len)
+
+    assert util.is_contiguous(new_inMat)
+    assert util.is_contiguous(new_labels)
+    assert util.is_contiguous(new_bad)
 
     return new_inMat, new_labels, new_bad

@@ -15,3 +15,10 @@ def geometric_prior(n, m, rev=False):
     if rev:
         prior = prior[::-1]
     return prior
+
+
+def is_contiguous(ndarray):
+    '''
+    See https://docs.scipy.org/doc/numpy/reference/generated/numpy.ascontiguousarray.html
+    '''
+    return ndarray.flags['C_CONTIGUOUS']
