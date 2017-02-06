@@ -11,7 +11,7 @@ from distutils import dir_util
 from nose_parameterized import parameterized
 
 
-from utils import run_cmd, is_close, maybe_create_dir
+from utils import run_cmd, is_close, maybe_create_dir, drop_info
 
 
 class AcceptanceTest(unittest.TestCase):
@@ -30,16 +30,16 @@ class AcceptanceTest(unittest.TestCase):
 
     def test_commands(self):
         cmd = [self.script]
-        run_cmd(self, cmd).return_code(0).stdout(lambda o: o.startswith(u"Available commands:"))
+        run_cmd(self, cmd).return_code(0).stdout(lambda o: drop_info(o).startswith(u"Available commands:"))
 
     @parameterized.expand(known_commands)
     def test_usage(self, command_name):
         cmd = [self.script, command_name]
-        run_cmd(self, cmd).return_code(2).stderr(lambda o: o.startswith(u"usage:"))
+        run_cmd(self, cmd).return_code(2).stderr(lambda o: drop_info(o).startswith(u"usage:"))
 
     def test_unsupported_command(self):
         cmd = [self.script, "hehe"]
-        run_cmd(self, cmd).return_code(1).stdout(lambda o: o.startswith(u"Unsupported command 'hehe'"))
+        run_cmd(self, cmd).return_code(1).stdout(lambda o: drop_info(o).startswith(u"Unsupported command 'hehe'"))
 
     def test_identity(self):
         strand_input_list = os.path.join(self.data_dir, "identity", "na12878_train.txt")

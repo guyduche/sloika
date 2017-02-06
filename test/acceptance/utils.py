@@ -83,3 +83,21 @@ def maybe_create_dir(directory_name):
             pass
         else:
             raise
+
+def drop_lines(L, prefix):
+    if len(L) == 0:
+        return []
+    else:
+        i = 0
+        while L[i].startswith(prefix):
+            i += 1
+        return L[i:]
+
+def drop_info(L):
+    '''
+    Weeding out theano messages of the sort:
+    INFO (theano.gof.compilelock): Waiting for existing lock by process '17108' (I am process '17109')
+E   INFO (theano.gof.compilelock): To manually release the lock, delete <file_name>
+    '''
+    return drop_lines(L, 'INFO (theano')
+

@@ -5,7 +5,7 @@ import glob
 
 from nose_parameterized import parameterized
 
-from utils import run_cmd, maybe_create_dir
+from utils import run_cmd, maybe_create_dir, drop_info
 
 class AcceptanceTest(unittest.TestCase):
     model_files = map(lambda x: [x], glob.glob(os.path.join(os.environ["ROOT_DIR"], "models/*.py")))
@@ -21,7 +21,7 @@ class AcceptanceTest(unittest.TestCase):
 
     def test_usage(self):
         cmd = [self.script]
-        run_cmd(self, cmd).return_code(2).stderr(lambda o: o.startswith(u"usage"))
+        run_cmd(self, cmd).return_code(2).stderr(lambda o: drop_info(o).startswith(u"usage"))
 
     def test_number_of_models(self):
         '''
