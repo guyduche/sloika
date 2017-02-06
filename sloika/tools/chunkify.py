@@ -12,12 +12,13 @@ from sloika.config import sloika_dtype
 
 from untangled.cmdargs import (AutoBool, FileAbsent, FileExists, Maybe,
                                NonNegative, Positive, proportion)
+from untangled.iterators import imap_mp
 from untangled import fast5
 
 
 def progress_report(i):
-    sys.stderr.write('.')
     i += 1
+    sys.stderr.write('.')
     if i % 50 == 0:
         print('{:8d}'.format(i))
     return i
@@ -36,6 +37,8 @@ def chunkify_main(argv):
                         help='Length of each read chunk')
     parser.add_argument('--kmer', default=5, metavar='length', type=Positive(int),
                         help='Length of kmer to estimate')
+    parser.add_argument('--threads', default=8, metavar='n', type=Positive(int),
+                        help='Number of threads to use when processing data')
     parser.add_argument('--limit', default=None, type=Maybe(Positive(int)),
                         help='Limit number of reads to process.')
     parser.add_argument('--min_length', default=1200, metavar='events',
@@ -57,26 +60,35 @@ def chunkify_main(argv):
 
     args = parser.parse_args(argv[1:])
 
-    fast5_files = set(fast5.iterate_fast5(args.input_folder, paths=True,
-                                          limit=args.limit,
-                                          strand_list=args.strand_list))
+    # TODO(semen): can fast5.iterate_fast5 return a list of files with duplicates
+    #              if duplicates are present in strand_list?
+    fast5_files = list(set(fast5.iterate_fast5(args.input_folder, paths=True,
+                                               limit=args.limit,
+                                               strand_list=args.strand_list)))
 
+    print('* Processing data using', args.threads, 'threads')
+    fix_kwargs = {'section': args.section,
+                  'chunk_len': args.chunk,
+                  'kmer_len': args.kmer,
+                  'min_length': args.min_length,
+                  'trim': args.trim,
+                  'use_scaled': args.use_scaled,
+                  'normalise': args.normalise,
+                  }
+    i = 0
     bad_list = []
     chunk_list = []
     label_list = []
-    print('* Reading in data')
-    i = 0
-    for (chunks, labels, bad) in batch.kmers(fast5_files, args.section,
-                                             args.chunk, args.kmer,
-                                             min_length=args.min_length,
-                                             trim=args.trim,
-                                             use_scaled=args.use_scaled,
-                                             normalise=args.normalise):
-
-        i = progress_report(i)
-        chunk_list.append(chunks)
-        label_list.append(labels)
-        bad_list.append(bad)
+    for chunks, labels, bad_ev in imap_mp(batch.batch_chunk_worker, fast5_files, threads=args.threads,
+                                          fix_kwargs=fix_kwargs):
+        if chunks is not None and labels is not None:
+            i = progress_report(i)
+            #
+            # TODO(semen): do we need ascontiguousarray below?
+            #
+            chunk_list.append(np.ascontiguousarray(chunks))
+            label_list.append(np.ascontiguousarray(labels))
+            bad_list.append(np.ascontiguousarray(bad_ev))
 
     all_chunks = np.vstack(chunk_list)
     all_labels = np.vstack(label_list)
