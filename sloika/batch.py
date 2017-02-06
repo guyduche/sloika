@@ -22,10 +22,8 @@ def chunk_worker(fn, section, chunk_len, kmer_len, min_length, trim, use_scaled,
     (X, chunk_len, nfeatures) containing the features for the batch,
     a 2D :class:`ndarray` of size (X, chunk_len) containing the
     associated labels, and a 2D :class:`ndarray` of size (X, chunk_len)
-    containing bad events.  1 <= X <= batch_size.
+    indicating bad events.  1 <= X <= batch_size.
     """
-
-    kmer_to_state = bio.kmer_mapping(kmer_len)
 
     try:
         with fast5.Reader(fn) as f5:
@@ -49,6 +47,7 @@ def chunk_worker(fn, section, chunk_len, kmer_len, min_length, trim, use_scaled,
     # Use rightmost middle kmer
     kl = (model_kmer_len - kmer_len + 1) // 2
     ku = kl + kmer_len
+    kmer_to_state = bio.kmer_mapping(kmer_len)
     new_labels = 1 + np.array(map(lambda k: kmer_to_state[k[kl : ku]],
                                   ev['kmer'][:ub]), dtype=np.int32)
 
