@@ -9,6 +9,7 @@ import os
 
 from sloika import batch
 from sloika.config import sloika_dtype
+from sloika.util import get_kwargs
 
 from untangled.cmdargs import (AutoBool, FileAbsent, FileExists, Maybe,
                                NonNegative, Positive, proportion)
@@ -55,7 +56,6 @@ def create_hdf5(args, all_chunks, all_labels, all_bad):
         h5['/'].attrs['trim'] = args.trim
         h5['/'].attrs['scaled'] = args.use_scaled
 
-
 def chunkify_with_identity_main(argv, parser):
     parser.add_argument('input_folder', action=FileExists,
                         help='Directory containing single-read fast5 files')
@@ -68,20 +68,14 @@ def chunkify_with_identity_main(argv, parser):
                                       strand_list=args.strand_list)
 
     print('* Processing data using', args.threads, 'threads')
-    fix_kwargs = {'section': args.section,
-                  'chunk_len': args.chunk_len,
-                  'kmer_len': args.kmer_len,
-                  'min_length': args.min_length,
-                  'trim': args.trim,
-                  'use_scaled': args.use_scaled,
-                  'normalise': args.normalise,
-                  }
+
+    kwarg_names = ['section', 'chunk_len', 'kmer_len', 'min_length', 'trim', 'use_scaled', 'normalise']
     i = 0
     bad_list = []
     chunk_list = []
     label_list = []
     for chunks, labels, bad_ev in imap_mp(batch.chunk_worker, fast5_files, threads=args.threads,
-                                          fix_kwargs=fix_kwargs):
+                                          fix_kwargs=get_kwargs(args, kwarg_names)):
         if chunks is not None and labels is not None:
             i = progress_report(i)
             chunk_list.append(chunks)

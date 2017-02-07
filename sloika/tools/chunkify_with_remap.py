@@ -19,7 +19,7 @@ from untangled import fast5
 from untangled.iterators import imap_mp
 
 from sloika import helpers
-from sloika.util import geometric_prior
+from sloika.util import geometric_prior, get_kwargs
 
 
 def init_worker(model, fasta, kmer_len):
@@ -39,7 +39,7 @@ def init_worker(model, fasta, kmer_len):
     kmer_to_state = bio.kmer_mapping(kmer_len)
 
 
-def mapread(args, fn):
+def chunk_remap_worker(fn, trim, min_prob, transducer, kmer_len, prior, slip):
     from sloika import decode, features, transducer
 
     try:
@@ -56,24 +56,24 @@ def mapread(args, fn):
         sys.stderr.write('No reference found for {}.\n'.format(fn))
         return None
 
-    if len(ev) <= sum(args.trim):
+    if len(ev) <= sum(trim):
         sys.stderr.write('{} with {} events is too short.\n'.format(fn, len(ev)))
         return None
 
-    begin, end = args.trim
+    begin, end = trim
     end = None if end is 0 else -end
     ev = ev[begin : end]
 
     inMat = features.from_events(ev, tag='')
     inMat = np.expand_dims(inMat, axis=1)
-    post = decode.prepare_post(calc_post(inMat), min_prob=args.min_prob, drop_bad=(not args.transducer))
+    post = decode.prepare_post(calc_post(inMat), min_prob=min_prob, drop_bad=(not transducer))
 
-    kmers = np.array(bio.seq_to_kmers(read_ref, args.kmer_len))
+    kmers = np.array(bio.seq_to_kmers(read_ref, kmer_len))
     seq = map(lambda k: kmer_to_state[k] + 1, kmers)
-    prior0 = None if args.prior[0] is None else geometric_prior(len(seq), args.prior[0])
-    prior1 = None if args.prior[1] is None else geometric_prior(len(seq), args.prior[1], rev=True)
+    prior0 = None if prior[0] is None else geometric_prior(len(seq), prior[0])
+    prior1 = None if prior[1] is None else geometric_prior(len(seq), prior[1], rev=True)
 
-    score, path = transducer.map_to_sequence(post, seq, slip=args.slip,
+    score, path = transducer.map_to_sequence(post, seq, slip=slip,
                                              prior_initial=prior0,
                                              prior_final=prior1, log=False)
 
@@ -141,10 +141,14 @@ def chunkify_with_remap_main(argv, parser):
 
     compiled_file = helpers.compile_model(args.model, args.compile)
 
+    fast5_files = fast5.iterate_fast5(args.input_folder, paths=True, limit=args.limit,
+                                      strand_list=args.strand_input_list)
+
+    print('* Processing data using', args.threads, 'threads')
+
+    kwarg_names = ['trim', 'min_prob', 'transducer', 'kmer_len', 'prior', 'slip']
     strands_list = []
-    files = fast5.iterate_fast5(args.input_folder, paths=True, limit=args.limit,
-                                strand_list=args.strand_input_list)
-    for res in imap_mp(mapread, files, threads=args.threads, fix_args=[args],
+    for res in imap_mp(chunk_remap_worker, fast5_files, threads=args.threads, fix_kwargs=get_kwargs(args,kwarg_names),
                        unordered=True, init=init_worker, initargs=[compiled_file, args.references, args.kmer_len]):
         if res is not None:
             read, score, nev, path, seq = res

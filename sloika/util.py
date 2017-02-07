@@ -22,3 +22,10 @@ def is_contiguous(ndarray):
     See https://docs.scipy.org/doc/numpy/reference/generated/numpy.ascontiguousarray.html
     '''
     return ndarray.flags['C_CONTIGUOUS']
+
+
+def get_kwargs(args, names):
+    kwargs = {}
+    for name in names:
+        kwargs[name] = getattr(args, name)
+    return kwargs
