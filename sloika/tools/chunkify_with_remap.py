@@ -116,6 +116,15 @@ def chunk_remap_worker(fn, trim, min_prob, transducer, kmer_len, prior, slip):
     return sn + '.fast5', score, len(ev), path, seq
 
 
+def create_output_strand_file(output_strand_list_entries, output_file_name):
+    output_strand_list_entries.sort()
+
+    with open(output_file_name, "w") as sl:
+        sl.write('\t'.join(['filename', 'nev', 'score', 'nstay', 'seqlen', 'start', 'end']) + '\n')
+        for strand_data in output_strand_list_entries:
+            sl.write('\t'.join(map(lambda x: str(x), strand_data)) + '\n')
+
+
 def chunkify_with_remap_main(argv, parser):
     parser.add_argument('--compile', default=None, type=Maybe(str),
                         help='File output compiled model')
@@ -125,11 +134,9 @@ def chunkify_with_remap_main(argv, parser):
                         type=Maybe(NonNegative(float)), help='Mean of start and end positions')
     parser.add_argument('--slip', default=5.0, type=Maybe(NonNegative(float)),
                         help='Slip penalty')
-    parser.add_argument('--strand-input-list', default=None, action=FileExists,
-                        help='strand summary file containing subset')
     parser.add_argument('--transducer', default=True, action=AutoBool,
                         help='Model is transducer')
-    parser.add_argument('--strand-output-list', default="strand_output_list.txt", action=FileAbsent,
+    parser.add_argument('--output-strand-list', default="strand_output_list.txt", action=FileAbsent,
                         help='strand summary output file')
     parser.add_argument('model', action=FileExists, help='Pickled model file')
     parser.add_argument('references', action=FileExists,
@@ -139,27 +146,22 @@ def chunkify_with_remap_main(argv, parser):
 
     args = parser.parse_args(argv)
 
-    compiled_file = helpers.compile_model(args.model, args.compile)
-
     fast5_files = fast5.iterate_fast5(args.input_folder, paths=True, limit=args.limit,
-                                      strand_list=args.strand_input_list)
+                                      strand_list=args.input_strand_list)
 
     print('* Processing data using', args.threads, 'threads')
 
     kwarg_names = ['trim', 'min_prob', 'transducer', 'kmer_len', 'prior', 'slip']
-    strands_list = []
+    output_strand_list_entries = []
+    compiled_file = helpers.compile_model(args.model, args.compile)
     for res in imap_mp(chunk_remap_worker, fast5_files, threads=args.threads, fix_kwargs=get_kwargs(args,kwarg_names),
                        unordered=True, init=init_worker, initargs=[compiled_file, args.references, args.kmer_len]):
         if res is not None:
             read, score, nev, path, seq = res
-            strands_list.append([read, nev, -score / nev, np.sum(np.ediff1d(path, to_begin=1) == 0),
+            output_strand_list_entries.append([read, nev, -score / nev, np.sum(np.ediff1d(path, to_begin=1) == 0),
                                  len(seq), min(path), max(path)])
 
-    strands_list.sort()
-    with open(args.strand_output_list, "w") as sl:
-        sl.write('\t'.join(['filename', 'nev', 'score', 'nstay', 'seqlen', 'start', 'end']) + '\n')
-        for strand_data in strands_list:
-            sl.write('\t'.join(map(lambda x: str(x), strand_data)) + '\n')
+    create_output_strand_file(output_strand_list_entries, args.output_strand_list)
 
     if compiled_file != args.compile:
         os.remove(compiled_file)

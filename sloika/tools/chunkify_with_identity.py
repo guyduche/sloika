@@ -65,7 +65,7 @@ def chunkify_with_identity_main(argv, parser):
 
     fast5_files = fast5.iterate_fast5(args.input_folder, paths=True,
                                       limit=args.limit,
-                                      strand_list=args.strand_list)
+                                      strand_list=args.input_strand_list)
 
     print('* Processing data using', args.threads, 'threads')
 

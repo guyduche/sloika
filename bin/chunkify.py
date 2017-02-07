@@ -36,7 +36,7 @@ def common_parser(argv, commands):
                         help='Per-strand normalisation')
     parser.add_argument('--section', default='template',
                         choices=['template', 'complement'], help='Section to call')
-    parser.add_argument('--strand-list', default=None, action=FileExists,
+    parser.add_argument('--input-strand-list', default=None, action=FileExists,
                         help='strand summary file containing subset')
     parser.add_argument('--trim', default=(50, 10), nargs=2, type=NonNegative(int),
                         metavar=('beginning', 'end'),
