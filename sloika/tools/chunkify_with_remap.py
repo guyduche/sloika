@@ -13,9 +13,7 @@ from untangled.cmdargs import (AutoBool, FileExists, Maybe, NonNegative,
 from untangled import fast5
 from untangled.iterators import imap_mp
 
-from sloika import helpers, batch
-from sloika.util import get_kwargs
-
+from sloika import helpers, batch, util
 
 
 def create_output_strand_file(output_strand_list_entries, output_file_name):
@@ -45,6 +43,7 @@ def chunkify_with_remap_main(argv, parser):
                         help='Reference sequences in fasta format')
     parser.add_argument('input_folder', action=FileExists,
                         help='Directory containing single-read fast5 files')
+    parser.add_argument('output', action=FileAbsent, help='Output HDF5 file')
 
     args = parser.parse_args(argv)
 
@@ -54,15 +53,27 @@ def chunkify_with_remap_main(argv, parser):
     print('* Processing data using', args.threads, 'threads')
 
     kwarg_names = ['trim', 'min_prob', 'transducer', 'kmer_len', 'prior', 'slip', 'chunk_len', 'use_scaled', 'normalise']
-    output_strand_list_entries = []
+    i = 0
     compiled_file = helpers.compile_model(args.model, args.compile)
-    for res in imap_mp(batch.chunk_remap_worker, fast5_files, threads=args.threads, fix_kwargs=get_kwargs(args,kwarg_names),
+    output_strand_list_entries = []
+    bad_list = []
+    chunk_list = []
+    label_list = []
+    for res in imap_mp(batch.chunk_remap_worker, fast5_files, threads=args.threads, fix_kwargs=util.get_kwargs(args,kwarg_names),
                        unordered=True, init=batch.init_chunk_remap_worker, initargs=[compiled_file, args.references, args.kmer_len]):
         if res is not None:
+            i = util.progress_report(i)
             read, score, nev, path, seq, chunks, labels, bad_ev = res
+            chunk_list.append(chunks)
+            label_list.append(labels)
+            bad_list.append(bad_ev)
             output_strand_list_entries.append([read, nev, -score / nev, np.sum(np.ediff1d(path, to_begin=1) == 0),
                                  len(seq), min(path), max(path)])
 
+    print('\n* Creating HDF5 file')
+    util.create_hdf5(args, chunk_list, label_list, bad_list)
+
+    print('\n* Creating output strand file')
     create_output_strand_file(output_strand_list_entries, args.output_strand_list)
 
     if compiled_file != args.compile:

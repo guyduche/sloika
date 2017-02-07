@@ -123,12 +123,16 @@ class AcceptanceTest(unittest.TestCase):
             shutil.rmtree(temporary_reads_dir)
         dir_util.copy_tree(reads_dir, temporary_reads_dir)
 
+        output_file = os.path.join(self.work_dir, "remap.hdf5")
+        if os.path.exists(output_file):
+            os.remove(output_file)
+
         reference_strand_output_list = os.path.join(self.data_dir, "remap", "strand_output_list.txt")
         self.assertTrue(os.path.exists(reference_strand_output_list))
 
         cmd = [self.script, "remap", "--trim", "200", "200",
                "--use-scaled", "--output-strand-list",
-               strand_output_list, model_file, reference_file, temporary_reads_dir]
+               strand_output_list, model_file, reference_file, temporary_reads_dir, output_file]
 
         run_cmd(self, cmd).return_code(0)
 
