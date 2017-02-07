@@ -52,14 +52,15 @@ def chunkify_with_remap_main(argv, parser):
 
     print('* Processing data using', args.threads, 'threads')
 
-    kwarg_names = ['trim', 'min_prob', 'transducer', 'kmer_len', 'prior', 'slip', 'chunk_len', 'use_scaled', 'normalise']
+    kwarg_names = ['trim', 'min_prob', 'transducer', 'kmer_len',
+                   'prior', 'slip', 'chunk_len', 'use_scaled', 'normalise']
     i = 0
     compiled_file = helpers.compile_model(args.model, args.compile)
     output_strand_list_entries = []
     bad_list = []
     chunk_list = []
     label_list = []
-    for res in imap_mp(batch.chunk_remap_worker, fast5_files, threads=args.threads, fix_kwargs=util.get_kwargs(args,kwarg_names),
+    for res in imap_mp(batch.chunk_remap_worker, fast5_files, threads=args.threads, fix_kwargs=util.get_kwargs(args, kwarg_names),
                        unordered=True, init=batch.init_chunk_remap_worker, initargs=[compiled_file, args.references, args.kmer_len]):
         if res is not None:
             i = util.progress_report(i)
@@ -68,7 +69,7 @@ def chunkify_with_remap_main(argv, parser):
             label_list.append(labels)
             bad_list.append(bad_ev)
             output_strand_list_entries.append([read, nev, -score / nev, np.sum(np.ediff1d(path, to_begin=1) == 0),
-                                 len(seq), min(path), max(path)])
+                                               len(seq), min(path), max(path)])
 
     print('\n* Creating HDF5 file')
     util.create_hdf5(args, chunk_list, label_list, bad_list)

@@ -3,6 +3,7 @@ import sys
 import h5py
 import numpy as np
 
+
 def geometric_prior(n, m, rev=False):
     """ Make a vec
 
@@ -33,12 +34,14 @@ def get_kwargs(args, names):
         kwargs[name] = getattr(args, name)
     return kwargs
 
+
 def progress_report(i):
     i += 1
     sys.stderr.write('.')
     if i % 50 == 0:
         print('{:8d}'.format(i))
     return i
+
 
 def create_hdf5(args, chunk_list, label_list, bad_list):
     all_chunks = np.vstack(chunk_list)
@@ -72,4 +75,3 @@ def create_hdf5(args, chunk_list, label_list, bad_list):
         h5['/'].attrs['section'] = args.section
         h5['/'].attrs['trim'] = args.trim
         h5['/'].attrs['scaled'] = args.use_scaled
-
