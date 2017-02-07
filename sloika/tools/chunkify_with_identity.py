@@ -56,7 +56,7 @@ def create_hdf5(args, all_chunks, all_labels, all_bad):
         h5['/'].attrs['scaled'] = args.use_scaled
 
 
-def chunkify_main(argv):
+def chunkify_with_identity_main(argv):
     program_name = ' '.join(sys.argv[:2])
 
     parser = argparse.ArgumentParser(prog=program_name,
