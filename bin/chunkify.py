@@ -26,7 +26,7 @@ def common_parser(argv, commands):
                         help='Length of each read chunk')
     parser.add_argument('--kmer-len', default=5, metavar='length', type=Positive(int),
                         help='Length of kmer to estimate')
-    parser.add_argument('--threads', default=8, metavar='n', type=Positive(int),
+    parser.add_argument('--threads', default=1, metavar='n', type=Positive(int),
                         help='Number of threads to use when processing data')
     parser.add_argument('--limit', default=None, type=Maybe(Positive(int)),
                         help='Limit number of reads to process')

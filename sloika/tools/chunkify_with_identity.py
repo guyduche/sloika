@@ -26,8 +26,6 @@ def progress_report(i):
 
 
 def create_hdf5(args, all_chunks, all_labels, all_bad):
-    print('\n* Writing out to HDF5')
-
     output_dir = os.path.dirname(args.output)
     if output_dir and not os.path.exists(output_dir):
         os.makedirs(os.path.normpath(output_dir))
@@ -86,4 +84,5 @@ def chunkify_with_identity_main(argv, parser):
     all_labels = np.vstack(label_list)
     all_bad = np.vstack(bad_list)
 
+    print('\n* Writing out to HDF5')
     create_hdf5(args, all_chunks, all_labels, all_bad)
