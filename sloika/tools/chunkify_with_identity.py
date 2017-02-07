@@ -56,41 +56,12 @@ def create_hdf5(args, all_chunks, all_labels, all_bad):
         h5['/'].attrs['scaled'] = args.use_scaled
 
 
-def chunkify_with_identity_main(argv):
-    program_name = ' '.join(sys.argv[:2])
-
-    parser = argparse.ArgumentParser(prog=program_name,
-                                     description='Create HDF file of a dataset',
-                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-
-    parser.add_argument('--blanks', metavar='proportion', default=0.7,
-                        type=proportion, help='Maximum proportion of blanks in labels')
-    parser.add_argument('--chunk', default=500, metavar='events', type=Positive(int),
-                        help='Length of each read chunk')
-    parser.add_argument('--kmer', default=5, metavar='length', type=Positive(int),
-                        help='Length of kmer to estimate')
-    parser.add_argument('--threads', default=8, metavar='n', type=Positive(int),
-                        help='Number of threads to use when processing data')
-    parser.add_argument('--limit', default=None, type=Maybe(Positive(int)),
-                        help='Limit number of reads to process.')
-    parser.add_argument('--min_length', default=1200, metavar='events',
-                        type=Positive(int), help='Minimum events in acceptable read')
-    parser.add_argument('--normalise', default=True, action=AutoBool,
-                        help='Per-strand normalisation')
-    parser.add_argument('--section', default='template',
-                        choices=['template', 'complement'], help='Section to call')
-    parser.add_argument('--strand_list', default=None, action=FileExists,
-                        help='strand summary file containing subset.')
-    parser.add_argument('--trim', default=(50, 10), nargs=2, type=NonNegative(int),
-                        metavar=('beginning', 'end'),
-                        help='Number of events to trim off start and end')
-    parser.add_argument('--use_scaled', default=False, action=AutoBool,
-                        help='Train from scaled event statistics')
+def chunkify_with_identity_main(argv, parser):
     parser.add_argument('input_folder', action=FileExists,
-                        help='Directory containing single-read fast5 files.')
+                        help='Directory containing single-read fast5 files')
     parser.add_argument('output', action=FileAbsent, help='Output HDF5 file')
 
-    args = parser.parse_args(argv[1:])
+    args = parser.parse_args(argv)
 
     fast5_files = fast5.iterate_fast5(args.input_folder, paths=True,
                                       limit=args.limit,

@@ -117,19 +117,9 @@ def mapread(args, fn):
     return sn + '.fast5', score, len(ev), path, seq
 
 
-def chunkify_with_remap_main(argv):
-    program_name = ' '.join(sys.argv[:2])
-
-    parser = argparse.ArgumentParser(prog=program_name, description='Map reads using trasducer network',
-                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+def chunkify_with_remap_main(argv, parser):
     parser.add_argument('--compile', default=None, type=Maybe(str),
                         help='File output compiled model')
-    parser.add_argument('--jobs', default=4, metavar='n', type=Positive(int),
-                        help='Number of jobs to run in parallel')
-    parser.add_argument('--kmer', default=5, metavar='length', type=Positive(int),
-                        help='Length of kmer')
-    parser.add_argument('--limit', default=None, metavar='reads',
-                        type=Maybe(Positive(int)), help='Limit number of reads to process.')
     parser.add_argument('--min_prob', metavar='proportion', default=1e-5,
                         type=proportion, help='Minimum allowed probabiility for basecalls')
     parser.add_argument('--prior', nargs=2, metavar=('start', 'end'), default=(25.0, 25.0),
@@ -137,27 +127,25 @@ def chunkify_with_remap_main(argv):
     parser.add_argument('--slip', default=5.0, type=Maybe(NonNegative(float)),
                         help='Slip penalty')
     parser.add_argument('--strand_input_list', default=None, action=FileExists,
-                        help='strand summary file containing subset.')
+                        help='strand summary file containing subset')
     parser.add_argument('--transducer', default=True, action=AutoBool,
                         help='Model is transducer')
-    parser.add_argument('--trim', default=(200, 200), nargs=2, type=NonNegative(int),
-                        metavar=('beginning', 'end'), help='Number of events to trim off start and end')
     parser.add_argument('--strand_output_list', default="strand_output_list.txt", action=FileAbsent,
-                        help='strand summary output file.')
+                        help='strand summary output file')
     parser.add_argument('model', action=FileExists, help='Pickled model file')
     parser.add_argument('references', action=FileExists,
                         help='Reference sequences in fasta format')
     parser.add_argument('input_folder', action=FileExists,
-                        help='Directory containing single-read fast5 files.')
+                        help='Directory containing single-read fast5 files')
 
-    args = parser.parse_args(argv[1:])
+    args = parser.parse_args(argv)
 
     compiled_file = helpers.compile_model(args.model, args.compile)
 
     strands_list = []
     files = fast5.iterate_fast5(args.input_folder, paths=True, limit=args.limit,
                                 strand_list=args.strand_input_list)
-    for res in imap_mp(mapread, files, threads=args.jobs, fix_args=[args],
+    for res in imap_mp(mapread, files, threads=args.threads, fix_args=[args],
                        unordered=True, init=init_worker, initargs=[compiled_file, args.references, args.kmer]):
         if res is not None:
             read, score, nev, path, seq = res

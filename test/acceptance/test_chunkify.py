@@ -126,14 +126,16 @@ class AcceptanceTest(unittest.TestCase):
         reference_strand_output_list = os.path.join(self.data_dir, "remap", "strand_output_list.txt")
         self.assertTrue(os.path.exists(reference_strand_output_list))
 
-        cmd = [self.script, "remap", "--strand_output_list", strand_output_list, model_file, reference_file, temporary_reads_dir]
+        cmd = [self.script, "remap", "--trim", "200", "200", "--strand_output_list",
+               strand_output_list, model_file, reference_file, temporary_reads_dir]
 
         run_cmd(self, cmd).return_code(0)
 
         self.assertTrue(os.path.exists(strand_output_list))
         strand_output_list_contents = open(strand_output_list, "r").readlines()
         reference_strand_output_list_contents = open(reference_strand_output_list, "r").readlines()
-        diff = list(difflib.context_diff( reference_strand_output_list_contents, strand_output_list_contents, "generated", "reference"))
+        diff = list(difflib.context_diff(reference_strand_output_list_contents,
+                                         strand_output_list_contents, "generated", "reference"))
         if len(diff) != 0:
             print(''.join(diff))
             self.assertTrue(reference_strand_output_list_contents == strand_output_list_contents)
