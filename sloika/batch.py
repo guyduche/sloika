@@ -11,39 +11,7 @@ import sloika
 from untangled import bio, fast5
 from untangled.maths import med_mad
 
-
-def chunk_worker(fn, section, chunk_len, kmer_len, min_length, trim, use_scaled,
-                 normalise):
-    """ Chunkifies data for training
-
-    :param fn: A filename to read from.
-    :param section: Section of read to process (template / complement)
-    :param chunk_len: Length of each chunk
-    :param kmer_len: Kmer length for training
-    :param min_length: Minimum number of events before read can be considered.
-    :param trim: Tuple (beginning, end) of number of events to trim from read.
-    :param use_scaled: Use prescaled event statistics
-    :param normalise: Do per-strand normalisation
-
-    :yields: A tuple containing a 3D :class:`ndarray` of size
-    (X, chunk_len, nfeatures) containing the features for the batch,
-    a 2D :class:`ndarray` of size (X, chunk_len) containing the
-    associated labels, and a 2D :class:`ndarray` of size (X, chunk_len)
-    indicating bad events.  1 <= X <= batch_size.
-    """
-
-    try:
-        with fast5.Reader(fn) as f5:
-            ev, _ = f5.get_any_mapping_data(section)
-    except:
-        return None, None, None
-
-    if len(ev) < sum(trim) + chunk_len or len(ev) < min_length:
-        return None, None, None
-    begin, end = trim
-    end = None if end is 0 else -end
-    ev = ev[begin : end]
-
+def chunkify(ev, chunk_len, kmer_len, use_scaled, normalise):
     ml = len(ev) // chunk_len
     ub = ml * chunk_len
 
@@ -83,6 +51,40 @@ def chunk_worker(fn, section, chunk_len, kmer_len, min_length, trim, use_scaled,
 
     return new_inMat, new_labels, new_bad
 
+
+def chunk_worker(fn, section, chunk_len, kmer_len, min_length, trim, use_scaled,
+                 normalise):
+    """ Chunkifies data for training
+
+    :param fn: A filename to read from.
+    :param section: Section of read to process (template / complement)
+    :param chunk_len: Length of each chunk
+    :param kmer_len: Kmer length for training
+    :param min_length: Minimum number of events before read can be considered.
+    :param trim: Tuple (beginning, end) of number of events to trim from read.
+    :param use_scaled: Use prescaled event statistics
+    :param normalise: Do per-strand normalisation
+
+    :yields: A tuple containing a 3D :class:`ndarray` of size
+    (X, chunk_len, nfeatures) containing the features for the batch,
+    a 2D :class:`ndarray` of size (X, chunk_len) containing the
+    associated labels, and a 2D :class:`ndarray` of size (X, chunk_len)
+    indicating bad events.  1 <= X <= batch_size.
+    """
+
+    try:
+        with fast5.Reader(fn) as f5:
+            ev, _ = f5.get_any_mapping_data(section)
+    except:
+        return None, None, None
+
+    if len(ev) < sum(trim) + chunk_len or len(ev) < min_length:
+        return None, None, None
+    begin, end = trim
+    end = None if end is 0 else -end
+    ev = ev[begin : end]
+
+    return chunkify(ev, chunk_len, kmer_len, use_scaled, normalise)
 
 def init_chunk_remap_worker(model, fasta, kmer_len):
     import cPickle
