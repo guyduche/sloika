@@ -68,7 +68,7 @@ def mapread(args, fn):
     inMat = np.expand_dims(inMat, axis=1)
     post = decode.prepare_post(calc_post(inMat), min_prob=args.min_prob, drop_bad=(not args.transducer))
 
-    kmers = np.array(bio.seq_to_kmers(read_ref, args.kmer))
+    kmers = np.array(bio.seq_to_kmers(read_ref, args.kmer_len))
     seq = map(lambda k: kmer_to_state[k] + 1, kmers)
     prior0 = None if args.prior[0] is None else geometric_prior(len(seq), args.prior[0])
     prior1 = None if args.prior[1] is None else geometric_prior(len(seq), args.prior[1], rev=True)
@@ -77,7 +77,7 @@ def mapread(args, fn):
                                              prior_initial=prior0,
                                              prior_final=prior1, log=False)
 
-    #  Write out
+
     with h5py.File(fn, 'r+') as h5:
         #  A lot of messy and somewhat unnecessary work to make compatible with fast5 reader
         ds = '/Analyses/AlignToRef_000/CurrentSpaceMapped_template/Events'
@@ -146,7 +146,7 @@ def chunkify_with_remap_main(argv, parser):
     files = fast5.iterate_fast5(args.input_folder, paths=True, limit=args.limit,
                                 strand_list=args.strand_input_list)
     for res in imap_mp(mapread, files, threads=args.threads, fix_args=[args],
-                       unordered=True, init=init_worker, initargs=[compiled_file, args.references, args.kmer]):
+                       unordered=True, init=init_worker, initargs=[compiled_file, args.references, args.kmer_len]):
         if res is not None:
             read, score, nev, path, seq = res
             strands_list.append([read, nev, -score / nev, np.sum(np.ediff1d(path, to_begin=1) == 0),

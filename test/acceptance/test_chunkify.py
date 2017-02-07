@@ -57,7 +57,7 @@ class AcceptanceTest(unittest.TestCase):
         if os.path.exists(output_file):
             os.remove(output_file)
 
-        cmd = [self.script, "identity", "--use_scaled", "--chunk", "500", "--kmer", "5",
+        cmd = [self.script, "identity", "--use_scaled", "--chunk_len", "500", "--kmer_len", "5",
                "--section", "template", "--strand_list", strand_input_list,
                reads_dir, output_file]
         run_cmd(self, cmd).return_code(0)
@@ -86,7 +86,7 @@ class AcceptanceTest(unittest.TestCase):
         if os.path.exists(output_file):
             os.remove(output_file)
 
-        cmd = [self.script, "identity", "--use_scaled", "--chunk", "500", "--kmer", "5",
+        cmd = [self.script, "identity", "--use_scaled", "--chunk_len", "500", "--kmer_len", "5",
                "--section", "template", "--strand_list", strand_input_list,
                reads_dir, output_file]
         run_cmd(self, cmd).return_code(0)

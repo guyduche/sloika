@@ -49,8 +49,8 @@ def create_hdf5(args, all_chunks, all_labels, all_bad):
         chunk_ds[:] = all_chunks
         label_ds[:] = all_labels
         weight_ds[:] = all_weights
-        h5['/'].attrs['chunk'] = args.chunk
-        h5['/'].attrs['kmer'] = args.kmer
+        h5['/'].attrs['chunk'] = args.chunk_len
+        h5['/'].attrs['kmer'] = args.kmer_len
         h5['/'].attrs['section'] = args.section
         h5['/'].attrs['trim'] = args.trim
         h5['/'].attrs['scaled'] = args.use_scaled
@@ -69,8 +69,8 @@ def chunkify_with_identity_main(argv, parser):
 
     print('* Processing data using', args.threads, 'threads')
     fix_kwargs = {'section': args.section,
-                  'chunk_len': args.chunk,
-                  'kmer_len': args.kmer,
+                  'chunk_len': args.chunk_len,
+                  'kmer_len': args.kmer_len,
                   'min_length': args.min_length,
                   'trim': args.trim,
                   'use_scaled': args.use_scaled,

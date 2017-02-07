@@ -22,9 +22,9 @@ def common_parser(argv, commands):
 
     parser.add_argument('--blanks', metavar='proportion', default=0.7,
                         type=proportion, help='Maximum proportion of blanks in labels')
-    parser.add_argument('--chunk', default=500, metavar='events', type=Positive(int),
+    parser.add_argument('--chunk_len', default=500, metavar='events', type=Positive(int),
                         help='Length of each read chunk')
-    parser.add_argument('--kmer', default=5, metavar='length', type=Positive(int),
+    parser.add_argument('--kmer_len', default=5, metavar='length', type=Positive(int),
                         help='Length of kmer to estimate')
     parser.add_argument('--threads', default=8, metavar='n', type=Positive(int),
                         help='Number of threads to use when processing data')
