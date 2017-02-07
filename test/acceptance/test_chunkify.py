@@ -126,7 +126,8 @@ class AcceptanceTest(unittest.TestCase):
         reference_strand_output_list = os.path.join(self.data_dir, "remap", "strand_output_list.txt")
         self.assertTrue(os.path.exists(reference_strand_output_list))
 
-        cmd = [self.script, "remap", "--trim", "200", "200", "--output-strand-list",
+        cmd = [self.script, "remap", "--trim", "200", "200",
+               "--use-scaled", "--output-strand-list",
                strand_output_list, model_file, reference_file, temporary_reads_dir]
 
         run_cmd(self, cmd).return_code(0)

@@ -53,13 +53,13 @@ def chunkify_with_remap_main(argv, parser):
 
     print('* Processing data using', args.threads, 'threads')
 
-    kwarg_names = ['trim', 'min_prob', 'transducer', 'kmer_len', 'prior', 'slip']
+    kwarg_names = ['trim', 'min_prob', 'transducer', 'kmer_len', 'prior', 'slip', 'chunk_len', 'use_scaled', 'normalise']
     output_strand_list_entries = []
     compiled_file = helpers.compile_model(args.model, args.compile)
     for res in imap_mp(batch.chunk_remap_worker, fast5_files, threads=args.threads, fix_kwargs=get_kwargs(args,kwarg_names),
                        unordered=True, init=batch.init_chunk_remap_worker, initargs=[compiled_file, args.references, args.kmer_len]):
         if res is not None:
-            read, score, nev, path, seq = res
+            read, score, nev, path, seq, chunks, labels, bad_ev = res
             output_strand_list_entries.append([read, nev, -score / nev, np.sum(np.ediff1d(path, to_begin=1) == 0),
                                  len(seq), min(path), max(path)])
 

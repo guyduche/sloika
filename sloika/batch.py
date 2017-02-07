@@ -122,7 +122,7 @@ def remap(read_ref, ev, min_prob, transducer, kmer_len, prior, slip):
 
     return (score, ev, path, seq)
 
-def chunk_remap_worker(fn, trim, min_prob, transducer, kmer_len, prior, slip):
+def chunk_remap_worker(fn, trim, min_prob, transducer, kmer_len, prior, slip, chunk_len, use_scaled, normalise):
     try:
         with fast5.Reader(fn) as f5:
             ev = f5.get_read()
@@ -146,6 +146,7 @@ def chunk_remap_worker(fn, trim, min_prob, transducer, kmer_len, prior, slip):
     ev = ev[begin : end]
 
     (score, ev, path, seq) = remap(read_ref, ev, min_prob, transducer, kmer_len, prior, slip)
+    (chunks, labels, bad_ev) = chunkify(ev, chunk_len, kmer_len, use_scaled, normalise)
 
-    return sn + '.fast5', score, len(ev), path, seq
+    return sn + '.fast5', score, len(ev), path, seq, chunks, labels, bad_ev
 
