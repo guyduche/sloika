@@ -22,26 +22,26 @@ def common_parser(argv, commands):
 
     parser.add_argument('--blanks', metavar='proportion', default=0.7,
                         type=proportion, help='Maximum proportion of blanks in labels')
-    parser.add_argument('--chunk_len', default=500, metavar='events', type=Positive(int),
+    parser.add_argument('--chunk-len', default=500, metavar='events', type=Positive(int),
                         help='Length of each read chunk')
-    parser.add_argument('--kmer_len', default=5, metavar='length', type=Positive(int),
+    parser.add_argument('--kmer-len', default=5, metavar='length', type=Positive(int),
                         help='Length of kmer to estimate')
     parser.add_argument('--threads', default=8, metavar='n', type=Positive(int),
                         help='Number of threads to use when processing data')
     parser.add_argument('--limit', default=None, type=Maybe(Positive(int)),
                         help='Limit number of reads to process')
-    parser.add_argument('--min_length', default=1200, metavar='events',
+    parser.add_argument('--min-length', default=1200, metavar='events',
                         type=Positive(int), help='Minimum events in acceptable read')
     parser.add_argument('--normalise', default=True, action=AutoBool,
                         help='Per-strand normalisation')
     parser.add_argument('--section', default='template',
                         choices=['template', 'complement'], help='Section to call')
-    parser.add_argument('--strand_list', default=None, action=FileExists,
+    parser.add_argument('--strand-list', default=None, action=FileExists,
                         help='strand summary file containing subset')
     parser.add_argument('--trim', default=(50, 10), nargs=2, type=NonNegative(int),
                         metavar=('beginning', 'end'),
                         help='Number of events to trim off start and end')
-    parser.add_argument('--use_scaled', default=False, action=AutoBool,
+    parser.add_argument('--use-scaled', default=False, action=AutoBool,
                         help='Train from scaled event statistics')
 
     return (argv[2:], parser)

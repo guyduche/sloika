@@ -57,8 +57,8 @@ class AcceptanceTest(unittest.TestCase):
         if os.path.exists(output_file):
             os.remove(output_file)
 
-        cmd = [self.script, "identity", "--use_scaled", "--chunk_len", "500", "--kmer_len", "5",
-               "--section", "template", "--strand_list", strand_input_list,
+        cmd = [self.script, "identity", "--use-scaled", "--chunk-len", "500", "--kmer-len", "5",
+               "--section", "template", "--strand-list", strand_input_list,
                reads_dir, output_file]
         run_cmd(self, cmd).return_code(0)
 
@@ -86,8 +86,8 @@ class AcceptanceTest(unittest.TestCase):
         if os.path.exists(output_file):
             os.remove(output_file)
 
-        cmd = [self.script, "identity", "--use_scaled", "--chunk_len", "500", "--kmer_len", "5",
-               "--section", "template", "--strand_list", strand_input_list,
+        cmd = [self.script, "identity", "--use-scaled", "--chunk-len", "500", "--kmer-len", "5",
+               "--section", "template", "--strand-list", strand_input_list,
                reads_dir, output_file]
         run_cmd(self, cmd).return_code(0)
 
@@ -126,7 +126,7 @@ class AcceptanceTest(unittest.TestCase):
         reference_strand_output_list = os.path.join(self.data_dir, "remap", "strand_output_list.txt")
         self.assertTrue(os.path.exists(reference_strand_output_list))
 
-        cmd = [self.script, "remap", "--trim", "200", "200", "--strand_output_list",
+        cmd = [self.script, "remap", "--trim", "200", "200", "--strand-output-list",
                strand_output_list, model_file, reference_file, temporary_reads_dir]
 
         run_cmd(self, cmd).return_code(0)
