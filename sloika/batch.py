@@ -6,8 +6,7 @@ import sys
 
 from Bio import SeqIO
 
-from sloika import features, util
-from sloika.util import geometric_prior
+import sloika
 
 from untangled import bio, fast5
 from untangled.maths import med_mad
@@ -53,7 +52,7 @@ def chunk_worker(fn, section, chunk_len, kmer_len, min_length, trim, use_scaled,
     # actually use later, so that features could be studentized using
     # moments computed using this bigger range
     #
-    new_inMat = features.from_events(ev, tag='' if use_scaled else 'scaled_',
+    new_inMat = sloika.features.from_events(ev, tag='' if use_scaled else 'scaled_',
                                      normalise=normalise)
     ev = ev[0 : ub]
     new_inMat = new_inMat[0 : ub].reshape((ml, chunk_len, -1))
@@ -78,9 +77,9 @@ def chunk_worker(fn, section, chunk_len, kmer_len, min_length, trim, use_scaled,
     new_bad = np.logical_not(ev['good_emission'])
     new_bad = new_bad.reshape(ml, chunk_len)
 
-    assert util.is_contiguous(new_inMat)
-    assert util.is_contiguous(new_labels)
-    assert util.is_contiguous(new_bad)
+    assert sloika.util.is_contiguous(new_inMat)
+    assert sloika.util.is_contiguous(new_labels)
+    assert sloika.util.is_contiguous(new_bad)
 
     return new_inMat, new_labels, new_bad
 
@@ -102,9 +101,26 @@ def init_chunk_remap_worker(model, fasta, kmer_len):
     kmer_to_state = bio.kmer_mapping(kmer_len)
 
 
-def chunk_remap_worker(fn, trim, min_prob, transducer, kmer_len, prior, slip):
-    from sloika import decode, features, transducer
+def remap(read_ref, ev, min_prob, transducer, kmer_len, prior, slip):
+    inMat = sloika.features.from_events(ev, tag='')
+    inMat = np.expand_dims(inMat, axis=1)
+    post = sloika.decode.prepare_post(calc_post(inMat), min_prob=min_prob, drop_bad=(not transducer))
 
+    kmers = np.array(bio.seq_to_kmers(read_ref, kmer_len))
+    seq = map(lambda k: kmer_to_state[k] + 1, kmers)
+    prior0 = None if prior[0] is None else sloika.util.geometric_prior(len(seq), prior[0])
+    prior1 = None if prior[1] is None else sloika.util.geometric_prior(len(seq), prior[1], rev=True)
+
+    score, path = sloika.transducer.map_to_sequence(post, seq, slip=slip,
+                                             prior_initial=prior0,
+                                             prior_final=prior1, log=False)
+
+    ev = nprf.append_fields(ev, ['seq_pos', 'kmer', 'good_emission'],
+                            [path, kmers[path], np.repeat(True, len(ev))])
+
+    return (score, ev, path, seq)
+
+def chunk_remap_worker(fn, trim, min_prob, transducer, kmer_len, prior, slip):
     try:
         with fast5.Reader(fn) as f5:
             ev = f5.get_read()
@@ -127,54 +143,7 @@ def chunk_remap_worker(fn, trim, min_prob, transducer, kmer_len, prior, slip):
     end = None if end is 0 else -end
     ev = ev[begin : end]
 
-    inMat = features.from_events(ev, tag='')
-    inMat = np.expand_dims(inMat, axis=1)
-    post = decode.prepare_post(calc_post(inMat), min_prob=min_prob, drop_bad=(not transducer))
-
-    kmers = np.array(bio.seq_to_kmers(read_ref, kmer_len))
-    seq = map(lambda k: kmer_to_state[k] + 1, kmers)
-    prior0 = None if prior[0] is None else geometric_prior(len(seq), prior[0])
-    prior1 = None if prior[1] is None else geometric_prior(len(seq), prior[1], rev=True)
-
-    score, path = transducer.map_to_sequence(post, seq, slip=slip,
-                                             prior_initial=prior0,
-                                             prior_final=prior1, log=False)
-
-    with h5py.File(fn, 'r+') as h5:
-        #  A lot of messy and somewhat unnecessary work to make compatible with fast5 reader
-        ds = '/Analyses/AlignToRef_000/CurrentSpaceMapped_template/Events'
-        gs = '/Analyses/AlignToRef_000/Summary/current_space_map_template'
-        gs2 = '/Analyses/Alignment_000/Summary/genome_mapping_template'
-        fs = '/Analyses/Alignment_000/Aligned_template/Fasta'
-        ev = nprf.append_fields(ev, ['seq_pos', 'kmer', 'good_emission'],
-                                [path, kmers[path], np.repeat(True, len(ev))])
-
-        if ds in h5:
-            del h5[ds]
-        h5.create_dataset(ds, data=ev)
-        h5[ds].attrs['direction'] = '+'
-        h5[ds].attrs['ref_start'] = 0
-        h5[ds].attrs['ref_stop'] = len(read_ref)
-
-        if gs in h5:
-            del h5[gs]
-        h5.create_group(gs)
-        h5[gs].attrs['direction'] = '+'
-        h5[gs].attrs['genome_start'] = 0
-        h5[gs].attrs['genome_end'] = len(read_ref)
-        h5[gs].attrs['genome'] = 'pseudo'
-        h5[gs].attrs['num_skips'] = 0
-        h5[gs].attrs['num_stays'] = 0
-
-        if gs2 in h5:
-            del h5[gs2]
-        h5.create_group(gs2)
-        h5[gs2].attrs['genome'] = 'pseudo'
-
-        refdat = '>pseudo\n' + read_ref
-        if fs in h5:
-            del h5[fs]
-        h5.create_dataset(fs, data=refdat)
+    (score, ev, path, seq) = remap(read_ref, ev, min_prob, transducer, kmer_len, prior, slip)
 
     return sn + '.fast5', score, len(ev), path, seq
 
