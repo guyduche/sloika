@@ -46,14 +46,14 @@ class AcceptanceTest(unittest.TestCase):
         cmd = [self.script, "hehe"]
         run_cmd(self, cmd).return_code(1).stdout(lambda o: drop_info(o).startswith(u"Unsupported command 'hehe'"))
 
-    def test_chunkify_identity(self):
+    def test_chunkify_with_identity(self):
         strand_input_list = os.path.join(self.data_dir, "identity", "na12878_train.txt")
         self.assertTrue(os.path.exists(strand_input_list))
 
         reads_dir = os.path.join(self.data_dir, "identity", "reads")
         self.assertTrue(os.path.exists(reads_dir))
 
-        output_file = os.path.join(self.work_dir, "chunkify_identity.hdf5")
+        output_file = os.path.join(self.work_dir, "chunkify_with_identity.hdf5")
         if os.path.exists(output_file):
             os.remove(output_file)
 
@@ -75,20 +75,31 @@ class AcceptanceTest(unittest.TestCase):
             self.assertClose(chunks.max(), 14.225174)
             self.assertClose(np.median(chunks), -0.254353493452)
 
-    def test_chunkify_identity2(self):
+    def test_chunkify_with_remap(self):
         strand_input_list = os.path.join(self.data_dir, "remap", "strand_output_list.txt")
         self.assertTrue(os.path.exists(strand_input_list))
 
-        reads_dir = os.path.join(self.data_dir, "remap", "remappedReads")
+        reads_dir = os.path.join(self.data_dir, "remap", "reads")
         self.assertTrue(os.path.exists(reads_dir))
 
-        output_file = os.path.join(self.work_dir, "chunkify_identity2.hdf5")
+        model_file = os.path.join(self.data_dir, "remap", "model.pkl")
+        self.assertTrue(os.path.exists(model_file))
+
+        reference_file = os.path.join(self.data_dir, "remap", "reference.fa")
+        self.assertTrue(os.path.exists(reference_file))
+
+        strand_output_list = os.path.join(self.work_dir, "strand_output_list.txt")
+        if os.path.exists(strand_output_list):
+            os.remove(strand_output_list)
+
+        output_file = os.path.join(self.work_dir, "chunkify_with_remap.hdf5")
         if os.path.exists(output_file):
             os.remove(output_file)
 
-        cmd = [self.script, "identity", "--use-scaled", "--chunk-len", "500", "--kmer-len", "5",
-               "--section", "template", "--input-strand-list", strand_input_list,
-               reads_dir, output_file]
+        cmd = [self.script, "remap", "--trim", "200", "200", "--use-scaled", "--chunk-len", "500", "--kmer-len", "5",
+               "--section", "template", "--input-strand-list", strand_input_list, "--output-strand-list",
+               strand_output_list, model_file, reference_file, reads_dir, output_file]
+
         run_cmd(self, cmd).return_code(0)
 
         with h5py.File(output_file, 'r') as fh:
@@ -103,44 +114,3 @@ class AcceptanceTest(unittest.TestCase):
             self.assertClose(chunks.min(), -2.70104813576)
             self.assertClose(chunks.max(), 12.7622556686)
             self.assertClose(np.median(chunks), -0.234752029181)
-
-    def test_remap(self):
-        strand_output_list = os.path.join(self.work_dir, "strand_output_list.txt")
-        if os.path.exists(strand_output_list):
-            os.remove(strand_output_list)
-
-        model_file = os.path.join(self.data_dir, "remap", "model.pkl")
-        self.assertTrue(os.path.exists(model_file))
-
-        reference_file = os.path.join(self.data_dir, "remap", "reference.fa")
-        self.assertTrue(os.path.exists(reference_file))
-
-        reads_dir = os.path.join(self.data_dir, "remap", "reads")
-        self.assertTrue(os.path.exists(reads_dir))
-
-        temporary_reads_dir = os.path.join(self.work_dir, "reads")
-        if os.path.exists(temporary_reads_dir):
-            shutil.rmtree(temporary_reads_dir)
-        dir_util.copy_tree(reads_dir, temporary_reads_dir)
-
-        output_file = os.path.join(self.work_dir, "remap.hdf5")
-        if os.path.exists(output_file):
-            os.remove(output_file)
-
-        reference_strand_output_list = os.path.join(self.data_dir, "remap", "strand_output_list.txt")
-        self.assertTrue(os.path.exists(reference_strand_output_list))
-
-        cmd = [self.script, "remap", "--trim", "200", "200",
-               "--use-scaled", "--output-strand-list",
-               strand_output_list, model_file, reference_file, temporary_reads_dir, output_file]
-
-        run_cmd(self, cmd).return_code(0)
-
-        self.assertTrue(os.path.exists(strand_output_list))
-        strand_output_list_contents = open(strand_output_list, "r").readlines()
-        reference_strand_output_list_contents = open(reference_strand_output_list, "r").readlines()
-        diff = list(difflib.context_diff(reference_strand_output_list_contents,
-                                         strand_output_list_contents, "generated", "reference"))
-        if len(diff) != 0:
-            print(''.join(diff))
-            self.assertTrue(reference_strand_output_list_contents == strand_output_list_contents)

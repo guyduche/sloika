@@ -146,6 +146,7 @@ def chunk_remap_worker(fn, trim, min_prob, transducer, kmer_len, prior, slip, ch
     ev = ev[begin : end]
 
     (score, ev, path, seq) = remap(read_ref, ev, min_prob, transducer, kmer_len, prior, slip)
+    ev = ev[50: -10]  -- TODO(semen): remove me -- only needed to mediate the transition to new behavior
     (chunks, labels, bad_ev) = chunkify(ev, chunk_len, kmer_len, use_scaled, normalise)
 
     return sn + '.fast5', score, len(ev), path, seq, chunks, labels, bad_ev
