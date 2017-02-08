@@ -109,8 +109,8 @@ class AcceptanceTest(unittest.TestCase):
             top_level_items.sort()
             self.assertEqual(top_level_items, [u'bad', u'chunks', u'labels', u'weights'])
 
-            self.assertEqual(fh['chunks'].shape, (32, 500, 4))
+            self.assertEqual(fh['chunks'].shape, (33, 500, 4))
             chunks = fh['chunks'][:]
-            self.assertClose(chunks.min(), -2.70104813576)
-            self.assertClose(chunks.max(), 12.7622556686)
-            self.assertClose(np.median(chunks), -0.234752029181)
+            self.assertClose(chunks.min(), -2.70142698288)
+            self.assertClose(chunks.max(), 12.7569065094)
+            self.assertClose(np.median(chunks), -0.238316237926)
