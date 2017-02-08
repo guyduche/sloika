@@ -30,14 +30,15 @@ def chunkify_with_remap_main(argv, parser):
                         help='File output compiled model')
     parser.add_argument('--min-prob', metavar='proportion', default=1e-5,
                         type=proportion, help='Minimum allowed probabiility for basecalls')
+    parser.add_argument('--output-strand-list', default="strand_output_list.txt", action=FileAbsent,
+                        help='strand summary output file')
     parser.add_argument('--prior', nargs=2, metavar=('start', 'end'), default=(25.0, 25.0),
                         type=Maybe(NonNegative(float)), help='Mean of start and end positions')
     parser.add_argument('--slip', default=5.0, type=Maybe(NonNegative(float)),
                         help='Slip penalty')
     parser.add_argument('--transducer', default=True, action=AutoBool,
                         help='Model is transducer')
-    parser.add_argument('--output-strand-list', default="strand_output_list.txt", action=FileAbsent,
-                        help='strand summary output file')
+
     parser.add_argument('model', action=FileExists, help='Pickled model file')
     parser.add_argument('references', action=FileExists,
                         help='Reference sequences in fasta format')
