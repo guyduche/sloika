@@ -13,10 +13,6 @@ from untangled import fast5
 
 
 def chunkify_with_identity_main(argv, parser):
-    parser.add_argument('input_folder', action=FileExists,
-                        help='Directory containing single-read fast5 files')
-    parser.add_argument('output', action=FileAbsent, help='Output HDF5 file')
-
     args = parser.parse_args(argv)
 
     fast5_files = fast5.iterate_fast5(args.input_folder, paths=True,

@@ -98,7 +98,7 @@ class AcceptanceTest(unittest.TestCase):
 
         cmd = [self.script, "remap", "--trim", "200", "200", "--use-scaled", "--chunk-len", "500", "--kmer-len", "5",
                "--section", "template", "--input-strand-list", strand_input_list, "--output-strand-list",
-               strand_output_list, model_file, reference_file, reads_dir, output_file]
+               strand_output_list, reads_dir, output_file, model_file, reference_file]
 
         run_cmd(self, cmd).return_code(0)
 

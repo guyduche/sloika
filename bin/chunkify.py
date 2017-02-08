@@ -44,6 +44,11 @@ def common_parser(argv, commands):
     parser.add_argument('--use-scaled', default=False, action=AutoBool,
                         help='Train from scaled event statistics')
 
+    parser.add_argument('input_folder', action=FileExists,
+                        help='Directory containing single-read fast5 files')
+    parser.add_argument('output', action=FileAbsent, help='Output HDF5 file')
+
+
     return (argv[2:], parser)
 
 

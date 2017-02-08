@@ -41,9 +41,6 @@ def chunkify_with_remap_main(argv, parser):
     parser.add_argument('model', action=FileExists, help='Pickled model file')
     parser.add_argument('references', action=FileExists,
                         help='Reference sequences in fasta format')
-    parser.add_argument('input_folder', action=FileExists,
-                        help='Directory containing single-read fast5 files')
-    parser.add_argument('output', action=FileAbsent, help='Output HDF5 file')
 
     args = parser.parse_args(argv)
 
