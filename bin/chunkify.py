@@ -26,6 +26,8 @@ def common_parser(argv, commands):
                         help='Length of each read chunk')
     parser.add_argument('--input-strand-list', default=None, action=FileExists,
                         help='strand summary file containing subset')
+    parser.add_argument('--jobs', default=1, metavar='n', type=Positive(int),
+                        help='Number of threads to use when processing data')
     parser.add_argument('--kmer-len', default=5, metavar='k', type=Positive(int),
                         help='Length of kmer to estimate')
     parser.add_argument('--limit', default=None, type=Maybe(Positive(int)),
@@ -36,8 +38,6 @@ def common_parser(argv, commands):
                         help='Per-strand normalisation')
     parser.add_argument('--section', default='template',
                         choices=['template', 'complement'], help='Section to call')
-    parser.add_argument('--threads', default=1, metavar='n', type=Positive(int),
-                        help='Number of threads to use when processing data')
     parser.add_argument('--trim', default=(50, 10), nargs=2, type=NonNegative(int),
                         metavar=('beginning', 'end'),
                         help='Number of events to trim off start and end')
