@@ -102,7 +102,6 @@ def init_chunk_remap_worker(model, fasta, kmer_len):
             refseq = str(ref.seq)
             if 'N' not in refseq:
                 references[ref.id] = refseq
-    sys.stderr.write('Read {} references from {}.\n'.format(len(references), fasta))
 
     kmer_to_state = bio.kmer_mapping(kmer_len)
 
