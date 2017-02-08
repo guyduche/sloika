@@ -87,6 +87,7 @@ def main(argv):
             command_action = commands.get_action(command_name)
         except:
             print('Unsupported command {!r}'.format(command_name))
+            print(commands)
             sys.exit(1)
 
         try:
