@@ -6,6 +6,6 @@
 build
 dist
 sloika/viterbi_helpers.c
-sloika/sloika_version.py
+sloika/version.py
 run
 .cache

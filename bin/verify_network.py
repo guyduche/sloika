@@ -9,7 +9,7 @@ import theano.tensor as T
 
 from untangled.cmdargs import (display_version_and_exit, FileExists, Positive)
 
-from sloika import __version__
+from sloika.version import __version__
 
 # This is here, not in main to allow documentation to be built
 parser = argparse.ArgumentParser(

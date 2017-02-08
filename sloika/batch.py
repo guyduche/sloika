@@ -6,7 +6,10 @@ import sys
 
 from Bio import SeqIO
 
-import sloika
+import sloika.features
+import sloika.decode
+import sloika.util
+import sloika.transducer
 
 from untangled import bio, fast5
 from untangled.maths import med_mad

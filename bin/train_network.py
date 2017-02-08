@@ -16,7 +16,8 @@ from untangled.cmdargs import (AutoBool, display_version_and_exit, FileAbsent,
                                FileExists, Maybe, NonNegative, ParseToNamedTuple,
                                Positive, proportion)
 
-from sloika import updates, __version__
+from sloika import updates
+from sloika.version import __version__
 
 # This is here, not in main to allow documentation to be built
 parser = argparse.ArgumentParser(
