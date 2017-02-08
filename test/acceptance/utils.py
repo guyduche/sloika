@@ -99,5 +99,5 @@ def drop_info(L):
     INFO (theano.gof.compilelock): Waiting for existing lock by process '17108' (I am process '17109')
 E   INFO (theano.gof.compilelock): To manually release the lock, delete <file_name>
     '''
-    return drop_lines(L, 'INFO (theano')
+    return drop_lines(L, 'INFO (theano.gof.compilelock):')
 
