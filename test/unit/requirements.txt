@@ -1,1 +1,1 @@
-pytest-xdist==1.15.0
+pytest-xdist == 1.15.0
