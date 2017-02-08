@@ -28,9 +28,9 @@ def create_output_strand_file(output_strand_list_entries, output_file_name):
 def chunkify_with_remap_main(argv, parser):
     parser.add_argument('--compile', default=None, type=Maybe(str),
                         help='File output compiled model')
-    parser.add_argument('--min-prob', metavar='proportion', default=1e-5,
+    parser.add_argument('--min_prob', metavar='proportion', default=1e-5,
                         type=proportion, help='Minimum allowed probabiility for basecalls')
-    parser.add_argument('--output-strand-list', default="strand_output_list.txt", action=FileAbsent,
+    parser.add_argument('--output_strand_list', default="strand_output_list.txt", action=FileAbsent,
                         help='strand summary output file')
     parser.add_argument('--prior', nargs=2, metavar=('start', 'end'), default=(25.0, 25.0),
                         type=Maybe(NonNegative(float)), help='Mean of start and end positions')
@@ -48,7 +48,7 @@ def chunkify_with_remap_main(argv, parser):
     fast5_files = fast5.iterate_fast5(args.input_folder, paths=True, limit=args.limit,
                                       strand_list=args.input_strand_list)
 
-    print('* Processing data using', args.threads, 'threads')
+    print('* Processing data using', args.jobs, 'threads')
 
     kwarg_names = ['trim', 'min_prob', 'transducer', 'kmer_len',
                    'prior', 'slip', 'chunk_len', 'use_scaled', 'normalise']
@@ -58,7 +58,7 @@ def chunkify_with_remap_main(argv, parser):
     bad_list = []
     chunk_list = []
     label_list = []
-    for res in imap_mp(batch.chunk_remap_worker, fast5_files, threads=args.threads, fix_kwargs=util.get_kwargs(args, kwarg_names),
+    for res in imap_mp(batch.chunk_remap_worker, fast5_files, threads=args.jobs, fix_kwargs=util.get_kwargs(args, kwarg_names),
                        unordered=True, init=batch.init_chunk_remap_worker, initargs=[compiled_file, args.references, args.kmer_len]):
         if res is not None:
             i = util.progress_report(i)

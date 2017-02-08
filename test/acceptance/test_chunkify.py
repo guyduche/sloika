@@ -57,8 +57,8 @@ class AcceptanceTest(unittest.TestCase):
         if os.path.exists(output_file):
             os.remove(output_file)
 
-        cmd = [self.script, "identity", "--use-scaled", "--chunk-len", "500", "--kmer-len", "5",
-               "--section", "template", "--input-strand-list", strand_input_list,
+        cmd = [self.script, "identity", "--use_scaled", "--chunk_len", "500", "--kmer_len", "5",
+               "--section", "template", "--input_strand_list", strand_input_list,
                reads_dir, output_file]
         run_cmd(self, cmd).return_code(0)
 
@@ -96,8 +96,8 @@ class AcceptanceTest(unittest.TestCase):
         if os.path.exists(output_file):
             os.remove(output_file)
 
-        cmd = [self.script, "remap", "--trim", "200", "200", "--use-scaled", "--chunk-len", "500", "--kmer-len", "5",
-               "--section", "template", "--input-strand-list", strand_input_list, "--output-strand-list",
+        cmd = [self.script, "remap", "--trim", "200", "200", "--use_scaled", "--chunk_len", "500", "--kmer_len", "5",
+               "--section", "template", "--input_strand_list", strand_input_list, "--output_strand_list",
                strand_output_list, reads_dir, output_file, model_file, reference_file]
 
         run_cmd(self, cmd).return_code(0)

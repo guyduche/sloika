@@ -19,14 +19,14 @@ def chunkify_with_identity_main(argv, parser):
                                       limit=args.limit,
                                       strand_list=args.input_strand_list)
 
-    print('* Processing data using', args.threads, 'threads')
+    print('* Processing data using', args.jobs, 'threads')
 
     kwarg_names = ['section', 'chunk_len', 'kmer_len', 'min_length', 'trim', 'use_scaled', 'normalise']
     i = 0
     bad_list = []
     chunk_list = []
     label_list = []
-    for chunks, labels, bad_ev in imap_mp(batch.chunk_worker, fast5_files, threads=args.threads,
+    for chunks, labels, bad_ev in imap_mp(batch.chunk_worker, fast5_files, threads=args.jobs,
                                           unordered=True, fix_kwargs=util.get_kwargs(args, kwarg_names)):
         if chunks is not None and labels is not None:
             i = util.progress_report(i)
