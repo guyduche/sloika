@@ -23,7 +23,7 @@ class fast5Test(unittest.TestCase):
     def test_002_get_event_data(self):
         #  Interface used by basecall_network.py
         with fast5.Reader(self.filename) as f5:
-            ev = f5.get_section_events(self.section)
+            ev = f5.get_section_events(self.section, analysis='Hairpin_Split')
             sn = f5.filename_short
 
     def test_003_iterate_returns_all(self):
