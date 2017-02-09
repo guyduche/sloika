@@ -19,17 +19,19 @@ inSloikaEnv:=source environment && source $${SLOIKA_VIRTUALENV_DIR}/bin/activate
 test: unitTest acceptanceTest
 
 #
-# TODO(semen): not ideal that test requirements are installed into the same env where sloika is
+# TODO(semen): do not install unit and acctest deps into the same env where sloika is
 #
 
-unitTestCmd:=${pipInstall} -r test/unit/requirements.txt && cd test/unit && py.test -n auto
+unitset?=
+unitTestCmd:=${pipInstall} -r test/unit/requirements.txt && cd test/unit && py.test -n auto ${unitset}
 .PHONY: unitTest unitTestFromScratch
 unitTest:
 	${inSloikaEnv} ${unitTestCmd}
 unitTestFromScratch: cleanTmpEnvWithSloika
 	${inTmpEnv} ${unitTestCmd}
 
-acceptanceTestCmd:=${pipInstall} -r test/acceptance/requirements.txt && cd test/acceptance && py.test -n auto
+accset?=
+acceptanceTestCmd:=${pipInstall} -r test/acceptance/requirements.txt && cd test/acceptance && py.test -n auto ${accset}
 .PHONY: acceptanceTest acceptanceTestFromScratch
 acceptanceTest:
 	${inSloikaEnv} ${acceptanceTestCmd}
@@ -80,7 +82,7 @@ cleanTmpEnvWithSloika: emptyTmpEnv
 
 .PHONY: autopep8
 autopep8:
-	${inSloikaEnv} $${SCRIPTS_DIR}/autopep8.py $f --ignore E203 -i --max-line-length=120
+	${inSloikaEnv} autopep8 $f --ignore E203 -i --max-line-length=120
 
 cmd?=echo "Set 'cmd' to command to run in Sloika env"
 .PHONY: runInEnv

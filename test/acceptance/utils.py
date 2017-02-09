@@ -1,4 +1,5 @@
 import os
+import itertools
 
 from io import StringIO
 from subprocess import Popen, PIPE
@@ -11,8 +12,8 @@ class Result:
         self.cmd = cmd
         self.cwd = cwd
         self._return_code = return_code
-        self._stdout = stdout
-        self._stderr = stderr
+        self._stdout = stdout.split('\n')
+        self._stderr = stderr.split('\n')
 
     def __repr__(self):
         L = ['\n\tCommand: {}'.format(' '.join(self.cmd))]
@@ -24,12 +25,12 @@ class Result:
 
         if self._stdout:
             L.append('\n\tCommand output:')
-            for line in self._stdout.split('\n'):
+            for line in self._stdout:
                 L.append("\t\t{}".format(line))
 
         if self._stderr:
             L.append('\n\tCommand error output:')
-            for line in self._stderr.split('\n'):
+            for line in self._stderr:
                 L.append("\t\t{}".format(line))
 
         return '\n'.join(L)
@@ -83,3 +84,39 @@ def maybe_create_dir(directory_name):
             pass
         else:
             raise
+
+
+def drop_lines(L, prefix):
+    return list(itertools.dropwhile(lambda x: x.startswith(prefix), L))
+
+
+def drop_info(L):
+    '''
+    Weeding out theano messages of the sort:
+    INFO (theano.gof.compilelock): Waiting for existing lock by process '17108' (I am process '17109')
+E   INFO (theano.gof.compilelock): To manually release the lock, delete <file_name>
+    '''
+    return drop_lines(L, 'INFO (theano.gof.compilelock):')
+
+def zeroth_line_starts_with(prefix):
+    def f(L):
+        M = drop_info(L)
+        if len(M) == 0:
+            return False
+        else:
+            return M[0].startswith(prefix)
+    return f
+
+
+if __name__=='__main__':
+    assert drop_lines([], "a") == []
+    assert drop_lines(["a"], "a") == []
+    assert drop_lines(["ab"], "a") == []
+    assert drop_lines(["c", "ab"], "a") == ["c", "ab"]
+    assert drop_lines(["ab", "c"], "a") == ["c"]
+
+    assert zeroth_line_starts_with('a')([]) == False
+    assert zeroth_line_starts_with('a')(['a']) == True
+    assert zeroth_line_starts_with('a')(['a','a']) == True
+    assert zeroth_line_starts_with('a')(['a','b']) == True
+    assert zeroth_line_starts_with('a')(['b','a']) == False
