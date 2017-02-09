@@ -21,7 +21,7 @@ class AcceptanceTest(unittest.TestCase):
 
     def test_usage(self):
         cmd = [self.script]
-        run_cmd(self, cmd).return_code(2).stderr(lambda o: drop_info(o).startswith(u"usage"))
+        run_cmd(self, cmd).return_code(2).stderr(lambda o: drop_info(o)[0].startswith(u"usage"))
 
     def test_number_of_models(self):
         '''

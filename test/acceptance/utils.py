@@ -11,8 +11,8 @@ class Result:
         self.cmd = cmd
         self.cwd = cwd
         self._return_code = return_code
-        self._stdout = stdout
-        self._stderr = stderr
+        self._stdout = stdout.split('\n')
+        self._stderr = stderr.split('\n')
 
     def __repr__(self):
         L = ['\n\tCommand: {}'.format(' '.join(self.cmd))]
@@ -24,12 +24,12 @@ class Result:
 
         if self._stdout:
             L.append('\n\tCommand output:')
-            for line in self._stdout.split('\n'):
+            for line in self._stdout:
                 L.append("\t\t{}".format(line))
 
         if self._stderr:
             L.append('\n\tCommand error output:')
-            for line in self._stderr.split('\n'):
+            for line in self._stderr:
                 L.append("\t\t{}".format(line))
 
         return '\n'.join(L)
