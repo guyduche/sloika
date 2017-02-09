@@ -2,7 +2,7 @@ import unittest
 import os
 import shutil
 
-from utils import run_cmd, maybe_create_dir, drop_info
+from utils import run_cmd, maybe_create_dir, first_line_starts_with
 
 
 class AcceptanceTest(unittest.TestCase):
@@ -18,4 +18,4 @@ class AcceptanceTest(unittest.TestCase):
 
     def test_usage(self):
         cmd = [self.script]
-        run_cmd(self, cmd).return_code(2).stderr(lambda o: drop_info(o)[0].startswith(u"usage"))
+        run_cmd(self, cmd).return_code(2).stderr(first_line_starts_with(u"usage"))

@@ -98,9 +98,25 @@ E   INFO (theano.gof.compilelock): To manually release the lock, delete <file_na
     '''
     return drop_lines(L, 'INFO (theano.gof.compilelock):')
 
+def first_line_starts_with(prefix):
+    def f(L):
+        M = drop_info(L)
+        if len(M) == 0:
+            return False
+        else:
+            return M[0].startswith(prefix)
+    return f
+
+
 if __name__=='__main__':
     assert drop_lines([], "a") == []
     assert drop_lines(["a"], "a") == []
     assert drop_lines(["ab"], "a") == []
     assert drop_lines(["c", "ab"], "a") == ["c", "ab"]
     assert drop_lines(["ab", "c"], "a") == ["c"]
+
+    assert first_line_starts_with('a')([]) == False
+    assert first_line_starts_with('a')(['a']) == True
+    assert first_line_starts_with('a')(['a','a']) == True
+    assert first_line_starts_with('a')(['a','b']) == True
+    assert first_line_starts_with('a')(['b','a']) == False
