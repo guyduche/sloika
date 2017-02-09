@@ -85,13 +85,11 @@ def maybe_create_dir(directory_name):
             raise
 
 def drop_lines(L, prefix):
-    if len(L) == 0:
-        return []
-    else:
-        i = 0
-        while L[i].startswith(prefix):
-            i += 1
-        return L[i:]
+    for i in range(len(L)):
+        if not L[i].startswith(prefix):
+            return L[i:]
+    return []
+
 
 def drop_info(L):
     '''
@@ -101,3 +99,9 @@ E   INFO (theano.gof.compilelock): To manually release the lock, delete <file_na
     '''
     return drop_lines(L, 'INFO (theano.gof.compilelock):')
 
+if __name__=='__main__':
+    assert drop_lines([], "a") == []
+    assert drop_lines(["a"], "a") == []
+    assert drop_lines(["ab"], "a") == []
+    assert drop_lines(["c", "ab"], "a") == ["c", "ab"]
+    assert drop_lines(["ab", "c"], "a") == ["c"]
