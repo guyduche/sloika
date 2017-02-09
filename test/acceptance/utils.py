@@ -1,4 +1,5 @@
 import os
+import itertools
 
 from io import StringIO
 from subprocess import Popen, PIPE
@@ -84,11 +85,9 @@ def maybe_create_dir(directory_name):
         else:
             raise
 
+
 def drop_lines(L, prefix):
-    for i in range(len(L)):
-        if not L[i].startswith(prefix):
-            return L[i:]
-    return []
+    return list(itertools.dropwhile(lambda x: x.startswith(prefix), L))
 
 
 def drop_info(L):
