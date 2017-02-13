@@ -30,6 +30,12 @@ parser.add_argument('--bad', default=True, action=AutoBool,
                     help='Use bad events as a separate state')
 parser.add_argument('--batch', default=100, metavar='size', type=Positive(int),
                     help='Batch size (number of chunks to run in parallel)')
+parser.add_argument('--chunk', metavar='size', type=Positive(int),
+                    help='Maximum chunk size to use. (Default: match input file)')
+parser.add_argument('--min_chunk', metavar='size', type=Positive(int),
+                    help='Chunk sizes are randomly sampled from interval [min_chunk, chunk]. (Default: equals chunk)')
+parser.add_argument('--scale_batch_size', default=True, action=AutoBool,
+                    help='Scale batch size with chunk size.')
 parser.add_argument('--drop', default=0, metavar='events', type=NonNegative(int),
                     help='Drop a number of events from start and end of chunk before evaluating loss')
 parser.add_argument('--ilf', default=False, action=AutoBool,
@@ -144,6 +150,13 @@ if __name__ == '__main__':
 
     all_weights /= np.sum(all_weights)
 
+    # check --chunk, and --min_chunk arguments
+    data_chunk = all_chunks.shape[1]
+    max_chunk = args.chunk or data_chunk
+    min_chunk = args.min_chunk or max_chunk
+    assert max_chunk >= min_chunk
+    assert data_chunk >= max_chunk # or should this be a warning?
+
     if not args.transducer:
         remove_blanks(all_labels)
 
@@ -173,10 +186,15 @@ if __name__ == '__main__':
     log.write('* Training\n')
     for i in xrange(args.niteration):
         learning_rate = args.adam.rate / (1.0 + i * lrfactor)
-        idx = np.sort(np.random.choice(len(all_chunks), size=args.batch,
+
+        chunk = np.random.randint(min_chunk, max_chunk + 1)
+        batch = int(args.batch * float(max_chunk) / chunk)
+        start = np.random.randint(data_chunk - chunk + 1)
+
+        idx = np.sort(np.random.choice(len(all_chunks), size=batch,
                                        replace=False, p=all_weights))
-        events = np.ascontiguousarray(all_chunks[idx].transpose((1, 0, 2)))
-        labels = np.ascontiguousarray(all_labels[idx].transpose())
+        events = np.ascontiguousarray(all_chunks[idx, start:start+chunk].transpose((1, 0, 2)))
+        labels = np.ascontiguousarray(all_labels[idx, start:start+chunk].transpose())
         weights = label_weights[labels]
 
         fval, ncorr = fg(events, labels, weights, learning_rate)
