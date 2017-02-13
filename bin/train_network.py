@@ -150,8 +150,8 @@ if __name__ == '__main__':
 
     # check --chunk, and --min_chunk arguments
     data_chunk = all_chunks.shape[1]
-    max_chunk = args.chunk or data_chunk
-    min_chunk = args.min_chunk or max_chunk
+    max_chunk = args.chunk if arg.chunk is not None else data_chunk
+    min_chunk = args.min_chunk if args.min_chunk is not None else max_chunk
     assert max_chunk >= min_chunk, "Min chunk size (got {}) must be <= chunk size (got {})".format(min_chunk, max_chunk)
     assert data_chunk >= max_chunk, "Max chunk size (got {}) must be <= data chunk size (got {})".format(max_chunk, data_chunk)
 
