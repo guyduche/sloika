@@ -185,14 +185,14 @@ if __name__ == '__main__':
     for i in xrange(args.niteration):
         learning_rate = args.adam.rate / (1.0 + i * lrfactor)
 
-        chunk = np.random.randint(min_chunk, max_chunk + 1)
-        batch = int(args.batch * float(max_chunk) / chunk)
-        start = np.random.randint(data_chunk - chunk + 1)
+        chunk_len = np.random.randint(min_chunk, max_chunk + 1)
+        batch_size = int(args.batch * float(max_chunk) / chunk_len)
+        start = np.random.randint(data_chunk - chunk_len + 1)
 
-        idx = np.sort(np.random.choice(len(all_chunks), size=batch,
+        idx = np.sort(np.random.choice(len(all_chunks), size=batch_size,
                                        replace=False, p=all_weights))
-        events = np.ascontiguousarray(all_chunks[idx, start:start+chunk].transpose((1, 0, 2)))
-        labels = np.ascontiguousarray(all_labels[idx, start:start+chunk].transpose())
+        events = np.ascontiguousarray(all_chunks[idx, start:start + chunk_len].transpose((1, 0, 2)))
+        labels = np.ascontiguousarray(all_labels[idx, start:start + chunk_len].transpose())
         weights = label_weights[labels]
 
         fval, ncorr = fg(events, labels, weights, learning_rate)
