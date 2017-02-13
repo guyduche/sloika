@@ -31,9 +31,9 @@ parser.add_argument('--bad', default=True, action=AutoBool,
 parser.add_argument('--batch', default=100, metavar='size', type=Positive(int),
                     help='Batch size (number of chunks to run in parallel)')
 parser.add_argument('--chunk', metavar='size', type=Positive(int),
-                    help='Chunk size to use during training. (Default: match input file)')
+                    help='Chunk size to use during training. Matches input file by default.')
 parser.add_argument('--min_chunk', metavar='size', type=Positive(int),
-                    help='Chunk sizes are randomly sampled from interval [min_chunk, chunk]. (Default: equals chunk, i.e. fixed chunk size)')
+                    help='If specified, chunk size is randomly sampled from interval [min_chunk, chunk].')
 parser.add_argument('--drop', default=0, metavar='events', type=NonNegative(int),
                     help='Drop a number of events from start and end of chunk before evaluating loss')
 parser.add_argument('--ilf', default=False, action=AutoBool,
