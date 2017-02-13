@@ -34,8 +34,6 @@ parser.add_argument('--chunk', metavar='size', type=Positive(int),
                     help='Maximum chunk size to use. (Default: match input file)')
 parser.add_argument('--min_chunk', metavar='size', type=Positive(int),
                     help='Chunk sizes are randomly sampled from interval [min_chunk, chunk]. (Default: equals chunk)')
-parser.add_argument('--scale_batch_size', default=True, action=AutoBool,
-                    help='Scale batch size with chunk size.')
 parser.add_argument('--drop', default=0, metavar='events', type=NonNegative(int),
                     help='Drop a number of events from start and end of chunk before evaluating loss')
 parser.add_argument('--ilf', default=False, action=AutoBool,
