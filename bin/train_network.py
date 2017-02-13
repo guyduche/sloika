@@ -28,12 +28,10 @@ parser.add_argument('--adam', nargs=3, metavar=('rate', 'decay1', 'decay2'),
                     action=ParseToNamedTuple, help='Parameters for Exponential Decay Adaptive Momementum')
 parser.add_argument('--bad', default=True, action=AutoBool,
                     help='Use bad events as a separate state')
-parser.add_argument('--batch', default=100, metavar='size', type=Positive(int),
-                    help='Batch size (number of chunks to run in parallel)')
-parser.add_argument('--chunk', metavar='size', type=Positive(int),
-                    help='Chunk size to use during training. Matches input file by default.')
-parser.add_argument('--min_chunk', metavar='size', type=Positive(int),
-                    help='If specified, chunk size is randomly sampled from interval [min_chunk, chunk].')
+parser.add_argument('--batch_size', default=100, metavar='chunks', type=Positive(int),
+                    help='Number of chunks to run in parallel')
+parser.add_argument('--chunk_len', metavar='events', type=Positive(int),
+                    help='Length of training sequences. Matches input file by default.')
 parser.add_argument('--drop', default=0, metavar='events', type=NonNegative(int),
                     help='Drop a number of events from start and end of chunk before evaluating loss')
 parser.add_argument('--ilf', default=False, action=AutoBool,
@@ -42,6 +40,8 @@ parser.add_argument('--l2', default=0.0, metavar='penalty', type=NonNegative(flo
                     help='L2 penalty on parameters')
 parser.add_argument('--lrdecay', default=5000, metavar='batches', type=Positive(float),
                     help='Number of batches to halving of learning rate')
+parser.add_argument('--min_chunk_len', metavar='events', type=Positive(int),
+                    help='If specified, chunk length is randomly sampled from interval [min_chunk_len, chunk_len].')
 parser.add_argument('--min_prob', default=0.0, metavar='p', type=proportion,
                     help='Minimum probability allowed for training')
 parser.add_argument('--niteration', metavar='batches', type=Positive(int), default=50000,
@@ -150,8 +150,8 @@ if __name__ == '__main__':
 
     # check --chunk, and --min_chunk arguments
     data_chunk = all_chunks.shape[1]
-    max_chunk = args.chunk if args.chunk is not None else data_chunk
-    min_chunk = args.min_chunk if args.min_chunk is not None else max_chunk
+    max_chunk = args.chunk_len if args.chunk_len is not None else data_chunk
+    min_chunk = args.min_chunk_len if args.min_chunk_len is not None else max_chunk
     assert max_chunk >= min_chunk, "Min chunk size (got {}) must be <= chunk size (got {})".format(min_chunk, max_chunk)
     assert data_chunk >= max_chunk, "Max chunk size (got {}) must be <= data chunk size (got {})".format(max_chunk, data_chunk)
 
@@ -186,7 +186,7 @@ if __name__ == '__main__':
         learning_rate = args.adam.rate / (1.0 + i * lrfactor)
 
         chunk_len = np.random.randint(min_chunk, max_chunk + 1)
-        batch_size = int(args.batch * float(max_chunk) / chunk_len)
+        batch_size = int(args.batch_size * float(max_chunk) / chunk_len)
         start = np.random.randint(data_chunk - chunk_len + 1)
 
         idx = np.sort(np.random.choice(len(all_chunks), size=batch_size,
