@@ -20,7 +20,7 @@ parser = argparse.ArgumentParser(
 parser.add_argument('--coverage', metavar='proportion', default=0.6, type=proportion,
     help='Minimum coverage')
 parser.add_argument('--bwa_mem_args', metavar='args',
-    help="Command line arguments to pass to bwa mem")
+    help="Command line arguments to pass to bwa mem, default: '-t 16 -A 1 -B 2 -O 2 -E 1'")
 parser.add_argument('reference', action=FileExists,
     help="Reference sequence to align against")
 parser.add_argument('files', metavar='seqs.fa', nargs='+',
@@ -29,6 +29,8 @@ parser.add_argument('files', metavar='seqs.fa', nargs='+',
 
 STRAND = { 0 : '+',
            16 : '-'}
+
+QUANTILES = [5, 25, 50, 75, 95]
 
 
 def call_bwa_mem(fin, fout, genome, clargs=None):
@@ -151,22 +153,23 @@ def summary(acc_dat, name):
     da = gaussian_kde(acc)
     mode = minimize_scalar(lambda x: -da(x), bounds=(0, 1)).x[0]
 
-    quantiles = np.percentile(acc, [5, 25, 50, 75, 95])
-    qstring = '{:.5f}    {:.5f}    {:.5f}    {:.5f}    {:.5f}'.format(*quantiles)
+    qstring1 = ''.join(['{:<11}'.format('Q' + str(q)) for q in QUANTILES]).strip()
+    qstring2 = '    '.join(['{:.5f}'.format(v) for v in np.percentile(acc, QUANTILES)])
 
     a90 = (acc > 0.9).mean()
-    n90 = (acc > 0.9).sum()
+    n_gt_90 = (acc > 0.9).sum()
     nmapped = len(set([r['name2'] for r in acc_dat]))
 
     res = """Summary report for {}:
     Number of mapped reads:  {}
     Mean accuracy:  {:.5f}
     Mode accuracy:  {:.5f}
-    Accuracy quantiles:      Q5        Q25        Q50        Q75        Q95
-                          {}
+    Accuracy quantiles:
+      {}
+      {}
     Proportion with accuracy >90%:  {:.5f}
     Number with accuracy >90%:  {}
-""".format(name, nmapped, mean, mode, qstring, a90, n90)
+""".format(name, nmapped, mean, mode, qstring1, qstring2, a90, n_gt_90)
 
     title = "{} (n = {})".format(name, nmapped)
     f, ax = acc_plot(acc, mode, title)
@@ -177,31 +180,35 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     for fn in args.files:
-        prefix, suffix = os.path.splitext(fn)
-        samfile = prefix + '.sam'
-        samaccfile = prefix + '.samacc'
-        summaryfile = prefix + '.summary'
-        graphfile = prefix + '.png'
+        try:
+            prefix, suffix = os.path.splitext(fn)
+            samfile = prefix + '.sam'
+            samaccfile = prefix + '.samacc'
+            summaryfile = prefix + '.summary'
+            graphfile = prefix + '.png'
 
-        # align sequences to reference
-        sys.stdout.write("Aligning {}...\n".format(fn))
-        bwa_output = call_bwa_mem(fn, samfile, args.reference, args.bwa_mem_args)
-        sys.stdout.write(bwa_output)
+            # align sequences to reference
+            sys.stdout.write("Aligning {}...\n".format(fn))
+            bwa_output = call_bwa_mem(fn, samfile, args.reference, args.bwa_mem_args)
+            sys.stdout.write(bwa_output)
 
-        # compile accuracy metrics
-        acc_dat = samacc(samfile, min_coverage=args.coverage)
-        if len(acc_dat) > 0:
-            with open(samaccfile, 'w') as fs:
-                fields = acc_dat[0].keys()
-                writer = csv.DictWriter(fs, fieldnames=fields, delimiter=' ')
-                writer.writeheader()
-                for row in acc_dat:
-                    writer.writerow(row)
+            # compile accuracy metrics
+            acc_dat = samacc(samfile, min_coverage=args.coverage)
+            if len(acc_dat) > 0:
+                with open(samaccfile, 'w') as fs:
+                    fields = acc_dat[0].keys()
+                    writer = csv.DictWriter(fs, fieldnames=fields, delimiter=' ')
+                    writer.writeheader()
+                    for row in acc_dat:
+                        writer.writerow(row)
 
-        # write summary file and plot
-        report, f, ax = summary(acc_dat, name=fn)
-        if f is not None:
-            f.savefig(graphfile)
-        sys.stdout.write('\n' + report + '\n')
-        with open(summaryfile, 'w') as fs:
-            fs.writelines(report)
+            # write summary file and plot
+            report, f, ax = summary(acc_dat, name=fn)
+            if f is not None:
+                f.savefig(graphfile)
+            sys.stdout.write('\n' + report + '\n')
+            with open(summaryfile, 'w') as fs:
+                fs.writelines(report)
+        except:
+            sys.stderr.write("{}: something went wrong, skipping\n\n".format(fn))
+            continue
