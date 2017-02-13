@@ -5,6 +5,7 @@ import csv
 from collections import OrderedDict
 import numpy as np
 import matplotlib.pyplot as plt
+import os
 import pysam
 from scipy.stats import gaussian_kde
 from scipy.optimize import minimize_scalar
@@ -110,21 +111,6 @@ def samacc(sam, min_coverage=0.6):
     return res
 
 
-def snort_prefix_suffix(filename):
-    """Extract filename prefix and extension, if any
-
-    E.g.
-        "prefix.suffix" --> ("prefix", "suffix")
-        "really.long.name" --> ("really.long", "name")
-        "no_extension_at_all" --> ("no_extension_at_all", "")
-    """
-    tokens = filename.split('.')
-    if len(tokens) > 1:
-        return ('.'.join(tokens[:-1]), tokens[-1])
-    else:
-        return (filename, '')
-
-
 def acc_plot(acc, mode, title="Test"):
     """Plot accuracy histogram
 
@@ -191,7 +177,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     for fn in args.files:
-        prefix, suffix = snort_prefix_suffix(fn)
+        prefix, suffix = os.path.splitext(fn)
         samfile = prefix + '.sam'
         samaccfile = prefix + '.samacc'
         summaryfile = prefix + '.summary'
