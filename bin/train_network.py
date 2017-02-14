@@ -32,7 +32,7 @@ parser.add_argument('--batch_size', default=100, metavar='chunks', type=Positive
                     help='Number of chunks to run in parallel')
 parser.add_argument('--chunk_len', metavar='events', type=Positive(int),
                     help='Length of training sequences. Matches input file by default.')
-parser.add_argument('--drop', default=0, metavar='events', type=NonNegative(int),
+parser.add_argument('--drop', default=20, metavar='events', type=NonNegative(int),
                     help='Drop a number of events from start and end of chunk before evaluating loss')
 parser.add_argument('--ilf', default=False, action=AutoBool,
                     help='Weight objective function by Inverse Label Frequency')
