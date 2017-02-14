@@ -30,7 +30,7 @@ parser.add_argument('--bad', default=True, action=AutoBool,
                     help='Use bad events as a separate state')
 parser.add_argument('--batch', default=100, metavar='size', type=Positive(int),
                     help='Batch size (number of chunks to run in parallel)')
-parser.add_argument('--drop', default=0, metavar='events', type=NonNegative(int),
+parser.add_argument('--drop', default=20, metavar='events', type=NonNegative(int),
                     help='Drop a number of events from start and end of chunk before evaluating loss')
 parser.add_argument('--ilf', default=False, action=AutoBool,
                     help='Weight objective function by Inverse Label Frequency')
