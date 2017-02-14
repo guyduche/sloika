@@ -32,7 +32,6 @@ parser.add_argument('--batch_size', default=100, metavar='chunks', type=Positive
                     help='Number of chunks to run in parallel')
 parser.add_argument('--chunk_len_range', nargs=2, metavar=('min', 'max'),
                     type=(Maybe(int), Maybe(int)), default=None,
-                    action=ParseToNamedTuple,
                     help="Randomly sample chunk sizes between min and max")
 parser.add_argument('--drop', default=20, metavar='events', type=NonNegative(int),
                     help='Drop a number of events from start and end of chunk before evaluating loss')
@@ -151,15 +150,14 @@ if __name__ == '__main__':
     # check chunk length arguments
     data_chunk = all_chunks.shape[1]
     if args.chunk_len_range is None:
-        min_chunk = data_chunk
-        max_chunk = data_chunk
-    else:
-        min_chunk = (args.chunk_len_range.min
-                     if args.chunk_len_range.min
-                     else 2 * args.drop + 1)
-        max_chunk = (args.chunk_len_range.max
-                     if args.chunk_len_range.max is not None
-                     else data_chunk)
+        # --chunk_len_range was not defined, use data file chunk size
+        args.chunk_len_range = (data_chunk, data_chunk)
+    if args.chunk_len_range[0] is None:
+        args.chunk_len_range[0] = 2 * args.drop + 1
+    if args.chunk_len_range[1] is None:
+        args.chunk_len_range[1] = data_chunk
+    min_chunk, max_chunk = args.chunk_len_range
+
     assert max_chunk >= min_chunk, "Min chunk size (got {}) must be <= chunk size (got {})".format(min_chunk, max_chunk)
     assert data_chunk >= max_chunk, "Max chunk size (got {}) must be <= data chunk size (got {})".format(max_chunk, data_chunk)
     assert data_chunk >= (2 * args.drop + 1), "Data chunk size (got {}) must be > 2 * drop (got {})".format(data_chunk, args.drop)
