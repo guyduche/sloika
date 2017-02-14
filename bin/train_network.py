@@ -28,8 +28,11 @@ parser.add_argument('--adam', nargs=3, metavar=('rate', 'decay1', 'decay2'),
                     action=ParseToNamedTuple, help='Parameters for Exponential Decay Adaptive Momementum')
 parser.add_argument('--bad', default=True, action=AutoBool,
                     help='Use bad events as a separate state')
-parser.add_argument('--batch', default=100, metavar='size', type=Positive(int),
-                    help='Batch size (number of chunks to run in parallel)')
+parser.add_argument('--batch_size', default=100, metavar='chunks', type=Positive(int),
+                    help='Number of chunks to run in parallel')
+parser.add_argument('--chunk_len_range', nargs=2, metavar=('min', 'max'),
+                    type=Maybe(int), default=None,
+                    help="Randomly sample chunk sizes between min and max")
 parser.add_argument('--drop', default=20, metavar='events', type=NonNegative(int),
                     help='Drop a number of events from start and end of chunk before evaluating loss')
 parser.add_argument('--ilf', default=False, action=AutoBool,
@@ -144,6 +147,22 @@ if __name__ == '__main__':
 
     all_weights /= np.sum(all_weights)
 
+    # check chunk length arguments
+    data_chunk = all_chunks.shape[1]
+    if args.chunk_len_range is None:
+        # --chunk_len_range was not defined, use data file chunk size
+        args.chunk_len_range = (data_chunk, data_chunk)
+    if args.chunk_len_range[0] is None:
+        args.chunk_len_range[0] = 2 * args.drop + 1
+    if args.chunk_len_range[1] is None:
+        args.chunk_len_range[1] = data_chunk
+    min_chunk, max_chunk = args.chunk_len_range
+
+    assert max_chunk >= min_chunk, "Min chunk size (got {}) must be <= chunk size (got {})".format(min_chunk, max_chunk)
+    assert data_chunk >= max_chunk, "Max chunk size (got {}) must be <= data chunk size (got {})".format(max_chunk, data_chunk)
+    assert data_chunk >= (2 * args.drop + 1), "Data chunk size (got {}) must be > 2 * drop (got {})".format(data_chunk, args.drop)
+    assert min_chunk >= (2 * args.drop + 1), "Min chunk size (got {}) must be > 2 * drop (got {})".format(min_chunk, args.drop)
+
     if not args.transducer:
         remove_blanks(all_labels)
 
@@ -173,10 +192,15 @@ if __name__ == '__main__':
     log.write('* Training\n')
     for i in xrange(args.niteration):
         learning_rate = args.adam.rate / (1.0 + i * lrfactor)
-        idx = np.sort(np.random.choice(len(all_chunks), size=args.batch,
+
+        chunk_len = np.random.randint(min_chunk, max_chunk + 1)
+        batch_size = int(args.batch_size * float(max_chunk) / chunk_len)
+        start = np.random.randint(data_chunk - chunk_len + 1)
+
+        idx = np.sort(np.random.choice(len(all_chunks), size=batch_size,
                                        replace=False, p=all_weights))
-        events = np.ascontiguousarray(all_chunks[idx].transpose((1, 0, 2)))
-        labels = np.ascontiguousarray(all_labels[idx].transpose())
+        events = np.ascontiguousarray(all_chunks[idx, start : start + chunk_len].transpose((1, 0, 2)))
+        labels = np.ascontiguousarray(all_labels[idx, start : start + chunk_len].transpose())
         weights = label_weights[labels]
 
         fval, ncorr = fg(events, labels, weights, learning_rate)
