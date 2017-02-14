@@ -45,6 +45,8 @@ parser.add_argument('--min_prob', default=0.0, metavar='p', type=proportion,
                     help='Minimum probability allowed for training')
 parser.add_argument('--niteration', metavar='batches', type=Positive(int), default=50000,
                     help='Maximum number of batches to train for')
+parser.add_argument('--quiet', default=False, action=AutoBool,
+                    help="Don't print progess information to stdout")
 parser.add_argument('--reweight', metavar='group', default='weights', type=Maybe(str),
                     help="Select chunk according to weights in 'group'")
 parser.add_argument('--save_every', metavar='x', type=Positive(int), default=5000,
@@ -99,13 +101,15 @@ def saveModel(network, output, index):
 
 class Logger:
 
-    def __init__(self, log_file_name):
+    def __init__(self, log_file_name, quiet=False):
         self.fh = open(log_file_name, 'w', 0)
+        self.quiet = quiet
 
     def write(self, message):
         self.fh.write(message)
-        sys.stdout.write(message)
-        sys.stdout.flush()
+        if not self.quiet:
+            sys.stdout.write(message)
+            sys.stdout.flush()
 
 
 if __name__ == '__main__':
@@ -115,7 +119,7 @@ if __name__ == '__main__':
     os.mkdir(args.output)
     copyfile(args.model, os.path.join(args.output, 'model.py'))
 
-    log = Logger(os.path.join(args.output, 'model.log'))
+    log = Logger(os.path.join(args.output, 'model.log'), args.quiet)
 
     log.write('* Command line\n')
     log.write(' '.join(sys.argv) + '\n')
