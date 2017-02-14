@@ -30,8 +30,10 @@ parser.add_argument('--bad', default=True, action=AutoBool,
                     help='Use bad events as a separate state')
 parser.add_argument('--batch_size', default=100, metavar='chunks', type=Positive(int),
                     help='Number of chunks to run in parallel')
-parser.add_argument('--chunk_len', metavar='events', type=Positive(int),
-                    help='Length of training sequences. Matches input file by default.')
+parser.add_argument('--chunk_len_range', nargs=2, metavar=('min', 'max'),
+                    type=(Maybe(int), Maybe(int)), default=None,
+                    action=ParseToNamedTuple,
+                    help="Randomly sample chunk sizes between min and max")
 parser.add_argument('--drop', default=20, metavar='events', type=NonNegative(int),
                     help='Drop a number of events from start and end of chunk before evaluating loss')
 parser.add_argument('--ilf', default=False, action=AutoBool,
@@ -40,8 +42,6 @@ parser.add_argument('--l2', default=0.0, metavar='penalty', type=NonNegative(flo
                     help='L2 penalty on parameters')
 parser.add_argument('--lrdecay', default=5000, metavar='batches', type=Positive(float),
                     help='Number of batches to halving of learning rate')
-parser.add_argument('--min_chunk_len', metavar='events', type=Positive(int),
-                    help='If specified, chunk length is randomly sampled from interval [min_chunk_len, chunk_len].')
 parser.add_argument('--min_prob', default=0.0, metavar='p', type=proportion,
                     help='Minimum probability allowed for training')
 parser.add_argument('--niteration', metavar='batches', type=Positive(int), default=50000,
@@ -148,12 +148,22 @@ if __name__ == '__main__':
 
     all_weights /= np.sum(all_weights)
 
-    # check --chunk, and --min_chunk arguments
+    # check chunk length arguments
     data_chunk = all_chunks.shape[1]
-    max_chunk = args.chunk_len if args.chunk_len is not None else data_chunk
-    min_chunk = args.min_chunk_len if args.min_chunk_len is not None else max_chunk
+    if args.chunk_len_range is None:
+        min_chunk = data_chunk
+        max_chunk = data_chunk
+    else:
+        min_chunk = (args.chunk_len_range.min
+                     if args.chunk_len_range.min
+                     else 2 * args.drop + 1)
+        max_chunk = (args.chunk_len_range.max
+                     if args.chunk_len_range.max is not None
+                     else data_chunk)
     assert max_chunk >= min_chunk, "Min chunk size (got {}) must be <= chunk size (got {})".format(min_chunk, max_chunk)
     assert data_chunk >= max_chunk, "Max chunk size (got {}) must be <= data chunk size (got {})".format(max_chunk, data_chunk)
+    assert data_chunk >= (2 * args.drop + 1), "Data chunk size (got {}) must be > 2 * drop (got {})".format(data_chunk, args.drop)
+    assert min_chunk >= (2 * args.drop + 1), "Min chunk size (got {}) must be > 2 * drop (got {})".format(min_chunk, args.drop)
 
     if not args.transducer:
         remove_blanks(all_labels)
