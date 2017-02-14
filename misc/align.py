@@ -19,6 +19,7 @@ parser = argparse.ArgumentParser(
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('--coverage', metavar='proportion', default=0.6, type=proportion,
     help='Minimum coverage')
+# TODO: add several named commonly used values for bwa_mem_args
 parser.add_argument('--bwa_mem_args', metavar='args',
     help="Command line arguments to pass to bwa mem, default: '-t 16 -A 1 -B 2 -O 2 -E 1'")
 parser.add_argument('reference', action=FileExists,
