@@ -201,8 +201,8 @@ if __name__ == '__main__':
 
         idx = np.sort(np.random.choice(len(all_chunks), size=batch_size,
                                        replace=False, p=all_weights))
-        events = np.ascontiguousarray(all_chunks[idx, start:start + chunk_len].transpose((1, 0, 2)))
-        labels = np.ascontiguousarray(all_labels[idx, start:start + chunk_len].transpose())
+        events = np.ascontiguousarray(all_chunks[idx, start : start + chunk_len].transpose((1, 0, 2)))
+        labels = np.ascontiguousarray(all_labels[idx, start : start + chunk_len].transpose())
         weights = label_weights[labels]
 
         fval, ncorr = fg(events, labels, weights, learning_rate)
