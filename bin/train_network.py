@@ -31,7 +31,7 @@ parser.add_argument('--bad', default=True, action=AutoBool,
 parser.add_argument('--batch_size', default=100, metavar='chunks', type=Positive(int),
                     help='Number of chunks to run in parallel')
 parser.add_argument('--chunk_len_range', nargs=2, metavar=('min', 'max'),
-                    type=(Maybe(int), Maybe(int)), default=None,
+                    type=Maybe(int), default=None,
                     help="Randomly sample chunk sizes between min and max")
 parser.add_argument('--drop', default=20, metavar='events', type=NonNegative(int),
                     help='Drop a number of events from start and end of chunk before evaluating loss')
