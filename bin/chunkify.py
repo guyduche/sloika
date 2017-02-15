@@ -92,6 +92,8 @@ def main(argv):
 
         try:
             return command_action(*common_parser(argv, commands))
+        except SystemExit as e:
+            sys.exit(e.code)
         except:
             print('Exception when running command {!r}'.format(command_name))
             raise
