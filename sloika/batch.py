@@ -13,7 +13,7 @@ import sloika.util
 import sloika.transducer
 
 from untangled import bio, fast5
-from untangled.maths import med_mad
+
 
 def chunkify(ev, chunk_len, kmer_len, use_scaled, normalise):
     ml = len(ev) // chunk_len
@@ -90,6 +90,7 @@ def chunk_worker(fn, section, chunk_len, kmer_len, min_length, trim, use_scaled,
 
     return chunkify(ev, chunk_len, kmer_len, use_scaled, normalise)
 
+
 def init_chunk_remap_worker(model, fasta, kmer_len):
     import cPickle
     global calc_post, kmer_to_state, references
@@ -124,6 +125,7 @@ def remap(read_ref, ev, min_prob, transducer, kmer_len, prior, slip):
                             [path, kmers[path], np.repeat(True, len(ev))])
 
     return (score, ev, path, seq)
+
 
 def chunk_remap_worker(fn, trim, min_prob, transducer, kmer_len, prior, slip, chunk_len, use_scaled, normalise):
     try:
