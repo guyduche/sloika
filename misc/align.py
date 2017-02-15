@@ -24,6 +24,7 @@ parser.add_argument('--coverage', metavar='proportion', default=0.6, type=propor
 parser.add_argument('--bwa_mem_args', metavar='args',
     help="Command line arguments to pass to bwa mem, default: '-t 16 -A 1 -B 2 -O 2 -E 1'")
 parser.add_argument('--mpl_backend', default="Agg", help="Matplotlib backend to use, default: Agg")
+parser.add_argument('--figure_format', help="Matplotlib file format. Default is to use the backend default")
 parser.add_argument('reference', action=FileExists,
     help="Reference sequence to align against")
 parser.add_argument('files', metavar='seqs.fa', nargs='+',
@@ -193,7 +194,6 @@ if __name__ == '__main__':
             samfile = prefix + '.sam'
             samaccfile = prefix + '.samacc'
             summaryfile = prefix + '.summary'
-            graphfile = prefix + '.png'
 
             # align sequences to reference
             sys.stdout.write("Aligning {}...\n".format(fn))
@@ -213,7 +213,7 @@ if __name__ == '__main__':
             # write summary file and plot
             report, f, ax = summary(acc_dat, name=fn)
             if f is not None:
-                f.savefig(graphfile)
+                f.savefig(prefix, format=args.figure_format)
             sys.stdout.write('\n' + report + '\n')
             with open(summaryfile, 'w') as fs:
                 fs.writelines(report)
