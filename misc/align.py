@@ -4,13 +4,14 @@ import argparse
 import csv
 from collections import OrderedDict
 import numpy as np
-import matplotlib.pyplot as plt
+import matplotlib
 import os
 import pysam
 from scipy.stats import gaussian_kde
 from scipy.optimize import minimize_scalar
 import subprocess
 import sys
+import traceback
 from untangled.cmdargs import proportion, FileExists
 
 
@@ -22,6 +23,9 @@ parser.add_argument('--coverage', metavar='proportion', default=0.6, type=propor
 # TODO: add several named commonly used values for bwa_mem_args
 parser.add_argument('--bwa_mem_args', metavar='args',
     help="Command line arguments to pass to bwa mem, default: '-t 16 -A 1 -B 2 -O 2 -E 1'")
+parser.add_argument('--mpl_backend', default="Agg", help="Matplotlib backend to use, default: Agg")
+parser.add_argument('--figure_format', default="png",
+    help="Graph file format. Must be compatible with matplotlib backend. Default: png")
 parser.add_argument('reference', action=FileExists,
     help="Reference sequence to align against")
 parser.add_argument('files', metavar='seqs.fa', nargs='+',
@@ -180,13 +184,18 @@ def summary(acc_dat, name):
 if __name__ == '__main__':
     args = parser.parse_args()
 
+    # Set the mpl backend. The default, Agg, does not require an X server to be running
+    # Note: this must happen before matplotlib.pyplot is imported
+    matplotlib.use(args.mpl_backend)
+    import matplotlib.pyplot as plt
+
     for fn in args.files:
         try:
             prefix, suffix = os.path.splitext(fn)
             samfile = prefix + '.sam'
             samaccfile = prefix + '.samacc'
             summaryfile = prefix + '.summary'
-            graphfile = prefix + '.png'
+            graphfile = prefix + '.' + args.figure_format
 
             # align sequences to reference
             sys.stdout.write("Aligning {}...\n".format(fn))
@@ -212,4 +221,5 @@ if __name__ == '__main__':
                 fs.writelines(report)
         except:
             sys.stderr.write("{}: something went wrong, skipping\n\n".format(fn))
+            sys.stderr.write("Traceback:\n\n{}\n\n".format(traceback.format_exc()))
             continue
