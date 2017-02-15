@@ -19,15 +19,25 @@ def chunkify(ev, chunk_len, kmer_len, use_scaled, normalise):
     ml = len(ev) // chunk_len
     ub = ml * chunk_len
 
-    #
-    # we may pass bigger range to the function below than we would
-    # actually use later, so that features could be studentized using
-    # moments computed using this bigger range
-    #
-    new_inMat = sloika.features.from_events(ev, tag='' if use_scaled else 'scaled_',
-                                     normalise=normalise)
-    ev = ev[0 : ub]
-    new_inMat = new_inMat[0 : ub].reshape((ml, chunk_len, -1))
+    if normalise == 'per-chunk':
+        raise NotImplementedError
+    else:
+        if normalise == 'none':
+            is_normalise = False
+        elif normalise == 'per-read':
+            is_normalise = True
+        else:
+            assert normalise in ['none', 'per-read']
+
+        #
+        # we may pass bigger range to the function below than we would
+        # actually use later, so that features could be studentized using
+        # moments computed using this bigger range
+        #
+        new_inMat = sloika.features.from_events(ev, tag='' if use_scaled else 'scaled_',
+                                         is_normalise=is_normalise)
+        ev = ev[0 : ub]
+        new_inMat = new_inMat[0 : ub].reshape((ml, chunk_len, -1))
 
     #
     # 'model' in the name 'model_kmer_len' refers to the model that was used

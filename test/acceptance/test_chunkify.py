@@ -46,20 +46,49 @@ class AcceptanceTest(unittest.TestCase):
         cmd = [self.script, "hehe"]
         run_cmd(self, cmd).return_code(1).stdout(zeroth_line_starts_with(u"Unsupported command 'hehe'"))
 
-    def test_chunkify_with_identity(self):
+    def test_chunkify_with_identity_without_normalisation(self):
         strand_input_list = os.path.join(self.data_dir, "identity", "na12878_train.txt")
         self.assertTrue(os.path.exists(strand_input_list))
 
         reads_dir = os.path.join(self.data_dir, "identity", "reads")
         self.assertTrue(os.path.exists(reads_dir))
 
-        output_file = os.path.join(self.work_dir, "chunkify_with_identity.hdf5")
+        output_file = os.path.join(self.work_dir, "chunkify_with_identity_without_normalisation.hdf5")
         if os.path.exists(output_file):
             os.remove(output_file)
 
         cmd = [self.script, "identity", "--use_scaled", "--chunk_len", "500", "--kmer_len", "5",
                "--section", "template", "--input_strand_list", strand_input_list,
-               reads_dir, output_file]
+               "--normalise", "none", reads_dir, output_file]
+        run_cmd(self, cmd).return_code(0)
+
+        with h5py.File(output_file, 'r') as fh:
+            top_level_items = []
+            for item in fh:
+                top_level_items.append(item)
+            top_level_items.sort()
+            self.assertEqual(top_level_items, [u'bad', u'chunks', u'labels', u'weights'])
+
+            self.assertEqual(fh['chunks'].shape, (182, 500, 4))
+            chunks = fh['chunks'][:]
+            self.assertClose(chunks.min(), 0)
+            self.assertClose(chunks.max(), 119.626564026)
+            self.assertClose(np.median(chunks), 1.89094209671)
+
+    def test_chunkify_with_identity_with_normalisation(self):
+        strand_input_list = os.path.join(self.data_dir, "identity", "na12878_train.txt")
+        self.assertTrue(os.path.exists(strand_input_list))
+
+        reads_dir = os.path.join(self.data_dir, "identity", "reads")
+        self.assertTrue(os.path.exists(reads_dir))
+
+        output_file = os.path.join(self.work_dir, "chunkify_with_identity_with_normalisation.hdf5")
+        if os.path.exists(output_file):
+            os.remove(output_file)
+
+        cmd = [self.script, "identity", "--use_scaled", "--chunk_len", "500", "--kmer_len", "5",
+               "--section", "template", "--input_strand_list", strand_input_list,
+               "--normalise", "per-read", reads_dir, output_file]
         run_cmd(self, cmd).return_code(0)
 
         with h5py.File(output_file, 'r') as fh:
@@ -97,7 +126,8 @@ class AcceptanceTest(unittest.TestCase):
             os.remove(output_file)
 
         cmd = [self.script, "remap", "--trim", "200", "200", "--use_scaled", "--chunk_len", "500", "--kmer_len", "5",
-               "--section", "template", "--input_strand_list", strand_input_list, "--output_strand_list",
+               "--section", "template", "--input_strand_list", strand_input_list,
+               "--normalise", "per-read", "--output_strand_list",
                strand_output_list, reads_dir, output_file, model_file, reference_file]
 
         run_cmd(self, cmd).return_code(0)
