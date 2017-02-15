@@ -4,13 +4,14 @@ import argparse
 import csv
 from collections import OrderedDict
 import numpy as np
-import matplotlib.pyplot as plt
+import matplotlib
 import os
 import pysam
 from scipy.stats import gaussian_kde
 from scipy.optimize import minimize_scalar
 import subprocess
 import sys
+import traceback
 from untangled.cmdargs import proportion, FileExists
 
 
@@ -18,14 +19,17 @@ parser = argparse.ArgumentParser(
     description='Align reads to reference and output accuracy statistics',
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('--coverage', metavar='proportion', default=0.6, type=proportion,
-    help='Minimum coverage')
+                    help='Minimum coverage')
 # TODO: add several named commonly used values for bwa_mem_args
-parser.add_argument('--bwa_mem_args', metavar='args',
-    help="Command line arguments to pass to bwa mem, default: '-t 16 -A 1 -B 2 -O 2 -E 1'")
+parser.add_argument('--bwa_mem_args', metavar='args', default='-t 16 -A 1 -B 2 -O 2 -E 1',
+                    help="Command line arguments to pass to bwa mem")
+parser.add_argument('--mpl_backend', default="Agg", help="Matplotlib backend to use")
+parser.add_argument('--figure_format', default="png",
+                    help="Figure file format. Must be compatible with matplotlib backend.")
 parser.add_argument('reference', action=FileExists,
-    help="Reference sequence to align against")
-parser.add_argument('files', metavar='seqs.fa', nargs='+',
-    help="One or more fasta files containing queries")
+                    help="Reference sequence to align against")
+parser.add_argument('files', metavar='input', nargs='+',
+                    help="One or more files containing query sequences")
 
 
 STRAND = { 0 : '+',
@@ -34,20 +38,18 @@ STRAND = { 0 : '+',
 QUANTILES = [5, 25, 50, 75, 95]
 
 
-def call_bwa_mem(fin, fout, genome, clargs=None):
+def call_bwa_mem(fin, fout, genome, clargs=''):
     """Call bwa aligner using the subprocess module
 
     :param fin: input sequence filename
     :param fout: filename for the output sam file
     :param genome: path to reference to align against
-    :param clargs: optional command line argumetns to pass to bwa as a string.
-        The default is: "-t 16 -A 1 -B 2 -O 2 -E 1"
+    :param clargs: optional command line arguments to pass to bwa as a string
 
     :returns: stdout of bwa command
 
     :raises: subprocess.CalledProcessError
     """
-    clargs = clargs if clargs is not None else "-t 16 -A 1 -B 2 -O 2 -E 1"
     command_line = "bwa mem {} {} {} > {}".format(clargs, genome, fin, fout)
     try:
         output = subprocess.check_output(command_line,
@@ -180,13 +182,18 @@ def summary(acc_dat, name):
 if __name__ == '__main__':
     args = parser.parse_args()
 
+    # Set the mpl backend. The default, Agg, does not require an X server to be running
+    # Note: this must happen before matplotlib.pyplot is imported
+    matplotlib.use(args.mpl_backend)
+    import matplotlib.pyplot as plt
+
     for fn in args.files:
         try:
             prefix, suffix = os.path.splitext(fn)
             samfile = prefix + '.sam'
             samaccfile = prefix + '.samacc'
             summaryfile = prefix + '.summary'
-            graphfile = prefix + '.png'
+            graphfile = prefix + '.' + args.figure_format
 
             # align sequences to reference
             sys.stdout.write("Aligning {}...\n".format(fn))
@@ -212,4 +219,5 @@ if __name__ == '__main__':
                 fs.writelines(report)
         except:
             sys.stderr.write("{}: something went wrong, skipping\n\n".format(fn))
+            sys.stderr.write("Traceback:\n\n{}\n\n".format(traceback.format_exc()))
             continue
