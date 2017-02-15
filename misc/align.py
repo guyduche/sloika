@@ -12,6 +12,7 @@ from scipy.stats import gaussian_kde
 from scipy.optimize import minimize_scalar
 import subprocess
 import sys
+import traceback
 from untangled.cmdargs import proportion, FileExists
 
 
@@ -217,4 +218,5 @@ if __name__ == '__main__':
                 fs.writelines(report)
         except:
             sys.stderr.write("{}: something went wrong, skipping\n\n".format(fn))
+            sys.stderr.write("Traceback:\n\n{}\n\n".format(traceback.format_exc()))
             continue
