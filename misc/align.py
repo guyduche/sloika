@@ -5,7 +5,6 @@ import csv
 from collections import OrderedDict
 import numpy as np
 import matplotlib
-import matplotlib.pyplot as plt
 import os
 import pysam
 from scipy.stats import gaussian_kde
@@ -184,7 +183,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # Set the mpl backend. The default, Agg, does not require an X server to be running
+    # Note: this must happen before matplotlib.pyplot is imported
     matplotlib.use(args.mpl_backend)
+    import matplotlib.pyplot as plt
 
     for fn in args.files:
         try:
