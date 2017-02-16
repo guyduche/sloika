@@ -69,7 +69,7 @@ class AcceptanceTest(unittest.TestCase):
         with tempfile.NamedTemporaryFile(suffix=".hdf5", delete=False) as fh:
             output_file_name = fh.name
 
-        cmd = [self.script, "identity", "--use_scaled", "--chunk_len", "500", "--kmer_len", "5",
+        cmd = [self.script, "identity", "--chunk_len", "500", "--kmer_len", "5",
                "--section", "template", "--input_strand_list", strand_input_list,
                reads_dir, output_file_name] + options
 
@@ -112,7 +112,7 @@ class AcceptanceTest(unittest.TestCase):
         with tempfile.NamedTemporaryFile(suffix=".hdf5", delete=False) as fh:
             output_file_name = fh.name
 
-        cmd = [self.script, "remap", "--trim", "200", "200", "--use_scaled", "--chunk_len", "500", "--kmer_len", "5",
+        cmd = [self.script, "remap", "--trim", "200", "200", "--chunk_len", "500", "--kmer_len", "5",
                "--section", "template", "--input_strand_list", strand_input_list,
                "--output_strand_list",
                strand_output_list, reads_dir, output_file_name, model_file, reference_file] + options
