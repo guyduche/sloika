@@ -9,7 +9,7 @@ from untangled.cmdargs import (AutoBool, FileAbsent, FileExists, Maybe,
 
 from sloika.tools.chunkify_with_identity import chunkify_with_identity_main
 from sloika.tools.chunkify_with_remap import chunkify_with_remap_main
-from sloika import features
+from sloika import batch
 
 
 def common_parser(argv, commands):
@@ -35,7 +35,7 @@ def common_parser(argv, commands):
                         help='Limit number of reads to process')
     parser.add_argument('--min_length', default=1200, metavar='events',
                         type=Positive(int), help='Minimum events in acceptable read')
-    parser.add_argument('--normalisation', default=features.default_normalisation, choices=features.available_normalisations,
+    parser.add_argument('--normalisation', default=batch.default_normalisation, choices=batch.available_normalisations,
                         help='Whether to perform studentisation and with what scope')
     parser.add_argument('--overwrite', default=False, action=AutoBool,
                         help='Whether to overwrite any output files')

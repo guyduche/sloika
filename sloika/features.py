@@ -3,11 +3,6 @@ from sloika.config import sloika_dtype
 from untangled.maths import studentise
 
 
-default_normalisation = 'per-read'
-
-available_normalisations = set(['none', 'per-read', 'per-chunk'])
-
-
 def from_events(ev, tag='scaled_', normalise=True, nanonet=False):
     """  Create a matrix of features from
 

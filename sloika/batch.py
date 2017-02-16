@@ -15,6 +15,11 @@ import sloika.transducer
 from untangled import bio, fast5
 
 
+default_normalisation = 'per-read'
+
+available_normalisations = set(['none', 'per-read', 'per-chunk'])
+
+
 def chunkify(ev, chunk_len, kmer_len, use_scaled, normalisation):
     ml = len(ev) // chunk_len
     ub = ml * chunk_len
