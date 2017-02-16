@@ -18,30 +18,39 @@ from untangled import bio, fast5
 def chunkify(ev, chunk_len, kmer_len, use_scaled, normalise):
     ml = len(ev) // chunk_len
     ub = ml * chunk_len
+    tag = '' if use_scaled else 'scaled_'  # TODO(semen): counter-intuitively named flag / plumbing
 
     if normalise == 'per-chunk':
-        raise NotImplementedError
+        new_inMat = []
+        for chunk_index in range(ml):
+            chunk_start = chunk_index * chunk_len
+            chunk_finish = chunk_start + chunk_len
+
+            # padding of 1 is needed for features to calculate step deltas
+            chunk_finish_maybe_with_padding = min(chunk_finish + 1, len(ev))
+
+            chunk_features = sloika.features.from_events(
+                ev[chunk_start : chunk_finish_maybe_with_padding], tag=tag, is_normalise=True)
+            new_inMat.append(chunk_features[:chunk_len, :])
+        new_inMat = np.vstack(new_inMat)
     else:
-        if normalise == 'none':
-            is_normalise = False
-        elif normalise == 'per-read':
-            is_normalise = True
-        else:
-            assert normalise in ['none', 'per-read']
+        assert normalise in ['none', 'per-read']
+        is_normalise = normalise == 'per-read'
 
         #
-        # we may pass bigger range to the function below than we would
+        # we may pass bigger ev range to from_events() function than we would
         # actually use later, so that features could be studentized using
-        # moments computed using this bigger range
+        # moments computed using this bigger range; we reset the range in (*) and (**)
         #
-        new_inMat = sloika.features.from_events(ev, tag='' if use_scaled else 'scaled_',
-                                         is_normalise=is_normalise)
-        ev = ev[0 : ub]
-        new_inMat = new_inMat[0 : ub].reshape((ml, chunk_len, -1))
+        new_inMat = sloika.features.from_events(ev, tag=tag, is_normalise=is_normalise)
+        new_inMat = new_inMat[0 : ub]  # reset range (*)
+
+    new_inMat = new_inMat.reshape((ml, chunk_len, -1))
+    ev = ev[0 : ub]  # reset range (**)
 
     #
     # 'model' in the name 'model_kmer_len' refers to the model that was used
-    # to map the reads read from the fast5 file above
+    # to map the reads read from fast5 file
     #
     model_kmer_len = len(ev['kmer'][0])
     # Use rightmost middle kmer
@@ -128,8 +137,8 @@ def remap(read_ref, ev, min_prob, transducer, kmer_len, prior, slip):
     prior1 = None if prior[1] is None else sloika.util.geometric_prior(len(seq), prior[1], rev=True)
 
     score, path = sloika.transducer.map_to_sequence(post, seq, slip=slip,
-                                             prior_initial=prior0,
-                                             prior_final=prior1, log=False)
+                                                    prior_initial=prior0,
+                                                    prior_final=prior1, log=False)
 
     ev = nprf.append_fields(ev, ['seq_pos', 'kmer', 'good_emission'],
                             [path, kmers[path], np.repeat(True, len(ev))])
@@ -164,4 +173,3 @@ def chunk_remap_worker(fn, trim, min_prob, transducer, kmer_len, prior, slip, ch
     (chunks, labels, bad_ev) = chunkify(ev, chunk_len, kmer_len, use_scaled, normalise)
 
     return sn + '.fast5', score, len(ev), path, seq, chunks, labels, bad_ev
-
