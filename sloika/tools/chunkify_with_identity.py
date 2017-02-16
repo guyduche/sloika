@@ -1,6 +1,8 @@
 from __future__ import print_function
 
 import argparse
+import os
+import sys
 import numpy as np
 
 from sloika import batch, util
@@ -14,6 +16,11 @@ from untangled import fast5
 
 def chunkify_with_identity_main(argv, parser):
     args = parser.parse_args(argv)
+
+    if not args.overwrite:
+        if os.path.exists(args.output):
+            print("Cowardly refusing to overwrite {}".format(args.output))
+            sys.exit(1)
 
     fast5_files = fast5.iterate_fast5(args.input_folder, paths=True,
                                       limit=args.limit,

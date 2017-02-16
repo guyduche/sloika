@@ -3,6 +3,7 @@ import os
 import shutil
 import h5py
 import shutil
+import tempfile
 import difflib
 
 import numpy as np
@@ -53,16 +54,18 @@ class AcceptanceTest(unittest.TestCase):
         reads_dir = os.path.join(self.data_dir, "identity", "reads")
         self.assertTrue(os.path.exists(reads_dir))
 
-        output_file = os.path.join(self.work_dir, "chunkify_with_identity_without_normalisation.hdf5")
-        if os.path.exists(output_file):
-            os.remove(output_file)
+        with tempfile.NamedTemporaryFile(suffix=".hdf5", delete=False) as fh:
+            output_file_name = fh.name
 
         cmd = [self.script, "identity", "--use_scaled", "--chunk_len", "500", "--kmer_len", "5",
                "--section", "template", "--input_strand_list", strand_input_list,
-               "--normalise", "none", reads_dir, output_file]
-        run_cmd(self, cmd).return_code(0)
+               "--normalise", "none", reads_dir, output_file_name]
 
-        with h5py.File(output_file, 'r') as fh:
+        run_cmd(self, cmd).return_code(1)
+
+        run_cmd(self, cmd + ['--overwrite']).return_code(0)
+
+        with h5py.File(output_file_name, 'r') as fh:
             top_level_items = []
             for item in fh:
                 top_level_items.append(item)
@@ -75,6 +78,8 @@ class AcceptanceTest(unittest.TestCase):
             self.assertClose(chunks.max(), 119.626564026)
             self.assertClose(np.median(chunks), 1.89094209671)
 
+        os.remove(output_file_name)
+
     def test_chunkify_with_identity_with_normalisation(self):
         strand_input_list = os.path.join(self.data_dir, "identity", "na12878_train.txt")
         self.assertTrue(os.path.exists(strand_input_list))
@@ -82,16 +87,18 @@ class AcceptanceTest(unittest.TestCase):
         reads_dir = os.path.join(self.data_dir, "identity", "reads")
         self.assertTrue(os.path.exists(reads_dir))
 
-        output_file = os.path.join(self.work_dir, "chunkify_with_identity_with_normalisation.hdf5")
-        if os.path.exists(output_file):
-            os.remove(output_file)
+        with tempfile.NamedTemporaryFile(suffix=".hdf5", delete=False) as fh:
+            output_file_name = fh.name
 
         cmd = [self.script, "identity", "--use_scaled", "--chunk_len", "500", "--kmer_len", "5",
                "--section", "template", "--input_strand_list", strand_input_list,
-               "--normalise", "per-read", reads_dir, output_file]
-        run_cmd(self, cmd).return_code(0)
+               "--normalise", "per-read", reads_dir, output_file_name]
 
-        with h5py.File(output_file, 'r') as fh:
+        run_cmd(self, cmd).return_code(1)
+
+        run_cmd(self, cmd + ['--overwrite']).return_code(0)
+
+        with h5py.File(output_file_name, 'r') as fh:
             top_level_items = []
             for item in fh:
                 top_level_items.append(item)
@@ -103,6 +110,8 @@ class AcceptanceTest(unittest.TestCase):
             self.assertClose(chunks.min(), -2.8844583)
             self.assertClose(chunks.max(), 14.225174)
             self.assertClose(np.median(chunks), -0.254353493452)
+
+        os.remove(output_file_name)
 
     def test_chunkify_with_remap(self):
         strand_input_list = os.path.join(self.data_dir, "remap", "strand_output_list.txt")
@@ -117,22 +126,26 @@ class AcceptanceTest(unittest.TestCase):
         reference_file = os.path.join(self.data_dir, "remap", "reference.fa")
         self.assertTrue(os.path.exists(reference_file))
 
-        strand_output_list = os.path.join(self.work_dir, "strand_output_list.txt")
-        if os.path.exists(strand_output_list):
-            os.remove(strand_output_list)
+        with tempfile.NamedTemporaryFile(prefix="strand_output_list", suffix=".txt", delete=False) as fh:
+            strand_output_list = fh.name
 
-        output_file = os.path.join(self.work_dir, "chunkify_with_remap.hdf5")
-        if os.path.exists(output_file):
-            os.remove(output_file)
+        with tempfile.NamedTemporaryFile(suffix=".hdf5", delete=False) as fh:
+            output_file_name = fh.name
 
         cmd = [self.script, "remap", "--trim", "200", "200", "--use_scaled", "--chunk_len", "500", "--kmer_len", "5",
                "--section", "template", "--input_strand_list", strand_input_list,
                "--normalise", "per-read", "--output_strand_list",
-               strand_output_list, reads_dir, output_file, model_file, reference_file]
+               strand_output_list, reads_dir, output_file_name, model_file, reference_file]
 
-        run_cmd(self, cmd).return_code(0)
+        run_cmd(self, cmd).return_code(1)
 
-        with h5py.File(output_file, 'r') as fh:
+        os.remove(output_file_name)
+
+        run_cmd(self, cmd).return_code(2)
+
+        run_cmd(self, cmd + ['--overwrite']).return_code(0)
+
+        with h5py.File(output_file_name, 'r') as fh:
             top_level_items = []
             for item in fh:
                 top_level_items.append(item)
@@ -144,3 +157,6 @@ class AcceptanceTest(unittest.TestCase):
             self.assertClose(chunks.min(), -2.70142698288)
             self.assertClose(chunks.max(), 12.7569065094)
             self.assertClose(np.median(chunks), -0.238316237926)
+
+        os.remove(output_file_name)
+        os.remove(strand_output_list)
