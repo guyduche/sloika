@@ -18,8 +18,12 @@ from utils import run_cmd, is_close, maybe_create_dir, zeroth_line_starts_with
 class AcceptanceTest(unittest.TestCase):
     known_commands = ["identity", "remap"]
 
-    # per-read normalisation is the default
-    default_normalisation_options = [[[]], [["--normalise", "per-read"]]]
+    identity_io = [[[], (182, 500, 4), -2.8844583, 14.225174, -0.254353493452],
+                   [["--normalise", "per-read"], (182, 500, 4), -2.8844583, 14.225174, -0.254353493452],
+                   ]
+    remap_io = [[[], (33, 500, 4), -2.70142698288, 12.7569065094, -0.238316237926],
+                [["--normalise", "per-read"], (33, 500, 4), -2.70142698288, 12.7569065094, -0.238316237926],
+                ]
 
     @classmethod
     def setUpClass(self):
@@ -50,7 +54,8 @@ class AcceptanceTest(unittest.TestCase):
         cmd = [self.script, "hehe"]
         run_cmd(self, cmd).return_code(1).stdout(zeroth_line_starts_with(u"Unsupported command 'hehe'"))
 
-    def test_chunkify_with_identity_without_normalisation(self):
+    @parameterized.expand(identity_io)
+    def test_chunkify_with_identity_with_normalisation(self, options, chunks_shape, min_value, max_value, median_value):
         strand_input_list = os.path.join(self.data_dir, "identity", "na12878_train.txt")
         self.assertTrue(os.path.exists(strand_input_list))
 
@@ -62,7 +67,7 @@ class AcceptanceTest(unittest.TestCase):
 
         cmd = [self.script, "identity", "--use_scaled", "--chunk_len", "500", "--kmer_len", "5",
                "--section", "template", "--input_strand_list", strand_input_list,
-               "--normalise", "none", reads_dir, output_file_name]
+               reads_dir, output_file_name] + options
 
         run_cmd(self, cmd).return_code(1)
 
@@ -75,50 +80,16 @@ class AcceptanceTest(unittest.TestCase):
             top_level_items.sort()
             self.assertEqual(top_level_items, [u'bad', u'chunks', u'labels', u'weights'])
 
-            self.assertEqual(fh['chunks'].shape, (182, 500, 4))
+            self.assertEqual(fh['chunks'].shape, chunks_shape)
             chunks = fh['chunks'][:]
-            self.assertClose(chunks.min(), 0)
-            self.assertClose(chunks.max(), 119.626564026)
-            self.assertClose(np.median(chunks), 1.89094209671)
+            self.assertClose(chunks.min(), min_value)
+            self.assertClose(chunks.max(), max_value)
+            self.assertClose(np.median(chunks), median_value)
 
         os.remove(output_file_name)
 
-    @parameterized.expand(default_normalisation_options)
-    def test_chunkify_with_identity_with_normalisation(self, normalisation_options):
-        strand_input_list = os.path.join(self.data_dir, "identity", "na12878_train.txt")
-        self.assertTrue(os.path.exists(strand_input_list))
-
-        reads_dir = os.path.join(self.data_dir, "identity", "reads")
-        self.assertTrue(os.path.exists(reads_dir))
-
-        with tempfile.NamedTemporaryFile(suffix=".hdf5", delete=False) as fh:
-            output_file_name = fh.name
-
-        cmd = [self.script, "identity", "--use_scaled", "--chunk_len", "500", "--kmer_len", "5",
-               "--section", "template", "--input_strand_list", strand_input_list,
-               reads_dir, output_file_name] + normalisation_options
-
-        run_cmd(self, cmd).return_code(1)
-
-        run_cmd(self, cmd + ['--overwrite']).return_code(0)
-
-        with h5py.File(output_file_name, 'r') as fh:
-            top_level_items = []
-            for item in fh:
-                top_level_items.append(item)
-            top_level_items.sort()
-            self.assertEqual(top_level_items, [u'bad', u'chunks', u'labels', u'weights'])
-
-            self.assertEqual(fh['chunks'].shape, (182, 500, 4))
-            chunks = fh['chunks'][:]
-            self.assertClose(chunks.min(), -2.8844583)
-            self.assertClose(chunks.max(), 14.225174)
-            self.assertClose(np.median(chunks), -0.254353493452)
-
-        os.remove(output_file_name)
-
-    @parameterized.expand(default_normalisation_options)
-    def test_chunkify_with_remap_with_normalisation(self, normalisation_options):
+    @parameterized.expand(remap_io)
+    def test_chunkify_with_remap_with_normalisation(self, options, chunks_shape, min_value, max_value, median_value):
         strand_input_list = os.path.join(self.data_dir, "remap", "strand_output_list.txt")
         self.assertTrue(os.path.exists(strand_input_list))
 
@@ -140,7 +111,7 @@ class AcceptanceTest(unittest.TestCase):
         cmd = [self.script, "remap", "--trim", "200", "200", "--use_scaled", "--chunk_len", "500", "--kmer_len", "5",
                "--section", "template", "--input_strand_list", strand_input_list,
                "--output_strand_list",
-               strand_output_list, reads_dir, output_file_name, model_file, reference_file] + normalisation_options
+               strand_output_list, reads_dir, output_file_name, model_file, reference_file] + options
 
         run_cmd(self, cmd).return_code(1)
 
@@ -157,11 +128,11 @@ class AcceptanceTest(unittest.TestCase):
             top_level_items.sort()
             self.assertEqual(top_level_items, [u'bad', u'chunks', u'labels', u'weights'])
 
-            self.assertEqual(fh['chunks'].shape, (33, 500, 4))
+            self.assertEqual(fh['chunks'].shape, chunks_shape)
             chunks = fh['chunks'][:]
-            self.assertClose(chunks.min(), -2.70142698288)
-            self.assertClose(chunks.max(), 12.7569065094)
-            self.assertClose(np.median(chunks), -0.238316237926)
+            self.assertClose(chunks.min(), min_value)
+            self.assertClose(chunks.max(), max_value)
+            self.assertClose(np.median(chunks), median_value)
 
         os.remove(output_file_name)
         os.remove(strand_output_list)
