@@ -36,7 +36,7 @@ class Result:
         return '\n'.join(L)
 
     def return_code(self, expected_return_code):
-        msg = "expected return code %s but got %s in: %s" % (self._return_code, expected_return_code, self)
+        msg = "expected return code %s but got %s in: %s" % (expected_return_code, self._return_code, self)
         self.test_case.assertEqual(expected_return_code, self._return_code, msg)
         return self
 
