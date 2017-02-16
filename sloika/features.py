@@ -3,12 +3,12 @@ from sloika.config import sloika_dtype
 from untangled.maths import studentise
 
 
-def from_events(ev, tag='scaled_', is_normalise=True, nanonet=False):
+def from_events(ev, tag='scaled_', normalise=True, nanonet=False):
     """  Create a matrix of features from
 
     :param ev: A :class:`ndrecarray` with fields 'mean', 'stdv' and 'length'
     :param tag: Prefix of which fields to read
-    :param is_normalise: Perform normalisation (Studentisation) of features.
+    :param normalise: Perform normalisation (Studentisation) of features.
     :param nanonet: Use Nanonet-like features
 
     :returns: A :class:`ndarray` with studentised features
@@ -21,7 +21,7 @@ def from_events(ev, tag='scaled_', is_normalise=True, nanonet=False):
     #  Zero pad delta mean
     features[:, 3] = np.fabs(np.ediff1d(ev[tag + 'mean'], to_end=0))
 
-    if is_normalise:
+    if normalise:
         features = studentise(features, axis=0)
 
     if nanonet:

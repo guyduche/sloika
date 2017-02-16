@@ -20,12 +20,12 @@ default_normalisation = 'per-read'
 available_normalisations = set(['none', 'per-read', 'per-chunk'])
 
 
-def chunkify(ev, chunk_len, kmer_len, use_scaled, normalise):
+def chunkify(ev, chunk_len, kmer_len, use_scaled, normalisation):
     ml = len(ev) // chunk_len
     ub = ml * chunk_len
     tag = 'scaled_' if use_scaled else ''
 
-    if normalise == 'per-chunk':
+    if normalisation == 'per-chunk':
         new_inMat = []
         for chunk_index in range(ml):
             chunk_start = chunk_index * chunk_len
@@ -35,19 +35,19 @@ def chunkify(ev, chunk_len, kmer_len, use_scaled, normalise):
             chunk_finish_maybe_with_padding = min(chunk_finish + 1, len(ev))
 
             chunk_features = sloika.features.from_events(
-                ev[chunk_start : chunk_finish_maybe_with_padding], tag=tag, is_normalise=True)
+                ev[chunk_start : chunk_finish_maybe_with_padding], tag=tag, normalise=True)
             new_inMat.append(chunk_features[:chunk_len])
         new_inMat = np.concatenate(new_inMat)
     else:
-        assert normalise in ['none', 'per-read']
-        is_normalise = normalise == 'per-read'
+        assert normalisation in ['none', 'per-read']
+        normalise = normalisation == 'per-read'
 
         #
         # we may pass bigger ev range to from_events() function than we would
         # actually use later, so that features could be studentized using
         # moments computed using this bigger range; we reset the range in (*) and (**)
         #
-        new_inMat = sloika.features.from_events(ev, tag=tag, is_normalise=is_normalise)
+        new_inMat = sloika.features.from_events(ev, tag=tag, normalise=normalise)
         new_inMat = new_inMat[0 : ub]  # reset range (*)
 
     new_inMat = new_inMat.reshape((ml, chunk_len, -1))
@@ -81,7 +81,7 @@ def chunkify(ev, chunk_len, kmer_len, use_scaled, normalise):
 
 
 def chunk_worker(fn, section, chunk_len, kmer_len, min_length, trim, use_scaled,
-                 normalise):
+                 normalisation):
     """ Chunkifies data for training
 
     :param fn: A filename to read from
@@ -91,7 +91,7 @@ def chunk_worker(fn, section, chunk_len, kmer_len, min_length, trim, use_scaled,
     :param min_length: Minimum number of events before read can be considered
     :param trim: Tuple (beginning, end) of number of events to trim from read
     :param use_scaled: Use prescaled event statistics
-    :param normalise: Type of normalisation to perform
+    :param normalisation: Type of normalisation to perform
 
     :yields: A tuple containing a 3D :class:`ndarray` of size
     (X, chunk_len, nfeatures) containing the features for the batch,
@@ -112,7 +112,7 @@ def chunk_worker(fn, section, chunk_len, kmer_len, min_length, trim, use_scaled,
     end = None if end is 0 else -end
     ev = ev[begin : end]
 
-    return chunkify(ev, chunk_len, kmer_len, use_scaled, normalise)
+    return chunkify(ev, chunk_len, kmer_len, use_scaled, normalisation)
 
 
 def init_chunk_remap_worker(model, fasta, kmer_len):
@@ -151,7 +151,7 @@ def remap(read_ref, ev, min_prob, transducer, kmer_len, prior, slip):
     return (score, ev, path, seq)
 
 
-def chunk_remap_worker(fn, trim, min_prob, transducer, kmer_len, prior, slip, chunk_len, use_scaled, normalise):
+def chunk_remap_worker(fn, trim, min_prob, transducer, kmer_len, prior, slip, chunk_len, use_scaled, normalisation):
     try:
         with fast5.Reader(fn) as f5:
             ev = f5.get_read()
@@ -175,6 +175,6 @@ def chunk_remap_worker(fn, trim, min_prob, transducer, kmer_len, prior, slip, ch
     ev = ev[begin : end]
 
     (score, ev, path, seq) = remap(read_ref, ev, min_prob, transducer, kmer_len, prior, slip)
-    (chunks, labels, bad_ev) = chunkify(ev, chunk_len, kmer_len, use_scaled, normalise)
+    (chunks, labels, bad_ev) = chunkify(ev, chunk_len, kmer_len, use_scaled, normalisation)
 
     return sn + '.fast5', score, len(ev), path, seq, chunks, labels, bad_ev
