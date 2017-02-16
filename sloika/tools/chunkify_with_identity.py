@@ -28,7 +28,7 @@ def chunkify_with_identity_main(argv, parser):
 
     print('* Processing data using', args.jobs, 'threads')
 
-    kwarg_names = ['section', 'chunk_len', 'kmer_len', 'min_length', 'trim', 'use_scaled', 'normalisation']
+    kwarg_names = ['section', 'chunk_len', 'kmer_len', 'min_length', 'trim', 'use_scaled', 'normalise']
     i = 0
     bad_list = []
     chunk_list = []

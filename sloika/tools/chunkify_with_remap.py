@@ -60,7 +60,7 @@ def chunkify_with_remap_main(argv, parser):
     print('* Processing data using', args.jobs, 'threads')
 
     kwarg_names = ['trim', 'min_prob', 'transducer', 'kmer_len',
-                   'prior', 'slip', 'chunk_len', 'use_scaled', 'normalisation']
+                   'prior', 'slip', 'chunk_len', 'use_scaled', 'normalise']
     i = 0
     compiled_file = helpers.compile_model(args.model, args.compile)
     output_strand_list_entries = []
