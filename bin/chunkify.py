@@ -45,7 +45,7 @@ def common_parser(argv, commands):
                         metavar=('beginning', 'end'),
                         help='Number of events to trim off start and end')
     parser.add_argument('--use_scaled', default=False, action=AutoBool,
-                        help='Train from scaled event statistics')  # TODO(semen): check this default
+                        help='Train from scaled event statistics')
 
     parser.add_argument('input_folder', action=FileExists,
                         help='Directory containing single-read fast5 files')
