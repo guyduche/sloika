@@ -18,7 +18,7 @@ from untangled import bio, fast5
 def chunkify(ev, chunk_len, kmer_len, use_scaled, normalise):
     ml = len(ev) // chunk_len
     ub = ml * chunk_len
-    tag = '' if use_scaled else 'scaled_'  # TODO(semen): counter-intuitively named flag / plumbing
+    tag = 'scaled_' if use_scaled else ''
 
     if normalise == 'per-chunk':
         new_inMat = []
