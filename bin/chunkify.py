@@ -35,7 +35,7 @@ def common_parser(argv, commands):
                         help='Limit number of reads to process')
     parser.add_argument('--min_length', default=1200, metavar='events',
                         type=Positive(int), help='Minimum events in acceptable read')
-    parser.add_argument('--normalise', default=features.default_normalisation, choices=features.available_normalisations,
+    parser.add_argument('--normalisation', default=features.default_normalisation, choices=features.available_normalisations,
                         help='Whether to perform studentisation and with what scope')
     parser.add_argument('--overwrite', default=False, action=AutoBool,
                         help='Whether to overwrite any output files')
@@ -50,7 +50,6 @@ def common_parser(argv, commands):
     parser.add_argument('input_folder', action=FileExists,
                         help='Directory containing single-read fast5 files')
     parser.add_argument('output', help='Output HDF5 file')
-
 
     return (argv[2:], parser)
 
