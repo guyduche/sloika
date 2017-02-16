@@ -18,6 +18,9 @@ from utils import run_cmd, is_close, maybe_create_dir, zeroth_line_starts_with
 class AcceptanceTest(unittest.TestCase):
     known_commands = ["identity", "remap"]
 
+    # per-read normalisation is the default
+    default_normalisation_options = [[[]], [["--normalise", "per-read"]]]
+
     @classmethod
     def setUpClass(self):
         self.test_directory = os.path.splitext(__file__)[0]
@@ -80,7 +83,8 @@ class AcceptanceTest(unittest.TestCase):
 
         os.remove(output_file_name)
 
-    def test_chunkify_with_identity_with_normalisation(self):
+    @parameterized.expand(default_normalisation_options)
+    def test_chunkify_with_identity_with_normalisation(self, normalisation_options):
         strand_input_list = os.path.join(self.data_dir, "identity", "na12878_train.txt")
         self.assertTrue(os.path.exists(strand_input_list))
 
@@ -92,7 +96,7 @@ class AcceptanceTest(unittest.TestCase):
 
         cmd = [self.script, "identity", "--use_scaled", "--chunk_len", "500", "--kmer_len", "5",
                "--section", "template", "--input_strand_list", strand_input_list,
-               "--normalise", "per-read", reads_dir, output_file_name]
+               reads_dir, output_file_name] + normalisation_options
 
         run_cmd(self, cmd).return_code(1)
 
@@ -113,7 +117,8 @@ class AcceptanceTest(unittest.TestCase):
 
         os.remove(output_file_name)
 
-    def test_chunkify_with_remap(self):
+    @parameterized.expand(default_normalisation_options)
+    def test_chunkify_with_remap_with_normalisation(self, normalisation_options):
         strand_input_list = os.path.join(self.data_dir, "remap", "strand_output_list.txt")
         self.assertTrue(os.path.exists(strand_input_list))
 
@@ -134,8 +139,8 @@ class AcceptanceTest(unittest.TestCase):
 
         cmd = [self.script, "remap", "--trim", "200", "200", "--use_scaled", "--chunk_len", "500", "--kmer_len", "5",
                "--section", "template", "--input_strand_list", strand_input_list,
-               "--normalise", "per-read", "--output_strand_list",
-               strand_output_list, reads_dir, output_file_name, model_file, reference_file]
+               "--output_strand_list",
+               strand_output_list, reads_dir, output_file_name, model_file, reference_file] + normalisation_options
 
         run_cmd(self, cmd).return_code(1)
 
