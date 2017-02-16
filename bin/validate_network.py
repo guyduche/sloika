@@ -96,11 +96,11 @@ if __name__ == '__main__':
         if (i + 1) % 50 == 0:
             tn = time.time()
             dt = tn - t1
-            sys.stdout.write(' {:5d} {:5.3f}  {:5.2f}%  {:5.2f}s ({:.2f} kev/s)\n'.format((i + 1) //
-                                                                                          50, score / wscore, 100.0 * acc / wacc, dt, line_ev / 1000.0 / dt))
+            t = ' {:5d} {:5.3f}  {:5.2f}%  {:5.2f}s ({:.2f} kev/s)\n'
+            sys.stdout.write(t.format((i + 1) // 50, score / wscore, 100.0 * acc / wacc, dt, line_ev / 1000.0 / dt))
             line_ev = 0
             t1 = tn
 
     dt = time.time() - t0
-    sys.stdout.write('\nFinal {:5.3f}  {:5.2f}%  {:5.2f}s ({:.2f} kev/s)\n'.format(score /
-                                                                                   wscore, 100.0 * acc / wacc, dt, total_ev / 1000.0 / dt))
+    t = '\nFinal {:5.3f}  {:5.2f}%  {:5.2f}s ({:.2f} kev/s)\n'
+    sys.stdout.write(t.format(score / wscore, 100.0 * acc / wacc, dt, total_ev / 1000.0 / dt))

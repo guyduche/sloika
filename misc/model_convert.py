@@ -9,7 +9,8 @@ from theano.sandbox.cuda.var import CudaNdarraySharedVariable
 import theano as th
 
 parser = argparse.ArgumentParser(
-    'Converts pickled sloika model between CPU and GPU (CUDA) versions.', epilog='If you encounter problems please contact joe.harvey@nanoporetech.com')
+    'Converts pickled sloika model between CPU and GPU (CUDA) versions.',
+    epilog='If you encounter problems please contact joe.harvey@nanoporetech.com')
 parser.add_argument('--target', default='swap',
                     choices=('cpu', 'gpu', 'swap'), help='Target device (cpu, gpu or swap)')
 parser.add_argument('model', action=FileExists,
@@ -84,7 +85,8 @@ if __name__ == '__main__':
     objs, names, devices = zip(*shared_vars)
 
     if args.target == 'swap':
-        swap = lambda s: ('cpu' if s == 'gpu' else 'gpu')
+        def swap(s):
+            return ('cpu' if s == 'gpu' else 'gpu')
         targets = map(swap, devices)
         if len(set(targets)) > 1:
             sys.stderr.write(SWAP_WARNING.format(list(set(targets))))

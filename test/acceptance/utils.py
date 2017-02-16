@@ -117,8 +117,8 @@ if __name__ == '__main__':
     assert drop_lines(["c", "ab"], "a") == ["c", "ab"]
     assert drop_lines(["ab", "c"], "a") == ["c"]
 
-    assert zeroth_line_starts_with('a')([]) == False
-    assert zeroth_line_starts_with('a')(['a']) == True
-    assert zeroth_line_starts_with('a')(['a', 'a']) == True
-    assert zeroth_line_starts_with('a')(['a', 'b']) == True
-    assert zeroth_line_starts_with('a')(['b', 'a']) == False
+    assert not zeroth_line_starts_with('a')([])
+    assert zeroth_line_starts_with('a')(['a'])
+    assert zeroth_line_starts_with('a')(['a', 'a'])
+    assert zeroth_line_starts_with('a')(['a', 'b'])
+    assert not zeroth_line_starts_with('a')(['b', 'a'])

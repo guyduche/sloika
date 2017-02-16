@@ -67,8 +67,10 @@ def chunkify_with_remap_main(argv, parser):
     bad_list = []
     chunk_list = []
     label_list = []
-    for res in imap_mp(batch.chunk_remap_worker, fast5_files, threads=args.jobs, fix_kwargs=util.get_kwargs(args, kwarg_names),
-                       unordered=True, init=batch.init_chunk_remap_worker, initargs=[compiled_file, args.references, args.kmer_len]):
+    for res in imap_mp(batch.chunk_remap_worker, fast5_files, threads=args.jobs,
+                       fix_kwargs=util.get_kwargs(args, kwarg_names),
+                       unordered=True, init=batch.init_chunk_remap_worker,
+                       initargs=[compiled_file, args.references, args.kmer_len]):
         if res is not None:
             i = util.progress_report(i)
             read, score, nev, path, seq, chunks, labels, bad_ev = res

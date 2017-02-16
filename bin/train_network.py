@@ -230,8 +230,8 @@ if __name__ == '__main__':
         if (i + 1) % 50 == 0:
             tn = time.time()
             dt = tn - t0
-            log.write(' {:5d} {:5.3f}  {:5.2f}%  {:5.2f}s ({:.2f} kev/s)\n'.format((i + 1) //
-                                                                                   50, score / wscore, 100.0 * acc / wacc, dt, total_ev / 1000.0 / dt))
+            t = ' {:5d} {:5.3f}  {:5.2f}%  {:5.2f}s ({:.2f} kev/s)\n'
+            log.write(t.format((i + 1) // 50, score / wscore, 100.0 * acc / wacc, dt, total_ev / 1000.0 / dt))
             total_ev = 0
             t0 = tn
 

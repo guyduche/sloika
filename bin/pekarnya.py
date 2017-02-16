@@ -93,8 +93,10 @@ def run_job(args):
     pmem = 0.8 * min(clargs.ngpu / float(clargs.jobs), 1)
     # Theano flags
     env = os.environ.copy()
-    env['THEANO_FLAGS'] = 'floatX=float32,warn_float64=warn,optimizer=fast_run,nvcc.fastmath=True,device=gpu{},scan.allow_gc=False,lib.cnmem={}'.format(
-        gpu, pmem)
+    t = ('floatX=float32,warn_float64=warn,optimizer=fast_run,nvcc.fastmath=True,'
+         'device=gpu{},scan.allow_gc=False,lib.cnmem={}'
+         )
+    env['THEANO_FLAGS'] = t.format(gpu, pmem)
 
     # arglist for training
     arglist = [os.path.join(sloika_gitdir, "bin/train_network.py"),

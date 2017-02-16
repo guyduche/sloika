@@ -140,8 +140,8 @@ if __name__ == '__main__':
         nbases += seq_len
         nevents += nev
     dt = time.time() - t0
-    sys.stderr.write('Called {} bases in {:.1f} s ({:.1f} bases/s or {:.1f} events/s)\n'.format(nbases,
-                                                                                                dt, nbases / dt, nevents / dt))
+    t = 'Called {} bases in {:.1f} s ({:.1f} bases/s or {:.1f} events/s)\n'
+    sys.stderr.write(t.format(nbases, dt, nbases / dt, nevents / dt))
 
     if compiled_file != args.compile:
         os.remove(compiled_file)

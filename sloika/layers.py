@@ -513,9 +513,7 @@ class Lstm(RNN):
         self.fun = fun
         self.gatefun = gatefun
 
-        self.b = th.shared(has_bias * (init(4 * size)
-                                       + np.repeat([0, 0, _FORGET_BIAS, 0],
-                                                   size).astype(sloika_dtype)))
+        self.b = th.shared(has_bias * (init(4 * size) + np.repeat([0, 0, _FORGET_BIAS, 0], size).astype(sloika_dtype)))
         self.p = th.shared(has_peep * init((3, size)) / np.sqrt(size))
         self.iW = th.shared(init((4 * size, insize)) / np.sqrt(insize + size))
         self.sW = th.shared(init((4 * size, size)) / np.sqrt(size + size))
@@ -612,9 +610,7 @@ class LstmCIFG(RNN):
         self.fun = fun
         self.gatefun = gatefun
 
-        self.b = th.shared(has_bias * (init(3 * size)
-                                       + np.repeat([0, _FORGET_BIAS, 0],
-                                                   size).astype(sloika_dtype)))
+        self.b = th.shared(has_bias * (init(3 * size) + np.repeat([0, _FORGET_BIAS, 0], size).astype(sloika_dtype)))
         self.p = th.shared(has_peep * init((2, size)) / np.sqrt(size))
         self.iW = th.shared(init((3 * size, insize)) / np.sqrt(insize + size))
         self.sW = th.shared(init((3 * size, size)) / np.sqrt(size + size))
@@ -707,9 +703,7 @@ class LstmO(RNN):
         self.fun = fun
         self.gatefun = gatefun
 
-        self.b = th.shared(has_bias * (init(3 * size)
-                                       + np.repeat([0, 0, _FORGET_BIAS],
-                                                   size).astype(sloika_dtype)))
+        self.b = th.shared(has_bias * (init(3 * size) + np.repeat([0, 0, _FORGET_BIAS], size).astype(sloika_dtype)))
         self.p = th.shared(has_peep * init((3, size)) / np.sqrt(size))
         self.iW = th.shared(init((3 * size, insize)) / np.sqrt(insize + size))
         self.sW = th.shared(init((3 * size, size)) / np.sqrt(size + size))
@@ -782,9 +776,7 @@ class Forget(RNN):
         self.fun = fun
         self.gatefun
 
-        self.b = th.shared(has_bias * (init(2 * size)
-                                       + np.repeat([_FORGET_BIAS, 0],
-                                                   size).astype(sloika_dtype)))
+        self.b = th.shared(has_bias * (init(2 * size) + np.repeat([_FORGET_BIAS, 0], size).astype(sloika_dtype)))
         self.iW = th.shared(init((2 * size, insize)) / np.sqrt(insize + size))
         self.sW = th.shared(init((2 * size, size)) / np.sqrt(size + size))
 
@@ -987,8 +979,8 @@ class Mut1(RNN):
     def step(self, in_vec, in_state):
         u = self.fun(T.tensordot(in_vec, self.W_xu, axes=(1, 1)) + self.b_u)
         z = self.gatefun(T.tensordot(in_vec, self.W_xz, axes=(1, 1)) + self.b_z)
-        r = self.gatefun(T.tensordot(in_vec, self.W_xr, axes=(1, 1))
-                         + T.tensordot(in_state, self.W_hr, axes=(1, 1)) + self.b_r)
+        r = self.gatefun(T.tensordot(in_vec, self.W_xr, axes=(1, 1)) +
+                         T.tensordot(in_state, self.W_hr, axes=(1, 1)) + self.b_r)
         y = T.tensordot(r * in_state, self.W_hh, axes=(1, 1))
         state = self.fun(y + u + self.b_h) * z + (1 - z) * in_state
         return state
@@ -1086,8 +1078,8 @@ class Mut2(RNN):
 
     def step(self, in_vec, in_state):
         u = self.fun(T.tensordot(in_vec, self.W_xu, axes=(1, 1)) + self.b_u)
-        z = self.gatefun(T.tensordot(in_vec, self.W_xz, axes=(1, 1))
-                         + T.tensordot(in_state, self.W_hz, axes=(1, 1)) + self.b_z)
+        z = self.gatefun(T.tensordot(in_vec, self.W_xz, axes=(1, 1)) +
+                         T.tensordot(in_state, self.W_hz, axes=(1, 1)) + self.b_z)
         r = self.gatefun(u + T.tensordot(in_state, self.W_hr, axes=(1, 1)) + self.b_r)
         y = T.tensordot(r * in_state, self.W_hh, axes=(1, 1))
         v = T.tensordot(in_vec, self.W_xh, axes=(1, 1))
@@ -1191,10 +1183,10 @@ class Mut3(RNN):
 
     def step(self, in_vec, in_state):
         u = self.fun(T.tensordot(in_vec, self.W_xu, axes=(1, 1)) + self.b_u)
-        z = self.gatefun(T.tensordot(in_vec, self.W_xz, axes=(1, 1))
-                         + T.tensordot(self.fun(in_state), self.W_hz, axes=(1, 1)) + self.b_z)
-        r = self.gatefun(T.tensordot(in_vec, self.W_xr, axes=(1, 1))
-                         + T.tensordot(in_state, self.W_hr, axes=(1, 1)) + self.b_r)
+        z = self.gatefun(T.tensordot(in_vec, self.W_xz, axes=(1, 1)) +
+                         T.tensordot(self.fun(in_state), self.W_hz, axes=(1, 1)) + self.b_z)
+        r = self.gatefun(T.tensordot(in_vec, self.W_xr, axes=(1, 1)) +
+                         T.tensordot(in_state, self.W_hr, axes=(1, 1)) + self.b_r)
         y = T.tensordot(r * in_state, self.W_hh, axes=(1, 1))
         v = T.tensordot(in_vec, self.W_xh, axes=(1, 1))
         state = self.fun(y + v + self.b_h) * z + (1 - z) * in_state
@@ -1273,9 +1265,7 @@ class Genmut(RNN):
         self.sW2.set_value(values['sW2'])
 
     def step(self, in_vec, in_state):
-        iT = (T.tensordot(in_vec, self.xW, axes=(1, 1))
-              + T.tensordot(in_state, self.sW, axes=(1, 1))
-              + self.b)
+        iT = (T.tensordot(in_vec, self.xW, axes=(1, 1)) + T.tensordot(in_state, self.sW, axes=(1, 1)) + self.b)
         iT = iT.reshape((-1, 3, self.size))
 
         u = self.fun(iT[:, 0])
@@ -1383,7 +1373,8 @@ class Decode(RNN):
         pscore = pscore.reshape((-1, self._NSTEP, self.rstep))
         score2 = T.repeat(T.max(pscore, axis=1), self._NSTEP)
         iscore2 = T.repeat(self.rstep * T.argmax(pscore, axis=1) + T.arange(0.0,
-                                                                            stop=self.rstep, dtype=sloika_dtype), self._NSTEP)
+                                                                            stop=self.rstep,
+                                                                            dtype=sloika_dtype), self._NSTEP)
         iscore2 = iscore2.reshape((-1, self.size))
         score2 = score2.reshape((-1, self.size))
         iscore = T.switch(T.gt(score, score2), iscore, iscore2)
