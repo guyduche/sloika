@@ -79,14 +79,14 @@ def chunk_worker(fn, section, chunk_len, kmer_len, min_length, trim, use_scaled,
                  normalisation):
     """ Chunkifies data for training
 
-    :param fn: A filename to read from.
+    :param fn: A filename to read from
     :param section: Section of read to process (template / complement)
     :param chunk_len: Length of each chunk
     :param kmer_len: Kmer length for training
-    :param min_length: Minimum number of events before read can be considered.
-    :param trim: Tuple (beginning, end) of number of events to trim from read.
+    :param min_length: Minimum number of events before read can be considered
+    :param trim: Tuple (beginning, end) of number of events to trim from read
     :param use_scaled: Use prescaled event statistics
-    :param normalisation: Do per-strand normalisation
+    :param normalisation: Type of normalisation to perform
 
     :yields: A tuple containing a 3D :class:`ndarray` of size
     (X, chunk_len, nfeatures) containing the features for the batch,
