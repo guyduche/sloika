@@ -44,9 +44,9 @@ def progress_report(i):
 
 
 def create_hdf5(args, chunk_list, label_list, bad_list):
-    all_chunks = np.vstack(chunk_list)
-    all_labels = np.vstack(label_list)
-    all_bad = np.vstack(bad_list)
+    all_chunks = np.concatenate(chunk_list)
+    all_labels = np.concatenate(label_list)
+    all_bad = np.concatenate(bad_list)
 
     output_dir = os.path.dirname(args.output)
     if output_dir and not os.path.exists(output_dir):
