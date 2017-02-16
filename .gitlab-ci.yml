@@ -37,10 +37,11 @@ acceptance_test:
     except:
         - tags
 
-dev_env_test:
+dev_env_and_style_test:
     stage: test
     script:
         - CI=True make cleanDevEnv
+        - CI=True make pep8
     except:
         - tags
 
