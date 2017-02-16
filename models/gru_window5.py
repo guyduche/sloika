@@ -1,5 +1,6 @@
 import sloika.module_tools as smt
 
+
 def network(klen, sd, nfeature=4, size=64):
     """ GRU Nanonet with window of size 5
 

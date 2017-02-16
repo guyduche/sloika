@@ -8,34 +8,45 @@ import theano.tensor as T
 def linear(x):
     return x
 
+
 def softplus(x):
     return T.nnet.softplus(x)
 
+
 def relu(x):
     return T.nnet.relu(x)
+
 
 def relu_smooth(x):
     y = T.clip(x, 0.0, 1.0)
     return T.square(y) - 2.0 * y + x + T.abs_(x)
 
+
 def exp(x):
     return T.exp(x)
 
 #  Bounded and monotonic
+
+
 def tanh(x):
     return T.tanh(x)
+
 
 def sigmoid(x):
     return T.nnet.sigmoid(x)
 
+
 def erf(x):
     return T.erf(x)
+
 
 def L1mL2(x):
     return x / T.sqrt(1.0 + 0.5 * T.sqr(x))
 
+
 def fair(x):
     return x / (1.0 + T.abs_(x) / 1.3998)
+
 
 def retu(x):
     """ Rectifying activation followed by Tanh
@@ -45,17 +56,20 @@ def retu(x):
     """
     return T.tanh(T.nnet.relu(x))
 
+
 def tanh_pm(x):
     """  Poor man's tanh
     Linear approximation by tangent at x=0.  Clip into valid range.
     """
     return T.clip(x, -1.0, 1.0)
 
+
 def sigmoid_pm(x):
     """ Poor man's sigmoid
     Linear approximation by tangent at x=0.  Clip into valid range.
     """
     return T.clip(0.5 + 0.25 * x, 0.0, 1.0)
+
 
 def bounded_linear(x):
     """ Linear activation clipped into -1, 1
@@ -67,11 +81,14 @@ def bounded_linear(x):
 def sin(x):
     return T.sin(x)
 
+
 def cauchy(x):
     return x / (1.0 + T.sqr(x / 2.3849))
 
+
 def geman_mcclure(x):
     return x / T.sqr(1.0 + T.sqr(x))
+
 
 def welsh(x):
     return x * T.exp(-T.sqr(x / 2.9846))

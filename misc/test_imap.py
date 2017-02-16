@@ -12,12 +12,14 @@ def gen(n):
         print '    Yielding', i
         yield i
 
+
 def worker(i):
     pid = int(multiprocessing.current_process().name.split('-')[-1])
     sleep_len = _SLEEP * (_NPROC - pid + 1)
     print '    Doing {}. Will sleep for {}s'.format(i, sleep_len)
     time.sleep(sleep_len)
     return i
+
 
 def imap_unordered2(pool, f, iterable):
     from collections import deque
@@ -31,6 +33,7 @@ def imap_unordered2(pool, f, iterable):
         q.append(pool.apply_async(f, (arg,)))
     while q:
         yield q.popleft().get()
+
 
 def imap_unordered3(pool, f, iterable):
     nproc = pool._processes
@@ -64,7 +67,6 @@ if __name__ == '__main__':
         print '    Done', i
     print '* Time ', time.time() - t0
 
-
     print 'http://bugs.python.org/issue19993'
     print '==================='
     print 'Slowest job blocks, one extra is always taken from iterator'
@@ -74,7 +76,6 @@ if __name__ == '__main__':
     for i in imap_unordered2(pool, worker, gg):
         print '    Done', i
     print '* Time ', time.time() - t0
-
 
     print 'Modified imap'
     print '============='

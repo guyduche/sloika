@@ -5,6 +5,7 @@ from sloika.activation import *
 from sloika.layers import *
 from sloika.variables import *
 
+
 def _rn(size, sd):
     #  Truncated normal for Xavier style initiation
     res = sd * truncnorm.rvs(-2, 2, size=size)

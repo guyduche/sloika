@@ -3,13 +3,15 @@ import os
 import unittest
 from untangled import fast5
 
+
 class fast5Test(unittest.TestCase):
+
     @classmethod
     def setUpClass(self):
         print '* Fast5'
         self.readdir = os.path.join(os.environ['DATA_DIR'], 'reads')
         self.filename = os.path.join(self.readdir, 'read03.fast5')
-        self.section ='template'
+        self.section = 'template'
         self.strand_list = os.path.join(os.environ['DATA_DIR'],
                                         'strands.txt')
         self.strands = set(map(lambda r: os.path.join(self.readdir, r),
@@ -28,7 +30,7 @@ class fast5Test(unittest.TestCase):
 
     def test_003_iterate_returns_all(self):
         fast5_files = set(fast5.iterate_fast5(self.readdir, paths=True))
-        dir_list = set(glob.glob(os.path.join(self.readdir,'*.fast5')))
+        dir_list = set(glob.glob(os.path.join(self.readdir, '*.fast5')))
         self.assertTrue(fast5_files == dir_list)
 
     def test_004_iterate_respects_limits(self):

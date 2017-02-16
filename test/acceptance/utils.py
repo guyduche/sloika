@@ -70,6 +70,7 @@ def run_cmd(test_case, cmd, cwd=None):
 def is_close(a, b, rel_tol=1e-09, abs_tol=0.0):
     return abs(a - b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
 
+
 def maybe_create_dir(directory_name):
     '''
     Create a directory if it does not exist already.
@@ -98,6 +99,7 @@ E   INFO (theano.gof.compilelock): To manually release the lock, delete <file_na
     '''
     return drop_lines(L, 'INFO (theano.gof.compilelock):')
 
+
 def zeroth_line_starts_with(prefix):
     def f(L):
         M = drop_info(L)
@@ -108,7 +110,7 @@ def zeroth_line_starts_with(prefix):
     return f
 
 
-if __name__=='__main__':
+if __name__ == '__main__':
     assert drop_lines([], "a") == []
     assert drop_lines(["a"], "a") == []
     assert drop_lines(["ab"], "a") == []
@@ -117,6 +119,6 @@ if __name__=='__main__':
 
     assert zeroth_line_starts_with('a')([]) == False
     assert zeroth_line_starts_with('a')(['a']) == True
-    assert zeroth_line_starts_with('a')(['a','a']) == True
-    assert zeroth_line_starts_with('a')(['a','b']) == True
-    assert zeroth_line_starts_with('a')(['b','a']) == False
+    assert zeroth_line_starts_with('a')(['a', 'a']) == True
+    assert zeroth_line_starts_with('a')(['a', 'b']) == True
+    assert zeroth_line_starts_with('a')(['b', 'a']) == False

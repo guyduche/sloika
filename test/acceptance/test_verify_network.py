@@ -7,6 +7,7 @@ from nose_parameterized import parameterized
 
 from utils import run_cmd, maybe_create_dir, zeroth_line_starts_with
 
+
 class AcceptanceTest(unittest.TestCase):
     model_files = map(lambda x: [x], glob.glob(os.path.join(os.environ["ROOT_DIR"], "models/*.py")))
 
