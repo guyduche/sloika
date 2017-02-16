@@ -31,7 +31,7 @@ def chunkify(ev, chunk_len, kmer_len, use_scaled, normalise):
 
             chunk_features = sloika.features.from_events(
                 ev[chunk_start : chunk_finish_maybe_with_padding], tag=tag, is_normalise=True)
-            new_inMat.append(chunk_features[:chunk_len, :])
+            new_inMat.append(chunk_features[:chunk_len])
         new_inMat = np.vstack(new_inMat)
     else:
         assert normalise in ['none', 'per-read']
