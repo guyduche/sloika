@@ -33,6 +33,5 @@ setup(
     install_requires=install_requires,
     dependency_links=[],
     zip_safe=False,
-    test_suite='discover_tests',
     scripts=[x for x in glob('bin/*.py')],
 )
