@@ -22,7 +22,7 @@ wheel:
             - dist
 
 ubuntu_14_04:
-    stage: build
+    stage: test
     image: docker-registry.oxfordnanolabs.local:5000/ont-base-ubuntu:14.04
     script:
         - CI=True make cleanDevEnv
