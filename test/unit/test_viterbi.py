@@ -2,7 +2,9 @@ import unittest
 import numpy as np
 from sloika import viterbi_helpers
 
+
 class ViterbiTest(unittest.TestCase):
+
     @classmethod
     def setUpClass(self):
         print '* Viterbi helpers'

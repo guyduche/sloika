@@ -258,7 +258,8 @@ class ANNTest(unittest.TestCase):
                     np.testing.assert_almost_equal(
                         res[:, j, i * _WINLEN: (i + 1) * _WINLEN], self.x[i: 1 + i - _WINLEN, j])
                 except:
-                    print "Window max: {}".format(np.amax(np.fabs(res[:, :, i * _WINLEN: (i + 1) * _WINLEN] - self.x[i: 1 + i - _WINLEN])))
+                    win_max = np.amax(np.fabs(res[:, :, i * _WINLEN: (i + 1) * _WINLEN] - self.x[i: 1 + i - _WINLEN]))
+                    print "Window max: {}".format(win_max)
                     raise
             np.testing.assert_almost_equal(res[:, j, _WINLEN * (_WINLEN - 1):], self.x[_WINLEN - 1:, j])
             #  Test first and last rows explicitly

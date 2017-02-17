@@ -30,7 +30,7 @@ def wrap_network(network):
     labels = T.imatrix()
     post = network.run(x)
     loss = T.mean(th.map(T.nnet.categorical_crossentropy, sequences=[post, labels])[0])
-    ncorrect = T.sum(T.eq(T.argmax(post,  axis=2), labels))
+    ncorrect = T.sum(T.eq(T.argmax(post, axis=2), labels))
 
     fg = th.function([x, labels], [loss, ncorrect])
     return fg

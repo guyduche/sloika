@@ -1,5 +1,6 @@
 import sloika.module_tools as smt
 
+
 def network(klen, sd, nfeature=4, winlen=3, size=64):
     """ GRU Nanonet with an additional terminal feed-forward layer
 
@@ -32,7 +33,6 @@ def network(klen, sd, nfeature=4, winlen=3, size=64):
 
     layer4 = smt.FeedForward(2 * size, 2 * size, init=_prn, has_bias=True, fun=ff_act)
     layer5 = smt.FeedForward(2 * size, size, init=_prn, has_bias=True, fun=ff_act)
-
 
     outlayer = smt.Softmax(size, nstate, init=_prn, has_bias=True)
 

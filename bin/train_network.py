@@ -88,7 +88,7 @@ def wrap_network(network, min_prob=0.0, l2=0.0, drop=0):
 
     loss_per_event, _ = th.map(T.nnet.categorical_crossentropy, sequences=[post, labels])
     loss = penalty + T.mean((weights * loss_per_event)[ldrop : udrop])
-    ncorrect = T.sum(T.eq(T.argmax(post,  axis=2), labels))
+    ncorrect = T.sum(T.eq(T.argmax(post, axis=2), labels))
     update_dict = updates.adam(network, loss, rate, (args.adam.decay1, args.adam.decay2))
 
     fg = th.function([x, labels, weights, rate], [loss, ncorrect], updates=update_dict)
@@ -98,6 +98,7 @@ def wrap_network(network, min_prob=0.0, l2=0.0, drop=0):
 def saveModel(network, output, index):
     with open(os.path.join(output, 'model_checkpoint_{:05d}.pkl'.format(index)), 'wb') as fh:
         cPickle.dump(network, fh, protocol=cPickle.HIGHEST_PROTOCOL)
+
 
 class Logger:
 
@@ -163,9 +164,12 @@ if __name__ == '__main__':
     min_chunk, max_chunk = args.chunk_len_range
 
     assert max_chunk >= min_chunk, "Min chunk size (got {}) must be <= chunk size (got {})".format(min_chunk, max_chunk)
-    assert data_chunk >= max_chunk, "Max chunk size (got {}) must be <= data chunk size (got {})".format(max_chunk, data_chunk)
-    assert data_chunk >= (2 * args.drop + 1), "Data chunk size (got {}) must be > 2 * drop (got {})".format(data_chunk, args.drop)
-    assert min_chunk >= (2 * args.drop + 1), "Min chunk size (got {}) must be > 2 * drop (got {})".format(min_chunk, args.drop)
+    assert data_chunk >= max_chunk, "Max chunk size (got {}) must be <= data chunk size (got {})".format(
+        max_chunk, data_chunk)
+    assert data_chunk >= (
+        2 * args.drop + 1), "Data chunk size (got {}) must be > 2 * drop (got {})".format(data_chunk, args.drop)
+    assert min_chunk >= (
+        2 * args.drop + 1), "Min chunk size (got {}) must be > 2 * drop (got {})".format(min_chunk, args.drop)
 
     if not args.transducer:
         remove_blanks(all_labels)
@@ -226,10 +230,10 @@ if __name__ == '__main__':
         if (i + 1) % 50 == 0:
             tn = time.time()
             dt = tn - t0
-            log.write(' {:5d} {:5.3f}  {:5.2f}%  {:5.2f}s ({:.2f} kev/s)\n'.format((i + 1) //
-                                                                                   50, score / wscore, 100.0 * acc / wacc, dt, total_ev / 1000.0 / dt))
+            t = ' {:5d} {:5.3f}  {:5.2f}%  {:5.2f}s ({:.2f} kev/s)\n'
+            log.write(t.format((i + 1) // 50, score / wscore, 100.0 * acc / wacc, dt, total_ev / 1000.0 / dt))
             total_ev = 0
             t0 = tn
 
-    with open(os.path.join(args.output,  'model_final.pkl'), 'wb') as fh:
+    with open(os.path.join(args.output, 'model_final.pkl'), 'wb') as fh:
         cPickle.dump(network, fh, protocol=cPickle.HIGHEST_PROTOCOL)

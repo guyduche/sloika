@@ -79,10 +79,15 @@ wheel: emptyTmpEnv
 cleanTmpEnvWithSloika: emptyTmpEnv
 	${inTmpEnv} ${pipInstall} ${whlFile}
 
-
+pyDirs:=sloika test bin models misc
+pyFiles:=$(shell find *.py ${pyDirs} -type f -regextype sed -regex ".*\.py") setup.py
 .PHONY: autopep8
 autopep8:
-	${inSloikaEnv} autopep8 $f --ignore E203 -i --max-line-length=120
+	${inSloikaEnv} autopep8 --ignore E203 -i --max-line-length=120 ${pyFiles}
+
+.PHONY: pep8
+pep8:
+	${inSloikaEnv} pep8 --ignore E203,E402 --max-line-length=120 ${pyFiles}
 
 cmd?=echo "Set 'cmd' to command to run in Sloika env"
 .PHONY: runInEnv

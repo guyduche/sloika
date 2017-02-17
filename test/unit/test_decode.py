@@ -3,7 +3,9 @@ import unittest
 
 from sloika import decode
 
+
 class TestDecode(unittest.TestCase):
+
     @classmethod
     def setUpClass(self):
         print '* Decoding'
@@ -223,7 +225,6 @@ class TestDecode(unittest.TestCase):
     def test_005_transposed_score(self):
         score = decode.forwards_transpose(self.post, self.bases)
         self.assertAlmostEqual(score, self.score_full)
-
 
         bases = decode.argmax(self.post)
         scoreF = decode.forwards_transpose(self.post, bases)

@@ -1,5 +1,6 @@
 import sloika.module_tools as smt
 
+
 def network(klen, sd, nfeature=4, winlen=3, size=64):
     """ Create standard Nanonet with GRU units
 

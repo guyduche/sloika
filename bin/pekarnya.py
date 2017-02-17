@@ -19,23 +19,23 @@ _SUSPEND = 4
 sloika_gitdir = os.path.expanduser(os.path.join('~', 'git', 'sloika'))
 
 parser = argparse.ArgumentParser(
-    description = 'server for model training',
+    description='server for model training',
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('--jobs', metavar='n', default=8, type=Positive(int),
-    help='Number of simulataneous jobs')
+                    help='Number of simulataneous jobs')
 parser.add_argument('--limit', metavar='jobs', default=None, type=Maybe(Positive(int)),
-    help='Maximum number of jobs')
+                    help='Maximum number of jobs')
 parser.add_argument('--ngpu', metavar='n', default=4, type=Positive(int),
-    help='Number of gpus')
+                    help='Number of gpus')
 parser.add_argument('--sleep', metavar='seconds', default=30, type=NonNegative(int),
-    help='Time between polling database')
+                    help='Time between polling database')
 parser.add_argument('database', action=FileExists, help='Database.db file')
 
 
 def get_git_commit(gitdir):
     return subprocess.check_output(
-              'cd {} && git log --pretty=format:"%H" -1'.format(gitdir), shell=True
-          ).rstrip()
+        'cd {} && git log --pretty=format:"%H" -1'.format(gitdir), shell=True
+    ).rstrip()
 
 
 def create_jobs(dbname, sleep=30, limit=None):
@@ -82,6 +82,7 @@ def _set_init_args(args):
     global clargs
     clargs = args
 
+
 def run_job(args):
     if args is None:
         return None
@@ -92,10 +93,13 @@ def run_job(args):
     pmem = 0.8 * min(clargs.ngpu / float(clargs.jobs), 1)
     # Theano flags
     env = os.environ.copy()
-    env['THEANO_FLAGS'] = 'floatX=float32,warn_float64=warn,optimizer=fast_run,nvcc.fastmath=True,device=gpu{},scan.allow_gc=False,lib.cnmem={}'.format(gpu, pmem)
+    t = ('floatX=float32,warn_float64=warn,optimizer=fast_run,nvcc.fastmath=True,'
+         'device=gpu{},scan.allow_gc=False,lib.cnmem={}'
+         )
+    env['THEANO_FLAGS'] = t.format(gpu, pmem)
 
     # arglist for training
-    arglist = [os.path.join(sloika_gitdir,"bin/train_network.py"),
+    arglist = [os.path.join(sloika_gitdir, "bin/train_network.py"),
                "--bad",
                "--quiet",
                args["model"],
@@ -128,7 +132,7 @@ def run_job(args):
     if returncode == 0 and args["validation_data"] is not None:
         # arglist for validation
         final_model = os.path.join(args["output_directory"], "model_final.pkl")
-        arglist = [os.path.join(sloika_gitdir,"bin/validate_network.py"),
+        arglist = [os.path.join(sloika_gitdir, "bin/validate_network.py"),
                    "--bad",
                    final_model,
                    args["validation_data"]

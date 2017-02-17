@@ -6,10 +6,10 @@ from untangled.cmdargs import AutoBool, FileExists
 json.encoder.FLOAT_REPR = lambda f: ("%.4f" % f)
 
 parser = argparse.ArgumentParser(
-    description = 'Dump JSON representation of model',
+    description='Dump JSON representation of model',
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('--params', default=True, action=AutoBool,
-    help='Output parameters in file')
+                    help='Output parameters in file')
 parser.add_argument('model', action=FileExists, help="Model file to read from")
 
 

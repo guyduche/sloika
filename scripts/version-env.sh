@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -eu
 
 export SLOIKA_VERSION_MAJOR=1
 export SLOIKA_VERSION_MINOR=1
@@ -9,10 +9,10 @@ else
     export SLOIKA_VERSION_PATCH=0
 fi
 
-if [ -z ${CI+x} ]; then
-    DEV="dev"
-else
+if [ "${CI_BUILD_REF_NAME:-dev}" == "master" ]; then
     DEV=""
+else
+    DEV="dev"
 fi
 
 export SLOIKA_VERSION=${SLOIKA_VERSION_MAJOR}.${SLOIKA_VERSION_MINOR}.${DEV}${SLOIKA_VERSION_PATCH}

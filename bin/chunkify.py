@@ -64,7 +64,8 @@ class Commands(object):
         descriptions = map(lambda name: self.get_description(name), names)
         name_description_pairs = zip(names, descriptions)
 
-        def show_pair(t): return "%10s -- %s" % t
+        def show_pair(t):
+            return "%10s -- %s" % t
         return 'Available commands:\n\t' + '\n\t'.join(map(show_pair, name_description_pairs))
 
     def get_action(self, command_name):

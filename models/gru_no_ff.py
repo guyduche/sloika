@@ -1,5 +1,6 @@
 import sloika.module_tools as smt
 
+
 def network(klen, sd, nfeature=4, winlen=3, size=64):
     """ GRU Nanonet with no feed-forward layers
 
@@ -23,11 +24,9 @@ def network(klen, sd, nfeature=4, winlen=3, size=64):
     bwd1 = smt.Gru(insize, size, init=_prn, has_bias=True, fun=gru_act)
     layer1 = smt.birnn(fwd1, bwd1)
 
-
     fwd3 = smt.Gru(2 * size, size, init=_prn, has_bias=True, fun=gru_act)
     bwd3 = smt.Gru(2 * size, size, init=_prn, has_bias=True, fun=gru_act)
     layer3 = smt.birnn(fwd3, bwd3)
-
 
     outlayer = smt.Softmax(2 * size, nstate, init=_prn, has_bias=True)
 

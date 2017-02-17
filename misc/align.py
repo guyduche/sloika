@@ -32,8 +32,8 @@ parser.add_argument('files', metavar='input', nargs='+',
                     help="One or more files containing query sequences")
 
 
-STRAND = { 0 : '+',
-           16 : '-'}
+STRAND = {0 : '+',
+          16 : '-'}
 
 QUANTILES = [5, 25, 50, 75, 95]
 

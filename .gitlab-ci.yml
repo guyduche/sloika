@@ -16,9 +16,7 @@ before_script:
 wheel:
     stage: build
     script:
-        - CI=True make wheel
-    except:
-        - tags
+        - make wheel
     artifacts:
         paths:
             - dist
@@ -26,23 +24,18 @@ wheel:
 unit_test:
     stage: test
     script:
-        - CI=True make unitTestFromScratch
-    except:
-        - tags
+        - make unitTestFromScratch
 
 acceptance_test:
     stage: test
     script:
-        - CI=True make acceptanceTestFromScratch
-    except:
-        - tags
+        - make acceptanceTestFromScratch
 
-dev_env_test:
+dev_env_and_style_test:
     stage: test
     script:
-        - CI=True make cleanDevEnv
-    except:
-        - tags
+        - make cleanDevEnv
+        - make pep8
 
 upload_artefact:
     stage: release
@@ -54,4 +47,5 @@ upload_artefact:
         - ssh-add <(set +x; echo "$PYPI_KEY")
         - scp -v -o StrictHostKeyChecking=no dist/* gitlab-ci-pypi@${PYPI_HOST}:/opt/ont-pypi/site-packages/
     only:
-        - /^dev$/
+        - master
+        - dev

@@ -19,17 +19,17 @@ parser = argparse.ArgumentParser(
     description='Validate a simple neural network',
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('--bad', default=True, action=AutoBool,
-    help='Use bad events as a separate state')
+                    help='Use bad events as a separate state')
 parser.add_argument('--batch', default=200, metavar='size', type=Positive(int),
-    help='Batch size (number of chunks to run in parallel)')
+                    help='Batch size (number of chunks to run in parallel)')
 parser.add_argument('--transducer', default=True, action=AutoBool,
-    help='Model is a transducer')
+                    help='Model is a transducer')
 parser.add_argument('--version', nargs=0, action=display_version_and_exit, metavar=__version__,
-    help='Display version information.')
+                    help='Display version information.')
 parser.add_argument('model', action=FileExists,
-    help='File to read model description from')
+                    help='File to read model description from')
 parser.add_argument('input', action=FileExists,
-    help='HDF5 file containing chunks')
+                    help='HDF5 file containing chunks')
 
 
 def remove_blanks(labels):
@@ -39,12 +39,13 @@ def remove_blanks(labels):
                 lbl_ch[i] = lbl_ch[i - 1]
     return labels
 
+
 def wrap_network(network):
     x = T.tensor3()
     labels = T.imatrix()
     post = network.run(x)
     loss = T.mean(th.map(T.nnet.categorical_crossentropy, sequences=[post, labels])[0])
-    ncorrect = T.sum(T.eq(T.argmax(post,  axis=2), labels))
+    ncorrect = T.sum(T.eq(T.argmax(post, axis=2), labels))
 
     fv = th.function([x, labels], [loss, ncorrect])
     return fv
@@ -95,9 +96,11 @@ if __name__ == '__main__':
         if (i + 1) % 50 == 0:
             tn = time.time()
             dt = tn - t1
-            sys.stdout.write(' {:5d} {:5.3f}  {:5.2f}%  {:5.2f}s ({:.2f} kev/s)\n'.format((i + 1) // 50, score / wscore, 100.0 * acc / wacc, dt, line_ev / 1000.0 / dt))
+            t = ' {:5d} {:5.3f}  {:5.2f}%  {:5.2f}s ({:.2f} kev/s)\n'
+            sys.stdout.write(t.format((i + 1) // 50, score / wscore, 100.0 * acc / wacc, dt, line_ev / 1000.0 / dt))
             line_ev = 0
             t1 = tn
 
     dt = time.time() - t0
-    sys.stdout.write('\nFinal {:5.3f}  {:5.2f}%  {:5.2f}s ({:.2f} kev/s)\n'.format(score / wscore, 100.0 * acc / wacc, dt, total_ev / 1000.0 / dt))
+    t = '\nFinal {:5.3f}  {:5.2f}%  {:5.2f}s ({:.2f} kev/s)\n'
+    sys.stdout.write(t.format(score / wscore, 100.0 * acc / wacc, dt, total_ev / 1000.0 / dt))
