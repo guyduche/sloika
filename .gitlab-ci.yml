@@ -21,23 +21,23 @@ wheel:
         paths:
             - dist
 
-unit_test:
+unit:
     stage: test
     script:
         - make unitTestFromScratch
 
-acceptance_test:
+acceptance:
     stage: test
     script:
         - make acceptanceTestFromScratch
 
-dev_env_and_style_test:
+dev_env_and_style:
     stage: test
     script:
         - make cleanDevEnv
         - make pep8
 
-ubuntu_14_04_test:
+ubuntu_14_04:
     stage: test
     image: docker-registry.oxfordnanolabs.local:5000/ont-base-ubuntu:14.04
     script:
