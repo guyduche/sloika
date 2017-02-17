@@ -57,5 +57,5 @@ upload_artefact:
         - ssh-add <(set +x; echo "$PYPI_KEY")
         - scp -v -o StrictHostKeyChecking=no dist/* gitlab-ci-pypi@${PYPI_HOST}:/opt/ont-pypi/site-packages/
     only:
-        - master
-        - dev
+        - master@algorithm/sloika
+        - dev@algorithm/sloika
