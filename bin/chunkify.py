@@ -9,6 +9,7 @@ from untangled.cmdargs import (AutoBool, FileAbsent, FileExists, Maybe,
 
 from sloika.tools.chunkify_with_identity import chunkify_with_identity_main
 from sloika.tools.chunkify_with_remap import chunkify_with_remap_main
+from sloika import batch
 
 
 def common_parser(argv, commands):
@@ -34,8 +35,10 @@ def common_parser(argv, commands):
                         help='Limit number of reads to process')
     parser.add_argument('--min_length', default=1200, metavar='events',
                         type=Positive(int), help='Minimum events in acceptable read')
-    parser.add_argument('--normalise', default=True, action=AutoBool,
-                        help='Per-strand normalisation')
+    parser.add_argument('--normalisation', default=batch.default_normalisation, choices=batch.available_normalisations,
+                        help='Whether to perform studentisation and with what scope')
+    parser.add_argument('--overwrite', default=False, action=AutoBool,
+                        help='Whether to overwrite any output files')
     parser.add_argument('--section', default='template',
                         choices=['template', 'complement'], help='Section to call')
     parser.add_argument('--trim', default=(50, 10), nargs=2, type=NonNegative(int),
@@ -46,13 +49,12 @@ def common_parser(argv, commands):
 
     parser.add_argument('input_folder', action=FileExists,
                         help='Directory containing single-read fast5 files')
-    parser.add_argument('output', action=FileAbsent, help='Output HDF5 file')
-
+    parser.add_argument('output', help='Output HDF5 file')
 
     return (argv[2:], parser)
 
 
-class Commands:
+class Commands(object):
 
     def __init__(self, commands):
         self.commands = commands

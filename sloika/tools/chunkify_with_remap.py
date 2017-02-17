@@ -2,10 +2,11 @@ from __future__ import print_function
 
 import argparse
 import cPickle
-import numpy as np
-import posixpath
-import time
 import os
+import posixpath
+import sys
+import time
+import numpy as np
 
 from untangled import bio
 from untangled.cmdargs import (AutoBool, FileExists, Maybe, NonNegative,
@@ -30,7 +31,7 @@ def chunkify_with_remap_main(argv, parser):
                         help='File output compiled model')
     parser.add_argument('--min_prob', metavar='proportion', default=1e-5,
                         type=proportion, help='Minimum allowed probabiility for basecalls')
-    parser.add_argument('--output_strand_list', default="strand_output_list.txt", action=FileAbsent,
+    parser.add_argument('--output_strand_list', default="strand_output_list.txt",
                         help='strand summary output file')
     parser.add_argument('--prior', nargs=2, metavar=('start', 'end'), default=(25.0, 25.0),
                         type=Maybe(NonNegative(float)), help='Mean of start and end positions')
@@ -45,13 +46,21 @@ def chunkify_with_remap_main(argv, parser):
 
     args = parser.parse_args(argv)
 
+    if not args.overwrite:
+        if os.path.exists(args.output):
+            print("Cowardly refusing to overwrite {}".format(args.output))
+            sys.exit(1)
+        if os.path.exists(args.output_strand_list):
+            print("Cowardly refusing to overwrite {}".format(args.output_strand_list))
+            sys.exit(2)
+
     fast5_files = fast5.iterate_fast5(args.input_folder, paths=True, limit=args.limit,
                                       strand_list=args.input_strand_list)
 
     print('* Processing data using', args.jobs, 'threads')
 
     kwarg_names = ['trim', 'min_prob', 'transducer', 'kmer_len',
-                   'prior', 'slip', 'chunk_len', 'use_scaled', 'normalise']
+                   'prior', 'slip', 'chunk_len', 'use_scaled', 'normalisation']
     i = 0
     compiled_file = helpers.compile_model(args.model, args.compile)
     output_strand_list_entries = []
