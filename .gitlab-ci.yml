@@ -37,6 +37,15 @@ dev_env_and_style_test:
         - make cleanDevEnv
         - make pep8
 
+ubuntu_14_04_test:
+    stage: test
+    image: docker-registry.oxfordnanolabs.local:5000/ont-base-ubuntu:14.04
+    script:
+        - CI=True make cleanDevEnv
+        - CI=True make
+    except:
+        - tags
+
 upload_artefact:
     stage: release
     before_script:
