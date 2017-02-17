@@ -80,7 +80,7 @@ cleanTmpEnvWithSloika: emptyTmpEnv
 	${inTmpEnv} ${pipInstall} ${whlFile}
 
 pyDirs:=sloika test bin models misc
-pyFiles:=$(shell find *.py ${pyDirs} -type f -regextype sed -regex ".*\.py") setup.py
+pyFiles:=$(shell find *.py ${pyDirs} -type f -regextype sed -regex ".*\.py")
 .PHONY: autopep8
 autopep8:
 	${inSloikaEnv} autopep8 --ignore E203 -i --max-line-length=120 ${pyFiles}
