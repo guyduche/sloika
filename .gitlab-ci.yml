@@ -21,6 +21,15 @@ wheel:
         paths:
             - dist
 
+ubuntu_14_04:
+    stage: build
+    image: docker-registry.oxfordnanolabs.local:5000/ont-base-ubuntu:14.04
+    script:
+        - CI=True make cleanDevEnv
+        - CI=True make
+    except:
+        - tags
+
 unit:
     stage: test
     script:
@@ -36,15 +45,6 @@ dev_env_and_style:
     script:
         - make cleanDevEnv
         - make pep8
-
-ubuntu_14_04:
-    stage: test
-    image: docker-registry.oxfordnanolabs.local:5000/ont-base-ubuntu:14.04
-    script:
-        - CI=True make cleanDevEnv
-        - CI=True make
-    except:
-        - tags
 
 upload_artefact:
     stage: release
