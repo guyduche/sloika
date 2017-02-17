@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -eu
 
 export SLOIKA_VERSION_MAJOR=1
 export SLOIKA_VERSION_MINOR=1
