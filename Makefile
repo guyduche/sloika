@@ -56,7 +56,7 @@ deps:
 	apt-get update
 	apt-get install -y \
 	    python-virtualenv python-pip python-setuptools ont-ca-certs git \
-	    libblas3 libblas-dev
+	    libblas3 libblas-dev python-dev python3-dev
 
 .PHONY: checkout
 checkout:
