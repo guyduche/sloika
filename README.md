@@ -16,7 +16,9 @@ After checking out sloika itself, check out and initialise submodules
 
     make
 
-For this step to function development environment needs to be set up.
+For this step to function development environment needs to be set up, and make deps must have been installed.
+
+**Note to experts**: These tests will run with the theano flags defined in the `environment` file. If you need to test sloika using a different set of theano flags you can edit this file before running make. Please do report any problems that you run into, although we cannot promise we can help with your configuration.
 
 # Running unit and acceptance tests in CI mode
 
