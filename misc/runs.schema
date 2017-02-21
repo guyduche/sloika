@@ -1,6 +1,7 @@
 CREATE TABLE runs(
     model text not NULL,
-    output_directory text unique not NULL,
+    output_prefix text not NULL,
+    output_directory text unique default NULL,
     training_data text not NULL,
     status integer default 0,
     runid integer primary key, 

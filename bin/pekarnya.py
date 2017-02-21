@@ -11,6 +11,7 @@ import multiprocessing
 import os
 import sqlite3
 import subprocess
+import tempfile
 import time
 from untangled.cmdargs import FileExists, Maybe, NonNegative, Positive
 
@@ -104,12 +105,15 @@ def run_job(args):
          )
     env['THEANO_FLAGS'] = t.format(gpu, pmem)
 
+    outdir, outpref = os.path.split(args["output_prefix"])
+    output_directory = tempfile.mkdtemp(prefix=outpref + '_', dir=outdir)
+
     # arglist for training
     arglist = [os.path.join(sloika_gitdir, "bin/train_network.py"),
                "--bad",
                "--quiet",
                args["model"],
-               args["output_directory"],
+               output_directory,
                args["training_data"]]
     if args["training_parameters"] is not None:
         arglist += args["training_parameters"].split()
@@ -122,8 +126,8 @@ def run_job(args):
         # Update database
         commit = get_git_commit(sloika_gitdir)
         c = conn.cursor()
-        c.execute("update runs set sloika_commit = ?, training_start = datetime('now') where runid = ?",
-                  (commit, args['runid']))
+        c.execute("update runs set sloika_commit = ?, training_start = datetime('now'), output_directory = ? where runid = ?",
+                  (commit, args['runid'], output_directory))
 
     proc = subprocess.Popen(arglist, env=env)
     proc.wait()
@@ -137,7 +141,7 @@ def run_job(args):
 
     if returncode == 0 and args["validation_data"] is not None:
         # arglist for validation
-        final_model = os.path.join(args["output_directory"], "model_final.pkl")
+        final_model = os.path.join(output_directory, "model_final.pkl")
         arglist = [os.path.join(sloika_gitdir, "bin/validate_network.py"),
                    "--bad",
                    final_model,
@@ -148,7 +152,7 @@ def run_job(args):
         else:
             arglist.append("--no-transducer")
 
-        with open(os.path.join(args["output_directory"], "model_final.validate"), "w") as fh:
+        with open(os.path.join(output_directory, "model_final.validate"), "w") as fh:
             proc = subprocess.Popen(arglist, env=env, stdout=fh)
             proc.wait()
 
