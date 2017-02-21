@@ -6,7 +6,6 @@ import sys
 import numpy as np
 
 from sloika import batch, util
-from sloika.config import sloika_dtype
 
 from untangled.cmdargs import (AutoBool, FileAbsent, FileExists, Maybe,
                                NonNegative, Positive, proportion)
