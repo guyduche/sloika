@@ -202,6 +202,7 @@ def map_to_sequence(trans, sequence, slip=None, prior_initial=None, prior_final=
     :returns: Tuple containing score for path and array containing path
     """
     assert slip is None or slip >= 0.0, 'Slip penalty should be non-negative'
+    slip = np.float32(slip)
     nev = len(trans)
     npos = len(sequence)
     ltrans = trans if log else np.log(trans)
