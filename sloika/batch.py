@@ -97,6 +97,7 @@ def chunk_worker(fn, section, chunk_len, kmer_len, min_length, trim, use_scaled,
     associated labels, and a 2D :class:`ndarray` of size (X, chunk_len)
     indicating bad events.  1 <= X <= batch_size.
     """
+    # Import within worker to avoid initialising GPU in main thread
     import sloika.features
 
     try:
@@ -116,6 +117,7 @@ def chunk_worker(fn, section, chunk_len, kmer_len, min_length, trim, use_scaled,
 
 def init_chunk_remap_worker(model, fasta, kmer_len):
     import cPickle
+    # Import within worker to avoid initialising GPU in main thread
     import sloika.features
     import sloika.transducer
     global calc_post, kmer_to_state, references
