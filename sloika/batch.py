@@ -7,10 +7,8 @@ import sys
 from Bio import SeqIO
 
 # NB: qualified imports here due to a name clash
-#import sloika.features
 import sloika.decode
 import sloika.util
-#import sloika.transducer
 
 from untangled import bio, fast5
 
