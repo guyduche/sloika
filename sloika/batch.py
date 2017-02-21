@@ -7,10 +7,8 @@ import sys
 from Bio import SeqIO
 
 # NB: qualified imports here due to a name clash
-import sloika.features
 import sloika.decode
 import sloika.util
-import sloika.transducer
 
 from untangled import bio, fast5
 
@@ -99,6 +97,7 @@ def chunk_worker(fn, section, chunk_len, kmer_len, min_length, trim, use_scaled,
     associated labels, and a 2D :class:`ndarray` of size (X, chunk_len)
     indicating bad events.  1 <= X <= batch_size.
     """
+    import sloika.features
 
     try:
         with fast5.Reader(fn) as f5:
@@ -117,6 +116,8 @@ def chunk_worker(fn, section, chunk_len, kmer_len, min_length, trim, use_scaled,
 
 def init_chunk_remap_worker(model, fasta, kmer_len):
     import cPickle
+    import sloika.features
+    import sloika.transducer
     global calc_post, kmer_to_state, references
     with open(model, 'r') as fh:
         calc_post = cPickle.load(fh)
