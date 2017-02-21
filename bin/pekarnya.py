@@ -122,7 +122,7 @@ def run_job(args):
         # Update database
         commit = get_git_commit(sloika_gitdir)
         c = conn.cursor()
-        c.execute('update runs set sloika_commit = ? where runid = ?',
+        c.execute("update runs set sloika_commit = ?, training_start = datetime('now') where runid = ?",
                   (commit, args['runid']))
 
     proc = subprocess.Popen(arglist, env=env)
@@ -132,7 +132,7 @@ def run_job(args):
     status = _SUCCESS if returncode == 0 else _FAILURE
     with sqlite3.connect(clargs.database) as conn:
         c = conn.cursor()
-        c.execute('update runs set status = ? where runid = ?',
+        c.execute("update runs set status = ?, training_end = datetime('now') where runid = ?",
                   (status, args['runid']))
 
     if returncode == 0 and args["validation_data"] is not None:
