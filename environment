@@ -10,8 +10,6 @@ export SCRIPTS_DIR="${ROOT_DIR}/scripts"
 
 export BIN_DIR="${ROOT_DIR}/bin"
 
-export SLOIKA_DEV_DIR="${BUILD_DIR}/sloika"
-
 export ACCTEST_WORK_DIR="${BUILD_DIR}/acceptance"
 
 export DEV_VIRTUALENV_DIR="${BUILD_DIR}/env"
