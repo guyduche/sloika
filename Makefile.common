@@ -29,21 +29,6 @@ unitTest:
 unitTestFromScratch: cleanTmpEnvWithWheelInstalled
 	${inTmpEnv} ${unitTestCmd}
 
-
-toxTestCmdPy2:=${pipInstall} -r test/unit/requirements.txt && tox -e py27-unit -e py27-acceptance
-.PHONY: toxTestPy2 toxTestFromScratchPy2
-toxTestPy2:
-	${inDevEnv} ${toxTestCmdPy2}
-toxTestFromScratchPy2: cleanTmpEnvWithDeps
-	${inTmpEnv} ${toxTestCmdPy2}
-
-toxTestCmdPy3:=${pipInstall} -r test/unit/requirements.txt && tox -e py35-unit
-.PHONY: toxTestPy3 toxTestFromScratchPy3
-toxTestPy3:
-	${inDevEnv} ${toxTestCmdPy3}
-toxTestFromScratchPy3: cleanTmpEnvWithDepsPy3
-	${inTmpEnvPy3} ${toxTestCmdPy3}
-
 accset?=
 acceptanceTestCmd:=${pipInstall} -r test/acceptance/requirements.txt && cd test/acceptance && py.test ${pyTestArgs} ${accset}
 .PHONY: acceptanceTest acceptanceTestFromScratch
@@ -51,6 +36,17 @@ acceptanceTest:
 	${inDevEnv} ${acceptanceTestCmd}
 acceptanceTestFromScratch: cleanTmpEnvWithWheelInstalled
 	${inTmpEnv} ${acceptanceTestCmd}
+
+
+toxTestCmdPy2:=${pipInstall} -r test/unit/requirements.txt && tox -e py27-unit -e py27-acceptance
+.PHONY: toxTestFromScratchPy2
+toxTestFromScratchPy2: cleanTmpEnvWithDepsPy3
+	${inTmpEnvPy3} ${toxTestCmdPy2}
+
+toxTestCmdPy3:=${pipInstall} -r test/unit/requirements.txt && tox -e py35-unit -e py35-acceptance
+.PHONY: toxTestFromScratchPy3
+toxTestFromScratchPy3: cleanTmpEnvWithDepsPy3
+	${inTmpEnvPy3} ${toxTestCmdPy3}
 
 .PHONY: cleanDevEnv
 cleanDevEnv: cleanVirtualenv
