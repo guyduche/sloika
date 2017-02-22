@@ -32,7 +32,7 @@ def _compile_model(outqueue, model_file, output_file=None):
             output_file = fh.name
 
     sys.setrecursionlimit(10000)
-    with open(model_file, 'r') as fh:
+    with open(model_file, 'rb') as fh:
         network = pickle.load(fh)
     if isinstance(network, layers.Layer):
         #  File contains network to compile
