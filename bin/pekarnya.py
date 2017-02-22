@@ -146,7 +146,7 @@ def run_job(args):
                   "training_start = datetime('now'), "
                   "output_directory = ? "
                   "where runid = ?",
-                  (commit, args['runid'], output_directory))
+                  (commit, output_directory, args['runid']))
 
     print('Executing on GPU {}:\n\t'.format(gpu) + ' '.join(arglist))
     proc = subprocess.Popen(arglist, env=env)
