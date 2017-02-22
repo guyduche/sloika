@@ -110,11 +110,14 @@ pep8:
 
 
 cmd?=echo "Set 'cmd' to command to run in dev env"
-.PHONY: runInEnv
-runInEnv:
+.PHONY: runInDevEnv
+runInDevEnv:
 	@${inDevEnv} ${cmd}
-.PHONY: runInEnvPy3
-runInEnvPy3:
+.PHONY: runInTmpEnv
+runInTmpEnv:
+	@${inTmpEnv} ${cmd}
+.PHONY: runInTmpEnvPy3
+runInTmpEnvPy3:
 	@${inTmpEnvPy3} ${cmd}
 
 .PHONY: deb
