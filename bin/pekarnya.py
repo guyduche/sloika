@@ -42,7 +42,7 @@ parser.add_argument('database', action=FileExists, help='Database.db file')
 
 def is_gitdir(path='.'):
     return subprocess.call(['git', '-C', path, 'status'], stderr=subprocess.STDOUT,
-                           stdout = open(os.devnull, 'w')) == 0
+                           stdout=open(os.devnull, 'w')) == 0
 
 
 def get_git_commit(gitdir, porcelain=False):
@@ -135,7 +135,6 @@ def run_job(args):
     else:
         arglist.append("--no-transducer")
 
-
     commit = get_git_commit(sloika_gitdir, porcelain=True)
     if commit is None:
         commit = 'unclean'
@@ -188,7 +187,6 @@ if __name__ == '__main__':
         print("Sloika dir {} is not a git repository".format(sloika_gitdir))
         exit(1)
     print("Running Sloika {} from {}".format(sloika.version.__version__, sloika_gitdir))
-
 
     jobs = create_jobs(args.database, sleep=args.sleep, limit=args.limit)
     pool = multiprocessing.Pool(args.jobs, initializer=_set_init_args, initargs=[args])
