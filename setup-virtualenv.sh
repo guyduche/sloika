@@ -2,11 +2,11 @@
 
 source environment
 
-# for fromscratch builds plow through ${SLOIKA_VIRTUALENV_DIR} before running this script
-mkdir -p ${SLOIKA_VIRTUALENV_DIR}
-virtualenv ${SLOIKA_VIRTUALENV_DIR}
+# for fromscratch builds plow through ${DEV_VIRTUALENV_DIR} before running this script
+mkdir -p ${DEV_VIRTUALENV_DIR}
+virtualenv ${DEV_VIRTUALENV_DIR}
 
-source ${SLOIKA_VIRTUALENV_DIR}/bin/activate
+source ${DEV_VIRTUALENV_DIR}/bin/activate
 
 # need a version of pip that supports --trusted-host option
 pip install pip --upgrade

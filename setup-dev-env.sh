@@ -2,7 +2,7 @@
 
 source environment
 
-source ${SLOIKA_VIRTUALENV_DIR}/bin/activate
+source ${DEV_VIRTUALENV_DIR}/bin/activate
 
 # need a version of pip that supports --trusted-host option
 pip install pip --upgrade

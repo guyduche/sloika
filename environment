@@ -14,7 +14,7 @@ export SLOIKA_DEV_DIR="${BUILD_DIR}/sloika"
 
 export ACCTEST_WORK_DIR="${BUILD_DIR}/acceptance"
 
-export SLOIKA_VIRTUALENV_DIR="${BUILD_DIR}/env"
+export DEV_VIRTUALENV_DIR="${BUILD_DIR}/env"
 
 export TMP_VIRTUALENV_DIR="${BUILD_DIR}/tmpenv"
 
