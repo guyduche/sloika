@@ -6,17 +6,28 @@ import subprocess
 from setuptools import setup, find_packages
 from Cython.Build import cythonize
 
-cmd = os.path.join(os.environ['SCRIPTS_DIR'], 'show-version.sh')
+try:
+    root_dir = os.environ['ROOT_DIR']
+except KeyError:
+    root_dir = '.'
+try:
+    scripts_dir = os.environ['SCRIPTS_DIR']
+except KeyError:
+    scripts_dir = 'scripts'
+
+cmd = os.path.join(scripts_dir, 'show-version.sh')
 version, err = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE).communicate()
+version = version.decode('utf-8')
 
-version_py = os.path.join(os.environ['ROOT_DIR'], 'sloika', 'version.py')
-open(version_py, 'w').write("__version__ = '%s'\n" % version)
+version_py_name = os.path.join(root_dir, 'sloika', 'version.py')
+version_py_contents = u"__version__ = '%s'\n" % version
+open(version_py_name, 'w').write(version_py_contents)
 
-requirements_file = os.path.join(os.environ['ROOT_DIR'], 'requirements.txt')
+requirements_file = os.path.join(root_dir, 'requirements.txt')
 with open(requirements_file) as f:
     install_requires = f.read().splitlines()
 
-package_dir = os.path.join(os.environ['ROOT_DIR'], 'sloika')
+package_dir = os.path.join(root_dir, 'sloika')
 setup(
     name='sloika',
     version=version,
