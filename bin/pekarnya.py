@@ -133,6 +133,7 @@ def run_job(args):
                   "where runid = ?",
                   (commit, args['runid'], output_directory))
 
+    print('Executing on GPU {}:\n\t'.format(gpu) + ' '.join(arglist))
     proc = subprocess.Popen(arglist, env=env)
     proc.wait()
     returncode = proc.returncode
