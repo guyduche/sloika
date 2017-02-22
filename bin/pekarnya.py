@@ -112,6 +112,7 @@ def run_job(args):
     arglist = [os.path.join(sloika_gitdir, "bin/train_network.py"),
                "--bad",
                "--quiet",
+               "--overwrite",
                args["model"],
                output_directory,
                args["training_data"]]
