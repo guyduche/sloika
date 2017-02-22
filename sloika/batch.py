@@ -127,7 +127,7 @@ def init_chunk_remap_worker(model, fasta, kmer_len):
     import sloika.features
     import sloika.transducer
     global calc_post, kmer_to_state, references
-    with open(model, 'r') as fh:
+    with open(model, 'rb') as fh:
         calc_post = pickle.load(fh)
 
     references = dict()
