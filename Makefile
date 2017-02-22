@@ -94,5 +94,11 @@ cmd?=echo "Set 'cmd' to command to run in Sloika env"
 runInEnv:
 	@${inSloikaEnv} ${cmd}
 
+.PHONY: pp pullpush
+pp: pullpush
+pullpush:
+	${MAKE} pep8
+	cd data && git pull --rebase && git push
+	git pull --rebase && git push
 
 include Makefile.res
