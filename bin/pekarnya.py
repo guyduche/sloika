@@ -40,7 +40,7 @@ parser.add_argument('--sleep', metavar='seconds', default=30, type=NonNegative(i
 parser.add_argument('database', action=FileExists, help='Database.db file')
 
 
-def is_git_directory(path='.'):
+def is_gitdir(path='.'):
     return subprocess.call(['git', '-C', path, 'status'], stderr=subprocess.STDOUT,
                            stdout = open(os.devnull, 'w')) == 0
 
@@ -184,7 +184,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     sloika_gitdir = os.path.dirname(os.path.dirname(sloika.__file__))
-    if not is_git_dir(sloika_gitdir):
+    if not is_gitdir(sloika_gitdir):
         print("Sloika dir {} is not a git repository".format(sloika_gitdir))
         exit(1)
 
