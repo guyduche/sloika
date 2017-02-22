@@ -126,7 +126,10 @@ def run_job(args):
         # Update database
         commit = get_git_commit(sloika_gitdir)
         c = conn.cursor()
-        c.execute("update runs set sloika_commit = ?, training_start = datetime('now'), output_directory = ? where runid = ?",
+        c.execute("update runs set sloika_commit = ?, "
+                  "training_start = datetime('now'), "
+                  "output_directory = ? "
+                  "where runid = ?",
                   (commit, args['runid'], output_directory))
 
     proc = subprocess.Popen(arglist, env=env)
