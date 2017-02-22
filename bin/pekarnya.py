@@ -187,6 +187,7 @@ if __name__ == '__main__':
     if not is_gitdir(sloika_gitdir):
         print("Sloika dir {} is not a git repository".format(sloika_gitdir))
         exit(1)
+    print("Running Sloika from {}".format(sloika_gitdir))
 
 
     jobs = create_jobs(args.database, sleep=args.sleep, limit=args.limit)
