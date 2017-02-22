@@ -28,7 +28,7 @@ def create_output_strand_file(output_strand_list_entries, output_file_name):
     output_strand_list_entries.sort()
 
     with open(output_file_name, "w") as sl:
-        sl.write('\t'.join(['filename', 'nev', 'score', 'nstay', 'seqlen', 'start', 'end']) + '\n')
+        sl.write(u'\t'.join(['filename', 'nev', 'score', 'nstay', 'seqlen', 'start', 'end']) + u'\n')
         for strand_data in output_strand_list_entries:
             sl.write('\t'.join([str(x) for x in strand_data]) + '\n')
 
