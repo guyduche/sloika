@@ -9,7 +9,7 @@ envCmd?=source $${DEV_VIRTUALENV_DIR}/bin/activate &&
 
 pipInstall:=pip install --trusted-host pypi.oxfordnanolabs.local --index-url https://pypi.oxfordnanolabs.local/simple/
 inTmpEnv:=source environment && source $${TMP_VIRTUALENV_DIR}/bin/activate &&
-inTmpEnvPy3:=source environment && source $${TMP_PY3_VIRTUALENV_DIR}/bin/activate &&
+inTmpEnvPy3:=source environment && source $${TMP_VIRTUALENV_DIR_PY3}/bin/activate &&
 inDevEnv:=source environment && ${envCmd}
 
 
@@ -68,7 +68,7 @@ cleanTmpEnv:
 
 .PHONY: cleanTmpEnvPy3
 cleanTmpEnvPy3:
-	source environment && rm -rf $${TMP_PY3_VIRTUALENV_DIR} && virtualenv -p python3 $${TMP_PY3_VIRTUALENV_DIR}
+	source environment && rm -rf $${TMP_VIRTUALENV_DIR_PY3} && virtualenv -p python3 $${TMP_VIRTUALENV_DIR_PY3}
 	${inTmpEnvPy3} pip install pip --upgrade
 
 .PHONY: cleanTmpEnvWithDeps
