@@ -30,19 +30,19 @@ unitTestFromScratch: cleanTmpEnvWithWheelInstalled
 	${inTmpEnv} ${unitTestCmd}
 
 
-unitTestCmdPy2:=${pipInstall} -r test/unit/requirements.txt && tox -e py27-unit
-.PHONY: unitTestPy2 unitTestFromScratchPy2
-unitTestPy2:
-	${inDevEnv} ${unitTestCmdPy2}
-unitTestFromScratchPy2: cleanTmpEnvWithDeps
-	${inTmpEnv} ${unitTestCmdPy2}
+toxTestCmdPy2:=${pipInstall} -r test/unit/requirements.txt && tox -e py27-unit -e py27-acceptance
+.PHONY: toxTestPy2 toxTestFromScratchPy2
+toxTestPy2:
+	${inDevEnv} ${toxTestCmdPy2}
+toxTestFromScratchPy2: cleanTmpEnvWithDeps
+	${inTmpEnv} ${toxTestCmdPy2}
 
-unitTestCmdPy3:=${pipInstall} -r test/unit/requirements.txt && tox -e py35-unit
-.PHONY: unitTestPy3 unitTestFromScratchPy3
-unitTestPy3:
-	${inDevEnv} ${unitTestCmdPy3}
-unitTestFromScratchPy3: cleanTmpEnvWithDepsPy3
-	${inTmpEnvPy3} ${unitTestCmdPy3}
+toxTestCmdPy3:=${pipInstall} -r test/unit/requirements.txt && tox -e py35-unit
+.PHONY: toxTestPy3 toxTestFromScratchPy3
+toxTestPy3:
+	${inDevEnv} ${toxTestCmdPy3}
+toxTestFromScratchPy3: cleanTmpEnvWithDepsPy3
+	${inTmpEnvPy3} ${toxTestCmdPy3}
 
 accset?=
 acceptanceTestCmd:=${pipInstall} -r test/acceptance/requirements.txt && cd test/acceptance && py.test ${pyTestArgs} ${accset}
