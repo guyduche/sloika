@@ -13,6 +13,8 @@ import sqlite3
 import subprocess
 import tempfile
 import time
+
+import sloika
 from untangled.cmdargs import FileExists, Maybe, NonNegative, Positive
 
 clargs = None
@@ -23,7 +25,6 @@ _SUCCESS = 2
 _FAILURE = 3
 _SUSPEND = 4
 
-sloika_gitdir = os.path.expanduser(os.path.join('~', 'git', 'sloika'))
 
 parser = argparse.ArgumentParser(
     description='server for model training',
@@ -39,7 +40,18 @@ parser.add_argument('--sleep', metavar='seconds', default=30, type=NonNegative(i
 parser.add_argument('database', action=FileExists, help='Database.db file')
 
 
-def get_git_commit(gitdir):
+def is_git_directory(path='.'):
+    return subprocess.call(['git', '-C', path, 'status'], stderr=subprocess.STDOUT,
+                           stdout = open(os.devnull, 'w')) == 0
+
+
+def get_git_commit(gitdir, porcelain=False):
+    if porcelain:
+        isclean = subprocess.check_output('cd {} && git status --untracked-files=no --porcelain'.format(gitdir),
+                                          shell=True)
+        if isclean != '':
+            return None
+
     return subprocess.check_output(
         'cd {} && git log --pretty=format:"%H" -1'.format(gitdir), shell=True
     ).rstrip()
@@ -123,9 +135,13 @@ def run_job(args):
     else:
         arglist.append("--no-transducer")
 
+
+    commit = get_git_commit(sloika_gitdir, porcelain=True)
+    if commit is None:
+        commit = 'unclean'
+
     with sqlite3.connect(clargs.database) as conn:
         # Update database
-        commit = get_git_commit(sloika_gitdir)
         c = conn.cursor()
         c.execute("update runs set sloika_commit = ?, "
                   "training_start = datetime('now'), "
@@ -166,6 +182,12 @@ def run_job(args):
 
 if __name__ == '__main__':
     args = parser.parse_args()
+
+    sloika_gitdir = os.path.dirname(os.path.dirname(sloika.__file__))
+    if not is_git_dir(sloika_gitdir):
+        print("Sloika dir {} is not a git repository".format(sloika_gitdir))
+        exit(1)
+
 
     jobs = create_jobs(args.database, sleep=args.sleep, limit=args.limit)
     pool = multiprocessing.Pool(args.jobs, initializer=_set_init_args, initargs=[args])
