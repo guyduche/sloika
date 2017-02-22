@@ -1,3 +1,13 @@
+from __future__ import division
+from __future__ import unicode_literals
+from __future__ import print_function
+from __future__ import absolute_import
+from future import standard_library
+standard_library.install_aliases()
+from builtins import next
+from builtins import range
+from builtins import *
+from past.utils import old_div
 import itertools
 import numpy as np
 
@@ -40,7 +50,7 @@ def decode_profile(post, trans=None, log=False, slip=0.0):
         ev_trans = next(trans_iter)
         # Stay
         score = pscore + ev_trans[0]
-        iscore = range(nstate)
+        iscore = list(range(nstate))
         # Slip
         scoreNew = np.amax(pscore) + log_slip
         iscoreNew = np.argmax(pscore)
@@ -50,14 +60,14 @@ def decode_profile(post, trans=None, log=False, slip=0.0):
         pscore = pscore.reshape((_NSTEP, -1))
         nrem = pscore.shape[1]
         scoreNew = np.repeat(np.amax(pscore, axis=0), _NSTEP) + ev_trans[1]
-        iscoreNew = np.repeat(nrem * np.argmax(pscore, axis=0) + range(nrem), _NSTEP)
+        iscoreNew = np.repeat(nrem * np.argmax(pscore, axis=0) + list(range(nrem)), _NSTEP)
         iscore = np.where(score > scoreNew, iscore, iscoreNew)
         score = np.fmax(score, scoreNew)
         # Skip
         pscore = pscore.reshape((_NSKIP, -1))
         nrem = pscore.shape[1]
         scoreNew = np.repeat(np.amax(pscore, axis=0), _NSKIP) + ev_trans[2]
-        iscoreNew = np.repeat(nrem * np.argmax(pscore, axis=0) + range(nrem), _NSKIP)
+        iscoreNew = np.repeat(nrem * np.argmax(pscore, axis=0) + list(range(nrem)), _NSKIP)
         iscore = np.where(score > scoreNew, iscore, iscoreNew)
         score = np.fmax(score, scoreNew)
         # Store
@@ -102,9 +112,9 @@ def estimate_transitions(post, trans=None):
     for ev in range(1, len(post)):
         stay = np.sum(post[ev - 1] * post[ev])
         p = post[ev].reshape((-1, _NSTEP))
-        step = np.sum(post[ev - 1] * np.tile(np.sum(p, axis=1), _NSTEP)) / _NSTEP
+        step = old_div(np.sum(post[ev - 1] * np.tile(np.sum(p, axis=1), _NSTEP)), _NSTEP)
         p = post[ev].reshape((-1, _NSKIP))
-        skip = np.sum(post[ev - 1] * np.tile(np.sum(p, axis=1), _NSKIP)) / _NSKIP
+        skip = old_div(np.sum(post[ev - 1] * np.tile(np.sum(p, axis=1), _NSKIP)), _NSKIP)
         res[ev - 1] = [stay, step, skip]
 
     if trans is None:

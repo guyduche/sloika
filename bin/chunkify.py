@@ -1,5 +1,14 @@
 #!/usr/bin/env python
 from __future__ import print_function
+from __future__ import unicode_literals
+from __future__ import division
+from __future__ import absolute_import
+from future import standard_library
+standard_library.install_aliases()
+from builtins import zip
+from builtins import map
+from builtins import *
+from builtins import object
 
 import argparse
 import sys
@@ -61,8 +70,8 @@ class Commands(object):
 
     def __repr__(self):
         names = sorted(self.commands.keys())
-        descriptions = map(lambda name: self.get_description(name), names)
-        name_description_pairs = zip(names, descriptions)
+        descriptions = [self.get_description(name) for name in names]
+        name_description_pairs = list(zip(names, descriptions))
 
         def show_pair(t):
             return "%10s -- %s" % t

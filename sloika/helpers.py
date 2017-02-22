@@ -1,4 +1,11 @@
-import cPickle
+from __future__ import unicode_literals
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
+from future import standard_library
+standard_library.install_aliases()
+from builtins import *
+import pickle
 from multiprocessing import Process
 from multiprocessing.queues import SimpleQueue
 import shutil
@@ -27,12 +34,12 @@ def _compile_model(outqueue, model_file, output_file=None):
 
     sys.setrecursionlimit(10000)
     with open(model_file, 'r') as fh:
-        network = cPickle.load(fh)
+        network = pickle.load(fh)
     if isinstance(network, layers.Layer):
         #  File contains network to compile
         with open(output_file, 'wb') as fh:
             compiled_network = network.compile()
-            cPickle.dump(compiled_network, fh, protocol=cPickle.HIGHEST_PROTOCOL)
+            pickle.dump(compiled_network, fh, protocol=pickle.HIGHEST_PROTOCOL)
     elif isinstance(network, theano.compile.function_module.Function):
         #  Network is already compiled - make temporary copy
         shutil.copy(model_file, output_file)

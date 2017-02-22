@@ -1,4 +1,14 @@
 #!/usr/bin/env python
+from __future__ import division
+from __future__ import unicode_literals
+from __future__ import print_function
+from __future__ import absolute_import
+from future import standard_library
+standard_library.install_aliases()
+from builtins import next
+from builtins import range
+from builtins import *
+from past.utils import old_div
 import argparse
 from itertools import islice
 import multiprocessing
@@ -66,7 +76,7 @@ def imap_unordered(pool, f, iterable):
 
     #  Repeatedly scan through job array looking for new jobs
     while any(jobs):
-        for i in xrange(len(jobs)):
+        for i in range(len(jobs)):
             if jobs[i] is not None and jobs[i].ready():
                 res = jobs[i].get()
                 try:
@@ -90,7 +100,7 @@ def run_job(args):
     # Split jobs cyclically among GPU by process ID.  NB: process IDs are 1-based
     pid = int(multiprocessing.current_process().name.split('-')[-1])
     gpu = (pid - 1) % clargs.ngpu
-    pmem = 0.8 * min(clargs.ngpu / float(clargs.jobs), 1)
+    pmem = 0.8 * min(old_div(clargs.ngpu, float(clargs.jobs)), 1)
     # Theano flags
     env = os.environ.copy()
     t = ('floatX=float32,warn_float64=warn,optimizer=fast_run,nvcc.fastmath=True,'

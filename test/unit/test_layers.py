@@ -1,6 +1,14 @@
 from __future__ import print_function
+from __future__ import unicode_literals
+from __future__ import division
+from __future__ import absolute_import
+from future import standard_library
+standard_library.install_aliases()
+from builtins import range
+from builtins import *
+from builtins import object
 import abc
-import cPickle
+import pickle
 import json
 import numpy as np
 import tempfile
@@ -12,6 +20,7 @@ import theano.tensor as T
 from sloika import activation
 from sloika.config import sloika_dtype
 import sloika.layers as nn
+from future.utils import with_metaclass
 
 
 def rvs(dim):
@@ -156,7 +165,7 @@ class ANNTest(unittest.TestCase):
 
         res = f(self.x)
         res2 = np.zeros((self._NBATCH, self._SIZE), dtype=sloika_dtype)
-        for i in xrange(self._NSTEP):
+        for i in range(self._NSTEP):
             res2 = res2.dot(sW.transpose()) + self.b
             np.testing.assert_almost_equal(res[i], res2)
 
@@ -189,7 +198,7 @@ class ANNTest(unittest.TestCase):
         theano_grad = f(self.x)[0]
         analytic_grad = np.sum(self.x, axis=(0, 1))
         self.assertEqual(theano_grad.shape, (self._SIZE, self._NFEATURES))
-        for i in xrange(self._NFEATURES):
+        for i in range(self._NFEATURES):
             np.testing.assert_almost_equal(theano_grad[i], analytic_grad, decimal=3)
 
     def test_013_simple_derivative_with_bias(self):
@@ -206,7 +215,7 @@ class ANNTest(unittest.TestCase):
         W_grad = np.sum(self.x, axis=(0, 1))
         self.assertEqual(theano_grad[0].shape, (self._SIZE, self._NFEATURES))
         self.assertEqual(theano_grad[1].shape[0], self._SIZE)
-        for i in xrange(self._NFEATURES):
+        for i in range(self._NFEATURES):
             np.testing.assert_almost_equal(theano_grad[0][i], W_grad, decimal=3)
             np.testing.assert_almost_equal(theano_grad[1][i], self._NBATCH * self._NSTEP)
 
@@ -235,9 +244,9 @@ class ANNTest(unittest.TestCase):
         grad = th.grad(loss, params)
         f = th.function([x], grad)
         with tempfile.TemporaryFile() as tf:
-            cPickle.dump(f, tf)
+            pickle.dump(f, tf)
             tf.seek(0)
-            f2 = cPickle.load(tf)
+            f2 = pickle.load(tf)
 
         theano_grad = f(self.x)[0]
         theano_grad2 = f2(self.x)[0]
@@ -253,8 +262,8 @@ class ANNTest(unittest.TestCase):
         #  Window is now 'SAME' not 'VALID'. Trim
         wh = _WINLEN // 2
         res = res[wh: -wh]
-        for j in xrange(self._NBATCH):
-            for i in xrange(_WINLEN - 1):
+        for j in range(self._NBATCH):
+            for i in range(_WINLEN - 1):
                 try:
                     np.testing.assert_almost_equal(
                         res[:, j, i * _WINLEN: (i + 1) * _WINLEN], self.x[i: 1 + i - _WINLEN, j])
@@ -290,7 +299,7 @@ class ANNTest(unittest.TestCase):
         np.testing.assert_almost_equal(res, self.res)
 
 
-class LayerTest(object):
+class LayerTest(with_metaclass(abc.ABCMeta, object)):
     """Mixin abstract class for testing basic layer functionality
     Writing a TestCase for a new layer is easy, for example:
 
@@ -305,7 +314,6 @@ class LayerTest(object):
         def setUp(self):
             self.layer = nn.Recurrent(12, 64)
     """
-    __metaclass__ = abc.ABCMeta
 
     @classmethod
     def setUpClass(cls):
@@ -338,12 +346,12 @@ class LayerTest(object):
             raise NotImplementedError(
                 "Please specify names of layer parameters, or explicitly set to [] if there are none.")
         p0 = self.layer.json(params=True)["params"]
-        p0 = {p: np.array(v, dtype=sloika_dtype) for (p, v) in p0.items()}
-        for (p, v) in p0.items():
+        p0 = {p: np.array(v, dtype=sloika_dtype) for (p, v) in list(p0.items())}
+        for (p, v) in list(p0.items()):
             p0[p] = v + np.random.uniform(size=v.shape).astype(sloika_dtype)
         self.layer.set_params(p0)
         p1 = self.layer.json(params=True)["params"]
-        p1 = {p: np.array(v) for (p, v) in p1.items()}
+        p1 = {p: np.array(v) for (p, v) in list(p1.items())}
         self.assertTrue(all([np.allclose(p0[k], p1[k]) for k in self._PARAMS]))
 
     def test_005_params(self):

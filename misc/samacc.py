@@ -1,5 +1,12 @@
 #!/usr/bin/env python
 from __future__ import print_function
+from __future__ import division
+from __future__ import unicode_literals
+from __future__ import absolute_import
+from future import standard_library
+standard_library.install_aliases()
+from builtins import *
+from past.utils import old_div
 import argparse
 import numpy as np
 import pysam
@@ -27,7 +34,7 @@ if __name__ == '__main__':
             if read.flag != 0 and read.flag != 16:
                 continue
 
-            coverage = float(read.qlen) / read.rlen
+            coverage = old_div(float(read.qlen), read.rlen)
             if coverage < args.coverage:
                 continue
 
@@ -42,5 +49,5 @@ if __name__ == '__main__':
             print(ref_name[read.reference_id], read.qname,
                   STRAND[read.flag], bins[0], mismatch, bins[1], bins[2],
                   coverage,
-                  float(correct) / float(bins[0]),
-                  float(correct) / alnlen)
+                  old_div(float(correct), float(bins[0])),
+                  old_div(float(correct), alnlen))

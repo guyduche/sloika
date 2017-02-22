@@ -1,4 +1,11 @@
 from __future__ import print_function
+from __future__ import division
+from __future__ import unicode_literals
+from __future__ import absolute_import
+from future import standard_library
+standard_library.install_aliases()
+from builtins import *
+from past.utils import old_div
 import os
 import sys
 import h5py
@@ -14,7 +21,7 @@ def geometric_prior(n, m, rev=False):
 
     :returns: A 1D :class:`ndarray` containing log probabilities
     """
-    p = 1.0 / (1.0 + m)
+    p = old_div(1.0, (1.0 + m))
     prior = np.repeat(np.log(p), n)
     prior[1:] += np.arange(1, n) * np.log1p(-p)
     if rev:

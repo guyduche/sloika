@@ -1,5 +1,12 @@
 #!/usr/bin/env python
 from __future__ import print_function
+from __future__ import unicode_literals
+from __future__ import division
+from __future__ import absolute_import
+from future import standard_library
+standard_library.install_aliases()
+from builtins import range
+from builtins import *
 import argparse
 import numpy as np
 from scipy.linalg import blas
@@ -92,7 +99,7 @@ def ff4_softmax(m):
 
 def timef(f, ntimes):
     t0 = time.time()
-    for i in xrange(ntimes):
+    for i in range(ntimes):
         out = f(m)
     return time.time() - t0
 

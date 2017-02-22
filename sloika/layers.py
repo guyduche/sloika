@@ -1,3 +1,13 @@
+from __future__ import division
+from __future__ import unicode_literals
+from __future__ import print_function
+from __future__ import absolute_import
+from future import standard_library
+standard_library.install_aliases()
+from builtins import range
+from builtins import *
+from past.utils import old_div
+from builtins import object
 import abc
 from collections import OrderedDict
 import theano as th
@@ -8,6 +18,7 @@ from sloika import activation
 from sloika.config import sloika_dtype
 from sloika.variables import NBASE, nkmer
 from functools import reduce
+from future.utils import with_metaclass
 
 """  Convention: inMat row major (C ordering) as (time, batch, state)
 """
@@ -28,9 +39,7 @@ def _extract(x, shape=None):
     return xv.tolist()
 
 
-class Layer(object):
-    __metaclass__ = abc.ABCMeta
-
+class Layer(with_metaclass(abc.ABCMeta, object)):
     def compile(self):
         x = T.tensor3()
         return th.function([th.In(x, borrow=True)], th.Out(self.run(x), borrow=True))
@@ -109,7 +118,7 @@ class FeedForward(Layer):
                  fun=activation.tanh):
         self.has_bias = has_bias
         self.b = th.shared(has_bias * init(size))
-        self.W = th.shared(init((size, insize)) / np.sqrt(size + insize))
+        self.W = th.shared(old_div(init((size, insize)), np.sqrt(size + insize)))
         self.insize = insize
         self.size = size
         self.fun = fun
@@ -160,7 +169,7 @@ class Studentise(Layer):
     def run(self, inMat):
         m = T.shape_padleft(T.mean(inMat, axis=(0, 1)), n_ones=2)
         v = T.shape_padleft(T.var(inMat, axis=(0, 1)), n_ones=2)
-        return (inMat - m) / T.sqrt(v + self.epsilon)
+        return old_div((inMat - m), T.sqrt(v + self.epsilon))
 
 
 class NormaliseL1(Layer):
@@ -183,7 +192,7 @@ class NormaliseL1(Layer):
 
     def run(self, inMat):
         f = self.epsilon + T.sum(T.abs_(inMat), axis=2)
-        return inMat / T.shape_padright(f)
+        return old_div(inMat, T.shape_padright(f))
 
 
 class Softmax(Layer):
@@ -200,7 +209,7 @@ class Softmax(Layer):
     def __init__(self, insize, size, init=zeros, has_bias=False):
         self.has_bias = has_bias
         self.b = th.shared(has_bias * init(size))
-        self.W = th.shared(init((size, insize)) / np.sqrt(insize + size))
+        self.W = th.shared(old_div(init((size, insize)), np.sqrt(insize + size)))
         self.insize = insize
         self.size = size
 
@@ -244,7 +253,7 @@ class SoftmaxOld(Layer):
     def __init__(self, insize, size, init=zeros, has_bias=False):
         self.has_bias = has_bias
         self.b = th.shared(has_bias * init(size))
-        self.W = th.shared(init((size, insize)) / np.sqrt(size + insize))
+        self.W = th.shared(old_div(init((size, insize)), np.sqrt(size + insize)))
         self.insize = insize
         self.size = size
 
@@ -274,7 +283,7 @@ class SoftmaxOld(Layer):
         m = T.shape_padright(T.max(tmp, axis=2))
         out = T.exp(tmp - m)
         rowsum = T.sum(out, axis=2)
-        return out / T.shape_padright(rowsum)
+        return old_div(out, T.shape_padright(rowsum))
 
 
 class Window(Layer):
@@ -303,7 +312,7 @@ class Window(Layer):
         ntime, nbatch, nfeatures = T.shape(inMat)
         zeros = T.zeros((self.w // 2, nbatch, nfeatures))
         padMat = T.concatenate([zeros, inMat, zeros], axis=0)
-        tmp = T.concatenate([padMat[i : 1 + i - self.w] for i in xrange(self.w - 1)], axis=2)
+        tmp = T.concatenate([padMat[i : 1 + i - self.w] for i in range(self.w - 1)], axis=2)
         return T.concatenate([tmp, padMat[self.w - 1 :]], axis=2)
 
 
@@ -319,7 +328,7 @@ class Convolution(Layer):
         assert size > 0, "Size (number of filters) must be positive"
         assert w > 0, "Window size must be positive"
         self.w = w
-        self.flt = th.shared(init((size, insize, 1, w)) / np.sqrt(w * insize + size))
+        self.flt = th.shared(old_div(init((size, insize, 1, w)), np.sqrt(w * insize + size)))
         self.insize = insize
         self.size = size
         self.fun = fun
@@ -370,8 +379,8 @@ class Recurrent(RNN):
                  fun=activation.tanh):
         self.has_bias = has_bias
         self.b = th.shared(has_bias * init(size))
-        self.iW = th.shared(init((size, insize)) / np.sqrt(insize + size))
-        self.sW = th.shared(init((size, size)) / np.sqrt(size + size))
+        self.iW = th.shared(old_div(init((size, insize)), np.sqrt(insize + size)))
+        self.sW = th.shared(old_div(init((size, size)), np.sqrt(size + size)))
         self.fun = fun
         self.insize = insize
         self.size = size
@@ -428,10 +437,10 @@ class Scrn(RNN):
         # the option to learn the entries of this matrix could be added later
         self.alpha = T.constant(alpha)
         self.ssW = th.shared((alpha * np.identity(slow_size)).astype(sloika_dtype))
-        self.isW = th.shared(init((slow_size, insize)) / np.sqrt(slow_size + insize))
-        self.sfW = th.shared(init((fast_size, slow_size)) / np.sqrt(fast_size + slow_size))
-        self.ifW = th.shared(init((fast_size, insize)) / np.sqrt(fast_size + insize))
-        self.ffW = th.shared(init((fast_size, fast_size)) / np.sqrt(fast_size + fast_size))
+        self.isW = th.shared(old_div(init((slow_size, insize)), np.sqrt(slow_size + insize)))
+        self.sfW = th.shared(old_div(init((fast_size, slow_size)), np.sqrt(fast_size + slow_size)))
+        self.ifW = th.shared(old_div(init((fast_size, insize)), np.sqrt(fast_size + insize)))
+        self.ffW = th.shared(old_div(init((fast_size, fast_size)), np.sqrt(fast_size + fast_size)))
         self.fun = fun
         self.insize = insize
         self.fast_size = fast_size
@@ -516,8 +525,8 @@ class Lstm(RNN):
 
         self.b = th.shared(has_bias * (init(4 * size) + np.repeat([0, 0, _FORGET_BIAS, 0], size).astype(sloika_dtype)))
         self.p = th.shared(has_peep * init((3, size)) / np.sqrt(size))
-        self.iW = th.shared(init((4 * size, insize)) / np.sqrt(insize + size))
-        self.sW = th.shared(init((4 * size, size)) / np.sqrt(size + size))
+        self.iW = th.shared(old_div(init((4 * size, insize)), np.sqrt(insize + size)))
+        self.sW = th.shared(old_div(init((4 * size, size)), np.sqrt(size + size)))
 
     def params(self):
         params = [self.iW, self.sW]
@@ -613,8 +622,8 @@ class LstmCIFG(RNN):
 
         self.b = th.shared(has_bias * (init(3 * size) + np.repeat([0, _FORGET_BIAS, 0], size).astype(sloika_dtype)))
         self.p = th.shared(has_peep * init((2, size)) / np.sqrt(size))
-        self.iW = th.shared(init((3 * size, insize)) / np.sqrt(insize + size))
-        self.sW = th.shared(init((3 * size, size)) / np.sqrt(size + size))
+        self.iW = th.shared(old_div(init((3 * size, insize)), np.sqrt(insize + size)))
+        self.sW = th.shared(old_div(init((3 * size, size)), np.sqrt(size + size)))
 
     def params(self):
         params = [self.iW, self.sW]
@@ -706,8 +715,8 @@ class LstmO(RNN):
 
         self.b = th.shared(has_bias * (init(3 * size) + np.repeat([0, 0, _FORGET_BIAS], size).astype(sloika_dtype)))
         self.p = th.shared(has_peep * init((3, size)) / np.sqrt(size))
-        self.iW = th.shared(init((3 * size, insize)) / np.sqrt(insize + size))
-        self.sW = th.shared(init((3 * size, size)) / np.sqrt(size + size))
+        self.iW = th.shared(old_div(init((3 * size, insize)), np.sqrt(insize + size)))
+        self.sW = th.shared(old_div(init((3 * size, size)), np.sqrt(size + size)))
 
     def params(self):
         params = [self.iW, self.sW]
@@ -778,8 +787,8 @@ class Forget(RNN):
         self.gatefun
 
         self.b = th.shared(has_bias * (init(2 * size) + np.repeat([_FORGET_BIAS, 0], size).astype(sloika_dtype)))
-        self.iW = th.shared(init((2 * size, insize)) / np.sqrt(insize + size))
-        self.sW = th.shared(init((2 * size, size)) / np.sqrt(size + size))
+        self.iW = th.shared(old_div(init((2 * size, insize)), np.sqrt(insize + size)))
+        self.sW = th.shared(old_div(init((2 * size, size)), np.sqrt(size + size)))
 
     def params(self):
         params = [self.iW, self.sW]
@@ -841,9 +850,9 @@ class Gru(RNN):
         self.gatefun = gatefun
 
         self.b = th.shared(has_bias * init(3 * size))
-        self.iW = th.shared(init((3 * size, insize)) / np.sqrt(insize + size))
-        self.sW = th.shared(init((2 * size, size)) / np.sqrt(size + size))
-        self.sW2 = th.shared(init((size, size)) / np.sqrt(size + size))
+        self.iW = th.shared(old_div(init((3 * size, insize)), np.sqrt(insize + size)))
+        self.sW = th.shared(old_div(init((2 * size, size)), np.sqrt(size + size)))
+        self.sW2 = th.shared(old_div(init((size, size)), np.sqrt(size + size)))
 
     def params(self):
         params = [self.iW, self.sW, self.sW2]
@@ -925,11 +934,11 @@ class Mut1(RNN):
         self.b_r = th.shared(has_bias * init(size))
         self.b_h = th.shared(has_bias * init(size))
         self.b_u = th.shared(has_bias * init(size))
-        self.W_xu = th.shared(init((size, insize)) / np.sqrt(insize + size))
-        self.W_xz = th.shared(init((size, insize)) / np.sqrt(insize + size))
-        self.W_xr = th.shared(init((size, insize)) / np.sqrt(insize + size))
-        self.W_hr = th.shared(init((size, size)) / np.sqrt(size + size))
-        self.W_hh = th.shared(init((size, size)) / np.sqrt(size + size))
+        self.W_xu = th.shared(old_div(init((size, insize)), np.sqrt(insize + size)))
+        self.W_xz = th.shared(old_div(init((size, insize)), np.sqrt(insize + size)))
+        self.W_xr = th.shared(old_div(init((size, insize)), np.sqrt(insize + size)))
+        self.W_hr = th.shared(old_div(init((size, size)), np.sqrt(size + size)))
+        self.W_hh = th.shared(old_div(init((size, size)), np.sqrt(size + size)))
 
     def params(self):
         params = [self.W_xu, self.W_xz, self.W_xr, self.W_hr, self.W_hh]
@@ -1022,12 +1031,12 @@ class Mut2(RNN):
         self.b_r = th.shared(has_bias * init(size))
         self.b_h = th.shared(has_bias * init(size))
         self.b_u = th.shared(has_bias * init(size))
-        self.W_xu = th.shared(init((size, insize)) / np.sqrt(insize + size))
-        self.W_xz = th.shared(init((size, insize)) / np.sqrt(insize + size))
-        self.W_hz = th.shared(init((size, size)) / np.sqrt(size + size))
-        self.W_hr = th.shared(init((size, size)) / np.sqrt(size + size))
-        self.W_hh = th.shared(init((size, size)) / np.sqrt(size + size))
-        self.W_xh = th.shared(init((size, insize)) / np.sqrt(size + size))
+        self.W_xu = th.shared(old_div(init((size, insize)), np.sqrt(insize + size)))
+        self.W_xz = th.shared(old_div(init((size, insize)), np.sqrt(insize + size)))
+        self.W_hz = th.shared(old_div(init((size, size)), np.sqrt(size + size)))
+        self.W_hr = th.shared(old_div(init((size, size)), np.sqrt(size + size)))
+        self.W_hh = th.shared(old_div(init((size, size)), np.sqrt(size + size)))
+        self.W_xh = th.shared(old_div(init((size, insize)), np.sqrt(size + size)))
 
     def params(self):
         params = [self.W_xu, self.W_xz, self.W_hz, self.W_hr, self.W_hh, self.W_xh]
@@ -1123,13 +1132,13 @@ class Mut3(RNN):
         self.b_r = th.shared(has_bias * init(size))
         self.b_h = th.shared(has_bias * init(size))
         self.b_u = th.shared(has_bias * init(size))
-        self.W_xu = th.shared(init((size, insize)) / np.sqrt(insize + size))
-        self.W_xz = th.shared(init((size, insize)) / np.sqrt(insize + size))
-        self.W_hz = th.shared(init((size, size)) / np.sqrt(size + size))
-        self.W_xr = th.shared(init((size, insize)) / np.sqrt(insize + size))
-        self.W_hr = th.shared(init((size, size)) / np.sqrt(size + size))
-        self.W_hh = th.shared(init((size, size)) / np.sqrt(size + size))
-        self.W_xh = th.shared(init((size, insize)) / np.sqrt(size + size))
+        self.W_xu = th.shared(old_div(init((size, insize)), np.sqrt(insize + size)))
+        self.W_xz = th.shared(old_div(init((size, insize)), np.sqrt(insize + size)))
+        self.W_hz = th.shared(old_div(init((size, size)), np.sqrt(size + size)))
+        self.W_xr = th.shared(old_div(init((size, insize)), np.sqrt(insize + size)))
+        self.W_hr = th.shared(old_div(init((size, size)), np.sqrt(size + size)))
+        self.W_hh = th.shared(old_div(init((size, size)), np.sqrt(size + size)))
+        self.W_xh = th.shared(old_div(init((size, insize)), np.sqrt(size + size)))
 
     def params(self):
         params = [self.W_xu, self.W_xz, self.W_hz, self.W_xr, self.W_hr, self.W_hh, self.W_xh]
@@ -1226,9 +1235,9 @@ class Genmut(RNN):
         self.gatefun = gatefun
 
         self.b = th.shared(has_bias * init(3 * size))
-        self.xW = th.shared(init((3 * size, insize)) / np.sqrt(insize + size))
-        self.sW = th.shared(init((3 * size, size)) / np.sqrt(size + size))
-        self.sW2 = th.shared(init((size, size)) / np.sqrt(size + size))
+        self.xW = th.shared(old_div(init((3 * size, insize)), np.sqrt(insize + size)))
+        self.sW = th.shared(old_div(init((3 * size, size)), np.sqrt(size + size)))
+        self.sW2 = th.shared(old_div(init((size, size)), np.sqrt(size + size)))
         self.b2 = th.shared(has_bias * init(size))
 
     def params(self):
@@ -1316,7 +1325,7 @@ class Parallel(Layer):
         return
 
     def run(self, inMat):
-        return T.concatenate(map(lambda x: x.run(inMat), self.layers), axis=2)
+        return T.concatenate([x.run(inMat) for x in self.layers], axis=2)
 
 
 class Serial(Layer):

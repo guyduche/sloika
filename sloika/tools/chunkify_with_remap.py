@@ -1,7 +1,15 @@
 from __future__ import print_function
+from __future__ import division
+from __future__ import unicode_literals
+from __future__ import absolute_import
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from builtins import *
+from past.utils import old_div
 
 import argparse
-import cPickle
+import pickle
 import os
 import posixpath
 import sys
@@ -23,7 +31,7 @@ def create_output_strand_file(output_strand_list_entries, output_file_name):
     with open(output_file_name, "w") as sl:
         sl.write('\t'.join(['filename', 'nev', 'score', 'nstay', 'seqlen', 'start', 'end']) + '\n')
         for strand_data in output_strand_list_entries:
-            sl.write('\t'.join(map(lambda x: str(x), strand_data)) + '\n')
+            sl.write('\t'.join([str(x) for x in strand_data]) + '\n')
 
 
 def chunkify_with_remap_main(argv, parser):
@@ -77,7 +85,7 @@ def chunkify_with_remap_main(argv, parser):
             chunk_list.append(chunks)
             label_list.append(labels)
             bad_list.append(bad_ev)
-            output_strand_list_entries.append([read, nev, -score / nev, np.sum(np.ediff1d(path, to_begin=1) == 0),
+            output_strand_list_entries.append([read, nev, old_div(-score, nev), np.sum(np.ediff1d(path, to_begin=1) == 0),
                                                len(seq), min(path), max(path)])
 
     print('\n* Creating HDF5 file')

@@ -1,6 +1,15 @@
+from __future__ import division
+from __future__ import unicode_literals
+from __future__ import print_function
+from __future__ import absolute_import
+from future import standard_library
+standard_library.install_aliases()
+from builtins import *
+from past.utils import old_div
+from builtins import object
 #!/usr/bin/env python
 import argparse
-import cPickle
+import pickle
 import numpy as np
 import sys
 import time
@@ -53,10 +62,10 @@ _ETA = 1e-10
 
 
 def init_worker(model):
-    import cPickle
+    import pickle
     global calc_post
     with open(model, 'r') as fh:
-        calc_post = cPickle.load(fh)
+        calc_post = pickle.load(fh)
 
 
 def basecall(args, fn):
@@ -141,7 +150,7 @@ if __name__ == '__main__':
         nevents += nev
     dt = time.time() - t0
     t = 'Called {} bases in {:.1f} s ({:.1f} bases/s or {:.1f} events/s)\n'
-    sys.stderr.write(t.format(nbases, dt, nbases / dt, nevents / dt))
+    sys.stderr.write(t.format(nbases, dt, old_div(nbases, dt), old_div(nevents, dt)))
 
     if compiled_file != args.compile:
         os.remove(compiled_file)

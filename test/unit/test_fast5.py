@@ -1,4 +1,10 @@
 from __future__ import print_function
+from __future__ import unicode_literals
+from __future__ import division
+from __future__ import absolute_import
+from future import standard_library
+standard_library.install_aliases()
+from builtins import *
 import glob
 import os
 import unittest
@@ -15,8 +21,7 @@ class fast5Test(unittest.TestCase):
         self.section = 'template'
         self.strand_list = os.path.join(os.environ['DATA_DIR'],
                                         'strands.txt')
-        self.strands = set(map(lambda r: os.path.join(self.readdir, r),
-                               ['read03.fast5', 'read16.fast5']))
+        self.strands = set([os.path.join(self.readdir, r) for r in ['read03.fast5', 'read16.fast5']])
 
     def test_001_get_mapping_data(self):
         #  Interface used by batch.py

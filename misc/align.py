@@ -1,5 +1,13 @@
 #!/usr/bin/env python
 from __future__ import print_function
+from __future__ import division
+from __future__ import unicode_literals
+from __future__ import absolute_import
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from builtins import *
+from past.utils import old_div
 import argparse
 import csv
 from collections import OrderedDict
@@ -87,7 +95,7 @@ def samacc(sam, min_coverage=0.6):
             if read.flag != 0 and read.flag != 16:
                 continue
 
-            coverage = float(read.query_alignment_length) / read.query_length
+            coverage = old_div(float(read.query_alignment_length), read.query_length)
             if coverage < min_coverage:
                 continue
 
@@ -109,8 +117,8 @@ def samacc(sam, min_coverage=0.6):
                 ('insertion', bins[1]),
                 ('deletion', bins[2]),
                 ('coverage', coverage),
-                ('id', float(correct) / float(bins[0])),
-                ('accuracy', float(correct) / alnlen),
+                ('id', old_div(float(correct), float(bins[0]))),
+                ('accuracy', old_div(float(correct), alnlen)),
             ])
             res.append(row)
     return res
@@ -204,7 +212,7 @@ if __name__ == '__main__':
             acc_dat = samacc(samfile, min_coverage=args.coverage)
             if len(acc_dat) > 0:
                 with open(samaccfile, 'w') as fs:
-                    fields = acc_dat[0].keys()
+                    fields = list(acc_dat[0].keys())
                     writer = csv.DictWriter(fs, fieldnames=fields, delimiter=' ')
                     writer.writeheader()
                     for row in acc_dat:

@@ -1,3 +1,12 @@
+from __future__ import division
+from __future__ import unicode_literals
+from __future__ import print_function
+from __future__ import absolute_import
+from future import standard_library
+standard_library.install_aliases()
+from builtins import range
+from builtins import *
+from past.utils import old_div
 import numpy as np
 import sloika.variables as sv
 
@@ -19,7 +28,7 @@ def argmax(post, zero_is_blank=True):
 
 
 def ishomopolymer(idx, klen):
-    base = (sv.nkmer(klen) - 1) / (klen - 1)
+    base = old_div((sv.nkmer(klen) - 1), (klen - 1))
     hidx = np.arange(4) * base + 1
     return idx in hidx
 
@@ -63,12 +72,12 @@ def viterbi(post, klen, skip_pen=0.0, log=False):
         pscore = pscore.reshape(nstep, -1)
         nrem = pscore.shape[1]
         score_step = np.repeat(np.amax(pscore, axis=0), nstep)
-        from_step = np.repeat(nrem * np.argmax(pscore, axis=0) + range(nrem), nstep)
+        from_step = np.repeat(nrem * np.argmax(pscore, axis=0) + list(range(nrem)), nstep)
         #  Skip
         pscore = pscore.reshape(nskip, -1)
         nrem = pscore.shape[1]
         score_skip = np.repeat(np.amax(pscore, axis=0), nskip) - skip_pen
-        from_skip = np.repeat(nrem * np.argmax(pscore, axis=0) + range(nrem), nskip)
+        from_skip = np.repeat(nrem * np.argmax(pscore, axis=0) + list(range(nrem)), nskip)
         #  Best score for step and skip
         vscore = lpost[i][1:] + np.maximum(score_step, score_skip)
         traceback[i] = np.where(score_step > score_skip, from_step, from_skip)

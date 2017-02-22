@@ -1,4 +1,12 @@
 from __future__ import print_function
+from __future__ import unicode_literals
+from __future__ import division
+from __future__ import absolute_import
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from builtins import range
+from builtins import *
 import h5py
 import numpy as np
 import numpy.lib.recfunctions as nprf
@@ -60,8 +68,7 @@ def chunkify(ev, chunk_len, kmer_len, use_scaled, normalisation):
     kl = (model_kmer_len - kmer_len + 1) // 2
     ku = kl + kmer_len
     kmer_to_state = bio.kmer_mapping(kmer_len)
-    new_labels = 1 + np.array(map(lambda k: kmer_to_state[k[kl : ku]],
-                                  ev['kmer']), dtype=np.int32)
+    new_labels = 1 + np.array([kmer_to_state[k[kl : ku]] for k in ev['kmer']], dtype=np.int32)
 
     new_labels = new_labels.reshape(ml, chunk_len)
     change = ev['seq_pos'].reshape(ml, chunk_len)
@@ -116,13 +123,13 @@ def chunk_worker(fn, section, chunk_len, kmer_len, min_length, trim, use_scaled,
 
 
 def init_chunk_remap_worker(model, fasta, kmer_len):
-    import cPickle
+    import pickle
     # Import within worker to avoid initialising GPU in main thread
     import sloika.features
     import sloika.transducer
     global calc_post, kmer_to_state, references
     with open(model, 'r') as fh:
-        calc_post = cPickle.load(fh)
+        calc_post = pickle.load(fh)
 
     references = dict()
     with open(fasta, 'r') as fh:
@@ -140,7 +147,7 @@ def remap(read_ref, ev, min_prob, transducer, kmer_len, prior, slip):
     post = sloika.decode.prepare_post(calc_post(inMat), min_prob=min_prob, drop_bad=(not transducer))
 
     kmers = np.array(bio.seq_to_kmers(read_ref, kmer_len))
-    seq = map(lambda k: kmer_to_state[k] + 1, kmers)
+    seq = [kmer_to_state[k] + 1 for k in kmers]
     prior0 = None if prior[0] is None else sloika.util.geometric_prior(len(seq), prior[0])
     prior1 = None if prior[1] is None else sloika.util.geometric_prior(len(seq), prior[1], rev=True)
 

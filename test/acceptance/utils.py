@@ -1,3 +1,11 @@
+from __future__ import unicode_literals
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
+from future import standard_library
+standard_library.install_aliases()
+from builtins import *
+from builtins import object
 import os
 import itertools
 
@@ -5,7 +13,7 @@ from io import StringIO
 from subprocess import Popen, PIPE
 
 
-class Result:
+class Result(object):
 
     def __init__(self, test_case, cmd, cwd, return_code, stdout, stderr):
         self.test_case = test_case

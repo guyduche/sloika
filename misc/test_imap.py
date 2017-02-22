@@ -1,5 +1,13 @@
 #!/usr/bin/env python
 from __future__ import print_function
+from __future__ import unicode_literals
+from __future__ import division
+from __future__ import absolute_import
+from future import standard_library
+standard_library.install_aliases()
+from builtins import next
+from builtins import range
+from builtins import *
 from itertools import islice
 import multiprocessing
 import time
@@ -9,7 +17,7 @@ _NPROC = 4
 
 
 def gen(n):
-    for i in xrange(n):
+    for i in range(n):
         print('    Yielding', i)
         yield i
 
@@ -44,7 +52,7 @@ def imap_unordered3(pool, f, iterable):
 
     #  Repeatedly scan through job array looking for new jobs
     while any(jobs):
-        for i in xrange(len(jobs)):
+        for i in range(len(jobs)):
             if jobs[i] is not None and jobs[i].ready():
                 res = jobs[i].get()
                 try:
