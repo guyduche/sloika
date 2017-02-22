@@ -46,6 +46,15 @@ dev_env_and_style:
         - make cleanDevEnv
         - make pep8
 
+pip_install_dot:
+    stage: test
+    before_script:
+        - apt-get install -y virtualenv
+        - virtualenv hoho
+        - source hoho/bin/activate && pip install numpy cython
+    script:
+        - source hoho/bin/activate && pip install . --trusted-host pypi.oxfordnanolabs.local --index-url https://pypi.oxfordnanolabs.local/simple/
+
 upload_artefact:
     stage: release
     before_script:
