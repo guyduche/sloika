@@ -52,6 +52,7 @@ parser.add_argument('--min_prob', default=0.0, metavar='p', type=proportion,
                     help='Minimum probability allowed for training')
 parser.add_argument('--niteration', metavar='batches', type=Positive(int), default=50000,
                     help='Maximum number of batches to train for')
+parser.add_argument('--overwrite', default=False, action=AutoBool, help='Overwrite output directory')
 parser.add_argument('--quiet', default=False, action=AutoBool,
                     help="Don't print progess information to stdout")
 parser.add_argument('--reweight', metavar='group', default='weights', type=Maybe(str),
@@ -68,7 +69,7 @@ parser.add_argument('--version', nargs=0, action=display_version_and_exit, metav
                     help='Display version information.')
 parser.add_argument('model', action=FileExists,
                     help='File to read python model description from')
-parser.add_argument('output', action=FileAbsent, help='Prefix for output files')
+parser.add_argument('output', help='Prefix for output files')
 parser.add_argument('input', action=FileExists,
                     help='HDF5 file containing chunks')
 
@@ -123,7 +124,15 @@ if __name__ == '__main__':
     args = parser.parse_args()
     np.random.seed(args.seed)
 
-    os.mkdir(args.output)
+    if not os.path.exists(args.output):
+        os.mkdir(args.output)
+    elif not args.overwrite:
+        log.write('Error: Output exists but --overwrite is false\n')
+        exit(1)
+    if not os.path.isdir(args.output):
+        log.write('Error: Output is not directory\n')
+        exit(1)
+
     copyfile(args.model, os.path.join(args.output, 'model.py'))
 
     log = Logger(os.path.join(args.output, 'model.log'), args.quiet)
