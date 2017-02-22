@@ -67,7 +67,7 @@ def chunkify(ev, chunk_len, kmer_len, use_scaled, normalisation):
     kl = (model_kmer_len - kmer_len + 1) // 2
     ku = kl + kmer_len
     kmer_to_state = bio.kmer_mapping(kmer_len)
-    new_labels = 1 + np.array([kmer_to_state[k[kl : ku]] for k in ev['kmer']], dtype=np.int32)
+    new_labels = 1 + np.array([kmer_to_state[k[kl : ku].decode('utf-8')] for k in ev['kmer']], dtype=np.int32)
 
     new_labels = new_labels.reshape(ml, chunk_len)
     change = ev['seq_pos'].reshape(ml, chunk_len)
