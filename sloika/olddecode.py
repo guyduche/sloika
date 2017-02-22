@@ -37,7 +37,7 @@ def decode_profile(post, trans=None, log=False, slip=0.0):
     trans_iter = trans.__iter__()
     for ev in range(1, len(post)):
         # Forward Viterbi iteration
-        ev_trans = trans_iter.next()
+        ev_trans = next(trans_iter)
         # Stay
         score = pscore + ev_trans[0]
         iscore = range(nstate)

@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 from Bio import SeqIO
 from collections import Counter, OrderedDict
 import math
@@ -38,12 +39,12 @@ for f in sys.argv[1:]:
         all_counts[k] += sk
 
     if first:
-        print ','.join(info.keys())
+        print(','.join(info.keys()))
         first = False
-    print ','.join(str(v) for v in info.values())
+    print(','.join(str(v) for v in info.values()))
 
-print '\n#Summary kmers'
-print 'kmer\tmissing\tabsrare\trelrare\tlowcount'
+print('\n#Summary kmers')
+print('kmer\tmissing\tabsrare\trelrare\tlowcount')
 for k in kmers:
     nkmer = len(BASES) ** k
     nkmer - len(sk)
@@ -51,4 +52,4 @@ for k in kmers:
     absrare = missing + sum([i < RARE for i in all_counts[k].values()])
     lowcount = math.ceil((0.1 * sum([i for i in all_counts[k].values()])) / nkmer)
     relrare = missing + sum([i < lowcount for i in all_counts[k].values()])
-    print k, missing, absrare, relrare
+    print(k, missing, absrare, relrare)

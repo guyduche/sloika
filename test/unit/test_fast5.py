@@ -1,3 +1,4 @@
+from __future__ import print_function
 import glob
 import os
 import unittest
@@ -8,7 +9,7 @@ class fast5Test(unittest.TestCase):
 
     @classmethod
     def setUpClass(self):
-        print '* Fast5'
+        print('* Fast5')
         self.readdir = os.path.join(os.environ['DATA_DIR'], 'reads')
         self.filename = os.path.join(self.readdir, 'read03.fast5')
         self.section = 'template'

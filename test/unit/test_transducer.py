@@ -1,3 +1,4 @@
+from __future__ import print_function
 import numpy as np
 import sys
 from sloika.transducer import align, alignment_to_call
@@ -11,7 +12,7 @@ class TransducerTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(self):
-        print '* Decode 2D transducer'
+        print('* Decode 2D transducer')
         np.random.seed(0xdeadbeef)
         self.n = 7
         self.gap = -5.0
@@ -31,9 +32,9 @@ class TransducerTest(unittest.TestCase):
         score, alignment = align(post1, post2, self.gap / 2.0, self.gap, self.gap / 2.0)
         path = alignment_to_call(post1, post2, alignment)
         if _PRINT:
-            print '* ', sys._getframe(1).f_code.co_name
-            print '  input sequences', seq1, seq2
-            print '  result', score, alignment, path
+            print('* ', sys._getframe(1).f_code.co_name)
+            print('  input sequences', seq1, seq2)
+            print('  result', score, alignment, path)
         return score, alignment, path
 
     def test_001_align_A(self):

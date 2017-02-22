@@ -70,7 +70,7 @@ def imap_unordered(pool, f, iterable):
             if jobs[i] is not None and jobs[i].ready():
                 res = jobs[i].get()
                 try:
-                    next_job = iterable.next()
+                    next_job = next(iterable)
                     jobs[i] = pool.apply_async(f, (next_job,))
                 except StopIteration:
                     jobs[i] = None

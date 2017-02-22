@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 from itertools import islice
 import multiprocessing
 import time
@@ -9,14 +10,14 @@ _NPROC = 4
 
 def gen(n):
     for i in xrange(n):
-        print '    Yielding', i
+        print('    Yielding', i)
         yield i
 
 
 def worker(i):
     pid = int(multiprocessing.current_process().name.split('-')[-1])
     sleep_len = _SLEEP * (_NPROC - pid + 1)
-    print '    Doing {}. Will sleep for {}s'.format(i, sleep_len)
+    print('    Doing {}. Will sleep for {}s'.format(i, sleep_len))
     time.sleep(sleep_len)
     return i
 
@@ -47,7 +48,7 @@ def imap_unordered3(pool, f, iterable):
             if jobs[i] is not None and jobs[i].ready():
                 res = jobs[i].get()
                 try:
-                    next_job = iterable.next()
+                    next_job = next(iterable)
                     jobs[i] = pool.apply_async(f, (next_job,))
                 except StopIteration:
                     jobs[i] = None
@@ -57,31 +58,31 @@ def imap_unordered3(pool, f, iterable):
 if __name__ == '__main__':
     pool = multiprocessing.Pool(_NPROC)
 
-    print 'pool.imap_unordered'
-    print '==================='
-    print 'Iterator is drained before jobs are started'
-    print
+    print('pool.imap_unordered')
+    print('===================')
+    print('Iterator is drained before jobs are started')
+    print()
     t0 = time.time()
     gg = gen(12)
     for i in pool.imap_unordered(worker, gg):
-        print '    Done', i
-    print '* Time ', time.time() - t0
+        print('    Done', i)
+    print('* Time ', time.time() - t0)
 
-    print 'http://bugs.python.org/issue19993'
-    print '==================='
-    print 'Slowest job blocks, one extra is always taken from iterator'
-    print
+    print('http://bugs.python.org/issue19993')
+    print('===================')
+    print('Slowest job blocks, one extra is always taken from iterator')
+    print()
     t0 = time.time()
     gg = gen(12)
     for i in imap_unordered2(pool, worker, gg):
-        print '    Done', i
-    print '* Time ', time.time() - t0
+        print('    Done', i)
+    print('* Time ', time.time() - t0)
 
-    print 'Modified imap'
-    print '============='
-    print
+    print('Modified imap')
+    print('=============')
+    print()
     t0 = time.time()
     gg = gen(12)
     for i in imap_unordered3(pool, worker, gg):
-        print '    Done', i
-    print '* Time ', time.time() - t0
+        print('    Done', i)
+    print('* Time ', time.time() - t0)

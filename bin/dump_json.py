@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 import argparse
 import cPickle
 import json
@@ -23,7 +24,7 @@ if __name__ == "__main__":
 
     if args.out_file is not None:
         with open(args.out_file, 'w') as f:
-            print "Writing to file: ", args.out_file
+            print("Writing to file: ", args.out_file)
             json.dump(json_out, f, indent=4)
     else:
-        print json.dumps(json_out, indent=4)
+        print(json.dumps(json_out, indent=4))

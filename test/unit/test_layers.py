@@ -1,3 +1,4 @@
+from __future__ import print_function
 import abc
 import cPickle
 import json
@@ -44,7 +45,7 @@ class ANNTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(self):
-        print '* Layers'
+        print('* Layers')
         np.random.seed(0xdeadbeef)
         self._NSTEP = 25
         self._NFEATURES = 3
@@ -259,7 +260,7 @@ class ANNTest(unittest.TestCase):
                         res[:, j, i * _WINLEN: (i + 1) * _WINLEN], self.x[i: 1 + i - _WINLEN, j])
                 except:
                     win_max = np.amax(np.fabs(res[:, :, i * _WINLEN: (i + 1) * _WINLEN] - self.x[i: 1 + i - _WINLEN]))
-                    print "Window max: {}".format(win_max)
+                    print("Window max: {}".format(win_max))
                     raise
             np.testing.assert_almost_equal(res[:, j, _WINLEN * (_WINLEN - 1):], self.x[_WINLEN - 1:, j])
             #  Test first and last rows explicitly
@@ -308,7 +309,7 @@ class LayerTest(object):
 
     @classmethod
     def setUpClass(cls):
-        print "* LayerTest: " + cls.__name__
+        print("* LayerTest: " + cls.__name__)
 
     _INPUTS = None  # List of input matrices for testing the layer's run method
     _PARAMS = None  # List of names for the learned parameters of the layer

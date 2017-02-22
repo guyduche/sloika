@@ -1,3 +1,4 @@
+from __future__ import print_function
 import unittest
 import numpy as np
 from sloika import viterbi_helpers
@@ -7,7 +8,7 @@ class ViterbiTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(self):
-        print '* Viterbi helpers'
+        print('* Viterbi helpers')
         np.random.seed(0xdeadbeef)
         self.n = 10
         self.slip = 5.0

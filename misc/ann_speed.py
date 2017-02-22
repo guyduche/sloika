@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 import argparse
 import numpy as np
 from scipy.linalg import blas
@@ -95,22 +96,22 @@ def timef(f, ntimes):
         out = f(m)
     return time.time() - t0
 
-print '** Naive implementation'
+print('** Naive implementation')
 dt = timef(ff_softmax, args.ntimes)
-print 'Time = {} ms'.format(dt * 1000.0)
-print 'Rate = {} kev/s'.format((args.ntimes * args.n1) / dt / 1000.0)
+print('Time = {} ms'.format(dt * 1000.0))
+print('Rate = {} kev/s'.format((args.ntimes * args.n1) / dt / 1000.0))
 
-print '** Using tensor dot to work with transpose of matrix'
+print('** Using tensor dot to work with transpose of matrix')
 dt = timef(ff2_softmax, args.ntimes)
-print 'Time = {} ms'.format(dt * 1000.0)
-print 'Rate = {} kev/s'.format((args.ntimes * args.n1) / dt / 1000.0)
+print('Time = {} ms'.format(dt * 1000.0))
+print('Rate = {} kev/s'.format((args.ntimes * args.n1) / dt / 1000.0))
 
-print '** Using BLAS directly from scipy'
+print('** Using BLAS directly from scipy')
 dt = timef(ff3_softmax, args.ntimes)
-print 'Time = {} ms'.format(dt * 1000.0)
-print 'Rate = {} kev/s'.format((args.ntimes * args.n1) / dt / 1000.0)
+print('Time = {} ms'.format(dt * 1000.0))
+print('Rate = {} kev/s'.format((args.ntimes * args.n1) / dt / 1000.0))
 
-print '** Numpy transpose'
+print('** Numpy transpose')
 dt = timef(ff_softmax, args.ntimes)
-print 'Time = {} ms'.format(dt * 1000.0)
-print 'Rate = {} kev/s'.format((args.ntimes * args.n1) / dt / 1000.0)
+print('Time = {} ms'.format(dt * 1000.0))
+print('Rate = {} kev/s'.format((args.ntimes * args.n1) / dt / 1000.0))
