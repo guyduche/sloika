@@ -14,7 +14,7 @@ import subprocess
 import tempfile
 import time
 
-import sloika
+import sloika.version
 from untangled.cmdargs import FileExists, Maybe, NonNegative, Positive
 
 clargs = None
@@ -183,11 +183,11 @@ def run_job(args):
 if __name__ == '__main__':
     args = parser.parse_args()
 
-    sloika_gitdir = os.path.dirname(os.path.dirname(sloika.__file__))
+    sloika_gitdir = os.path.dirname(os.path.dirname(sloika.version.__file__))
     if not is_gitdir(sloika_gitdir):
         print("Sloika dir {} is not a git repository".format(sloika_gitdir))
         exit(1)
-    print("Running Sloika from {}".format(sloika_gitdir))
+    print("Running Sloika {} from {}".format(sloika.version.__version__, sloika_gitdir))
 
 
     jobs = create_jobs(args.database, sleep=args.sleep, limit=args.limit)
