@@ -158,3 +158,18 @@ pullpush:
 	${MAKE} pep8
 	cd data && git pull --rebase && git push
 	git pull --rebase && git push
+
+.PHONY: debDeps
+debDeps: deps
+	apt-get install -y \
+	    python-stdeb dpkg-dev fakeroot lintian
+
+.PHONY: python-future
+python-future: cleanTmpEnv
+	mkdir -p deb_dist build
+	cat requirements.txt | grep future > build/python-future.txt
+	${inTmpEnv} pip install py2deb
+	${inTmpEnv} py2deb -r deb_dist --name-prefix=python -- -r build/python-future.txt
+	ls -l deb_dist/*.deb
+	dpkg --info deb_dist/python-future*.deb
+
