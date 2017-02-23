@@ -12,6 +12,7 @@ import numpy as np
 
 from sloika import activation
 from sloika.config import sloika_dtype
+from sloika.conv import conv_same_1d, pool_same_1d
 from sloika.variables import NBASE, nkmer
 from functools import reduce
 from future.utils import with_metaclass
@@ -380,22 +381,34 @@ class Window(Layer):
         return T.concatenate([tmp, padMat[self.w - 1 :]], axis=2)
 
 
-class Convolution(Layer):
-    """ Create a 1D convolution over input
 
-    :param insize: Size of input to layer
-    :param size: Layer size (number of filters)
-    :param w: Size of convolution
+class Convolution(Layer):
+    """1D convolution over the first dimension
+
+    :param insize: number of features on input
+    :param size: number of output features
+    :param winlen: size of window over input
+    :param stride: step size between successive windows
+    :param init: function to initialise tensors with
+    :param has_bias: whether layer has bias
+    :param fun: the activation function
     """
 
-    def __init__(self, insize, size, w, init=zeros, fun=activation.tanh):
-        assert size > 0, "Size (number of filters) must be positive"
-        assert w > 0, "Window size must be positive"
-        self.w = w
-        self.flt = th.shared(init((size, insize, 1, w)) / np.sqrt(w * insize + size))
+    def __init__(self, insize, size, winlen, stride=1, init=zeros,
+                 has_bias=False, fun=activation.tanh):
         self._insize = insize
         self._size = size
+        self.winlen = winlen
+        self.stride = stride
         self.fun = fun
+        self.has_bias = has_bias
+
+        # parameters
+        fanin = insize * winlen
+        fanout = (size * winlen) // stride
+        self.W = th.shared(init((size, insize, winlen)) /
+                           np.sqrt(fanin + fanout))
+        self.b = th.shared(has_bias * init(size))
 
     @property
     def insize(self):
@@ -406,33 +419,138 @@ class Convolution(Layer):
         return self._size
 
     def params(self):
-        return [self.flt]
+        return [self.W, self.b] if self.has_bias else [self.W]
 
     def json(self, params=False):
-        res = OrderedDict([('type', "convolution"),
-                           ('activation', self.fun.__name__),
-                           ('size', self.size),
-                           ('insize', self.insize)])
+        res = OrderedDict([("type", "convolution"),
+                           ("insize", self.insize),
+                           ("size", self.size),
+                           ("winlen", self.winlen),
+                           ("stride", self.stride),
+                           ("activation", self.fun.__name__)])
         if params:
-            res['params'] = OrderedDict([('w', self.w),
-                                         ('filter', _extract(self.flt))])
+            res['params'] = OrderedDict([("W", nn._extract(self.W)),
+                                         ("b", nn._extract(self.b))])
         return res
 
     def set_params(self, values):
-        assert values['flt'].shape == (self.size, self.insize, 1, self.w)
-        self.flt.set_value(values['flt'])
+        assert values['W'].shape == (self.size, self.insize, self.winlen)
+        self.W.set_value(values['w'])
+        if self.has_bias:
+            assert values['b'].shape[0] == self.size
+            self.b.set_value(values['b'])
 
     def run(self, inMat):
-        # Input to convolution is (batch x channels x row x column)
-        ntime, nbatch, nfeatures = T.shape(inMat)
-        inMatT = T.shape_padaxis(inMat.transpose((1, 2, 0)), axis=2)
-        outMat = T.nnet.conv2d(inMatT, filters=self.flt, border_mode='half',
-                               filter_shape=(self.size, self.insize, 1, self.w))
-        # Output of convolution is (batch x filters x row x col)
+        return self.fun(conv_same_1d(inMat, self.W, self.stride) + self.b)
 
-        outMat = outMat.transpose((3, 0, 1, 2))
-        outMat = outMat.reshape((ntime, nbatch, self.size))
-        return self.fun(outMat)
+
+class MaxPool(Layer):
+    """Max pooling over the first dimension of the input
+
+    :param insize: dimension of input
+    :param pool_size: number of elements in each pool
+    :param stride: spacing between adjacent pools
+    :param fun: activation function for the layer (default: identity)
+    """
+
+    def __init__(self, insize, pool_size, stride, fun=None):
+        self._insize = insize
+        self.pool_size = pool_size
+        self.stride = stride
+
+        def identity(x):
+            return x
+        self.fun = fun or identity
+
+    @property
+    def insize(self):
+        return self._insize
+
+    @property
+    def size(self):
+        return self.insize
+
+    def params(self):
+        return []
+
+    def json(self, params=False):
+        return OrderedDict([("type", "max_pool"),
+                            ("pool_size", self.pool_size),
+                            ("stride", self.stride),
+                            ("activation", self.fun.__name__)])
+
+    def set_params(self, values):
+        pass
+
+    def run(self, inMat):
+        return self.fun(pool_same_1d(inMat, self.pool_size, self.stride))
+
+
+class ConvPool(Layer):
+    """1D convolution over the first dimension with max-pooling
+
+    :param insize: number of features on input
+    :param size: number of output features
+    :param winlen: size of window over input
+    :param pool_size: size of pool for max-pooling
+    :param stride: step size between successive windows
+    :param init: function to initialise tensors with
+    :param has_bias: whether layer has bias
+    :param fun: the activation function
+    """
+
+    def __init__(self, insize, size, winlen, pool_size, stride=None,
+                 init=zeros, has_bias=False, fun=activation.tanh):
+        self._insize = insize
+        self._size = size
+        self.winlen = winlen
+        self.pool_size = pool_size
+        self.stride = stride or pool_size
+        self.fun = fun
+        self.has_bias = has_bias
+
+        # parameters
+        fanin = insize * winlen
+        fanout = (size * winlen) // self.stride
+        self.W = th.shared(init((size, insize, winlen)) /
+                           np.sqrt(fanin + fanout))
+        self.b = th.shared(has_bias * init(size))
+
+    @property
+    def insize(self):
+        return self._insize
+
+    @property
+    def size(self):
+        return self._size
+
+    def params(self):
+        return [self.W, self.b] if self.has_bias else [self.W]
+
+    def json(self, params=False):
+        res = OrderedDict([("type", "conv_pool"),
+                           ("insize", self.insize),
+                           ("size", self.size),
+                           ("winlen", self.winlen),
+                           ("pool_size", self.pool_size)
+                           ("stride", self.stride),
+                           ("activation", self.fun.func_name)])
+        if params:
+            res['params'] = OrderedDict([("W", nn._extract(self.W)),
+                                         ("b", nn._extract(self.b))])
+        return res
+
+    def set_params(self, values):
+        assert values['W'].shape == (self.size, self.insize, self.winlen)
+        self.W.set_value(values['w'])
+        if self.has_bias:
+            assert values['b'].shape[0] == self.size
+            self.b.set_value(values['b'])
+
+    def run(self, inMat):
+        conv = conv_same_1d(inMat, self.W)
+        pool = pool_same_1d(conv, self.pool_size, self.stride)
+        return self.fun(pool + self.b)
 
 
 class Recurrent(RNN):
