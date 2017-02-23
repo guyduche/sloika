@@ -11,6 +11,7 @@ pipInstall:=pip install --trusted-host pypi.oxfordnanolabs.local --index-url htt
 inTmpEnv:=source environment && source $${TMP_VIRTUALENV_DIR}/bin/activate &&
 inTmpEnvPy3:=source environment && source $${TMP_VIRTUALENV_DIR_PY3}/bin/activate &&
 inDevEnv:=source environment && ${envCmd}
+inEnv:=source environment &&
 
 
 .PHONY: test
@@ -52,9 +53,19 @@ toxTestFromScratchPy3: cleanTmpEnvWithDepsPy3
 cleanDevEnv: cleanVirtualenv
 	./setup-dev-env.sh
 
+.PHONY: cleanDevEnvPy3
+cleanDevEnvPy3: cleanVirtualenvPy3
+	PY3=True ./setup-dev-env.sh
+
 .PHONY: cleanVirtualenv
-cleanVirtualenv: clean
+cleanVirtualenv:
+	${inEnv} rm -rf $${DEV_VIRTUALENV_DIR}
 	./setup-virtualenv.sh
+
+.PHONY: cleanVirtualenvPy3
+cleanVirtualenvPy3:
+	${inEnv} rm -rf $${DEV_VIRTUALENV_DIR_PY3}
+	PY3=True ./setup-virtualenv.sh
 
 .PHONY: checkout
 checkout:
