@@ -25,7 +25,7 @@ test: unitTest acceptanceTest
 
 pyTestArgs?=-n auto
 unitset?=
-unitTestCmd:=${pipInstall} -r test/unit/requirements.txt && cd test/unit && py.test ${pyTestArgs} ${unitset}
+unitTestCmd:=${pipInstall} -r test/unit/requirements.txt && cd test/unit && py.test ${pyTestArgs} -v -s --fulltrace ${unitset}
 .PHONY: unitTest unitTestFromScratch
 unitTest:
 	${inDevEnv} ${unitTestCmd}
@@ -35,7 +35,7 @@ unitTestFromScratch: cleanTmpEnvWithWheelInstalled
 	${inTmpEnv} ${unitTestCmd}
 
 accset?=
-acceptanceTestCmd:=${pipInstall} -r test/acceptance/requirements.txt && cd test/acceptance && py.test ${pyTestArgs} ${accset}
+acceptanceTestCmd:=${pipInstall} -r test/acceptance/requirements.txt && cd test/acceptance && py.test ${pyTestArgs} -v -s --fulltrace ${accset}
 .PHONY: acceptanceTest acceptanceTestFromScratch
 acceptanceTest:
 	${inDevEnv} ${acceptanceTestCmd}
