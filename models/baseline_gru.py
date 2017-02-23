@@ -19,7 +19,7 @@ def network(klen, sd, nfeature=4, winlen=3, size=64):
 
     insize = nfeature * winlen
 
-    inlayer = smt.Window(winlen)
+    inlayer = smt.Window(nfeature, winlen)
 
     fwd1 = smt.Gru(insize, size, init=_prn, has_bias=True, fun=gru_act)
     bwd1 = smt.Gru(insize, size, init=_prn, has_bias=True, fun=gru_act)

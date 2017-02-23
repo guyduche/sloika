@@ -253,7 +253,7 @@ class ANNTest(unittest.TestCase):
 
     def test_016_window(self):
         _WINLEN = 3
-        network = nn.Window(_WINLEN)
+        network = nn.Window(self._NFEATURES, _WINLEN)
         f = network.compile()
         res = f(self.x)
         #  Window is now 'SAME' not 'VALID'. Trim
@@ -281,7 +281,7 @@ class ANNTest(unittest.TestCase):
         res = f(self.res)
 
     def test_018_studentise(self):
-        network = nn.Studentise()
+        network = nn.Studentise(self._NFEATURES)
         f = network.compile()
         res = f(self.x)
 
@@ -289,7 +289,7 @@ class ANNTest(unittest.TestCase):
         np.testing.assert_almost_equal(np.std(res, axis=(0, 1)), 1.0, decimal=4)
 
     def test_019_identity(self):
-        network = nn.Identity()
+        network = nn.Identity(self._NFEATURES)
         f = network.compile()
         res = f(self.res)
 
@@ -353,6 +353,9 @@ class LayerTest(with_metaclass(abc.ABCMeta, object)):
 
     def test_005_params(self):
         plist = self.layer.params()
+
+    def test_006_sizes(self):
+        size, insize = self.layer.size, self.layer.insize
 
 
 class RecurrentTest(LayerTest, unittest.TestCase):

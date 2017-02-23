@@ -84,8 +84,12 @@ class RNN(Layer):
 
 class Identity(Layer):
 
-    def __init__(self):
-        pass
+    def __init__(self, insize):
+        self.insize = insize
+
+    @property
+    def size(self):
+        return self.insize
 
     def params(self):
         return []
@@ -151,8 +155,13 @@ class Studentise(Layer):
     :param epsilon: Stabilsation layer
     """
 
-    def __init__(self, epsilon=1e-4):
+    def __init__(self, insize, epsilon=1e-4):
         self.epsilon = epsilon
+        self.insize = insize
+
+    @property
+    def size(self):
+        return self.insize
 
     def params(self):
         return []
@@ -175,8 +184,13 @@ class NormaliseL1(Layer):
     :param epsilon: Stabilsation layer
     """
 
-    def __init__(self, epsilon=1e-4):
+    def __init__(self, insize, epsilon=1e-4):
         self.epsilon = epsilon
+        self.insize = insize
+
+    @property
+    def size(self):
+        return self.insize
 
     def params(self):
         return []
@@ -289,10 +303,15 @@ class Window(Layer):
     :param w: Size of window
     """
 
-    def __init__(self, w):
+    def __init__(self, insize, w):
         assert w > 0, "Window size must be positive"
         assert w % 2 == 1, 'Window size should be odd'
         self.w = w
+        self.insize = insize
+
+    @property
+    def size(self):
+        return self.w * self.insize
 
     def params(self):
         return []
@@ -1289,6 +1308,8 @@ class Reverse(Layer):
 
     def __init__(self, layer):
         self.layer = layer
+        self.insize = layer.insize
+        self.size = layer.size
 
     def params(self):
         return self.layer.params()
@@ -1309,7 +1330,12 @@ class Parallel(Layer):
     """
 
     def __init__(self, layers):
+        assert len(layers) > 0, "A Parallel layer cannot be empty"
         self.layers = layers
+        self.insize = self.layers[0].insize
+        is_consistent = all(x.insize == self.insize for x in self.layers)
+        assert is_consistent, "Parallel layer has inconsistent sizes"
+        self.size = sum(x.size for x in self.layers)
 
     def params(self):
         return reduce(lambda x, y: x + y.params(), self.layers, [])
@@ -1330,7 +1356,12 @@ class Serial(Layer):
     """
 
     def __init__(self, layers):
+        assert len(layers) > 0, "A Serial layer cannot be empty"
         self.layers = layers
+        self.insize = self.layers[0].insize
+        self.size = self.layers[-1].size
+        is_consistent = all(x.size == y.insize for x, y in zip(layers, layers[1:]))
+        assert is_consistent, "Serial layer has inconistent sizes"
 
     def params(self):
         return reduce(lambda x, y: x + y.params(), self.layers, [])

@@ -19,7 +19,7 @@ def network(klen, sd, nfeature=4, winlen=3, size=64):
     ff_act = smt.tanh
     insize = nfeature * winlen
 
-    inlayer = smt.Window(winlen)
+    inlayer = smt.Window(nfeature, winlen)
 
     fwd1 = smt.Lstm(insize, size, init=_prn, has_bias=True,
                     has_peep=True, fun=rnn_act)
