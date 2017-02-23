@@ -8,7 +8,6 @@ from builtins import object
 import os
 import itertools
 
-from io import StringIO
 from subprocess import Popen, PIPE
 
 
@@ -65,7 +64,7 @@ def run_cmd(test_case, cmd, cwd=None):
         base_compiledir) + os.environ["THEANO_FLAGS_FOR_ACCTEST"]
 
     proc = Popen(cmd, env=env_with_theano_flags, stdout=PIPE, stderr=PIPE, cwd=cwd)
-    stdout, stderr = proc.communicate(StringIO())
+    stdout, stderr = proc.communicate(None)
 
     return_code = proc.returncode
     stdout = stdout.decode('UTF-8')
