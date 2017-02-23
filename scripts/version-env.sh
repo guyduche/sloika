@@ -9,7 +9,7 @@ else
     export SLOIKA_VERSION_PATCH=0
 fi
 
-if [ "${CI_BUILD_REF_NAME:-dev}" == "master" ]; then
+if [ "${CI_BUILD_REF_NAME:-dev}" == "release" ]; then
     DEV=""
 else
     DEV="dev"

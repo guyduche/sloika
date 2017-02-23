@@ -1,7 +1,7 @@
 #!/bin/bash -eu
 
-export SCRIPTS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+export VERSION_ENV_SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-source ${SCRIPTS_DIR}/version-env.sh
+source ${VERSION_ENV_SCRIPT_DIR}/version-env.sh
 
 echo -n ${SLOIKA_VERSION}
