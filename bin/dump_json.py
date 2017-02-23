@@ -2,15 +2,18 @@
 import argparse
 import cPickle
 import json
-from untangled.cmdargs import AutoBool, FileExists
+from untangled.cmdargs import AutoBool, FileExists, FileAbsent
 
 json.encoder.FLOAT_REPR = lambda f: ("%.4f" % f)
 
 parser = argparse.ArgumentParser(description='Dump JSON representation of model',
                                  formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-parser.add_argument('--params', default=True, action=AutoBool, help='Output parameters in file')
-parser.add_argument('--out_file', default=False, help='[Opt] Location of output json file')
-parser.add_argument('model', action=FileExists, help="Model file to read from")
+
+parser.add_argument('--out_file', default=False, action=FileAbsent, help='Output json file to this file location')
+parser.add_argument('--params', default=True, action=AutoBool, help='Output additional parameters to json')
+
+parser.add_argument('model', action=FileExists, help='Model file to read from')
+
 
 if __name__ == "__main__":
     args = parser.parse_args()
