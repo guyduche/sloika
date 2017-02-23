@@ -6,11 +6,13 @@ nproc:=$(shell nproc)
 
 # set this to nothing to get system environment
 envCmd?=source $${DEV_VIRTUALENV_DIR}/bin/activate &&
+envCmdPy3?=source $${DEV_VIRTUALENV_DIR_PY3}/bin/activate &&
 
 pipInstall:=pip install --trusted-host pypi.oxfordnanolabs.local --index-url https://pypi.oxfordnanolabs.local/simple/
 inTmpEnv:=source environment && source $${TMP_VIRTUALENV_DIR}/bin/activate &&
 inTmpEnvPy3:=source environment && source $${TMP_VIRTUALENV_DIR_PY3}/bin/activate &&
 inDevEnv:=source environment && ${envCmd}
+inDevEnvPy3:=source environment && ${envCmdPy3}
 inEnv:=source environment &&
 
 
@@ -27,6 +29,8 @@ unitTestCmd:=${pipInstall} -r test/unit/requirements.txt && cd test/unit && py.t
 .PHONY: unitTest unitTestFromScratch
 unitTest:
 	${inDevEnv} ${unitTestCmd}
+unitTestPy3:
+	${inDevEnvPy3} ${unitTestCmd}
 unitTestFromScratch: cleanTmpEnvWithWheelInstalled
 	${inTmpEnv} ${unitTestCmd}
 
@@ -35,6 +39,8 @@ acceptanceTestCmd:=${pipInstall} -r test/acceptance/requirements.txt && cd test/
 .PHONY: acceptanceTest acceptanceTestFromScratch
 acceptanceTest:
 	${inDevEnv} ${acceptanceTestCmd}
+acceptanceTestPy3:
+	${inDevEnvPy3} ${acceptanceTestCmd}
 acceptanceTestFromScratch: cleanTmpEnvWithWheelInstalled
 	${inTmpEnv} ${acceptanceTestCmd}
 
