@@ -41,6 +41,14 @@ class Layer(with_metaclass(abc.ABCMeta, object)):
         x = T.tensor3()
         return th.function([th.In(x, borrow=True)], th.Out(self.run(x), borrow=True))
 
+    @abc.abstractproperty
+    def insize(self):
+        return
+
+    @abc.abstractproperty
+    def size(self):
+        return
+
     @abc.abstractmethod
     def params(self):
         """ a list of network parameters
@@ -85,7 +93,11 @@ class RNN(Layer):
 class Identity(Layer):
 
     def __init__(self, insize):
-        self.insize = insize
+        self._insize = insize
+
+    @property
+    def insize(self):
+        return self._insize
 
     @property
     def size(self):
@@ -120,9 +132,17 @@ class FeedForward(Layer):
         self.has_bias = has_bias
         self.b = th.shared(has_bias * init(size))
         self.W = th.shared(init((size, insize)) / np.sqrt(size + insize))
-        self.insize = insize
-        self.size = size
+        self._insize = insize
+        self._size = size
         self.fun = fun
+
+    @property
+    def insize(self):
+        return self._insize
+
+    @property
+    def size(self):
+        return self._size
 
     def params(self):
         return [self.W, self.b] if self.has_bias else [self.W]
@@ -157,7 +177,11 @@ class Studentise(Layer):
 
     def __init__(self, insize, epsilon=1e-4):
         self.epsilon = epsilon
-        self.insize = insize
+        self._insize = insize
+
+    @property
+    def insize(self):
+        return self._insize
 
     @property
     def size(self):
@@ -186,7 +210,11 @@ class NormaliseL1(Layer):
 
     def __init__(self, insize, epsilon=1e-4):
         self.epsilon = epsilon
-        self.insize = insize
+        self._insize = insize
+
+    @property
+    def insize(self):
+        return self._insize
 
     @property
     def size(self):
@@ -221,8 +249,16 @@ class Softmax(Layer):
         self.has_bias = has_bias
         self.b = th.shared(has_bias * init(size))
         self.W = th.shared(init((size, insize)) / np.sqrt(insize + size))
-        self.insize = insize
-        self.size = size
+        self._insize = insize
+        self._size = size
+
+    @property
+    def insize(self):
+        return self._insize
+
+    @property
+    def size(self):
+        return self._size
 
     def params(self):
         return [self.W, self.b] if self.has_bias else [self.W]
@@ -265,8 +301,16 @@ class SoftmaxOld(Layer):
         self.has_bias = has_bias
         self.b = th.shared(has_bias * init(size))
         self.W = th.shared(init((size, insize)) / np.sqrt(size + insize))
-        self.insize = insize
-        self.size = size
+        self._insize = insize
+        self._size = size
+
+    @property
+    def insize(self):
+        return self._insize
+
+    @property
+    def size(self):
+        return self._size
 
     def params(self):
         return [self.W, self.b] if self.has_bias else [self.W]
@@ -307,7 +351,11 @@ class Window(Layer):
         assert w > 0, "Window size must be positive"
         assert w % 2 == 1, 'Window size should be odd'
         self.w = w
-        self.insize = insize
+        self._insize = insize
+
+    @property
+    def insize(self):
+        return self._insize
 
     @property
     def size(self):
@@ -345,9 +393,17 @@ class Convolution(Layer):
         assert w > 0, "Window size must be positive"
         self.w = w
         self.flt = th.shared(init((size, insize, 1, w)) / np.sqrt(w * insize + size))
-        self.insize = insize
-        self.size = size
+        self._insize = insize
+        self._size = size
         self.fun = fun
+
+    @property
+    def insize(self):
+        return self._insize
+
+    @property
+    def size(self):
+        return self._size
 
     def params(self):
         return [self.flt]
@@ -398,8 +454,16 @@ class Recurrent(RNN):
         self.iW = th.shared(init((size, insize)) / np.sqrt(insize + size))
         self.sW = th.shared(init((size, size)) / np.sqrt(size + size))
         self.fun = fun
-        self.insize = insize
-        self.size = size
+        self._insize = insize
+        self._size = size
+
+    @property
+    def insize(self):
+        return self._insize
+
+    @property
+    def size(self):
+        return self._size
 
     def params(self):
         return [self.iW, self.sW, self.b] if self.has_bias else [self.iW, self.sW]
@@ -458,10 +522,17 @@ class Scrn(RNN):
         self.ifW = th.shared(init((fast_size, insize)) / np.sqrt(fast_size + insize))
         self.ffW = th.shared(init((fast_size, fast_size)) / np.sqrt(fast_size + fast_size))
         self.fun = fun
-        self.insize = insize
+        self._insize = insize
         self.fast_size = fast_size
         self.slow_size = slow_size
-        self.size = fast_size + slow_size
+
+    @property
+    def insize(self):
+        return self._insize
+
+    @property
+    def size(self):
+        return self.fast_size + self.slow_size
 
     def params(self):
         return [self.isW, self.sfW, self.ifW, self.ffW]
@@ -532,8 +603,8 @@ class Lstm(RNN):
 
     def __init__(self, insize, size, init=zeros, has_bias=False, has_peep=False,
                  fun=activation.tanh, gatefun=activation.sigmoid):
-        self.size = size
-        self.insize = insize
+        self._size = size
+        self._insize = insize
         self.has_bias = has_bias
         self.has_peep = has_peep
         self.fun = fun
@@ -543,6 +614,14 @@ class Lstm(RNN):
         self.p = th.shared(has_peep * init((3, size)) / np.sqrt(size))
         self.iW = th.shared(init((4 * size, insize)) / np.sqrt(insize + size))
         self.sW = th.shared(init((4 * size, size)) / np.sqrt(size + size))
+
+    @property
+    def insize(self):
+        return self._insize
+
+    @property
+    def size(self):
+        return self._size
 
     def params(self):
         params = [self.iW, self.sW]
@@ -629,8 +708,8 @@ class LstmCIFG(RNN):
 
     def __init__(self, insize, size, init=zeros, has_bias=False, has_peep=False,
                  fun=activation.tanh, gatefun=activation.sigmoid):
-        self.size = size
-        self.insize = insize
+        self._size = size
+        self._insize = insize
         self.has_bias = has_bias
         self.has_peep = has_peep
         self.fun = fun
@@ -640,6 +719,14 @@ class LstmCIFG(RNN):
         self.p = th.shared(has_peep * init((2, size)) / np.sqrt(size))
         self.iW = th.shared(init((3 * size, insize)) / np.sqrt(insize + size))
         self.sW = th.shared(init((3 * size, size)) / np.sqrt(size + size))
+
+    @property
+    def insize(self):
+        return self._insize
+
+    @property
+    def size(self):
+        return self._size
 
     def params(self):
         params = [self.iW, self.sW]
@@ -722,8 +809,8 @@ class LstmO(RNN):
 
     def __init__(self, insize, size, init=zeros, has_bias=False, has_peep=False,
                  fun=activation.tanh, gatefun=activation.sigmoid):
-        self.size = size
-        self.insize = insize
+        self._size = size
+        self._insize = insize
         self.has_bias = has_bias
         self.has_peep = has_peep
         self.fun = fun
@@ -733,6 +820,14 @@ class LstmO(RNN):
         self.p = th.shared(has_peep * init((3, size)) / np.sqrt(size))
         self.iW = th.shared(init((3 * size, insize)) / np.sqrt(insize + size))
         self.sW = th.shared(init((3 * size, size)) / np.sqrt(size + size))
+
+    @property
+    def insize(self):
+        return self._insize
+
+    @property
+    def size(self):
+        return self._size
 
     def params(self):
         params = [self.iW, self.sW]
@@ -796,8 +891,8 @@ class Forget(RNN):
 
     def __init__(self, insize, size, init=zeros, has_bias=False,
                  fun=activation.tanh, gatefun=activation.sigmoid):
-        self.size = size
-        self.insize = insize
+        self._size = size
+        self._insize = insize
         self.has_bias = has_bias
         self.fun = fun
         self.gatefun
@@ -805,6 +900,14 @@ class Forget(RNN):
         self.b = th.shared(has_bias * (init(2 * size) + np.repeat([_FORGET_BIAS, 0], size).astype(sloika_dtype)))
         self.iW = th.shared(init((2 * size, insize)) / np.sqrt(insize + size))
         self.sW = th.shared(init((2 * size, size)) / np.sqrt(size + size))
+
+    @property
+    def insize(self):
+        return self._insize
+
+    @property
+    def size(self):
+        return self._size
 
     def params(self):
         params = [self.iW, self.sW]
@@ -859,8 +962,8 @@ class Gru(RNN):
 
     def __init__(self, insize, size, init=zeros, has_bias=False,
                  fun=activation.tanh, gatefun=activation.sigmoid):
-        self.size = size
-        self.insize = insize
+        self._size = size
+        self._insize = insize
         self.has_bias = has_bias
         self.fun = fun
         self.gatefun = gatefun
@@ -869,6 +972,14 @@ class Gru(RNN):
         self.iW = th.shared(init((3 * size, insize)) / np.sqrt(insize + size))
         self.sW = th.shared(init((2 * size, size)) / np.sqrt(size + size))
         self.sW2 = th.shared(init((size, size)) / np.sqrt(size + size))
+
+    @property
+    def insize(self):
+        return self._insize
+
+    @property
+    def size(self):
+        return self._size
 
     def params(self):
         params = [self.iW, self.sW, self.sW2]
@@ -940,8 +1051,8 @@ class Mut1(RNN):
 
     def __init__(self, insize, size, init=zeros, has_bias=False,
                  fun=activation.tanh, gatefun=activation.sigmoid):
-        self.size = size
-        self.insize = insize
+        self._size = size
+        self._insize = insize
         self.has_bias = has_bias
         self.fun = fun
         self.gatefun = gatefun
@@ -955,6 +1066,14 @@ class Mut1(RNN):
         self.W_xr = th.shared(init((size, insize)) / np.sqrt(insize + size))
         self.W_hr = th.shared(init((size, size)) / np.sqrt(size + size))
         self.W_hh = th.shared(init((size, size)) / np.sqrt(size + size))
+
+    @property
+    def insize(self):
+        return self._insize
+
+    @property
+    def size(self):
+        return self._size
 
     def params(self):
         params = [self.W_xu, self.W_xz, self.W_xr, self.W_hr, self.W_hh]
@@ -1037,8 +1156,8 @@ class Mut2(RNN):
 
     def __init__(self, insize, size, init=zeros, has_bias=False,
                  fun=activation.tanh, gatefun=activation.sigmoid):
-        self.size = size
-        self.insize = insize
+        self._size = size
+        self._insize = insize
         self.has_bias = has_bias
         self.fun = fun
         self.gatefun = gatefun
@@ -1053,6 +1172,14 @@ class Mut2(RNN):
         self.W_hr = th.shared(init((size, size)) / np.sqrt(size + size))
         self.W_hh = th.shared(init((size, size)) / np.sqrt(size + size))
         self.W_xh = th.shared(init((size, insize)) / np.sqrt(size + size))
+
+    @property
+    def insize(self):
+        return self._insize
+
+    @property
+    def size(self):
+        return self._size
 
     def params(self):
         params = [self.W_xu, self.W_xz, self.W_hz, self.W_hr, self.W_hh, self.W_xh]
@@ -1138,8 +1265,8 @@ class Mut3(RNN):
 
     def __init__(self, insize, size, init=zeros, has_bias=False,
                  fun=activation.tanh, gatefun=activation.sigmoid, embed="learn"):
-        self.size = size
-        self.insize = insize
+        self._size = size
+        self._insize = insize
         self.has_bias = has_bias
         self.fun = fun
         self.gatefun = gatefun
@@ -1155,6 +1282,14 @@ class Mut3(RNN):
         self.W_hr = th.shared(init((size, size)) / np.sqrt(size + size))
         self.W_hh = th.shared(init((size, size)) / np.sqrt(size + size))
         self.W_xh = th.shared(init((size, insize)) / np.sqrt(size + size))
+
+    @property
+    def insize(self):
+        return self._insize
+
+    @property
+    def size(self):
+        return self._size
 
     def params(self):
         params = [self.W_xu, self.W_xz, self.W_hz, self.W_xr, self.W_hr, self.W_hh, self.W_xh]
@@ -1244,8 +1379,8 @@ class Genmut(RNN):
 
     def __init__(self, insize, size, init=zeros, has_bias=False,
                  fun=activation.tanh, gatefun=activation.sigmoid):
-        self.size = size
-        self.insize = insize
+        self._size = size
+        self._insize = insize
         self.has_bias = has_bias
         self.fun = fun
         self.gatefun = gatefun
@@ -1255,6 +1390,14 @@ class Genmut(RNN):
         self.sW = th.shared(init((3 * size, size)) / np.sqrt(size + size))
         self.sW2 = th.shared(init((size, size)) / np.sqrt(size + size))
         self.b2 = th.shared(has_bias * init(size))
+
+    @property
+    def insize(self):
+        return self._insize
+
+    @property
+    def size(self):
+        return self._size
 
     def params(self):
         params = [self.xW, self.sW, self.sW2]
@@ -1308,8 +1451,14 @@ class Reverse(Layer):
 
     def __init__(self, layer):
         self.layer = layer
-        self.insize = layer.insize
-        self.size = layer.size
+
+    @property
+    def insize(self):
+        return self.layer.insize
+
+    @property
+    def size(self):
+        return self.layer.size
 
     def params(self):
         return self.layer.params()
@@ -1332,10 +1481,17 @@ class Parallel(Layer):
     def __init__(self, layers):
         assert len(layers) > 0, "A Parallel layer cannot be empty"
         self.layers = layers
-        self.insize = self.layers[0].insize
+        insize = self.layers[0].insize
         is_consistent = all(x.insize == self.insize for x in self.layers)
         assert is_consistent, "Parallel layer has inconsistent sizes"
-        self.size = sum(x.size for x in self.layers)
+
+    @property
+    def insize(self):
+        return self.layers[0].insize
+
+    @property
+    def size(self):
+        return sum(x.size for x in self.layers)
 
     def params(self):
         return reduce(lambda x, y: x + y.params(), self.layers, [])
@@ -1358,10 +1514,16 @@ class Serial(Layer):
     def __init__(self, layers):
         assert len(layers) > 0, "A Serial layer cannot be empty"
         self.layers = layers
-        self.insize = self.layers[0].insize
-        self.size = self.layers[-1].size
         is_consistent = all(x.size == y.insize for x, y in zip(layers, layers[1:]))
         assert is_consistent, "Serial layer has inconistent sizes"
+
+    @property
+    def insize(self):
+        return self.layers[0].insize
+
+    @property
+    def size(self):
+        return self.layers[-1].size
 
     def params(self):
         return reduce(lambda x, y: x + y.params(), self.layers, [])
