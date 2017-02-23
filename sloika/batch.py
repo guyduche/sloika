@@ -66,8 +66,8 @@ def chunkify(ev, chunk_len, kmer_len, use_scaled, normalisation):
     # Use rightmost middle kmer
     kl = (model_kmer_len - kmer_len + 1) // 2
     ku = kl + kmer_len
-    kmer_to_state = bio.kmer_mapping(kmer_len)
-    new_labels = 1 + np.array([kmer_to_state[k[kl : ku].decode('utf-8')] for k in ev['kmer']], dtype=np.int32)
+    kmer_to_state = bio.kmer_mapping(kmer_len, alphabet=b'ACGT')
+    new_labels = 1 + np.array([kmer_to_state[k[kl : ku]] for k in ev['kmer']], dtype=np.int32)
 
     new_labels = new_labels.reshape(ml, chunk_len)
     change = ev['seq_pos'].reshape(ml, chunk_len)
@@ -135,9 +135,12 @@ def init_chunk_remap_worker(model, fasta, kmer_len):
         for ref in SeqIO.parse(fh, 'fasta'):
             refseq = str(ref.seq)
             if 'N' not in refseq:
-                references[ref.id] = refseq
+                if sys.version_info[0] == 3:
+                    references[ref.id] = refseq.encode('utf-8')
+                else:
+                    references[ref.id] = refseq
 
-    kmer_to_state = bio.kmer_mapping(kmer_len)
+    kmer_to_state = bio.kmer_mapping(kmer_len, alphabet=b'ACGT')
 
 
 def remap(read_ref, ev, min_prob, transducer, kmer_len, prior, slip):
