@@ -109,7 +109,7 @@ def chunk_worker(fn, section, chunk_len, kmer_len, min_length, trim, use_scaled,
     if len(ev) < sum(trim) + chunk_len or len(ev) < min_length:
         return None, None, None
     begin = trim[0]
-    end = None if trim[1] is 0 else -trim[1]
+    end = None if trim[1] == 0 else -trim[1]
     ev = ev[begin : end]
 
     return chunkify(ev, chunk_len, kmer_len, use_scaled, normalisation)
@@ -174,7 +174,7 @@ def chunk_remap_worker(fn, trim, min_prob, transducer, kmer_len, prior, slip, ch
         return None
 
     begin = trim[0]
-    end = None if trim[1] is 0 else -trim[1]
+    end = None if trim[1] == 0 else -trim[1]
     ev = ev[begin : end]
 
     (score, ev, path, seq) = remap(read_ref, ev, min_prob, transducer, kmer_len, prior, slip)

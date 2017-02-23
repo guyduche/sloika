@@ -76,7 +76,7 @@ def remove_blanks(labels):
 
 def wrap_network(network, min_prob=0.0, l2=0.0, drop=0):
     ldrop = drop
-    udrop = None if drop is 0 else -drop
+    udrop = None if drop == 0 else -drop
 
     x = T.tensor3()
     labels = T.imatrix()
