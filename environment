@@ -14,6 +14,8 @@ export ACCTEST_WORK_DIR="${BUILD_DIR}/acceptance"
 
 export DEV_VIRTUALENV_DIR="${BUILD_DIR}/env"
 
+export DEV_VIRTUALENV_DIR_PY3="${BUILD_DIR}/envPy3"
+
 export TMP_VIRTUALENV_DIR="${BUILD_DIR}/tmpenv"
 
 export TMP_VIRTUALENV_DIR_PY3="${BUILD_DIR}/tmpenvPy3"
