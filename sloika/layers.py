@@ -1516,6 +1516,8 @@ class Reverse(Layer):
 
     def __init__(self, layer):
         self.layer = layer
+        self.insize = layer.insize
+        self.size = layer.size
 
     @property
     def insize(self):
