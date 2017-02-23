@@ -9,8 +9,8 @@ json.encoder.FLOAT_REPR = lambda f: ("%.4f" % f)
 parser = argparse.ArgumentParser(description='Dump JSON representation of model',
                                  formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-parser.add_argument('--out_file', default=None, action=FileAbsent, help='Output json file to this file location')
-parser.add_argument('--params', default=True, action=AutoBool, help='Output additional parameters to json')
+parser.add_argument('--out_file', default=None, action=FileAbsent, help='Output JSON file to this file location')
+parser.add_argument('--params', default=True, action=AutoBool, help='Output parameters as well as model structure')
 
 parser.add_argument('model', action=FileExists, help='Model file to read from')
 
