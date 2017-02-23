@@ -22,7 +22,7 @@ export TMP_VIRTUALENV_DIR_PY3="${BUILD_DIR}/tmpenvPy3"
 
 export PYTHONDONTWRITEBYTECODE="no .pyc files please"
 
-export COMMON_THEANO_FLAGS_FOR_TRAINING="floatX=float32,warn_float64=warn,optimizer=fast_run,nvcc.fastmath=True,scan.allow_gc=False"
+export COMMON_THEANO_FLAGS_FOR_TRAINING="floatX=float32,warn_float64=warn,optimizer=fast_run,nvcc.fastmath=True,scan.allow_gc=False,lib.cnmem=0.1"
 
 #
 # TODO(semen): pass OMP_NUM_THREADS=1 when basecalling
