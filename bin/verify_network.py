@@ -7,6 +7,7 @@ standard_library.install_aliases()
 from builtins import *
 import argparse
 import imp
+import numpy as np
 import os
 import sys
 
@@ -30,6 +31,7 @@ parser.add_argument('--version', nargs=0, action=display_version_and_exit,
 parser.add_argument('model', action=FileExists,
                     help='File to read python model description from')
 
+NFEATURE = 4
 
 def wrap_network(network):
     x = T.tensor3()
@@ -51,7 +53,7 @@ if __name__ == '__main__':
 
     try:
         netmodule = imp.load_source('netmodule', args.model)
-        network = netmodule.network(klen=args.kmer, sd=args.sd)
+        network = netmodule.network(nfeature=NFEATURE, klen=args.kmer, sd=args.sd)
         fg = wrap_network(network)
     except:
         sys.stderr.write('Compilation of model {} failed\n'.format(args.model))
@@ -61,3 +63,12 @@ if __name__ == '__main__':
     nparam = sum([p.get_value().size for p in network.params()])
     sys.stderr.write('Compilation of model {} succeeded\n'.format(os.path.basename(args.model)))
     sys.stderr.write('nparam = {}\n'.format(nparam))
+
+    ntime, nbatch = 20, 2
+    x = np.random.normal(size=(ntime, nbatch, NFEATURE)).astype(th.config.floatX)
+    lbls = np.zeros((ntime, nbatch), dtype='i4')
+    try:
+        loss, ncorrect = fg(x, lbls)
+    except:
+        sys.stderr.write('Execution of model {} failed\n'.format(args.model))
+        raise
