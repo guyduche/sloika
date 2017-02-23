@@ -84,7 +84,8 @@ def chunkify_with_remap_main(argv, parser):
             chunk_list.append(chunks)
             label_list.append(labels)
             bad_list.append(bad_ev)
-            output_strand_list_entries.append([read, nev, old_div(-score, nev), np.sum(np.ediff1d(path, to_begin=1) == 0),
+            output_strand_list_entries.append([read, nev, old_div(-score, nev),
+                                               np.sum(np.ediff1d(path, to_begin=1) == 0),
                                                len(seq), min(path), max(path)])
 
     print('\n* Creating HDF5 file')
