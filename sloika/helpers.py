@@ -71,8 +71,10 @@ def compile_model(model_file, output_file=None):
     p = Process(target=_compile_model, args=(queue, model_file, output_file))
     p.start()
     p.join()
-    if p.exitcode < 0:
+    if p.exitcode != 0:
+        output_file = None
         raise ValueError("model_file was neither a network nor compiled network")
-    output_file = queue.get()
+    else:
+        output_file = queue.get()
 
     return output_file
