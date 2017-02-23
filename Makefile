@@ -14,6 +14,6 @@ deps:
 	apt-get update
 	apt-get install -y \
 	    python-virtualenv python-pip python-setuptools ont-ca-certs git \
-	    libblas3 libblas-dev python-dev python3-dev
+	    libblas3 libblas-dev python-dev python3-dev lsb-release
 
 include Makefile.res
