@@ -70,8 +70,8 @@ def basecall(args, fn):
 
     if len(ev) <= sum(args.trim):
         return None
-    begin, end = args.trim
-    end = None if end is 0 else -end
+    begin = args.trim[0]
+    end = None if args.trim[1] is 0 else -args.trim[1]
     ev = ev[begin : end]
 
     inMat = features.from_events(ev, tag='')
