@@ -27,6 +27,16 @@ Release 1.1
     * `chunkify.py identity` has simliar behaviour to `chunk_hdf5.py`
     * `chunkify.py remap` will remap a directory of fast5 files using a transducer RNN before chunking.
   * `remap_hdf5.py` and `chunk_hdf5.py` removed in favour of `chunkify.py`
+  * Per chunk normalisation optional `--normalisation`
+    * Default is still to normalise over entire read
+* Chunk size for training can be randomly selected from batch to batch
+  * `--chunk_len_range min max`
+  * Default is to always train with maximum possible chunk size
+  * Chunk size chosen uniformly in specified interval
+* Edge events are not used when assessing loss function
+  * `--drop n`
+  * Default to drop 20 events from start and end before assessing loss
+
 
 ### Minor changes
 
@@ -42,6 +52,8 @@ Release 1.1
 * Increased PEP8 compliance
 * Default location of segmentation information has changed (see Untangled 0.5.1)
 * Location of segmentation information can now be given as commandline option in many programs.
+* Trainer copies logging information to stdout.  May be silenced with `--quiet`
+* JSON may be dumped to file rather than stdout
 
 
 Release 1.0
