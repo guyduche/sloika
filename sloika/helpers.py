@@ -6,7 +6,11 @@ standard_library.install_aliases()
 from builtins import *
 import pickle
 from multiprocessing import Process
-from multiprocessing.queues import SimpleQueue
+try:
+    # Python 3.3 or later
+    from multiprocessing import SimpleQueue
+except ImportError:
+    from multiprocessing.queues import SimpleQueue
 import shutil
 import sys
 import tempfile
@@ -33,7 +37,10 @@ def _compile_model(outqueue, model_file, output_file=None):
 
     sys.setrecursionlimit(10000)
     with open(model_file, 'rb') as fh:
-        network = pickle.load(fh)
+        if sys.version_info[0] == 3:
+            network = pickle.load(fh, encoding='latin1')
+        else:
+            network = pickle.load(fh)
     if isinstance(network, layers.Layer):
         #  File contains network to compile
         with open(output_file, 'wb') as fh:
