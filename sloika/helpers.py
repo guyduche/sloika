@@ -73,7 +73,7 @@ def compile_model(model_file, output_file=None):
     p.join()
     if p.exitcode != 0:
         output_file = None
-        raise ValueError("model_file was neither a network nor compiled network")
+        raise ValueError("Model file {} was neither a network nor compiled network".format(model_file))
     else:
         output_file = queue.get()
 
