@@ -102,8 +102,13 @@ def wrap_network(network, min_prob=0.0, l2=0.0, drop=0):
     return fg
 
 
-def save_model(network, output, index):
-    with open(os.path.join(output, 'model_checkpoint_{:05d}.pkl'.format(index)), 'wb') as fh:
+def save_model(network, output, index=None):
+    if index is not None:
+        model_file = 'model_checkpoint_{:05d}.pkl'.format(index)
+    else:
+        model_file = 'model_final.pkl'
+
+    with open(os.path.join(output, model_file), 'wb') as fh:
         pickle.dump(network, fh, protocol=pickle.HIGHEST_PROTOCOL)
 
 
@@ -250,5 +255,4 @@ if __name__ == '__main__':
             total_ev = 0
             t0 = tn
 
-    with open(os.path.join(args.output, 'model_final.pkl'), 'wb') as fh:
-        pickle.dump(network, fh, protocol=pickle.HIGHEST_PROTOCOL)
+    save_model(network, args.output)
