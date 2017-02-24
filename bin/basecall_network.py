@@ -6,7 +6,6 @@ from future import standard_library
 standard_library.install_aliases()
 from builtins import *
 from past.utils import old_div
-from builtins import object
 import argparse
 import pickle
 import numpy as np
