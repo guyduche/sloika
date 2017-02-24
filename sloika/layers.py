@@ -384,6 +384,9 @@ class Window(Layer):
 class Convolution(Layer):
     """1D convolution over the first dimension
 
+    Takes input of shape [time, batch, features] and produces output of shape
+    [ceil(time / stride), batch, features]
+
     :param insize: number of features on input
     :param size: number of output features
     :param winlen: size of window over input
