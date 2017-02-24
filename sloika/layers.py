@@ -381,7 +381,6 @@ class Window(Layer):
         return T.concatenate([tmp, padMat[self.w - 1 :]], axis=2)
 
 
-
 class Convolution(Layer):
     """1D convolution over the first dimension
 
