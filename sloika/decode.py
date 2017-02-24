@@ -1,6 +1,7 @@
 import numpy as np
 import sloika.variables as sv
 
+
 def argmax(post, zero_is_blank=True):
     """  Argmax decoding of simple transducer
 

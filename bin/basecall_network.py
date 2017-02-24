@@ -2,16 +2,16 @@
 import argparse
 import cPickle
 import numpy as np
-import os
 import sys
 import time
+import os
 
 from sloika import helpers
 from sloika.variables import nstate
 
 from untangled import bio
-from untangled.cmdargs import (AutoBool, FileExists, Maybe, NonNegative,
-                               proportion, Positive, Vector)
+from untangled.cmdargs import (AutoBool, FileAbsent, FileExists, Maybe,
+                               NonNegative, proportion, Positive, Vector)
 from untangled import fast5
 from untangled.iterators import imap_mp
 
@@ -21,31 +21,33 @@ parser = argparse.ArgumentParser(
     description='1D basecaller for RNNs',
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('--bad', default=True, action=AutoBool,
-    help='Model emits bad events as a separate state')
-parser.add_argument('--compile', default=None, type=Maybe(str),
-    help='File output compiled model')
+                    help='Model emits bad events as a separate state')
+parser.add_argument('--compile', default=None, action=FileAbsent,
+                    help='File output compiled model')
 parser.add_argument('--jobs', default=4, metavar='n', type=Positive(int),
-    help='Number of jobs to run in parallel')
+                    help='Number of jobs to run in parallel')
 parser.add_argument('--kmer', default=5, metavar='length', type=Positive(int),
-    help='Length of kmer')
+                    help='Length of kmer')
 parser.add_argument('--limit', default=None, metavar='reads',
-    type=Maybe(Positive(int)), help='Limit number of reads to process.')
+                    type=Maybe(Positive(int)), help='Limit number of reads to process.')
 parser.add_argument('--min_prob', metavar='proportion', default=1e-5,
-    type=proportion, help='Minimum allowed probabiility for basecalls')
+                    type=proportion, help='Minimum allowed probabiility for basecalls')
 parser.add_argument('--section', default='template', choices=['template', 'complement'],
-    help='Section to call')
+                    help='Section to call')
+parser.add_argument('--segmentation', default=fast5.__default_segmentation_analysis__,
+                    metavar='location', help='Location of segmentation information')
 parser.add_argument('--skip', default=0.0, type=Positive(float), help='Skip penalty')
 parser.add_argument('--strand_list', default=None, action=FileExists,
-    help='strand summary file containing subset.')
+                    help='strand summary file containing subset.')
 parser.add_argument('--transducer', default=True, action=AutoBool,
-    help='Model is transducer')
+                    help='Model is transducer')
 parser.add_argument('--trans', default=None, action=Vector(proportion), nargs=3,
-    metavar=('stay', 'step', 'skip'), help='Base transition probabilities')
+                    metavar=('stay', 'step', 'skip'), help='Base transition probabilities')
 parser.add_argument('--trim', default=(50, 1), nargs=2, type=NonNegative(int),
-    metavar=('beginning', 'end'), help='Number of events to trim off start and end')
+                    metavar=('beginning', 'end'), help='Number of events to trim off start and end')
 parser.add_argument('model', action=FileExists, help='Pickled model file')
 parser.add_argument('input_folder', action=FileExists,
-    help='Directory containing single-read fast5 files.')
+                    help='Directory containing single-read fast5 files.')
 
 _ETA = 1e-10
 
@@ -61,15 +63,15 @@ def basecall(args, fn):
     from sloika import decode, features, olddecode
     try:
         with fast5.Reader(fn) as f5:
-            ev = f5.get_section_events(args.section)
+            ev = f5.get_section_events(args.section, analysis=args.segmentation)
             sn = f5.filename_short
     except:
         return None
 
     if len(ev) <= sum(args.trim):
         return None
-    begin, end = args.trim
-    end = None if end is 0 else -end
+    begin = args.trim[0]
+    end = None if args.trim[1] == 0 else -args.trim[1]
     ev = ev[begin : end]
 
     inMat = features.from_events(ev, tag='')
@@ -90,6 +92,7 @@ def basecall(args, fn):
 
 
 class SeqPrinter(object):
+
     def __init__(self, kmerlen, transducer=False, fh=None):
         self.kmers = bio.all_kmers(kmerlen)
         self.transducer = transducer
@@ -120,11 +123,7 @@ class SeqPrinter(object):
 if __name__ == '__main__':
     args = parser.parse_args()
 
-    compiled_file = helpers.compile_model(args.model)
-    if args.compile is not None:
-        os.rename(compiled_file, args.compile)
-        compiled_file = args.compile
-
+    compiled_file = helpers.compile_model(args.model, args.compile)
 
     seq_printer = SeqPrinter(args.kmer, transducer=args.transducer)
 
@@ -141,4 +140,8 @@ if __name__ == '__main__':
         nbases += seq_len
         nevents += nev
     dt = time.time() - t0
-    sys.stderr.write('Called {} bases in {:.1f} s ({:.1f} bases/s or {:.1f} events/s)\n'.format(nbases, dt, nbases / dt, nevents / dt))
+    t = 'Called {} bases in {:.1f} s ({:.1f} bases/s or {:.1f} events/s)\n'
+    sys.stderr.write(t.format(nbases, dt, nbases / dt, nevents / dt))
+
+    if compiled_file != args.compile:
+        os.remove(compiled_file)

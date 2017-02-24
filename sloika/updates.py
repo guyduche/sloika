@@ -5,6 +5,7 @@ import theano.tensor as T
 
 from sloika.config import sloika_dtype
 
+
 def sgd(network, loss, rate, momentum, clip=5.0):
     """  Stochastic Gradient Descent with momentum
 

@@ -9,17 +9,19 @@ from theano.sandbox.cuda.var import CudaNdarraySharedVariable
 import theano as th
 
 parser = argparse.ArgumentParser(
-    'Converts pickled sloika model between CPU and GPU (CUDA) versions.', epilog='If you encounter problems please contact joe.harvey@nanoporetech.com')
-parser.add_argument('--target', default='swap', 
-    choices=('cpu', 'gpu', 'swap'), help='Target device (cpu, gpu or swap)')
+    'Converts pickled sloika model between CPU and GPU (CUDA) versions.',
+    epilog='If you encounter problems please contact joe.harvey@nanoporetech.com')
+parser.add_argument('--target', default='swap',
+                    choices=('cpu', 'gpu', 'swap'), help='Target device (cpu, gpu or swap)')
 parser.add_argument('model', action=FileExists,
-    help='Pickled sloika model to convert')
+                    help='Pickled sloika model to convert')
 parser.add_argument('output', help='Output file to write to')
 
 
 def device(obj, name):
     return ('cpu' if isinstance(getattr(obj, name), TensorSharedVariable)
-                  else 'gpu')
+            else 'gpu')
+
 
 def get_var_names(obj, depth=0, max_depth=3):
     """Get names and parent objects of all theano shared variables in obj
@@ -47,7 +49,7 @@ def get_var_names(obj, depth=0, max_depth=3):
             if depth < max_depth:
                 for item in value:
                     shared_vars.extend(get_var_names(item, depth + 1,
-                                                    max_depth=max_depth))
+                                                     max_depth=max_depth))
     return shared_vars
 
 SWAP_WARNING = """
@@ -83,7 +85,8 @@ if __name__ == '__main__':
     objs, names, devices = zip(*shared_vars)
 
     if args.target == 'swap':
-        swap = lambda s: ('cpu' if s == 'gpu' else 'gpu')
+        def swap(s):
+            return ('cpu' if s == 'gpu' else 'gpu')
         targets = map(swap, devices)
         if len(set(targets)) > 1:
             sys.stderr.write(SWAP_WARNING.format(list(set(targets))))

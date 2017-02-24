@@ -1,52 +1,61 @@
+#
 #  Yaml CI config for Gitlab See. http://docs.gitlab.com/ce/ci/yaml/README.html
-#  Machine image on which to build, test etc
-# TODO(semen): any chance we can exercise 16.04 image here?
-image: docker-registry.oxfordnanolabs.local:5000/ont-base-ubuntu:14.04
+#
+
+image: docker-registry.oxfordnanolabs.local:5000/ont-base-ubuntu:16.04
 
 stages:
+    - build
     - test
     - release
 
-# TODO(semen): move these installation steps into a script so that user can run them on a clean box
 before_script:
-    #  Addition setup for machine image.  Here install a few packages
-    - apt-get update
-    - apt-get install -y python-numpy python-h5py python-scipy python-docutils 
-    - apt-get install -y cython python-pip python-all-dev python-setuptools ont-ca-certs
-    - pip install pip --upgrade
+    - make deps
+    - make checkout
 
-# TODO(semen): not all dependencies were captured by setup.py and I see some of these are maintained here. make requirements.txt the source of authority on that and call a setup script here that will use it
-do_testing:
-    stage: test
+wheel:
+    stage: build
     script:
-        #  Simple test of Python project.  Could be e.g. `make test`
-        - /usr/local/bin/pip install --trusted-host=pypi.oxfordnanolabs.local --extra-index-url=https://pypi.oxfordnanolabs.local/simple untangled
-        - /usr/local/bin/pip install Theano
-        - python setup.py test
+        - make wheel
+    artifacts:
+        paths:
+            - dist
+
+ubuntu_14_04:
+    stage: test
+    image: docker-registry.oxfordnanolabs.local:5000/ont-base-ubuntu:14.04
+    script:
+        - CI=True make cleanDevEnv
+        - CI=True make
     except:
-        #  Don't test tags (just branches)
         - tags
 
-#
-# TODO(semen): there's a general problem with this build script: we should build the tarball and upload it to the server and then test target should pick it up and exercise it, rather than the other way around. If the tests pass then the tarball should be marked as releasable. Otherwise it is easy to end up in the state we are in now: the deployable that do_release scp'es is not installable.
-#
-
-do_release:
-    stage: release
+unit:
+    stage: test
     script:
-        #  Build project
-        - python setup.py sdist
-        #  Going to push project via ssh.
-        #  PYPI_KEY and PYPI_HOST should set up as project variables on Gitlab
-        #  PYPI_KEY is private key produced by ssh-keygen
+        - make unitTestFromScratch
+
+acceptance:
+    stage: test
+    script:
+        - make acceptanceTestFromScratch
+
+dev_env_and_style:
+    stage: test
+    script:
+        - make cleanDevEnv
+        - make pep8
+
+upload_artefact:
+    stage: release
+    before_script:
         - apt-get install -y openssh-client
         - eval $(ssh-agent -s)
+    script:
+        #  PYPI_KEY and PYPI_HOST should set up as project variables on Gitlab
+        #  PYPI_KEY is private key produced by ssh-keygen
         - ssh-add <(set +x; echo "$PYPI_KEY")
-        - scp -o StrictHostKeyChecking=no dist/* gitlab-ci-pypi@${PYPI_HOST}:/opt/ont-pypi/site-packages/
+        - scp -v -o StrictHostKeyChecking=no dist/* gitlab-ci-pypi@${PYPI_HOST}:/opt/ont-pypi/site-packages/
     only:
-        #  Only do a release of tags marked explicit as release (match this regular expression)
-        - /^release_.*$/
-    except:
-        #  Do look for tags in branches
-        - branches
-
+        - master@algorithm/sloika
+        - dev@algorithm/sloika

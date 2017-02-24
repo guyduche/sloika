@@ -28,8 +28,8 @@ def decode_profile(post, trans=None, log=False, slip=0.0):
         trans = itertools.repeat(np.zeros(3))
     else:
         trans = np.copy(trans)
-        trans[:,1] -= _STEP_FACTOR
-        trans[:,2] -= _SKIP_FACTOR
+        trans[:, 1] -= _STEP_FACTOR
+        trans[:, 2] -= _SKIP_FACTOR
 
     log_slip = np.log(_ETA + slip)
 
@@ -61,14 +61,14 @@ def decode_profile(post, trans=None, log=False, slip=0.0):
         iscore = np.where(score > scoreNew, iscore, iscoreNew)
         score = np.fmax(score, scoreNew)
         # Store
-        lpost[ev-1] = iscore
+        lpost[ev - 1] = iscore
         pscore = score + lpost[ev]
 
     state_seq = np.zeros(len(post), dtype=int)
     state_seq[-1] = np.argmax(pscore)
     for ev in range(len(post), 1, -1):
         # Viterbi backtrace
-        state_seq[ev-2] = int(lpost[ev-2][state_seq[ev-1]])
+        state_seq[ev - 2] = int(lpost[ev - 2][state_seq[ev - 1]])
 
     return np.amax(pscore), state_seq
 
@@ -100,18 +100,18 @@ def estimate_transitions(post, trans=None):
     res[:] = _ETA
 
     for ev in range(1, len(post)):
-        stay = np.sum(post[ev-1] * post[ev])
+        stay = np.sum(post[ev - 1] * post[ev])
         p = post[ev].reshape((-1, _NSTEP))
-        step = np.sum(post[ev-1] * np.tile(np.sum(p, axis=1), _NSTEP)) / _NSTEP
+        step = np.sum(post[ev - 1] * np.tile(np.sum(p, axis=1), _NSTEP)) / _NSTEP
         p = post[ev].reshape((-1, _NSKIP))
-        skip = np.sum(post[ev-1] * np.tile(np.sum(p, axis=1), _NSKIP)) / _NSKIP
-        res[ev-1] = [stay, step, skip]
+        skip = np.sum(post[ev - 1] * np.tile(np.sum(p, axis=1), _NSKIP)) / _NSKIP
+        res[ev - 1] = [stay, step, skip]
 
     if trans is None:
         trans = np.sum(res, axis=0)
         trans /= np.sum(trans)
 
     res *= trans
-    res /= np.sum(res, axis=1).reshape((-1,1))
+    res /= np.sum(res, axis=1).reshape((-1, 1))
 
     return res

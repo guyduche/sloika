@@ -15,14 +15,17 @@ _NSKIP = NBASE * NBASE
 _FORGET_BIAS = 2.0
 _INDENT = ' ' * 4
 
+
 def zeros(size):
     return np.zeros(size, dtype=sloika_dtype)
+
 
 def _extract(x, shape=None):
     xv = x.get_value()
     if shape is not None:
         xv = xv.reshape(shape)
     return xv.tolist()
+
 
 class Layer(object):
     __metaclass__ = abc.ABCMeta
@@ -73,6 +76,7 @@ class RNN(Layer):
 
 
 class Identity(Layer):
+
     def __init__(self):
         pass
 
@@ -99,6 +103,7 @@ class FeedForward(Layer):
     :param has_bias: Whether layer has bias
     :param fun: The activation function.
     """
+
     def __init__(self, insize, size, init=zeros, has_bias=False,
                  fun=activation.tanh):
         self.has_bias = has_bias
@@ -138,6 +143,7 @@ class Studentise(Layer):
 
     :param epsilon: Stabilsation layer
     """
+
     def __init__(self, epsilon=1e-4):
         self.epsilon = epsilon
 
@@ -161,6 +167,7 @@ class NormaliseL1(Layer):
 
     :param epsilon: Stabilsation layer
     """
+
     def __init__(self, epsilon=1e-4):
         self.epsilon = epsilon
 
@@ -188,6 +195,7 @@ class Softmax(Layer):
     :param init: function to initialise tensors with
     :param has_bias: Whether layer has bias
     """
+
     def __init__(self, insize, size, init=zeros, has_bias=False):
         self.has_bias = has_bias
         self.b = th.shared(has_bias * init(size))
@@ -215,9 +223,8 @@ class Softmax(Layer):
         assert values['W'].shape == (self.size, self.insize)
         self.W.set_value(values['W'])
 
-
     def run(self, inMat):
-        tmp =  T.tensordot(inMat, self.W, axes=(2,1)) + self.b
+        tmp = T.tensordot(inMat, self.W, axes=(2, 1)) + self.b
         out, _ = th.map(T.nnet.softmax, sequences=tmp)
         return out
 
@@ -232,6 +239,7 @@ class SoftmaxOld(Layer):
     :param init: function to initialise tensors with
     :param has_bias: Whether layer has bias
     """
+
     def __init__(self, insize, size, init=zeros, has_bias=False):
         self.has_bias = has_bias
         self.b = th.shared(has_bias * init(size))
@@ -261,13 +269,11 @@ class SoftmaxOld(Layer):
         self.W.set_value(values['W'])
 
     def run(self, inMat):
-        tmp =  T.tensordot(inMat, self.W, axes=(2,1)) + self.b
+        tmp = T.tensordot(inMat, self.W, axes=(2, 1)) + self.b
         m = T.shape_padright(T.max(tmp, axis=2))
         out = T.exp(tmp - m)
         rowsum = T.sum(out, axis=2)
         return out / T.shape_padright(rowsum)
-
-
 
 
 class Window(Layer):
@@ -275,6 +281,7 @@ class Window(Layer):
 
     :param w: Size of window
     """
+
     def __init__(self, w):
         assert w > 0, "Window size must be positive"
         assert w % 2 == 1, 'Window size should be odd'
@@ -306,6 +313,7 @@ class Convolution(Layer):
     :param size: Layer size (number of filters)
     :param w: Size of convolution
     """
+
     def __init__(self, insize, size, w, init=zeros, fun=activation.tanh):
         assert size > 0, "Size (number of filters) must be positive"
         assert w > 0, "Window size must be positive"
@@ -356,6 +364,7 @@ class Recurrent(RNN):
     :param has_bias: Whether layer has bias
     :param fun: The activation function.
     """
+
     def __init__(self, insize, size, init=zeros, has_bias=False,
                  fun=activation.tanh):
         self.has_bias = has_bias
@@ -396,6 +405,7 @@ class Recurrent(RNN):
         state_out = self.fun(iV + sV + self.b)
         return state_out
 
+
 class Scrn(RNN):
     """ Structurally Constrained Recurrent Network as described in
     https://arxiv.org/pdf/1412.7753.pdf (equations 4, 5 and 6)
@@ -410,12 +420,13 @@ class Scrn(RNN):
     :param init: function to initialise tensors with
     :param fun: The activation function.  Must accept a numpy array as input.
     """
+
     def __init__(self, insize, fast_size, slow_size, init=zeros, alpha=0.95,
                  fun=activation.sigmoid):
         # mmW is the (non-learned) memory unit decay matrix
         # the option to learn the entries of this matrix could be added later
         self.alpha = T.constant(alpha)
-        self.ssW = th.shared((alpha*np.identity(slow_size)).astype(sloika_dtype))
+        self.ssW = th.shared((alpha * np.identity(slow_size)).astype(sloika_dtype))
         self.isW = th.shared(init((slow_size, insize)) / np.sqrt(slow_size + insize))
         self.sfW = th.shared(init((fast_size, slow_size)) / np.sqrt(fast_size + slow_size))
         self.ifW = th.shared(init((fast_size, insize)) / np.sqrt(fast_size + insize))
@@ -465,6 +476,7 @@ class Scrn(RNN):
         fast_out = self.fun(sV + iV + sV)
         return T.concatenate([fast_out, slow_out], 1)
 
+
 class Lstm(RNN):
     """ LSTM layer with peepholes.  Implementation is to be consistent with
     Currennt and may differ from other descriptions of LSTM networks (e.g.
@@ -491,6 +503,7 @@ class Lstm(RNN):
     :param gatefun: The activation function for gates.  Generally a monotone
     mapping from (-inf, inf) -> [0, 1]
     """
+
     def __init__(self, insize, size, init=zeros, has_bias=False, has_peep=False,
                  fun=activation.tanh, gatefun=activation.sigmoid):
         self.size = size
@@ -500,15 +513,13 @@ class Lstm(RNN):
         self.fun = fun
         self.gatefun = gatefun
 
-        self.b = th.shared(has_bias * (init(4 * size)
-                                       + np.repeat([0, 0, _FORGET_BIAS, 0],
-                                                   size).astype(sloika_dtype)))
+        self.b = th.shared(has_bias * (init(4 * size) + np.repeat([0, 0, _FORGET_BIAS, 0], size).astype(sloika_dtype)))
         self.p = th.shared(has_peep * init((3, size)) / np.sqrt(size))
         self.iW = th.shared(init((4 * size, insize)) / np.sqrt(insize + size))
         self.sW = th.shared(init((4 * size, size)) / np.sqrt(size + size))
 
     def params(self):
-        params =  [self.iW, self.sW]
+        params = [self.iW, self.sW]
         if self.has_bias:
             params += [self.b]
         if self.has_peep:
@@ -530,7 +541,6 @@ class Lstm(RNN):
                                          ('p', _extract(self.p, (3, self.size)))])
         return res
 
-
     def set_params(self, values):
         if self.has_bias:
             assert values['b'].shape == (4, self.size)
@@ -545,25 +555,26 @@ class Lstm(RNN):
 
     def step(self, in_vec, in_state):
         vW = T.tensordot(in_vec, self.iW, axes=(1, 1))
-        out_prev = in_state[:,:self.size]
-        state = in_state[:,self.size:]
+        out_prev = in_state[:, :self.size]
+        state = in_state[:, self.size:]
         outW = T.tensordot(out_prev, self.sW, axes=(1, 1))
-        sumW = vW + outW  + self.b
+        sumW = vW + outW + self.b
         sumW = sumW.reshape((-1, self.size, 4))
 
         #  Forget gate activation
-        out_state = state * self.gatefun(sumW[:,:,2] + state * self.p[1])
+        out_state = state * self.gatefun(sumW[:, :, 2] + state * self.p[1])
         #  Update state with input
-        out_state += self.fun(sumW[:,:,0]) * self.gatefun(sumW[:,:,1] + state * self.p[0])
+        out_state += self.fun(sumW[:, :, 0]) * self.gatefun(sumW[:, :, 1] + state * self.p[0])
         #  Output gate activation
-        out = self.fun(out_state) * self.gatefun(sumW[:,:,3] + out_state * self.p[2])
+        out = self.fun(out_state) * self.gatefun(sumW[:, :, 3] + out_state * self.p[2])
         return T.concatenate((out, out_state), axis=1)
 
     def run(self, inMat):
         nbatch = T.shape(inMat)[1]
         out, _ = th.scan(self.step, sequences=inMat,
                          outputs_info=T.zeros((nbatch, 2 * self.size)))
-        return out[:,:,:self.size]
+        return out[:, :, :self.size]
+
 
 class LstmCIFG(RNN):
     """ LSTM layer with coupled input and forget gates.
@@ -589,6 +600,7 @@ class LstmCIFG(RNN):
     :param gatefun: The activation function for gates.  Generally a monotone
     mapping from (-inf, inf) -> [0, 1]
     """
+
     def __init__(self, insize, size, init=zeros, has_bias=False, has_peep=False,
                  fun=activation.tanh, gatefun=activation.sigmoid):
         self.size = size
@@ -598,15 +610,13 @@ class LstmCIFG(RNN):
         self.fun = fun
         self.gatefun = gatefun
 
-        self.b = th.shared(has_bias * (init(3 * size)
-                                       + np.repeat([0, _FORGET_BIAS, 0],
-                                                   size).astype(sloika_dtype)))
+        self.b = th.shared(has_bias * (init(3 * size) + np.repeat([0, _FORGET_BIAS, 0], size).astype(sloika_dtype)))
         self.p = th.shared(has_peep * init((2, size)) / np.sqrt(size))
         self.iW = th.shared(init((3 * size, insize)) / np.sqrt(insize + size))
         self.sW = th.shared(init((3 * size, size)) / np.sqrt(size + size))
 
     def params(self):
-        params =  [self.iW, self.sW]
+        params = [self.iW, self.sW]
         if self.has_bias:
             params += [self.b]
         if self.has_peep:
@@ -628,7 +638,6 @@ class LstmCIFG(RNN):
                                          ('p', _extract(self.p, (2, self.size)))])
         return res
 
-
     def set_params(self, values):
         if self.has_bias:
             assert values['b'].shape == (3, self.size)
@@ -643,26 +652,27 @@ class LstmCIFG(RNN):
 
     def step(self, in_vec, in_state):
         vW = T.tensordot(in_vec, self.iW, axes=(1, 1))
-        out_prev = in_state[:,:self.size]
-        state = in_state[:,self.size:]
+        out_prev = in_state[:, :self.size]
+        state = in_state[:, self.size:]
         outW = T.tensordot(out_prev, self.sW, axes=(1, 1))
-        sumW = vW + outW  + self.b
+        sumW = vW + outW + self.b
         sumW = sumW.reshape((-1, self.size, 3))
 
         #  Forget gate activation
-        forget = self.gatefun(sumW[:,:,1] + state * self.p[0])
+        forget = self.gatefun(sumW[:, :, 1] + state * self.p[0])
         out_state = state * forget
         #  Update state with input
-        out_state += self.fun(sumW[:,:,0]) * (1 - forget)
+        out_state += self.fun(sumW[:, :, 0]) * (1 - forget)
         #  Output gate activation
-        out = self.fun(out_state) * self.gatefun(sumW[:,:,2] + out_state * self.p[1])
+        out = self.fun(out_state) * self.gatefun(sumW[:, :, 2] + out_state * self.p[1])
         return T.concatenate((out, out_state), axis=1)
 
     def run(self, inMat):
         nbatch = T.shape(inMat)[1]
         out, _ = th.scan(self.step, sequences=inMat,
                          outputs_info=T.zeros((nbatch, 2 * self.size)))
-        return out[:,:,:self.size]
+        return out[:, :, :self.size]
+
 
 class LstmO(RNN):
     """ LSTM layer with peepholes but no output gate.
@@ -683,6 +693,7 @@ class LstmO(RNN):
     :param gatefun: The activation function for gates.  Generally a monotone
     mapping from (-inf, inf) -> [0, 1]
     """
+
     def __init__(self, insize, size, init=zeros, has_bias=False, has_peep=False,
                  fun=activation.tanh, gatefun=activation.sigmoid):
         self.size = size
@@ -692,15 +703,13 @@ class LstmO(RNN):
         self.fun = fun
         self.gatefun = gatefun
 
-        self.b = th.shared(has_bias * (init(3 * size)
-                                       + np.repeat([0, 0, _FORGET_BIAS],
-                                                   size).astype(sloika_dtype)))
-        self.p = th.shared(has_peep * init((3, size))/ np.sqrt(size))
+        self.b = th.shared(has_bias * (init(3 * size) + np.repeat([0, 0, _FORGET_BIAS], size).astype(sloika_dtype)))
+        self.p = th.shared(has_peep * init((3, size)) / np.sqrt(size))
         self.iW = th.shared(init((3 * size, insize)) / np.sqrt(insize + size))
         self.sW = th.shared(init((3 * size, size)) / np.sqrt(size + size))
 
     def params(self):
-        params =  [self.iW, self.sW]
+        params = [self.iW, self.sW]
         if self.has_bias:
             params += [self.b]
         if self.has_peep:
@@ -734,17 +743,16 @@ class LstmO(RNN):
         assert values['sW'].shape == (3, self.size, self.size)
         self.sW.set_value(values['sW'].reshape((3 * self.size, self.size)))
 
-
     def step(self, in_vec, in_state):
         vW = T.tensordot(in_vec, self.iW, axes=(1, 1))
         outW = T.tensordot(in_state, self.sW, axes=(1, 1))
-        sumW = vW + outW  + self.b
+        sumW = vW + outW + self.b
         sumW = sumW.reshape((-1, 3, self.size))
 
         #  Forget gate activation
-        state = in_state * self.gatefun(sumW[:,2] + in_state * self.p[2])
+        state = in_state * self.gatefun(sumW[:, 2] + in_state * self.p[2])
         #  Update state with input
-        state += self.fun(sumW[:,0] + in_state * self.p[0]) * self.gatefun(sumW[:,1] + in_state * self.p[1])
+        state += self.fun(sumW[:, 0] + in_state * self.p[0]) * self.gatefun(sumW[:, 1] + in_state * self.p[1])
         return state
 
 
@@ -759,6 +767,7 @@ class Forget(RNN):
     :param gatefun: The activation function for gates.  Generally a monotone
     mapping from (-inf, inf) -> [0, 1]
     """
+
     def __init__(self, insize, size, init=zeros, has_bias=False,
                  fun=activation.tanh, gatefun=activation.sigmoid):
         self.size = size
@@ -767,21 +776,19 @@ class Forget(RNN):
         self.fun = fun
         self.gatefun
 
-        self.b = th.shared(has_bias * (init(2 * size)
-                                       + np.repeat([_FORGET_BIAS, 0],
-                                                   size).astype(sloika_dtype)))
+        self.b = th.shared(has_bias * (init(2 * size) + np.repeat([_FORGET_BIAS, 0], size).astype(sloika_dtype)))
         self.iW = th.shared(init((2 * size, insize)) / np.sqrt(insize + size))
         self.sW = th.shared(init((2 * size, size)) / np.sqrt(size + size))
 
     def params(self):
-        params =  [self.iW, self.sW]
+        params = [self.iW, self.sW]
         if self.has_bias:
             params += [self.b]
         return params
 
     def json(self, params=False):
         res = OrderedDict([('type', "forget gate"),
-                           ('activation',self.fun.func_name),
+                           ('activation', self.fun.func_name),
                            ('gate', self.gatefun.func_name),
                            ('size', self.size),
                            ('insize', self.insize),
@@ -802,13 +809,13 @@ class Forget(RNN):
         self.sW.set_value(values['sW'].reshape((2 * self.size, self.size)))
 
     def step(self, in_vec, in_state):
-        vI = T.tensordot(in_vec, self.iW, axes=(1,1))
-        vS = T.tensordot(in_state, self.sW, axes=(1,1))
+        vI = T.tensordot(in_vec, self.iW, axes=(1, 1))
+        vS = T.tensordot(in_state, self.sW, axes=(1, 1))
         vT = vI + vS + self.b
         vT = vT.reshape((-1, 2, self.size))
 
-        forget = self.gatefun(vT[:,0])
-        state = in_state * forget + (1.0 - forget) * self.fun(vT[:,1])
+        forget = self.gatefun(vT[:, 0])
+        state = in_state * forget + (1.0 - forget) * self.fun(vT[:, 1])
         return state
 
 
@@ -823,6 +830,7 @@ class Gru(RNN):
     :param gatefun: The activation function for gates.  Generally a monotone
     mapping from (-inf, inf) -> [0, 1]
     """
+
     def __init__(self, insize, size, init=zeros, has_bias=False,
                  fun=activation.tanh, gatefun=activation.sigmoid):
         self.size = size
@@ -837,7 +845,7 @@ class Gru(RNN):
         self.sW2 = th.shared(init((size, size)) / np.sqrt(size + size))
 
     def params(self):
-        params =  [self.iW, self.sW, self.sW2]
+        params = [self.iW, self.sW, self.sW2]
         if self.has_bias:
             params += [self.b]
         return params
@@ -864,18 +872,18 @@ class Gru(RNN):
         self.iW.set_value(values['iW'].reshape((3 * self.size, self.insize)))
         assert values['sW'].shape == (2, self.size, self.size)
         self.sW.set_value(values['sW'].reshape((2 * self.size, self.size)))
-        assert values['sW2'].shape == (self.size,  self.size)
+        assert values['sW2'].shape == (self.size, self.size)
         self.sW2.set_value(values['sW2'])
 
     def step(self, in_vec, in_state):
-        vI = T.tensordot(in_vec, self.iW, axes=(1,1)) + self.b
-        vS = T.tensordot(in_state, self.sW, axes=(1,1))
+        vI = T.tensordot(in_vec, self.iW, axes=(1, 1)) + self.b
+        vS = T.tensordot(in_state, self.sW, axes=(1, 1))
         vT = vI[:, :2 * self.size] + vS
         vT = vT.reshape((-1, 2, self.size))
 
-        z = self.gatefun(vT[:,0])
-        r = self.gatefun(vT[:,1])
-        y = T.tensordot(r * in_state, self.sW2, axes=(1,1))
+        z = self.gatefun(vT[:, 0])
+        r = self.gatefun(vT[:, 1])
+        y = T.tensordot(r * in_state, self.sW2, axes=(1, 1))
         hbar = self.fun(vI[:, 2 * self.size:] + y)
         state = z * in_state + (1 - z) * hbar
         return state
@@ -903,6 +911,7 @@ class Mut1(RNN):
     :param gatefun: The activation function for gates.  Generally a monotone
         mapping from (-inf, inf) -> [0, 1]
     """
+
     def __init__(self, insize, size, init=zeros, has_bias=False,
                  fun=activation.tanh, gatefun=activation.sigmoid):
         self.size = size
@@ -922,7 +931,7 @@ class Mut1(RNN):
         self.W_hh = th.shared(init((size, size)) / np.sqrt(size + size))
 
     def params(self):
-        params =  [self.W_xu, self.W_xz, self.W_xr, self.W_hr, self.W_hh]
+        params = [self.W_xu, self.W_xz, self.W_xr, self.W_hr, self.W_hh]
         if self.has_bias:
             params += [self.b_u, self.b_r, self.b_z, self.b_h]
         return params
@@ -968,11 +977,11 @@ class Mut1(RNN):
         self.W_hh.set_value(values['W_hh'])
 
     def step(self, in_vec, in_state):
-        u = self.fun(T.tensordot(in_vec, self.W_xu, axes=(1,1)) + self.b_u)
-        z = self.gatefun(T.tensordot(in_vec, self.W_xz, axes=(1,1)) + self.b_z)
-        r = self.gatefun(T.tensordot(in_vec, self.W_xr, axes=(1,1))
-                                + T.tensordot(in_state, self.W_hr, axes=(1,1)) + self.b_r)
-        y = T.tensordot(r * in_state, self.W_hh, axes=(1,1))
+        u = self.fun(T.tensordot(in_vec, self.W_xu, axes=(1, 1)) + self.b_u)
+        z = self.gatefun(T.tensordot(in_vec, self.W_xz, axes=(1, 1)) + self.b_z)
+        r = self.gatefun(T.tensordot(in_vec, self.W_xr, axes=(1, 1)) +
+                         T.tensordot(in_state, self.W_hr, axes=(1, 1)) + self.b_r)
+        y = T.tensordot(r * in_state, self.W_hh, axes=(1, 1))
         state = self.fun(y + u + self.b_h) * z + (1 - z) * in_state
         return state
 
@@ -999,6 +1008,7 @@ class Mut2(RNN):
     :param gatefun: The activation function for gates.  Generally a monotone
         mapping from (-inf, inf) -> [0, 1]
     """
+
     def __init__(self, insize, size, init=zeros, has_bias=False,
                  fun=activation.tanh, gatefun=activation.sigmoid):
         self.size = size
@@ -1019,7 +1029,7 @@ class Mut2(RNN):
         self.W_xh = th.shared(init((size, insize)) / np.sqrt(size + size))
 
     def params(self):
-        params =  [self.W_xu, self.W_xz, self.W_hz, self.W_hr, self.W_hh, self.W_xh]
+        params = [self.W_xu, self.W_xz, self.W_hz, self.W_hr, self.W_hh, self.W_xh]
         if self.has_bias:
             params += [self.b_u, self.b_r, self.b_z, self.b_h]
         return params
@@ -1067,14 +1077,15 @@ class Mut2(RNN):
         self.W_hz.set_value(values['W_hz'])
 
     def step(self, in_vec, in_state):
-        u = self.fun(T.tensordot(in_vec, self.W_xu, axes=(1,1)) + self.b_u)
-        z = self.gatefun(T.tensordot(in_vec, self.W_xz, axes=(1,1))
-                                + T.tensordot(in_state, self.W_hz, axes=(1,1)) + self.b_z)
-        r = self.gatefun(u + T.tensordot(in_state, self.W_hr, axes=(1,1)) + self.b_r)
-        y = T.tensordot(r * in_state, self.W_hh, axes=(1,1))
-        v = T.tensordot(in_vec, self.W_xh, axes=(1,1))
+        u = self.fun(T.tensordot(in_vec, self.W_xu, axes=(1, 1)) + self.b_u)
+        z = self.gatefun(T.tensordot(in_vec, self.W_xz, axes=(1, 1)) +
+                         T.tensordot(in_state, self.W_hz, axes=(1, 1)) + self.b_z)
+        r = self.gatefun(u + T.tensordot(in_state, self.W_hr, axes=(1, 1)) + self.b_r)
+        y = T.tensordot(r * in_state, self.W_hh, axes=(1, 1))
+        v = T.tensordot(in_vec, self.W_xh, axes=(1, 1))
         state = self.fun(y + v + self.b_h) * z + (1 - z) * in_state
         return state
+
 
 class Mut3(RNN):
     """ Based on MUT3 from Jozefowicz
@@ -1098,6 +1109,7 @@ class Mut3(RNN):
     :param gatefun: The activation function for gates.  Generally a monotone
         mapping from (-inf, inf) -> [0, 1]
     """
+
     def __init__(self, insize, size, init=zeros, has_bias=False,
                  fun=activation.tanh, gatefun=activation.sigmoid, embed="learn"):
         self.size = size
@@ -1119,7 +1131,7 @@ class Mut3(RNN):
         self.W_xh = th.shared(init((size, insize)) / np.sqrt(size + size))
 
     def params(self):
-        params =  [self.W_xu, self.W_xz, self.W_hz, self.W_xr, self.W_hr, self.W_hh, self.W_xh]
+        params = [self.W_xu, self.W_xz, self.W_hz, self.W_xr, self.W_hr, self.W_hh, self.W_xh]
         if self.has_bias:
             params += [self.b_u, self.b_r, self.b_z, self.b_h]
         return params
@@ -1170,13 +1182,13 @@ class Mut3(RNN):
         self.W_hz.set_value(values['W_hz'])
 
     def step(self, in_vec, in_state):
-        u = self.fun(T.tensordot(in_vec, self.W_xu, axes=(1,1)) + self.b_u)
-        z = self.gatefun(T.tensordot(in_vec, self.W_xz, axes=(1,1))
-                                + T.tensordot(self.fun(in_state), self.W_hz, axes=(1,1)) + self.b_z)
-        r = self.gatefun(T.tensordot(in_vec, self.W_xr, axes=(1,1))
-                                + T.tensordot(in_state, self.W_hr, axes=(1,1)) + self.b_r)
-        y = T.tensordot(r * in_state, self.W_hh, axes=(1,1))
-        v = T.tensordot(in_vec, self.W_xh, axes=(1,1))
+        u = self.fun(T.tensordot(in_vec, self.W_xu, axes=(1, 1)) + self.b_u)
+        z = self.gatefun(T.tensordot(in_vec, self.W_xz, axes=(1, 1)) +
+                         T.tensordot(self.fun(in_state), self.W_hz, axes=(1, 1)) + self.b_z)
+        r = self.gatefun(T.tensordot(in_vec, self.W_xr, axes=(1, 1)) +
+                         T.tensordot(in_state, self.W_hr, axes=(1, 1)) + self.b_r)
+        y = T.tensordot(r * in_state, self.W_hh, axes=(1, 1))
+        v = T.tensordot(in_vec, self.W_xh, axes=(1, 1))
         state = self.fun(y + v + self.b_h) * z + (1 - z) * in_state
         return state
 
@@ -1203,6 +1215,7 @@ class Genmut(RNN):
     :param gatefun: The activation function for gates.  Generally a monotone
         mapping from (-inf, inf) -> [0, 1]
     """
+
     def __init__(self, insize, size, init=zeros, has_bias=False,
                  fun=activation.tanh, gatefun=activation.sigmoid):
         self.size = size
@@ -1218,7 +1231,7 @@ class Genmut(RNN):
         self.b2 = th.shared(has_bias * init(size))
 
     def params(self):
-        params =  [self.xW, self.sW, self.sW2]
+        params = [self.xW, self.sW, self.sW2]
         if self.has_bias:
             params += [self.b, self.b2]
         return params
@@ -1252,9 +1265,7 @@ class Genmut(RNN):
         self.sW2.set_value(values['sW2'])
 
     def step(self, in_vec, in_state):
-        iT = ( T.tensordot(in_vec, self.xW, axes=(1, 1))
-             + T.tensordot(in_state, self.sW, axes=(1, 1))
-             + self.b)
+        iT = (T.tensordot(in_vec, self.xW, axes=(1, 1)) + T.tensordot(in_state, self.sW, axes=(1, 1)) + self.b)
         iT = iT.reshape((-1, 3, self.size))
 
         u = self.fun(iT[:, 0])
@@ -1268,8 +1279,9 @@ class Genmut(RNN):
 class Reverse(Layer):
     """  Runs a recurrent layer in reverse time (backwards)
     """
+
     def __init__(self, layer):
-       self.layer = layer
+        self.layer = layer
 
     def params(self):
         return self.layer.params()
@@ -1288,6 +1300,7 @@ class Reverse(Layer):
 class Parallel(Layer):
     """ Run multiple layers in parallel (all have same input and outputs are concatenated)
     """
+
     def __init__(self, layers):
         self.layers = layers
 
@@ -1308,6 +1321,7 @@ class Parallel(Layer):
 class Serial(Layer):
     """ Run multiple layers serially: output of a layer is the input for the next layer
     """
+
     def __init__(self, layers):
         self.layers = layers
 
@@ -1327,9 +1341,11 @@ class Serial(Layer):
             tmp = layer.run(tmp)
         return tmp
 
+
 class Decode(RNN):
     """ Forward pass of a Viterbi decoder
     """
+
     def __init__(self, k):
         self._NBASE = T.constant(NBASE, dtype='int32')
         self._NSTEP = T.constant(_NSTEP, dtype='int32')
@@ -1348,7 +1364,7 @@ class Decode(RNN):
         return
 
     def step(self, in_vec, in_state):
-        pscore = in_state[:,:self.size]
+        pscore = in_state[:, :self.size]
         # Stay
         score = pscore
         iscore = T.zeros_like(score)
@@ -1356,7 +1372,9 @@ class Decode(RNN):
         # Step
         pscore = pscore.reshape((-1, self._NSTEP, self.rstep))
         score2 = T.repeat(T.max(pscore, axis=1), self._NSTEP)
-        iscore2 = T.repeat(self.rstep * T.argmax(pscore, axis=1) + T.arange(0.0, stop=self.rstep, dtype=sloika_dtype), self._NSTEP)
+        iscore2 = T.repeat(self.rstep * T.argmax(pscore, axis=1) + T.arange(0.0,
+                                                                            stop=self.rstep,
+                                                                            dtype=sloika_dtype), self._NSTEP)
         iscore2 = iscore2.reshape((-1, self.size))
         score2 = score2.reshape((-1, self.size))
         iscore = T.switch(T.gt(score, score2), iscore, iscore2)
@@ -1377,7 +1395,8 @@ class Decode(RNN):
         nbatch = T.shape(inMat)[1]
         out, _ = th.scan(self.step, sequences=inMat,
                          outputs_info=T.zeros((nbatch, 2 * self.size)))
-        return out[:,:,self.size]
+        return out[:, :, self.size]
+
 
 def birnn(layer1, layer2):
     """  Creates a bidirectional RNN from two RNNs

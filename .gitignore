@@ -1,8 +1,11 @@
 *.pyc
 *~
-*.swp
+*.sw?
 *.so
 *.egg-info
 build
 dist
 sloika/viterbi_helpers.c
+sloika/version.py
+run
+.cache

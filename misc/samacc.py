@@ -10,11 +10,11 @@ parser = argparse.ArgumentParser(
     description='Output match statistics from SAM',
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('--coverage', metavar='proportion', default=0.8, type=proportion,
-    help='Minimum coverage')
+                    help='Minimum coverage')
 parser.add_argument('sam')
 
-STRAND = { 0 : '+',
-           16 : '-'}
+STRAND = {0 : '+',
+          16 : '-'}
 
 if __name__ == '__main__':
     args = parser.parse_args()

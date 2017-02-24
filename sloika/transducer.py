@@ -5,9 +5,11 @@ from sloika.config import sloika_dtype
 _NEG_LARGE = -50000.0
 _STAY = 0
 
+
 def argmax(*args):
     res = max(enumerate(args), key=lambda x: x[1])
     return res
+
 
 def align(trans1, trans2, gapin, gap, gapout, rev=True):
     """  Perform an alignment of two partial transducers.
@@ -99,7 +101,7 @@ def align(trans1, trans2, gapin, gap, gapout, rev=True):
             i, v = argmax(vmat[i1 + 1, i2, 0] + gs + trans2[i2][4],
                           vmat[i1 + 1, i2, 3] + gs + trans2[i2][4])
             vmat[i1 + 1, i2 + 1, 3] = v
-            imat[i1 + 1, i2 + 1, 3] = 0 if i ==0 else i + 2
+            imat[i1 + 1, i2 + 1, 3] = 0 if i == 0 else i + 2
 
             # skip-emit state (horizontal move)
             # (small penalty so 4 -> 2 is favoured over 2 -> 4)
@@ -118,7 +120,7 @@ def align(trans1, trans2, gapin, gap, gapout, rev=True):
     score = np.amax(vmat[i1, i2])
     path = [np.argmax(vmat[i1, i2])]
     while i1 > 0 or i2 > 0:
-        assert i1 >=0 and i2 >= 0, 'Failed i1 {} i2 {}\n'.format(i1, i2)
+        assert i1 >= 0 and i2 >= 0, 'Failed i1 {} i2 {}\n'.format(i1, i2)
         move = (path[-1] + 1) // 2
         pfrom = imat[i1, i2, path[-1]]
         if move == 0:
@@ -200,6 +202,7 @@ def map_to_sequence(trans, sequence, slip=None, prior_initial=None, prior_final=
     :returns: Tuple containing score for path and array containing path
     """
     assert slip is None or slip >= 0.0, 'Slip penalty should be non-negative'
+    slip = np.float32(slip)
     nev = len(trans)
     npos = len(sequence)
     ltrans = trans if log else np.log(trans)
@@ -211,9 +214,9 @@ def map_to_sequence(trans, sequence, slip=None, prior_initial=None, prior_final=
     cscore = np.zeros(npos, dtype=sloika_dtype)
 
     # Initialisation
-    pscore = ltrans[0][sequence]
     if prior_initial is not None:
         pscore += prior_initial
+    pscore += np.fmax(ltrans[0][sequence], ltrans[0][_STAY])
 
     # Main loop
     for i in xrange(1, nev):
