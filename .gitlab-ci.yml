@@ -8,7 +8,6 @@ stages:
     - build
     - test
     - release
-    - deb_release
 
 before_script:
     - make deps
@@ -30,20 +29,34 @@ wheel_py3:
         paths:
             - dist/*.whl
 
-unit:
-    stage: test
-    script:
-        - make unitTestFromScratch
-
 tox:
     stage: test
     script:
         - make toxTestFromScratchPy2
         - make toxTestFromScratchPy3
 
-acceptance:
+unit_xenial:
     stage: test
     script:
+        - make unitTestFromScratch
+
+acceptance_xenial:
+    stage: test
+    script:
+        - make acceptanceTestFromScratch
+
+unit_acceptance_trusty:
+    image: docker-registry.oxfordnanolabs.local:5000/ont-base-ofan-dev:14.04
+    stage: test
+    script:
+        - make unitTestFromScratch
+        - make acceptanceTestFromScratch
+
+unit_acceptance_precise:
+    image: docker-registry.oxfordnanolabs.local:5000/ont-base-ofan-dev:12.04
+    stage: test
+    script:
+        - make unitTestFromScratch
         - make acceptanceTestFromScratch
 
 dev_env_and_style:
@@ -72,108 +85,3 @@ wheel_upload:
     only:
         - release@algorithm/sloika
         - master@algorithm/sloika
-
-deb_xenial:
-    image: docker-registry.oxfordnanolabs.local:5000/ont-base-ubuntu:16.04
-    stage: build
-    before_script:
-        - make debDeps
-    script:
-        - make deb
-    artifacts:
-        paths:
-            - deb_dist/*.deb
-
-deb_trusty:
-    image: docker-registry.oxfordnanolabs.local:5000/ont-base-ofan-dev:14.04
-    stage: build
-    before_script:
-        - make debDeps
-    script:
-        - make deb
-    artifacts:
-        paths:
-            - deb_dist/*.deb
-
-deb_precise:
-    image: docker-registry.oxfordnanolabs.local:5000/ont-base-ofan-dev:12.04
-    stage: build
-    before_script:
-        - make debDeps
-    script:
-        - make deb
-    artifacts:
-        paths:
-            - deb_dist/*.deb
-
-future:
-    image: docker-registry.oxfordnanolabs.local:5000/ont-base-ofan-dev:14.04
-    stage: build
-    before_script:
-        - make debDeps
-    script:
-        - make python-future
-    artifacts:
-        paths:
-            - deb_dist/*.deb
-
-deb_test_xenial:
-    image: docker-registry.oxfordnanolabs.local:5000/ont-base-ubuntu:16.04
-    stage: test
-    before_script:
-      - wget -O- http://deb-repo.oxfordnanolabs.local/roger.pettett@nanoporetech.com.key | apt-key add -
-      - apt-get update
-      - apt-get install -y gdebi python-pip git
-      - gdebi deb_dist/*xenial*.deb -n
-      - make checkout
-      - pip install pip --upgrade
-    script:
-      - python -c 'import sloika; print sloika.__file__'
-      - make unitTest envCmd:=
-      - make acceptanceTest envCmd:=
-
-deb_test_trusty:
-    image: docker-registry.oxfordnanolabs.local:5000/ont-base-ofan-dev:14.04
-    stage: test
-    before_script:
-      - wget -O- http://deb-repo.oxfordnanolabs.local/roger.pettett@nanoporetech.com.key | apt-key add -
-      - apt-get update
-      - apt-get install -y gdebi python-pip git
-      - gdebi deb_dist/python-future*.deb -n
-      - gdebi deb_dist/*sloika*trusty*.deb -n
-      - make checkout
-      - pip install pip --upgrade
-    script:
-      - python -c 'import sloika; print sloika.__file__'
-      - make unitTest envCmd:=
-      - make acceptanceTest envCmd:=
-
-deb_test_precise:
-    image: docker-registry.oxfordnanolabs.local:5000/ont-base-ofan-dev:12.04
-    stage: test
-    before_script:
-      - wget -O- http://deb-repo.oxfordnanolabs.local/roger.pettett@nanoporetech.com.key | apt-key add -
-      - apt-get update
-      - apt-get install -y gdebi python-pip git
-      - gdebi deb_dist/python-future*.deb -n
-      - gdebi deb_dist/*sloika*precise*.deb -n
-      - make checkout
-      - pip install pip --upgrade
-    script:
-      - python -c 'import sloika; print sloika.__file__'
-      - make unitTest envCmd:= pyTestArgs:=
-      - make acceptanceTest envCmd:= pyTestArgs:=
-
-deb_upload:
-    stage: release
-    before_script:
-        - apt-get install -y openssh-client
-        - eval $(ssh-agent -s)
-    script:
-        - ssh-add <(echo "$DEB_REPO_KEY")
-        - ls -laht deb_dist/*.deb
-        - scp -v -o StrictHostKeyChecking=no deb_dist/*xenial*.deb hudson@deb-repo.oxfordnanolabs.local:/var/www/apt/xenial-stable
-        - scp -v -o StrictHostKeyChecking=no deb_dist/*trusty*.deb hudson@deb-repo.oxfordnanolabs.local:/var/www/apt/trusty-stable
-        - scp -v -o StrictHostKeyChecking=no deb_dist/*precise*.deb hudson@deb-repo.oxfordnanolabs.local:/var/www/apt/precise-stable
-    only:
-        - release@algorithm/sloika
