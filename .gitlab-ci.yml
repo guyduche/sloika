@@ -52,13 +52,6 @@ unit_acceptance_trusty:
         - make unitTestFromScratch
         - make acceptanceTestFromScratch
 
-unit_acceptance_precise:
-    image: docker-registry.oxfordnanolabs.local:5000/ont-base-ofan-dev:12.04
-    stage: test
-    script:
-        - make unitTestFromScratch
-        - make acceptanceTestFromScratch
-
 dev_env_and_style:
     stage: test
     script:
