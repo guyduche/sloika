@@ -61,7 +61,7 @@ dev_env_and_style:
 pip_install_dot:
     stage: test
     before_script:
-        - apt-get install -y virtualenv python2.7
+        - apt-get install -y virtualenv python2.7 python-dev python3-dev
         - virtualenv --python=python2.7 hoho
         - source hoho/bin/activate && pip install numpy cython future
     script:
