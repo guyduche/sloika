@@ -4,7 +4,6 @@ from __future__ import absolute_import
 from future import standard_library
 standard_library.install_aliases()
 from builtins import *
-from past.utils import old_div
 import numpy as np
 import sloika.variables as sv
 
@@ -23,12 +22,6 @@ def argmax(post, zero_is_blank=True):
     if zero_is_blank:
         path_trimmed -= 1
     return path_trimmed
-
-
-def ishomopolymer(idx, klen):
-    base = old_div((sv.nkmer(klen) - 1), (klen - 1))
-    hidx = np.arange(4) * base + 1
-    return idx in hidx
 
 
 def prepare_post(post, min_prob=1e-5, drop_bad=False):

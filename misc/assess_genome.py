@@ -5,7 +5,6 @@ from __future__ import absolute_import
 from future import standard_library
 standard_library.install_aliases()
 from builtins import *
-from past.utils import old_div
 from Bio import SeqIO
 from collections import Counter, OrderedDict
 import math
@@ -39,7 +38,7 @@ for f in sys.argv[1:]:
         sk += Counter({k : v for k, v in zip(reverse_complement_kmers(list(sk.keys())), list(sk.values()))})
         info['missK' + str(k)] = nkmer - len(sk)
         info['absrareK' + str(k)] = info['missK' + str(k)] + sum([i < RARE for i in list(sk.values())])
-        lowcount = math.ceil(old_div((0.1 * len(seqrec.seq)), nkmer))
+        lowcount = math.ceil((0.1 * len(seqrec.seq)) / nkmer)
         info['relrareK' + str(k)] = info['missK' + str(k)] + sum([i < lowcount for i in list(sk.values())])
 
         all_counts[k] += sk
@@ -56,6 +55,6 @@ for k in kmers:
     nkmer - len(sk)
     missing = nkmer - len(all_counts[k])
     absrare = missing + sum([i < RARE for i in list(all_counts[k].values())])
-    lowcount = math.ceil(old_div((0.1 * sum([i for i in list(all_counts[k].values())])), nkmer))
+    lowcount = math.ceil((0.1 * sum([i for i in list(all_counts[k].values())])) / nkmer)
     relrare = missing + sum([i < lowcount for i in list(all_counts[k].values())])
     print(k, missing, absrare, relrare)

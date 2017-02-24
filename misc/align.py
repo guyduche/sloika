@@ -5,7 +5,6 @@ from __future__ import absolute_import
 from future import standard_library
 standard_library.install_aliases()
 from builtins import *
-from past.utils import old_div
 import argparse
 import csv
 from collections import OrderedDict
@@ -93,7 +92,7 @@ def samacc(sam, min_coverage=0.6):
             if read.flag != 0 and read.flag != 16:
                 continue
 
-            coverage = old_div(float(read.query_alignment_length), read.query_length)
+            coverage = float(read.query_alignment_length) / read.query_length
             if coverage < min_coverage:
                 continue
 
@@ -115,8 +114,8 @@ def samacc(sam, min_coverage=0.6):
                 ('insertion', bins[1]),
                 ('deletion', bins[2]),
                 ('coverage', coverage),
-                ('id', old_div(float(correct), float(bins[0]))),
-                ('accuracy', old_div(float(correct), alnlen)),
+                ('id', float(correct) / float(bins[0])),
+                ('accuracy', float(correct) / alnlen),
             ])
             res.append(row)
     return res

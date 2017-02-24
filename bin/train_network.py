@@ -6,7 +6,6 @@ from __future__ import absolute_import
 from future import standard_library
 standard_library.install_aliases()
 from builtins import *
-from past.utils import old_div
 import argparse
 import pickle
 import h5py
@@ -198,7 +197,7 @@ if __name__ == '__main__':
     score = wscore = 0.0
     acc = wacc = 0.0
     SMOOTH = 0.8
-    lrfactor = 0.0 if args.lrdecay is None else (old_div(1.0, args.lrdecay))
+    lrfactor = 0.0 if args.lrdecay is None else (1.0 / args.lrdecay)
 
     log.write('* Dumping initial model\n')
     saveModel(network, args.output, 0)
@@ -206,7 +205,7 @@ if __name__ == '__main__':
     t0 = time.time()
     log.write('* Training\n')
     for i in range(args.niteration):
-        learning_rate = old_div(args.adam.rate, (1.0 + i * lrfactor))
+        learning_rate = args.adam.rate / (1.0 + i * lrfactor)
 
         chunk_len = np.random.randint(min_chunk, max_chunk + 1)
         batch_size = int(args.batch_size * float(max_chunk) / chunk_len)
@@ -224,7 +223,7 @@ if __name__ == '__main__':
         nev = np.size(labels)
         total_ev += nev
         score = fval + SMOOTH * score
-        acc = (old_div(ncorr, nev)) + SMOOTH * acc
+        acc = (ncorr / nev) + SMOOTH * acc
         wscore = 1.0 + SMOOTH * wscore
         wacc = 1.0 + SMOOTH * wacc
 
@@ -238,7 +237,7 @@ if __name__ == '__main__':
             tn = time.time()
             dt = tn - t0
             t = ' {:5d} {:5.3f}  {:5.2f}%  {:5.2f}s ({:.2f} kev/s)\n'
-            log.write(t.format((i + 1) // 50, old_div(score, wscore), 100.0 * acc / wacc, dt, total_ev / 1000.0 / dt))
+            log.write(t.format((i + 1) // 50, score / wscore, 100.0 * acc / wacc, dt, total_ev / 1000.0 / dt))
             total_ev = 0
             t0 = tn
 

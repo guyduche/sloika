@@ -5,7 +5,6 @@ from __future__ import absolute_import
 from future import standard_library
 standard_library.install_aliases()
 from builtins import *
-from past.utils import old_div
 import argparse
 from itertools import islice
 import multiprocessing
@@ -97,7 +96,7 @@ def run_job(args):
     # Split jobs cyclically among GPU by process ID.  NB: process IDs are 1-based
     pid = int(multiprocessing.current_process().name.split('-')[-1])
     gpu = (pid - 1) % clargs.ngpu
-    pmem = 0.8 * min(old_div(clargs.ngpu, float(clargs.jobs)), 1)
+    pmem = 0.8 * min(clargs.ngpu / float(clargs.jobs), 1)
     # Theano flags
     env = os.environ.copy()
     t = ('floatX=float32,warn_float64=warn,optimizer=fast_run,nvcc.fastmath=True,'

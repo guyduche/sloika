@@ -4,7 +4,6 @@ from __future__ import absolute_import
 from future import standard_library
 standard_library.install_aliases()
 from builtins import *
-from past.utils import old_div
 import theano.tensor as T
 #  Some activation functions
 #  Many based on M-estimations functions, see
@@ -48,11 +47,11 @@ def erf(x):
 
 
 def L1mL2(x):
-    return old_div(x, T.sqrt(1.0 + 0.5 * T.sqr(x)))
+    return x / T.sqrt(1.0 + 0.5 * T.sqr(x))
 
 
 def fair(x):
-    return old_div(x, (1.0 + old_div(T.abs_(x), 1.3998)))
+    return x / (1.0 + T.abs_(x) / 1.3998)
 
 
 def retu(x):
@@ -90,12 +89,12 @@ def sin(x):
 
 
 def cauchy(x):
-    return old_div(x, (1.0 + T.sqr(old_div(x, 2.3849))))
+    return x / (1.0 + T.sqr(x / 2.3849))
 
 
 def geman_mcclure(x):
-    return old_div(x, T.sqr(1.0 + T.sqr(x)))
+    return x / T.sqr(1.0 + T.sqr(x))
 
 
 def welsh(x):
-    return x * T.exp(-T.sqr(old_div(x, 2.9846)))
+    return x * T.exp(-T.sqr(x / 2.9846))

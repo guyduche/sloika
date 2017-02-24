@@ -4,7 +4,6 @@ from __future__ import absolute_import
 from future import standard_library
 standard_library.install_aliases()
 from builtins import *
-from past.utils import old_div
 import numpy as np
 import sys
 from sloika.transducer import align, alignment_to_call
@@ -35,7 +34,7 @@ class TransducerTest(unittest.TestCase):
     def _compare_seqs(self, seq1, seq2):
         post1 = self._fill_seq(seq1)
         post2 = self._fill_seq(seq2)
-        score, alignment = align(post1, post2, old_div(self.gap, 2.0), self.gap, old_div(self.gap, 2.0))
+        score, alignment = align(post1, post2, self.gap / 2.0, self.gap, self.gap / 2.0)
         path = alignment_to_call(post1, post2, alignment)
         if _PRINT:
             print('* ', sys._getframe(1).f_code.co_name)

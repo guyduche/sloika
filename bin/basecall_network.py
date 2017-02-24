@@ -5,7 +5,6 @@ from __future__ import absolute_import
 from future import standard_library
 standard_library.install_aliases()
 from builtins import *
-from past.utils import old_div
 import argparse
 import pickle
 import numpy as np
@@ -148,7 +147,7 @@ if __name__ == '__main__':
         nevents += nev
     dt = time.time() - t0
     t = 'Called {} bases in {:.1f} s ({:.1f} bases/s or {:.1f} events/s)\n'
-    sys.stderr.write(t.format(nbases, dt, old_div(nbases, dt), old_div(nevents, dt)))
+    sys.stderr.write(t.format(nbases, dt, nbases / dt, nevents / dt))
 
     if compiled_file != args.compile:
         os.remove(compiled_file)

@@ -6,7 +6,6 @@ from __future__ import absolute_import
 from future import standard_library
 standard_library.install_aliases()
 from builtins import *
-from past.utils import old_div
 import argparse
 import pickle
 import h5py
@@ -105,11 +104,11 @@ if __name__ == '__main__':
             tn = time.time()
             dt = tn - t1
             t = ' {:5d} {:5.3f}  {:5.2f}%  {:5.2f}s ({:.2f} kev/s)\n'
-            sys.stdout.write(t.format((i + 1) // 50, old_div(score, wscore),
+            sys.stdout.write(t.format((i + 1) // 50, score / wscore,
                                       100.0 * acc / wacc, dt, line_ev / 1000.0 / dt))
             line_ev = 0
             t1 = tn
 
     dt = time.time() - t0
     t = '\nFinal {:5.3f}  {:5.2f}%  {:5.2f}s ({:.2f} kev/s)\n'
-    sys.stdout.write(t.format(old_div(score, wscore), 100.0 * acc / wacc, dt, total_ev / 1000.0 / dt))
+    sys.stdout.write(t.format(score / wscore, 100.0 * acc / wacc, dt, total_ev / 1000.0 / dt))

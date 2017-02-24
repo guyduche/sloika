@@ -4,7 +4,6 @@ from __future__ import absolute_import
 from future import standard_library
 standard_library.install_aliases()
 from builtins import *
-from past.utils import old_div
 import itertools
 import numpy as np
 
@@ -109,9 +108,9 @@ def estimate_transitions(post, trans=None):
     for ev in range(1, len(post)):
         stay = np.sum(post[ev - 1] * post[ev])
         p = post[ev].reshape((-1, _NSTEP))
-        step = old_div(np.sum(post[ev - 1] * np.tile(np.sum(p, axis=1), _NSTEP)), _NSTEP)
+        step = np.sum(post[ev - 1] * np.tile(np.sum(p, axis=1), _NSTEP)) / _NSTEP
         p = post[ev].reshape((-1, _NSKIP))
-        skip = old_div(np.sum(post[ev - 1] * np.tile(np.sum(p, axis=1), _NSKIP)), _NSKIP)
+        skip = np.sum(post[ev - 1] * np.tile(np.sum(p, axis=1), _NSKIP)) / _NSKIP
         res[ev - 1] = [stay, step, skip]
 
     if trans is None:

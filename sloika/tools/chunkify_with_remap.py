@@ -4,7 +4,6 @@ from __future__ import absolute_import
 from future import standard_library
 standard_library.install_aliases()
 from builtins import *
-from past.utils import old_div
 
 import argparse
 import pickle
@@ -83,7 +82,7 @@ def chunkify_with_remap_main(argv, parser):
             chunk_list.append(chunks)
             label_list.append(labels)
             bad_list.append(bad_ev)
-            output_strand_list_entries.append([read, nev, old_div(-score, nev),
+            output_strand_list_entries.append([read, nev, -score / nev,
                                                np.sum(np.ediff1d(path, to_begin=1) == 0),
                                                len(seq), min(path), max(path)])
 
