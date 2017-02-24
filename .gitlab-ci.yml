@@ -45,11 +45,16 @@ acceptance_xenial:
     script:
         - make acceptanceTestFromScratch
 
-unit_acceptance_trusty:
+unit_trusty:
     image: docker-registry.oxfordnanolabs.local:5000/ont-base-ofan-dev:14.04
     stage: test
     script:
         - make unitTestFromScratch
+
+acceptance_trusty:
+    image: docker-registry.oxfordnanolabs.local:5000/ont-base-ofan-dev:14.04
+    stage: test
+    script:
         - make acceptanceTestFromScratch
 
 dev_env_and_style:
