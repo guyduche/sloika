@@ -50,26 +50,21 @@ def progress_report(i):
 
 
 def create_hdf5(args, chunk_list, label_list, bad_list):
+    assert len(chunk_list) == len(label_list) == len(bad_list)
+    assert len(chunk_list) > 0
+
     output_dir = os.path.dirname(args.output)
     if output_dir and not os.path.exists(output_dir):
         os.makedirs(os.path.normpath(output_dir))
 
-    if chunk_list == []:
-        assert label_list == []
-        assert bad_list == []
-        all_chunks = np.ndarray((0,))
-        all_labels = np.ndarray((0,))
-        all_bad = np.ndarray((0,))
-        all_weights = np.ndarray((0,))
-    else:
-        all_chunks = np.concatenate(chunk_list)
-        all_labels = np.concatenate(label_list)
-        all_bad = np.concatenate(bad_list)
+    all_chunks = np.concatenate(chunk_list)
+    all_labels = np.concatenate(label_list)
+    all_bad = np.concatenate(bad_list)
 
-        #  Mark chunks with too many blanks with a zero weight
-        nblank = np.sum(all_labels == 0, axis=1)
-        max_blanks = int(all_labels.shape[1] * args.blanks)
-        all_weights = nblank < max_blanks
+    #  Mark chunks with too many blanks with a zero weight
+    nblank = np.sum(all_labels == 0, axis=1)
+    max_blanks = int(all_labels.shape[1] * args.blanks)
+    all_weights = nblank < max_blanks
 
     with h5py.File(args.output, 'w') as h5:
         bad_ds = h5.create_dataset('bad', all_bad.shape, dtype='i1',
