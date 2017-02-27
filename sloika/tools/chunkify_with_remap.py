@@ -86,6 +86,9 @@ def chunkify_with_remap_main(argv, parser):
                                                np.sum(np.ediff1d(path, to_begin=1) == 0),
                                                len(seq), min(path), max(path)])
 
+    if compiled_file != args.compile:
+        os.remove(compiled_file)
+
     if chunk_list == []:
         print("no chunks were produced", file=sys.stderr)
         sys.exit(1)
@@ -96,5 +99,3 @@ def chunkify_with_remap_main(argv, parser):
         print('\n* Creating output strand file')
         create_output_strand_file(output_strand_list_entries, args.output_strand_list)
 
-        if compiled_file != args.compile:
-            os.remove(compiled_file)
