@@ -452,17 +452,14 @@ class MaxPool(Layer):
     :param insize: dimension of input
     :param pool_size: number of elements in each pool
     :param stride: spacing between adjacent pools
-    :param fun: activation function for the layer (default: identity)
+    :param fun: activation function for the layer
     """
 
-    def __init__(self, insize, pool_size, stride, fun=None):
+    def __init__(self, insize, pool_size, stride, fun=activation.linear):
         self._insize = insize
         self.pool_size = pool_size
         self.stride = stride
-
-        def identity(x):
-            return x
-        self.fun = fun or identity
+        self.fun = fun
 
     @property
     def insize(self):
