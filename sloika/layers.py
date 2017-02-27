@@ -407,7 +407,7 @@ class Convolution(Layer):
 
         # parameters
         fanin = insize * winlen
-        fanout = (size * winlen) // stride
+        fanout = (size * winlen) / float(stride)
         self.W = th.shared(init((size, insize, winlen)) /
                            np.sqrt(fanin + fanout))
         self.b = th.shared(has_bias * init(size))
