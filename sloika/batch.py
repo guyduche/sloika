@@ -15,7 +15,34 @@ from Bio import SeqIO
 import sloika.decode
 import sloika.util
 
-from untangled import bio, fast5
+from untangled import bio, fast5, maths
+
+
+def locate_read(signal, max_op_fraction=0.3, var_method='mad'):
+    """Locate raw read in signal by thresholding local variance
+
+    :param signal: raw data containing a read
+    :param max_op_fraction: (float) Maximum expected fraction of signal that
+        consists of open pore. Higher values will find smaller reads at the
+        cost of slightly truncating longer reads.
+    :param var_method: ('var' | 'mad') method used to compute the local
+        variation. var: variance, mad: Median Absolute Deviation
+    """
+    chunk_len = 100
+    sig_chunks = chunk(signal, chunk_len)
+    if var_method == 'var':
+        local_var = chunk(signal, chunk_len).var(1)
+    elif var_method == 'mad':
+        local_var = np.array(map(maths.mad, sig_chunks))
+    else:
+        raise ValueError(
+            "Did not understand var_method:  {}".format(var_method))
+    probably_read = (local_var >
+                     np.percentile(local_var, 100 * max_op_fraction))
+    ix = np.arange(local_var.shape[0])[probably_read]
+    start = ix.min() * chunk_len
+    end = (ix.max() + 1) * chunk_len
+    return signal[start:end]
 
 
 default_normalisation = 'per-read'
@@ -49,7 +76,7 @@ def chunkify(ev, chunk_len, kmer_len, use_scaled, normalisation):
             chunk_finish_maybe_with_padding = min(chunk_finish + 1, len(ev))
 
             chunk_features = sloika.features.from_events(
-                ev[chunk_start : chunk_finish_maybe_with_padding], tag=tag, normalise=True)
+                ev[chunk_start: chunk_finish_maybe_with_padding], tag=tag, normalise=True)
             new_inMat.append(chunk_features[:chunk_len])
         new_inMat = np.concatenate(new_inMat)
     else:
@@ -61,11 +88,12 @@ def chunkify(ev, chunk_len, kmer_len, use_scaled, normalisation):
         # actually use later, so that features could be studentized using
         # moments computed using this bigger range; we reset the range in (*) and (**)
         #
-        new_inMat = sloika.features.from_events(ev, tag=tag, normalise=normalise)
-        new_inMat = new_inMat[0 : ub]  # reset range (*)
+        new_inMat = sloika.features.from_events(
+            ev, tag=tag, normalise=normalise)
+        new_inMat = new_inMat[0: ub]  # reset range (*)
 
     new_inMat = new_inMat.reshape((ml, chunk_len, -1))
-    ev = ev[0 : ub]  # reset range (**)
+    ev = ev[0: ub]  # reset range (**)
 
     #
     # 'model' in the name 'model_kmer_len' refers to the model that was used
@@ -154,7 +182,8 @@ def init_chunk_remap_worker(model, fasta, kmer_len):
 def remap(read_ref, ev, min_prob, transducer, kmer_len, prior, slip):
     inMat = sloika.features.from_events(ev, tag='')
     inMat = np.expand_dims(inMat, axis=1)
-    post = sloika.decode.prepare_post(calc_post(inMat), min_prob=min_prob, drop_bad=(not transducer))
+    post = sloika.decode.prepare_post(
+        calc_post(inMat), min_prob=min_prob, drop_bad=(not transducer))
 
     kmers = np.array(bio.seq_to_kmers(read_ref, kmer_len))
     seq = [kmer_to_state[k] + 1 for k in kmers]
