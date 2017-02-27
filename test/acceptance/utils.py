@@ -104,6 +104,7 @@ E   INFO (theano.gof.compilelock): To manually release the lock, delete <file_na
     '''
     return drop_lines(L, 'INFO (theano.gof.compilelock):')
 
+
 def nth_line_starts_with(prefix, n):
     def f(L):
         M = drop_info(L)
@@ -113,8 +114,10 @@ def nth_line_starts_with(prefix, n):
             return False
     return f
 
+
 def zeroth_line_starts_with(prefix):
     return nth_line_starts_with(prefix, 0)
+
 
 def last_line_starts_with(prefix):
     return nth_line_starts_with(prefix, -1)

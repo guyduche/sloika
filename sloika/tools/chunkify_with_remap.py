@@ -98,4 +98,3 @@ def chunkify_with_remap_main(argv, parser):
 
         print('\n* Creating output strand file')
         create_output_strand_file(output_strand_list_entries, args.output_strand_list)
-

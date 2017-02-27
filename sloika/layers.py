@@ -36,6 +36,7 @@ def _extract(x, shape=None):
 
 
 class Layer(with_metaclass(abc.ABCMeta, object)):
+
     def compile(self):
         x = T.tensor3()
         return th.function([th.In(x, borrow=True)], th.Out(self.run(x), borrow=True))
