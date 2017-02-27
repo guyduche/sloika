@@ -18,7 +18,7 @@ from distutils import dir_util
 from nose_parameterized import parameterized
 
 
-from utils import run_cmd, is_close, maybe_create_dir, zeroth_line_starts_with
+from utils import run_cmd, is_close, maybe_create_dir, zeroth_line_starts_with, last_line_starts_with
 
 
 class AcceptanceTest(unittest.TestCase):
@@ -146,3 +146,35 @@ class AcceptanceTest(unittest.TestCase):
 
         os.remove(output_file_name)
         os.remove(strand_output_list)
+
+    def test_chunkify_with_remap_no_results(self):
+        strand_input_list = os.path.join(self.data_dir, "remap", "strand_output_list.txt")
+        self.assertTrue(os.path.exists(strand_input_list))
+
+        reads_dir = os.path.join(self.data_dir, "identity", "reads")
+        self.assertTrue(os.path.exists(reads_dir))
+
+        model_file = os.path.join(self.data_dir, "remap", "model.pkl")
+        self.assertTrue(os.path.exists(model_file))
+
+        reference_file = os.path.join(self.data_dir, "remap", "reference.fa")
+        self.assertTrue(os.path.exists(reference_file))
+
+        with tempfile.NamedTemporaryFile(prefix="strand_output_list", suffix=".txt", delete=False) as fh:
+            strand_output_list = fh.name
+
+        with tempfile.NamedTemporaryFile(suffix=".hdf5", delete=False) as fh:
+            output_file_name = fh.name
+
+        cmd = [self.script, "remap", "--trim", "200", "200", "--chunk_len", "500", "--kmer_len", "5",
+               "--section", "template", "--input_strand_list", strand_input_list,
+               "--output_strand_list", strand_output_list,
+               reads_dir, output_file_name, model_file, reference_file]
+
+        os.remove(output_file_name)
+        os.remove(strand_output_list)
+
+        run_cmd(self, cmd).return_code(1).stderr(last_line_starts_with(u"no chunks were produced"))
+
+        self.assertTrue(not os.path.exists(output_file_name))
+        self.assertTrue(not os.path.exists(strand_output_list))

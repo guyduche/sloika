@@ -6,16 +6,28 @@ strandValidate?=/mnt/data/human/training/na12878_validation.txt
 
 .PHONY: prepare
 prepare:
-	${inSloikaEnv} $${BIN_DIR}/chunkify.py identity --chunk_len 500 --kmer_len 5 --section template --use_scaled --threads 1 \
-	    --strand_list ${strandTrain} \
+	${inSloikaEnv} $${BIN_DIR}/chunkify.py identity --chunk_len 500 --kmer_len 5 --section template --jobs 1 --overwrite \
+	    --input_strand_list ${strandTrain} \
 	    ${fast5Dir} ${workDir}dataset_train.hdf5
-	${inSloikaEnv} $${BIN_DIR}/chunkify.py identity --chunk_len 500 --kmer_len 5 --section template --use_scaled --threads 1 \
-	    --strand_list ${strandValidate} \
+	${inSloikaEnv} $${BIN_DIR}/chunkify.py identity --chunk_len 500 --kmer_len 5 --section template --jobs 1 --overwrite \
+	    --input_strand_list ${strandValidate} \
 	    ${fast5Dir} ${workDir}dataset_validate.hdf5
 
 .PHONY: testPrepare
 testPrepare:
 	${inSloikaEnv} ${MAKE} prepare workDir:=$${BUILD_DIR}/prepare/ fast5Dir:=data/test_chunkify/identity/reads/ \
+	    strandTrain:=data/test_chunkify/identity/na12878_train.txt \
+	    strandValidate:=data/test_chunkify/identity/na12878_train.txt
+
+.PHONY: remap
+remap:
+	${inSloikaEnv} $${BIN_DIR}/chunkify.py remap --chunk_len 500 --kmer_len 5 --section template --jobs 1 --overwrite \
+	    --input_strand_list ${strandTrain} \
+	    ${fast5Dir} ${workDir}dataset_train.hdf5 data/test_chunkify/remap/model.pkl data/test_chunkify/remap/reference.fa
+
+.PHONY: testRemap
+testRemap:
+	${inSloikaEnv} ${MAKE} remap workDir:=$${BUILD_DIR}/prepare/ fast5Dir:=data/test_chunkify/identity/reads/ \
 	    strandTrain:=data/test_chunkify/identity/na12878_train.txt \
 	    strandValidate:=data/test_chunkify/identity/na12878_train.txt
 

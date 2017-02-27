@@ -50,13 +50,16 @@ def progress_report(i):
 
 
 def create_hdf5(args, chunk_list, label_list, bad_list):
-    all_chunks = np.concatenate(chunk_list)
-    all_labels = np.concatenate(label_list)
-    all_bad = np.concatenate(bad_list)
+    assert len(chunk_list) == len(label_list) == len(bad_list)
+    assert len(chunk_list) > 0
 
     output_dir = os.path.dirname(args.output)
     if output_dir and not os.path.exists(output_dir):
         os.makedirs(os.path.normpath(output_dir))
+
+    all_chunks = np.concatenate(chunk_list)
+    all_labels = np.concatenate(label_list)
+    all_bad = np.concatenate(bad_list)
 
     #  Mark chunks with too many blanks with a zero weight
     nblank = np.sum(all_labels == 0, axis=1)
