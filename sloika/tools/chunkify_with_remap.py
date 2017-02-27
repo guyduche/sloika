@@ -93,8 +93,8 @@ def chunkify_with_remap_main(argv, parser):
         print('\n* Creating HDF5 file')
         util.create_hdf5(args, chunk_list, label_list, bad_list)
 
-    print('\n* Creating output strand file')
-    create_output_strand_file(output_strand_list_entries, args.output_strand_list)
+        print('\n* Creating output strand file')
+        create_output_strand_file(output_strand_list_entries, args.output_strand_list)
 
-    if compiled_file != args.compile:
-        os.remove(compiled_file)
+        if compiled_file != args.compile:
+            os.remove(compiled_file)
