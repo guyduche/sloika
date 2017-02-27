@@ -10,13 +10,15 @@ export SCRIPTS_DIR="${ROOT_DIR}/scripts"
 
 export BIN_DIR="${ROOT_DIR}/bin"
 
-export SLOIKA_DEV_DIR="${BUILD_DIR}/sloika"
-
 export ACCTEST_WORK_DIR="${BUILD_DIR}/acceptance"
 
-export SLOIKA_VIRTUALENV_DIR="${BUILD_DIR}/env"
+export DEV_VIRTUALENV_DIR="${BUILD_DIR}/env"
+
+export DEV_VIRTUALENV_DIR_PY3="${BUILD_DIR}/envPy3"
 
 export TMP_VIRTUALENV_DIR="${BUILD_DIR}/tmpenv"
+
+export TMP_VIRTUALENV_DIR_PY3="${BUILD_DIR}/tmpenvPy3"
 
 export PYTHONDONTWRITEBYTECODE="no .pyc files please"
 

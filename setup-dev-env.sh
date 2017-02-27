@@ -2,7 +2,13 @@
 
 source environment
 
-source ${SLOIKA_VIRTUALENV_DIR}/bin/activate
+if [ -z ${PY3+x} ]; then
+    VIRTUALENV_DIR="${DEV_VIRTUALENV_DIR}"
+else
+    VIRTUALENV_DIR="${DEV_VIRTUALENV_DIR_PY3}"
+fi
+
+source ${VIRTUALENV_DIR}/bin/activate
 
 # need a version of pip that supports --trusted-host option
 pip install pip --upgrade

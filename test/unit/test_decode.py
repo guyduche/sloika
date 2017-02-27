@@ -1,3 +1,9 @@
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
+from future import standard_library
+standard_library.install_aliases()
+from builtins import *
 import numpy as np
 import unittest
 
@@ -8,7 +14,7 @@ class TestDecode(unittest.TestCase):
 
     @classmethod
     def setUpClass(self):
-        print '* Decoding'
+        print('* Decoding')
         self.post = [[0.144983872, 0.0353539565, 0.460170397, 0.0003722599, 0.3591195148],
                      [0.100967586, 0.0357787755, 0.003763944, 0.0135964994, 0.8458931946],
                      [0.225580112, 0.0053868825, 0.127545423, 0.0438386941, 0.5976488894],

@@ -1,5 +1,10 @@
 #!/usr/bin/env python
 from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
+from future import standard_library
+standard_library.install_aliases()
+from builtins import *
 import argparse
 import csv
 from collections import OrderedDict
@@ -204,7 +209,7 @@ if __name__ == '__main__':
             acc_dat = samacc(samfile, min_coverage=args.coverage)
             if len(acc_dat) > 0:
                 with open(samaccfile, 'w') as fs:
-                    fields = acc_dat[0].keys()
+                    fields = list(acc_dat[0].keys())
                     writer = csv.DictWriter(fs, fieldnames=fields, delimiter=' ')
                     writer.writeheader()
                     for row in acc_dat:

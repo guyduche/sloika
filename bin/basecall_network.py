@@ -1,6 +1,12 @@
 #!/usr/bin/env python
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
+from future import standard_library
+standard_library.install_aliases()
+from builtins import *
 import argparse
-import cPickle
+import pickle
 import numpy as np
 import sys
 import time
@@ -53,10 +59,10 @@ _ETA = 1e-10
 
 
 def init_worker(model):
-    import cPickle
+    import pickle
     global calc_post
     with open(model, 'r') as fh:
-        calc_post = cPickle.load(fh)
+        calc_post = pickle.load(fh)
 
 
 def basecall(args, fn):

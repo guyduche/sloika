@@ -19,23 +19,40 @@ wheel:
         - make wheel
     artifacts:
         paths:
-            - dist
+            - dist/*.whl
 
-ubuntu_14_04:
-    stage: test
-    image: docker-registry.oxfordnanolabs.local:5000/ont-base-ubuntu:14.04
+wheel_py3:
+    stage: build
     script:
-        - CI=True make cleanDevEnv
-        - CI=True make
-    except:
-        - tags
+        - make wheelPy3
+    artifacts:
+        paths:
+            - dist/*.whl
 
-unit:
+tox:
+    stage: test
+    script:
+        - make toxTestFromScratchPy2
+        - make toxTestFromScratchPy3
+
+unit_xenial:
     stage: test
     script:
         - make unitTestFromScratch
 
-acceptance:
+acceptance_xenial:
+    stage: test
+    script:
+        - make acceptanceTestFromScratch
+
+unit_trusty:
+    image: docker-registry.oxfordnanolabs.local:5000/ont-base-ofan-dev:14.04
+    stage: test
+    script:
+        - make unitTestFromScratch
+
+acceptance_trusty:
+    image: docker-registry.oxfordnanolabs.local:5000/ont-base-ofan-dev:14.04
     stage: test
     script:
         - make acceptanceTestFromScratch
@@ -46,16 +63,23 @@ dev_env_and_style:
         - make cleanDevEnv
         - make pep8
 
-upload_artefact:
+pip_install_dot:
+    stage: test
+    before_script:
+        - apt-get install -y virtualenv python2.7 python-dev python3-dev
+        - virtualenv --python=python2.7 hoho
+        - source hoho/bin/activate && pip install numpy cython future
+    script:
+        - source hoho/bin/activate && pip install . --trusted-host pypi.oxfordnanolabs.local --index-url https://pypi.oxfordnanolabs.local/simple/
+
+wheel_upload:
     stage: release
     before_script:
         - apt-get install -y openssh-client
         - eval $(ssh-agent -s)
     script:
-        #  PYPI_KEY and PYPI_HOST should set up as project variables on Gitlab
-        #  PYPI_KEY is private key produced by ssh-keygen
         - ssh-add <(set +x; echo "$PYPI_KEY")
         - scp -v -o StrictHostKeyChecking=no dist/* gitlab-ci-pypi@${PYPI_HOST}:/opt/ont-pypi/site-packages/
     only:
+        - release@algorithm/sloika
         - master@algorithm/sloika
-        - dev@algorithm/sloika

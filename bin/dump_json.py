@@ -1,6 +1,12 @@
 #!/usr/bin/env python
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
+from future import standard_library
+standard_library.install_aliases()
+from builtins import *
 import argparse
-import cPickle
+import pickle
 import json
 from untangled.cmdargs import AutoBool, FileExists, FileAbsent
 
@@ -17,13 +23,13 @@ parser.add_argument('model', action=FileExists, help='Model file to read from')
 if __name__ == "__main__":
     args = parser.parse_args()
     with open(args.model, 'r') as fh:
-        model = cPickle.load(fh)
+        model = pickle.load(fh)
 
     json_out = model.json(args.params)
 
     if args.out_file is not None:
         with open(args.out_file, 'w') as f:
-            print "Writing to file: ", args.out_file
+            print("Writing to file: ", args.out_file)
             json.dump(json_out, f, indent=4)
     else:
-        print json.dumps(json_out, indent=4)
+        print(json.dumps(json_out, indent=4))

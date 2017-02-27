@@ -1,6 +1,12 @@
 #!/usr/bin/env python
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
+from future import standard_library
+standard_library.install_aliases()
+from builtins import *
 import argparse
-import cPickle
+import pickle
 import sys
 from untangled.cmdargs import FileExists
 from sloika.layers import Layer
@@ -36,7 +42,7 @@ def get_var_names(obj, depth=0, max_depth=3):
         theano shared variable on the specified device
     """
     shared_vars = []
-    for name, value in vars(obj).items():
+    for name, value in list(vars(obj).items()):
         if isinstance(value, TensorSharedVariable):
             shared_vars.append((obj, name, device(obj, name)))
         elif isinstance(value, CudaNdarraySharedVariable):
@@ -74,7 +80,7 @@ if __name__ == '__main__':
 
     sys.stdout.write('\nLoading pickled model:  {}\n'.format(args.model))
     with open(args.model, 'r') as fi:
-        net = cPickle.load(fi)
+        net = pickle.load(fi)
 
     shared_vars = get_var_names(net)
 
@@ -82,12 +88,12 @@ if __name__ == '__main__':
         sys.stderr.write("\nWARNING: Found no shared variables. Nothing to do.\n")
         exit(0)
 
-    objs, names, devices = zip(*shared_vars)
+    objs, names, devices = list(zip(*shared_vars))
 
     if args.target == 'swap':
         def swap(s):
             return ('cpu' if s == 'gpu' else 'gpu')
-        targets = map(swap, devices)
+        targets = list(map(swap, devices))
         if len(set(targets)) > 1:
             sys.stderr.write(SWAP_WARNING.format(list(set(targets))))
     elif args.target == 'cpu':
@@ -109,4 +115,4 @@ if __name__ == '__main__':
 
     sys.stdout.write('\nWriting new pickled model:  {}\n'.format(args.output))
     with open(args.output, 'w') as fo:
-        cPickle.dump(net, fo)
+        pickle.dump(net, fo)

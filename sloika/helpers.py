@@ -1,6 +1,16 @@
-import cPickle
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
+from future import standard_library
+standard_library.install_aliases()
+from builtins import *
+import pickle
 from multiprocessing import Process
-from multiprocessing.queues import SimpleQueue
+try:
+    # Python 3.3 or later
+    from multiprocessing import SimpleQueue
+except ImportError:
+    from multiprocessing.queues import SimpleQueue
 import shutil
 import sys
 import tempfile
@@ -26,13 +36,16 @@ def _compile_model(outqueue, model_file, output_file=None):
             output_file = fh.name
 
     sys.setrecursionlimit(10000)
-    with open(model_file, 'r') as fh:
-        network = cPickle.load(fh)
+    with open(model_file, 'rb') as fh:
+        if sys.version_info[0] == 3:
+            network = pickle.load(fh, encoding='latin1')
+        else:
+            network = pickle.load(fh)
     if isinstance(network, layers.Layer):
         #  File contains network to compile
         with open(output_file, 'wb') as fh:
             compiled_network = network.compile()
-            cPickle.dump(compiled_network, fh, protocol=cPickle.HIGHEST_PROTOCOL)
+            pickle.dump(compiled_network, fh, protocol=pickle.HIGHEST_PROTOCOL)
     elif isinstance(network, theano.compile.function_module.Function):
         #  Network is already compiled - make temporary copy
         shutil.copy(model_file, output_file)
@@ -58,8 +71,10 @@ def compile_model(model_file, output_file=None):
     p = Process(target=_compile_model, args=(queue, model_file, output_file))
     p.start()
     p.join()
-    if p.exitcode < 0:
-        raise ValueError("model_file was neither a network nor compiled network")
-    output_file = queue.get()
+    if p.exitcode != 0:
+        output_file = None
+        raise ValueError("Model file {} was neither a network nor compiled network".format(model_file))
+    else:
+        output_file = queue.get()
 
     return output_file

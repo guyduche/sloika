@@ -1,6 +1,13 @@
 #!/usr/bin/env python
+from __future__ import division
+from __future__ import unicode_literals
+from __future__ import print_function
+from __future__ import absolute_import
+from future import standard_library
+standard_library.install_aliases()
+from builtins import *
 import argparse
-import cPickle
+import pickle
 import h5py
 import imp
 import numpy as np
@@ -68,7 +75,7 @@ parser.add_argument('input', action=FileExists,
 
 def remove_blanks(labels):
     for lbl_ch in labels:
-        for i in xrange(1, len(lbl_ch)):
+        for i in range(1, len(lbl_ch)):
             if lbl_ch[i] == 0:
                 lbl_ch[i] = lbl_ch[i - 1]
     return labels
@@ -96,10 +103,10 @@ def wrap_network(network, min_prob=0.0, l2=0.0, drop=0):
 
 def saveModel(network, output, index):
     with open(os.path.join(output, 'model_checkpoint_{:05d}.pkl'.format(index)), 'wb') as fh:
-        cPickle.dump(network, fh, protocol=cPickle.HIGHEST_PROTOCOL)
+        pickle.dump(network, fh, protocol=pickle.HIGHEST_PROTOCOL)
 
 
-class Logger:
+class Logger(object):
 
     def __init__(self, log_file_name, quiet=False):
         self.fh = open(log_file_name, 'w', 0)
@@ -133,7 +140,7 @@ if __name__ == '__main__':
         network = netmodule.network(klen=klen, sd=args.sd)
     elif model_ext == '.pkl':
         with open(args.model, 'r') as fh:
-            network = cPickle.load(fh)
+            network = pickle.load(fh)
     else:
         log.write('* Model is neither python file nor model pickle\n')
         exit(1)
@@ -197,7 +204,7 @@ if __name__ == '__main__':
 
     t0 = time.time()
     log.write('* Training\n')
-    for i in xrange(args.niteration):
+    for i in range(args.niteration):
         learning_rate = args.adam.rate / (1.0 + i * lrfactor)
 
         chunk_len = np.random.randint(min_chunk, max_chunk + 1)
@@ -235,4 +242,4 @@ if __name__ == '__main__':
             t0 = tn
 
     with open(os.path.join(args.output, 'model_final.pkl'), 'wb') as fh:
-        cPickle.dump(network, fh, protocol=cPickle.HIGHEST_PROTOCOL)
+        pickle.dump(network, fh, protocol=pickle.HIGHEST_PROTOCOL)

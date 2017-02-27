@@ -1,3 +1,9 @@
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
+from future import standard_library
+standard_library.install_aliases()
+from builtins import *
 import itertools
 import numpy as np
 
@@ -37,10 +43,10 @@ def decode_profile(post, trans=None, log=False, slip=0.0):
     trans_iter = trans.__iter__()
     for ev in range(1, len(post)):
         # Forward Viterbi iteration
-        ev_trans = trans_iter.next()
+        ev_trans = next(trans_iter)
         # Stay
         score = pscore + ev_trans[0]
-        iscore = range(nstate)
+        iscore = list(range(nstate))
         # Slip
         scoreNew = np.amax(pscore) + log_slip
         iscoreNew = np.argmax(pscore)
@@ -50,14 +56,14 @@ def decode_profile(post, trans=None, log=False, slip=0.0):
         pscore = pscore.reshape((_NSTEP, -1))
         nrem = pscore.shape[1]
         scoreNew = np.repeat(np.amax(pscore, axis=0), _NSTEP) + ev_trans[1]
-        iscoreNew = np.repeat(nrem * np.argmax(pscore, axis=0) + range(nrem), _NSTEP)
+        iscoreNew = np.repeat(nrem * np.argmax(pscore, axis=0) + list(range(nrem)), _NSTEP)
         iscore = np.where(score > scoreNew, iscore, iscoreNew)
         score = np.fmax(score, scoreNew)
         # Skip
         pscore = pscore.reshape((_NSKIP, -1))
         nrem = pscore.shape[1]
         scoreNew = np.repeat(np.amax(pscore, axis=0), _NSKIP) + ev_trans[2]
-        iscoreNew = np.repeat(nrem * np.argmax(pscore, axis=0) + range(nrem), _NSKIP)
+        iscoreNew = np.repeat(nrem * np.argmax(pscore, axis=0) + list(range(nrem)), _NSKIP)
         iscore = np.where(score > scoreNew, iscore, iscoreNew)
         score = np.fmax(score, scoreNew)
         # Store

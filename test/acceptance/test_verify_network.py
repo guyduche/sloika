@@ -1,3 +1,9 @@
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
+from future import standard_library
+standard_library.install_aliases()
+from builtins import *
 import unittest
 import os
 import shutil
@@ -9,7 +15,7 @@ from utils import run_cmd, maybe_create_dir, zeroth_line_starts_with
 
 
 class AcceptanceTest(unittest.TestCase):
-    model_files = map(lambda x: [x], glob.glob(os.path.join(os.environ["ROOT_DIR"], "models/*.py")))
+    model_files = [[x] for x in glob.glob(os.path.join(os.environ["ROOT_DIR"], "models/*.py"))]
 
     @classmethod
     def setUpClass(self):

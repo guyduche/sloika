@@ -1,4 +1,10 @@
 #!/usr/bin/env python
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
+from future import standard_library
+standard_library.install_aliases()
+from builtins import *
 import argparse
 from itertools import islice
 import multiprocessing
@@ -66,11 +72,11 @@ def imap_unordered(pool, f, iterable):
 
     #  Repeatedly scan through job array looking for new jobs
     while any(jobs):
-        for i in xrange(len(jobs)):
+        for i in range(len(jobs)):
             if jobs[i] is not None and jobs[i].ready():
                 res = jobs[i].get()
                 try:
-                    next_job = iterable.next()
+                    next_job = next(iterable)
                     jobs[i] = pool.apply_async(f, (next_job,))
                 except StopIteration:
                     jobs[i] = None

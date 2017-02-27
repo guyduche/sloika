@@ -9,3 +9,4 @@ sloika/viterbi_helpers.c
 sloika/version.py
 run
 .cache
+.tox

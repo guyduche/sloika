@@ -1,3 +1,9 @@
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
+from future import standard_library
+standard_library.install_aliases()
+from builtins import *
 import abc
 from collections import OrderedDict
 import theano as th
@@ -7,6 +13,8 @@ import numpy as np
 from sloika import activation
 from sloika.config import sloika_dtype
 from sloika.variables import NBASE, nkmer
+from functools import reduce
+from future.utils import with_metaclass
 
 """  Convention: inMat row major (C ordering) as (time, batch, state)
 """
@@ -27,9 +35,7 @@ def _extract(x, shape=None):
     return xv.tolist()
 
 
-class Layer(object):
-    __metaclass__ = abc.ABCMeta
-
+class Layer(with_metaclass(abc.ABCMeta, object)):
     def compile(self):
         x = T.tensor3()
         return th.function([th.In(x, borrow=True)], th.Out(self.run(x), borrow=True))
@@ -118,7 +124,7 @@ class FeedForward(Layer):
 
     def json(self, params=False):
         res = OrderedDict([('type', "feed-forward"),
-                           ('activation', self.fun.func_name),
+                           ('activation', self.fun.__name__),
                            ('size', self.size),
                            ('insize', self.insize),
                            ('bias', self.has_bias)])
@@ -302,7 +308,7 @@ class Window(Layer):
         ntime, nbatch, nfeatures = T.shape(inMat)
         zeros = T.zeros((self.w // 2, nbatch, nfeatures))
         padMat = T.concatenate([zeros, inMat, zeros], axis=0)
-        tmp = T.concatenate([padMat[i : 1 + i - self.w] for i in xrange(self.w - 1)], axis=2)
+        tmp = T.concatenate([padMat[i : 1 + i - self.w] for i in range(self.w - 1)], axis=2)
         return T.concatenate([tmp, padMat[self.w - 1 :]], axis=2)
 
 
@@ -328,7 +334,7 @@ class Convolution(Layer):
 
     def json(self, params=False):
         res = OrderedDict([('type', "convolution"),
-                           ('activation', self.fun.func_name),
+                           ('activation', self.fun.__name__),
                            ('size', self.size),
                            ('insize', self.insize)])
         if params:
@@ -380,7 +386,7 @@ class Recurrent(RNN):
 
     def json(self, params=False):
         res = OrderedDict([('type', "recurrent"),
-                           ('activation', self.fun.func_name),
+                           ('activation', self.fun.__name__),
                            ('size', self.size),
                            ('insize', self.insize),
                            ('bias', self.has_bias)])
@@ -442,7 +448,7 @@ class Scrn(RNN):
 
     def json(self, params=False):
         res = OrderedDict([('type', "SCRN"),
-                           ('activation', self.fun.func_name),
+                           ('activation', self.fun.__name__),
                            ('size', self.size),
                            ('fast_size', self.fast_size),
                            ('slow_size', self.slow_size),
@@ -528,8 +534,8 @@ class Lstm(RNN):
 
     def json(self, params=False):
         res = OrderedDict([('type', "LSTM"),
-                           ('activation', self.fun.func_name),
-                           ('gate', self.gatefun.func_name),
+                           ('activation', self.fun.__name__),
+                           ('gate', self.gatefun.__name__),
                            ('size', self.size),
                            ('insize', self.insize),
                            ('bias', self.has_bias),
@@ -625,8 +631,8 @@ class LstmCIFG(RNN):
 
     def json(self, params=False):
         res = OrderedDict([('type', "LSTM-CIFG"),
-                           ('activation', self.fun.func_name),
-                           ('gate', self.gatefun.func_name),
+                           ('activation', self.fun.__name__),
+                           ('gate', self.gatefun.__name__),
                            ('size', self.size),
                            ('insize', self.insize),
                            ('bias', self.has_bias),
@@ -718,8 +724,8 @@ class LstmO(RNN):
 
     def json(self, params=False):
         res = OrderedDict([('type', "LSTM-O"),
-                           ('activation', self.fun.func_name),
-                           ('gate', self.gatefun.func_name),
+                           ('activation', self.fun.__name__),
+                           ('gate', self.gatefun.__name__),
                            ('size', self.size),
                            ('insize', self.insize),
                            ('bias', self.has_bias),
@@ -788,8 +794,8 @@ class Forget(RNN):
 
     def json(self, params=False):
         res = OrderedDict([('type', "forget gate"),
-                           ('activation', self.fun.func_name),
-                           ('gate', self.gatefun.func_name),
+                           ('activation', self.fun.__name__),
+                           ('gate', self.gatefun.__name__),
                            ('size', self.size),
                            ('insize', self.insize),
                            ('bias', self.has_bias)])
@@ -852,8 +858,8 @@ class Gru(RNN):
 
     def json(self, params=False):
         res = OrderedDict([('type', "GRU"),
-                           ('activation', self.fun.func_name),
-                           ('gate', self.gatefun.func_name),
+                           ('activation', self.fun.__name__),
+                           ('gate', self.gatefun.__name__),
                            ('size', self.size),
                            ('insize', self.insize),
                            ('bias', self.has_bias)])
@@ -938,8 +944,8 @@ class Mut1(RNN):
 
     def json(self, params=False):
         res = OrderedDict([('type', "MUT1"),
-                           ('activation', self.fun.func_name),
-                           ('gate', self.gatefun.func_name),
+                           ('activation', self.fun.__name__),
+                           ('gate', self.gatefun.__name__),
                            ('size', self.size),
                            ('insize', self.insize),
                            ('bias', self.has_bias)])
@@ -1036,7 +1042,7 @@ class Mut2(RNN):
 
     def json(self, params=False):
         res = OrderedDict([('type', "MUT2"),
-                           ('activation', self.fun.func_name),
+                           ('activation', self.fun.__name__),
                            ('size', self.size),
                            ('insize', self.insize),
                            ('bias', self.has_bias)])
@@ -1138,7 +1144,7 @@ class Mut3(RNN):
 
     def json(self, params=False):
         res = OrderedDict([('type', "MUT3"),
-                           ('activation', self.fun.func_name),
+                           ('activation', self.fun.__name__),
                            ('size', self.size),
                            ('insize', self.insize),
                            ('bias', self.has_bias)])
@@ -1238,8 +1244,8 @@ class Genmut(RNN):
 
     def json(self, params=False):
         res = OrderedDict([('type', "Genmut"),
-                           ('activation', self.fun.func_name),
-                           ('gate', self.gatefun.func_name),
+                           ('activation', self.fun.__name__),
+                           ('gate', self.gatefun.__name__),
                            ('size', self.size),
                            ('insize', self.insize),
                            ('bias', self.has_bias)])
@@ -1315,7 +1321,7 @@ class Parallel(Layer):
         return
 
     def run(self, inMat):
-        return T.concatenate(map(lambda x: x.run(inMat), self.layers), axis=2)
+        return T.concatenate([x.run(inMat) for x in self.layers], axis=2)
 
 
 class Serial(Layer):

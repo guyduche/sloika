@@ -1,0 +1,175 @@
+SHELL=/bin/bash
+
+pwd:=$(shell pwd)/
+bin:=${pwd}bin/
+nproc:=$(shell nproc)
+
+# set this to nothing to get system environment
+envCmd?=source $${DEV_VIRTUALENV_DIR}/bin/activate &&
+envCmdPy3?=source $${DEV_VIRTUALENV_DIR_PY3}/bin/activate &&
+
+pipInstall:=pip install --trusted-host pypi.oxfordnanolabs.local --index-url https://pypi.oxfordnanolabs.local/simple/
+inTmpEnv:=source environment && source $${TMP_VIRTUALENV_DIR}/bin/activate &&
+inTmpEnvPy3:=source environment && source $${TMP_VIRTUALENV_DIR_PY3}/bin/activate &&
+inDevEnv:=source environment && ${envCmd}
+inDevEnvPy3:=source environment && ${envCmdPy3}
+inEnv:=source environment &&
+
+
+.PHONY: test
+test: unitTest acceptanceTest
+
+#
+# TODO(semen): do not install unit and acctest deps into the same env where wheel is
+#
+
+pyTestArgs?=-n auto
+unitset?=
+unitTestCmd:=${pipInstall} -r test/unit/requirements.txt && cd test/unit && py.test ${pyTestArgs} -v -s --fulltrace ${unitset}
+.PHONY: unitTest unitTestFromScratch
+unitTest:
+	${inDevEnv} ${unitTestCmd}
+unitTestPy3:
+	${inDevEnvPy3} ${unitTestCmd}
+unitTestFromScratch: cleanTmpEnvWithWheelInstalled
+	${inTmpEnv} ${unitTestCmd}
+
+accset?=
+acceptanceTestCmd:=${pipInstall} -r test/acceptance/requirements.txt && cd test/acceptance && py.test ${pyTestArgs} -v -s --fulltrace ${accset}
+.PHONY: acceptanceTest acceptanceTestFromScratch
+acceptanceTest:
+	${inDevEnv} ${acceptanceTestCmd}
+acceptanceTestPy3:
+	${inDevEnvPy3} ${acceptanceTestCmd}
+acceptanceTestFromScratch: cleanTmpEnvWithWheelInstalled
+	${inTmpEnv} ${acceptanceTestCmd}
+
+
+toxTestCmdPy2:=${pipInstall} -r test/unit/requirements.txt && tox -e py27-unit -e py27-acceptance
+.PHONY: toxTestFromScratchPy2
+toxTestFromScratchPy2: cleanTmpEnvWithDepsPy3
+	${inTmpEnvPy3} ${toxTestCmdPy2}
+
+toxTestCmdPy3:=${pipInstall} -r test/unit/requirements.txt && tox -e py35-unit -e py35-acceptance
+.PHONY: toxTestFromScratchPy3
+toxTestFromScratchPy3: cleanTmpEnvWithDepsPy3
+	${inTmpEnvPy3} ${toxTestCmdPy3}
+
+.PHONY: cleanDevEnv
+cleanDevEnv: cleanVirtualenv
+	./setup-dev-env.sh
+
+.PHONY: cleanDevEnvPy3
+cleanDevEnvPy3: cleanVirtualenvPy3
+	PY3=True ./setup-dev-env.sh
+
+.PHONY: cleanVirtualenv
+cleanVirtualenv:
+	${inEnv} rm -rf $${DEV_VIRTUALENV_DIR}
+	./setup-virtualenv.sh
+
+.PHONY: cleanVirtualenvPy3
+cleanVirtualenvPy3:
+	${inEnv} rm -rf $${DEV_VIRTUALENV_DIR_PY3}
+	PY3=True ./setup-virtualenv.sh
+
+.PHONY: checkout
+checkout:
+	git submodule init
+	git submodule update
+
+.PHONY: cleanTmpEnv
+cleanTmpEnv:
+	source environment && rm -rf $${TMP_VIRTUALENV_DIR} && virtualenv $${TMP_VIRTUALENV_DIR}
+	${inTmpEnv} pip install pip --upgrade
+
+.PHONY: cleanTmpEnvPy3
+cleanTmpEnvPy3:
+	source environment && rm -rf $${TMP_VIRTUALENV_DIR_PY3} && virtualenv -p python3 $${TMP_VIRTUALENV_DIR_PY3}
+	${inTmpEnvPy3} pip install pip --upgrade
+
+.PHONY: cleanTmpEnvWithDeps
+cleanTmpEnvWithDeps: cleanTmpEnv
+	${inTmpEnv} ${pipInstall} -r scripts/requirements.txt && \
+	            ${pipInstall} -r requirements.txt
+
+.PHONY: cleanTmpEnvWithDepsPy3
+cleanTmpEnvWithDepsPy3: cleanTmpEnvPy3
+	${inTmpEnvPy3} ${pipInstall} -r scripts/requirements.txt && \
+	               ${pipInstall} -r requirements.txt
+
+.PHONY: wheel
+wheel: cleanTmpEnvWithDeps
+	${inTmpEnv} python setup.py bdist_wheel
+	ls -l dist/*.whl
+
+.PHONY: wheelPy3
+wheelPy3: cleanTmpEnvWithDepsPy3
+	${inTmpEnvPy3} python setup.py bdist_wheel
+	ls -l dist/*.whl
+
+.PHONY: cleanTmpEnvWithWheelInstalled
+cleanTmpEnvWithWheelInstalled: cleanTmpEnv
+	${inTmpEnv} ${pipInstall} ${whlFile}
+
+.PHONY: cleanTmpEnvWithWheelInstalledPy3
+cleanTmpEnvWithWheelInstalledPy3: cleanTmpEnvPy3
+	${inTmpEnvPy3} ${pipInstall} ${whlFilePy3}
+
+
+.PHONY: autopep8
+autopep8:
+	${inDevEnv} autopep8 --ignore E203 -i --max-line-length=120 ${pyFiles}
+
+.PHONY: pep8
+pep8:
+	${inDevEnv} pep8 --ignore E203,E402 --max-line-length=120 ${pyFiles}
+
+
+cmd?=echo "Set 'cmd' to command to run in dev env"
+.PHONY: runInDevEnv
+runInDevEnv:
+	@${inDevEnv} ${cmd}
+.PHONY: runInTmpEnv
+runInTmpEnv:
+	@${inTmpEnv} ${cmd}
+.PHONY: runInTmpEnvPy3
+runInTmpEnvPy3:
+	@${inTmpEnvPy3} ${cmd}
+
+.PHONY: deb
+deb: clean cleanTmpEnv
+	lsb_release  # must be installed for this target to work
+	${inTmpEnv} ${pipInstall} -r scripts/requirements.txt && \
+	            ${pipInstall} -r requirements.txt && \
+	            python setup.py --command-packages=stdeb.command sdist_dsc --debian-version 1~`lsb_release -cs` bdist_deb
+	ls -l deb_dist/*.deb
+
+.PHONY: clean
+clean:
+	(source environment && rm -rf $${BUILD_DIR})
+	rm -rf dist/ deb_dist/ *.egg-info/
+	find . -name '*.pyc' -delete
+	find . -name '*.so' -delete
+
+.PHONY: pp pullpush
+pp: pullpush
+pullpush:
+	${MAKE} pep8
+	cd data && git pull --rebase && git push
+	git pull --rebase && git push
+
+.PHONY: debDeps
+debDeps: deps
+	apt-get install -y \
+	    python-stdeb dpkg-dev fakeroot lintian
+
+.PHONY: python-future
+python-future: cleanTmpEnv
+	mkdir -p deb_dist build
+	cat requirements.txt | grep future > build/python-future.txt
+	${inTmpEnv} pip install py2deb
+	${inTmpEnv} py2deb -r deb_dist --name-prefix=python -- -r build/python-future.txt
+	ls -l deb_dist/*.deb
+	dpkg --info deb_dist/python-future*.deb
+

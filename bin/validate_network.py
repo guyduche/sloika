@@ -1,6 +1,13 @@
 #!/usr/bin/env python
+from __future__ import division
+from __future__ import unicode_literals
+from __future__ import print_function
+from __future__ import absolute_import
+from future import standard_library
+standard_library.install_aliases()
+from builtins import *
 import argparse
-import cPickle
+import pickle
 import h5py
 import numpy as np
 import sys
@@ -34,7 +41,7 @@ parser.add_argument('input', action=FileExists,
 
 def remove_blanks(labels):
     for lbl_ch in labels:
-        for i in xrange(1, len(lbl_ch)):
+        for i in range(1, len(lbl_ch)):
             if lbl_ch[i] == 0:
                 lbl_ch[i] = lbl_ch[i - 1]
     return labels
@@ -56,7 +63,7 @@ if __name__ == '__main__':
 
     sys.stdout.write('* Loading network from {}\n'.format(args.model))
     with open(args.model, 'r') as fh:
-        network = cPickle.load(fh)
+        network = pickle.load(fh)
     fv = wrap_network(network)
 
     sys.stdout.write('* Loading data from {}\n'.format(args.input))
@@ -75,7 +82,7 @@ if __name__ == '__main__':
     t1 = t0 = time.time()
     sys.stdout.write('* Validating\n')
     nbatch = len(full_chunks) // args.batch
-    for i in xrange(nbatch):
+    for i in range(nbatch):
         idx = i * args.batch
         events = np.ascontiguousarray(full_chunks[idx : idx + args.batch].transpose((1, 0, 2)))
         labels = np.ascontiguousarray(full_labels[idx : idx + args.batch].transpose())
@@ -97,7 +104,8 @@ if __name__ == '__main__':
             tn = time.time()
             dt = tn - t1
             t = ' {:5d} {:5.3f}  {:5.2f}%  {:5.2f}s ({:.2f} kev/s)\n'
-            sys.stdout.write(t.format((i + 1) // 50, score / wscore, 100.0 * acc / wacc, dt, line_ev / 1000.0 / dt))
+            sys.stdout.write(t.format((i + 1) // 50, score / wscore,
+                                      100.0 * acc / wacc, dt, line_ev / 1000.0 / dt))
             line_ev = 0
             t1 = tn
 

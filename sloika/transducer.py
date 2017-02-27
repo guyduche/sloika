@@ -1,3 +1,9 @@
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
+from future import standard_library
+standard_library.install_aliases()
+from builtins import *
 import numpy as np
 from sloika import viterbi_helpers
 from sloika.config import sloika_dtype
@@ -63,8 +69,8 @@ def align(trans1, trans2, gapin, gap, gapout, rev=True):
     imat[2:, 0, 2] = 2
     imat[0, 2:, 4] = 4
 
-    for i1 in xrange(nev1):
-        for i2 in xrange(nev2):
+    for i1 in range(nev1):
+        for i2 in range(nev2):
             if i1 + 1 == nev1 or i2 + 1 == nev2:
                 gs = gapout
             else:
@@ -219,7 +225,7 @@ def map_to_sequence(trans, sequence, slip=None, prior_initial=None, prior_final=
     pscore += np.fmax(ltrans[0][sequence], ltrans[0][_STAY])
 
     # Main loop
-    for i in xrange(1, nev):
+    for i in range(1, nev):
         ctrans = ltrans[i]
         # Stay
         vmat[i] = np.arange(0, npos)
@@ -245,7 +251,7 @@ def map_to_sequence(trans, sequence, slip=None, prior_initial=None, prior_final=
     path = np.empty(nev, dtype=np.int16)
     path[0] = np.argmax(pscore)
     max_score = pscore[path[0]]
-    for i in xrange(1, nev):
+    for i in range(1, nev):
         path[i] = vmat[nev - i][path[i - 1]]
 
     return max_score, path[::-1]

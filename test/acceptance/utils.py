@@ -1,11 +1,16 @@
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
+from future import standard_library
+standard_library.install_aliases()
+from builtins import *
 import os
 import itertools
 
-from io import StringIO
 from subprocess import Popen, PIPE
 
 
-class Result:
+class Result(object):
 
     def __init__(self, test_case, cmd, cwd, return_code, stdout, stderr):
         self.test_case = test_case
@@ -58,7 +63,7 @@ def run_cmd(test_case, cmd, cwd=None):
         base_compiledir) + os.environ["THEANO_FLAGS_FOR_ACCTEST"]
 
     proc = Popen(cmd, env=env_with_theano_flags, stdout=PIPE, stderr=PIPE, cwd=cwd)
-    stdout, stderr = proc.communicate(StringIO())
+    stdout, stderr = proc.communicate(None)
 
     return_code = proc.returncode
     stdout = stdout.decode('UTF-8')
