@@ -92,24 +92,10 @@ def maybe_create_dir(directory_name):
             raise
 
 
-def drop_lines(L, prefix):
-    return list(itertools.dropwhile(lambda x: x.startswith(prefix), L))
-
-
-def drop_info(L):
-    '''
-    Weeding out theano messages of the sort:
-    INFO (theano.gof.compilelock): Waiting for existing lock by process '17108' (I am process '17109')
-E   INFO (theano.gof.compilelock): To manually release the lock, delete <file_name>
-    '''
-    return drop_lines(L, 'INFO (theano.gof.compilelock):')
-
-
 def nth_line_starts_with(prefix, n):
     def f(L):
-        M = drop_info(L)
         try:
-            return M[n].startswith(prefix)
+            return L[n].startswith(prefix)
         except IndexError:
             return False
     return f
@@ -123,12 +109,6 @@ def last_line_starts_with(prefix):
     return nth_line_starts_with(prefix, -1)
 
 if __name__ == '__main__':
-    assert drop_lines([], "a") == []
-    assert drop_lines(["a"], "a") == []
-    assert drop_lines(["ab"], "a") == []
-    assert drop_lines(["c", "ab"], "a") == ["c", "ab"]
-    assert drop_lines(["ab", "c"], "a") == ["c"]
-
     assert not zeroth_line_starts_with('a')([])
     assert zeroth_line_starts_with('a')(['a'])
     assert zeroth_line_starts_with('a')(['a', 'a'])
