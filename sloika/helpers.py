@@ -30,6 +30,9 @@ def _compile_model(outqueue, model_file, output_file=None):
     """
     from sloika import layers
     import theano
+    import logging
+
+    logging.getLogger("theano.gof.compilelock").setLevel(logging.WARNING)
 
     if output_file is None:
         with tempfile.NamedTemporaryFile(mode='wb', dir='', suffix='.pkl', delete=False) as fh:
