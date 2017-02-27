@@ -18,7 +18,7 @@ from distutils import dir_util
 from nose_parameterized import parameterized
 
 
-from utils import run_cmd, is_close, maybe_create_dir, zeroth_line_starts_with
+from utils import run_cmd, is_close, maybe_create_dir, zeroth_line_starts_with, last_line_starts_with
 
 
 class AcceptanceTest(unittest.TestCase):
@@ -168,24 +168,13 @@ class AcceptanceTest(unittest.TestCase):
 
         cmd = [self.script, "remap", "--trim", "200", "200", "--chunk_len", "500", "--kmer_len", "5",
                "--section", "template", "--input_strand_list", strand_input_list,
-               "--output_strand_list", strand_output_list, "--overwrite",
+               "--output_strand_list", strand_output_list,
                reads_dir, output_file_name, model_file, reference_file]
 
-        run_cmd(self, cmd).return_code(0)
-
-        self.assertTrue(os.path.exists(output_file_name))
-        with h5py.File(output_file_name, 'r') as fh:
-            top_level_items = []
-            for item in fh:
-                top_level_items.append(item)
-            top_level_items.sort()
-            self.assertEqual(top_level_items, [u'bad', u'chunks', u'labels', u'weights'])
-
-            self.assertEqual(fh['chunks'].shape, (0,))
-
         os.remove(output_file_name)
-
-        self.assertTrue(os.path.exists(strand_output_list))
-        lines = open(strand_output_list, 'r').read()
-        self.assertEqual(lines, u'filename\tnev\tscore\tnstay\tseqlen\tstart\tend\n')
         os.remove(strand_output_list)
+
+        run_cmd(self, cmd).return_code(5).stderr(last_line_starts_with(u"no chunks were produced"))
+
+        self.assertTrue(not os.path.exists(output_file_name))
+        self.assertTrue(not os.path.exists(strand_output_list))

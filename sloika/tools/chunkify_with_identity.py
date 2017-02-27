@@ -45,5 +45,9 @@ def chunkify_with_identity_main(argv, parser):
             label_list.append(labels)
             bad_list.append(bad_ev)
 
-    print('\n* Writing out to HDF5')
-    util.create_hdf5(args, chunk_list, label_list, bad_list)
+    if chunk_list == []:
+        print("no chunks were produced", file=sys.stderr)
+        sys.exit(5)
+    else:
+        print('\n* Writing out to HDF5')
+        util.create_hdf5(args, chunk_list, label_list, bad_list)

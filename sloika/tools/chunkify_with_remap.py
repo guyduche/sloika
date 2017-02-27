@@ -86,8 +86,12 @@ def chunkify_with_remap_main(argv, parser):
                                                np.sum(np.ediff1d(path, to_begin=1) == 0),
                                                len(seq), min(path), max(path)])
 
-    print('\n* Creating HDF5 file')
-    util.create_hdf5(args, chunk_list, label_list, bad_list)
+    if chunk_list == []:
+        print("no chunks were produced", file=sys.stderr)
+        sys.exit(5)
+    else:
+        print('\n* Creating HDF5 file')
+        util.create_hdf5(args, chunk_list, label_list, bad_list)
 
     print('\n* Creating output strand file')
     create_output_strand_file(output_strand_list_entries, args.output_strand_list)

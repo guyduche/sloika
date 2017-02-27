@@ -17,8 +17,8 @@ class Result(object):
         self.cmd = cmd
         self.cwd = cwd
         self._return_code = return_code
-        self._stdout = stdout.split('\n')
-        self._stderr = stderr.split('\n')
+        self._stdout = stdout.strip('\n').split('\n')
+        self._stderr = stderr.strip('\n').split('\n')
 
     def __repr__(self):
         L = ['\n\tCommand: {}'.format(' '.join(self.cmd))]
@@ -104,16 +104,20 @@ E   INFO (theano.gof.compilelock): To manually release the lock, delete <file_na
     '''
     return drop_lines(L, 'INFO (theano.gof.compilelock):')
 
-
-def zeroth_line_starts_with(prefix):
+def nth_line_starts_with(prefix, n):
     def f(L):
         M = drop_info(L)
-        if len(M) == 0:
+        try:
+            return M[n].startswith(prefix)
+        except IndexError:
             return False
-        else:
-            return M[0].startswith(prefix)
     return f
 
+def zeroth_line_starts_with(prefix):
+    return nth_line_starts_with(prefix, 0)
+
+def last_line_starts_with(prefix):
+    return nth_line_starts_with(prefix, -1)
 
 if __name__ == '__main__':
     assert drop_lines([], "a") == []
@@ -127,3 +131,9 @@ if __name__ == '__main__':
     assert zeroth_line_starts_with('a')(['a', 'a'])
     assert zeroth_line_starts_with('a')(['a', 'b'])
     assert not zeroth_line_starts_with('a')(['b', 'a'])
+
+    assert not last_line_starts_with('a')([])
+    assert last_line_starts_with('a')(['a'])
+    assert last_line_starts_with('a')(['a', 'a'])
+    assert not last_line_starts_with('a')(['a', 'b'])
+    assert last_line_starts_with('a')(['b', 'a'])
