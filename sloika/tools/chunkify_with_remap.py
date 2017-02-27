@@ -88,7 +88,7 @@ def chunkify_with_remap_main(argv, parser):
 
     if chunk_list == []:
         print("no chunks were produced", file=sys.stderr)
-        sys.exit(5)
+        sys.exit(1)
     else:
         print('\n* Creating HDF5 file')
         util.create_hdf5(args, chunk_list, label_list, bad_list)
