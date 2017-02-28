@@ -5,6 +5,33 @@ import theano.tensor as T
 import theano.tensor.signal.pool as tp
 
 
+def pad_same(X, size):
+    """Pad first dimension in preparation for conv_same_1d or pool_same_1d
+
+    :param X: symbolic tensor to pad
+    :param size: window length or pool size or conv or pool op. If size if odd,
+        padding is symmetric (size - 1) // 2 elements at the start and end.
+        If size is even, padding at the end is greater by 1. These conventions
+        ensure that after a 'valid' conv or pool op, the output shape is
+        independent of the window length or pool size.
+    """
+    pad = T.shape_padleft(T.zeros(X.shape[1:]))
+    pad_begin = T.repeat(pad, (size - 1) // 2, axis=0)
+    pad_end = T.repeat(pad, size // 2, axis=0)
+    X_pad = T.concatenate([pad_begin, X, pad_end], 0)
+    return X_pad
+
+
+def bf1t(X):
+    """Transpose from [time, batch, features] to [batch, features, 1, time]"""
+    return T.shape_padaxis(X.transpose((1, 2, 0)), 2)
+
+
+def tbf(X):
+    """Tranpsoe from [batch, features, 1, time] to [time, batch, features]"""
+    return X.transpose((3, 0, 1, 2))[:, :, :, 0]
+
+
 def conv_same_1d(X, W, stride=1):
     """1d convolution in "same" mode i.e. output dim = ceil(input dim / stride)
 
@@ -27,15 +54,10 @@ def conv_same_1d(X, W, stride=1):
     """
 
     winlen = T.shape(W)[2]
-    pad = T.shape_padleft(T.zeros(X.shape[1:]))
-    pad_begin = T.repeat(pad, (winlen - 1) // 2, axis=0)
-    pad_end = T.repeat(pad, winlen // 2, axis=0)
-    X_pad = T.concatenate([pad_begin, X, pad_end], 0)
-
-    conv = T.nnet.conv2d(T.shape_padaxis(X_pad.transpose((1, 2, 0)), 2),
-                         T.shape_padaxis(W, 2), subsample=(1, stride),
-                         filter_flip=False)
-    Y = conv.transpose((3, 0, 1, 2))[:, :, :, 0]
+    X_pad = pad_same(X, winlen)
+    conv = T.nnet.conv2d(bf1t(X_pad), T.shape_padaxis(W, 2),
+                         subsample=(1, stride), filter_flip=False)
+    Y = tbf(conv)
 
     return Y
 
@@ -56,13 +78,9 @@ def pool_same_1d(X, pool_size, stride):
         3D tensor of shape (ceil(time/stride), batch, features)
     """
 
-    pad = T.shape_padleft(T.zeros(X.shape[1:]))
-    pad_begin = T.repeat(pad, (pool_size - 1) // 2, axis=0)
-    pad_end = T.repeat(pad, pool_size // 2, axis=0)
-    X_pad = T.concatenate([pad_begin, X, pad_end], 0)
-
-    pool = tp.pool_2d(T.shape_padaxis(X_pad.transpose((1, 2, 0)), 2),
-                      (1, pool_size), st=(1, stride), ignore_border=True)
-    Y = pool.transpose((3, 0, 1, 2))[:, :, :, 0]
+    X_pad = pad_same(X, pool_size)
+    pool = tp.pool_2d(bf1t(X_pad), (1, pool_size), st=(1, stride),
+                      ignore_border=True)
+    Y = tbf(pool)
 
     return Y
