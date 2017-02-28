@@ -64,7 +64,7 @@ def chunkify_with_remap_main(argv, parser):
 
     print('* Processing data using', args.jobs, 'threads')
 
-    kwarg_names = ['trim', 'min_prob', 'transducer', 'kmer_len',
+    kwarg_names = ['trim', 'min_prob', 'transducer', 'kmer_len', 'min_length',
                    'prior', 'slip', 'chunk_len', 'use_scaled', 'normalisation']
     i = 0
     compiled_file = helpers.compile_model(args.model, args.compile)

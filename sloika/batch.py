@@ -23,7 +23,19 @@ default_normalisation = 'per-read'
 available_normalisations = set(['none', 'per-read', 'per-chunk'])
 
 
+def trim_ends_and_filter(fn, ev, trim, min_length, chunk_len):
+    if len(ev) < sum(trim) + chunk_len or len(ev) < min_length:
+        sys.stderr.write('{} with {} events is too short.\n'.format(fn, len(ev)))
+        return None
+    else:
+        begin = trim[0]
+        end = None if trim[1] == 0 else -trim[1]
+        return ev[begin : end]
+
+
 def chunkify(ev, chunk_len, kmer_len, use_scaled, normalisation):
+    assert len(ev) >= chunk_len
+
     ml = len(ev) // chunk_len
     ub = ml * chunk_len
     tag = 'scaled_' if use_scaled else ''
@@ -110,11 +122,9 @@ def chunk_worker(fn, section, chunk_len, kmer_len, min_length, trim, use_scaled,
     except:
         return None, None, None
 
-    if len(ev) < sum(trim) + chunk_len or len(ev) < min_length:
+    ev = trim_ends_and_filter(fn, ev, trim, min_length, chunk_len)
+    if ev == None:
         return None, None, None
-    begin = trim[0]
-    end = None if trim[1] == 0 else -trim[1]
-    ev = ev[begin : end]
 
     return chunkify(ev, chunk_len, kmer_len, use_scaled, normalisation)
 
@@ -161,7 +171,7 @@ def remap(read_ref, ev, min_prob, transducer, kmer_len, prior, slip):
     return (score, ev, path, seq)
 
 
-def chunk_remap_worker(fn, trim, min_prob, transducer, kmer_len, prior, slip, chunk_len, use_scaled, normalisation):
+def chunk_remap_worker(fn, trim, min_prob, transducer, kmer_len, prior, slip, chunk_len, use_scaled, normalisation, min_length):
     try:
         with fast5.Reader(fn) as f5:
             ev = f5.get_read()
@@ -176,13 +186,9 @@ def chunk_remap_worker(fn, trim, min_prob, transducer, kmer_len, prior, slip, ch
         sys.stderr.write('No reference found for {}.\n'.format(fn))
         return None
 
-    if len(ev) <= sum(trim):
-        sys.stderr.write('{} with {} events is too short.\n'.format(fn, len(ev)))
+    ev = trim_ends_and_filter(fn, ev, trim, min_length, chunk_len)
+    if ev == None:
         return None
-
-    begin = trim[0]
-    end = None if trim[1] == 0 else -trim[1]
-    ev = ev[begin : end]
 
     (score, ev, path, seq) = remap(read_ref, ev, min_prob, transducer, kmer_len, prior, slip)
     (chunks, labels, bad_ev) = chunkify(ev, chunk_len, kmer_len, use_scaled, normalisation)

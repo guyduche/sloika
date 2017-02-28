@@ -24,17 +24,6 @@ from util import run_cmd, is_close, maybe_create_dir, zeroth_line_starts_with, l
 class AcceptanceTest(unittest.TestCase):
     known_commands = ["identity", "remap"]
 
-    identity_io = [
-        [[], (182, 500, 4), -2.8844583, 14.225174, -0.254353493452],
-        [["--normalisation", "per-read"], (182, 500, 4), -2.8844583, 14.225174, -0.254353493452],
-        [["--normalisation", "per-chunk"], (182, 500, 4), -4.1303601265, 12.2556829453, -0.249717712402],
-    ]
-    remap_io = [
-        [[], (33, 500, 4), -2.70142698288, 12.7569065094, -0.238316237926],
-        [["--normalisation", "per-read"], (33, 500, 4), -2.70142698288, 12.7569065094, -0.238316237926],
-        [["--normalisation", "per-chunk"], (33, 500, 4), -2.85386562347, 11.4694499969, -0.237461671233],
-    ]
-
     @classmethod
     def setUpClass(self):
         self.test_directory = os.path.splitext(__file__)[0]
@@ -64,7 +53,11 @@ class AcceptanceTest(unittest.TestCase):
         cmd = [self.script, "hehe"]
         run_cmd(self, cmd).return_code(1).stdout(zeroth_line_starts_with(u"Unsupported command 'hehe'"))
 
-    @parameterized.expand(identity_io)
+    @parameterized.expand([
+        [[], (182, 500, 4), -2.8844583, 14.225174, -0.254353493452],
+        [["--normalisation", "per-read"], (182, 500, 4), -2.8844583, 14.225174, -0.254353493452],
+        [["--normalisation", "per-chunk"], (182, 500, 4), -4.1303601265, 12.2556829453, -0.249717712402],
+    ])
     def test_chunkify_with_identity_with_normalisation(self, options, chunks_shape, min_value, max_value, median_value):
         strand_input_list = os.path.join(self.data_dir, "identity", "na12878_train.txt")
         self.assertTrue(os.path.exists(strand_input_list))
@@ -98,7 +91,11 @@ class AcceptanceTest(unittest.TestCase):
 
         os.remove(output_file_name)
 
-    @parameterized.expand(remap_io)
+    @parameterized.expand([
+        [[], (33, 500, 4), -2.70142698288, 12.7569065094, -0.238316237926],
+        [["--normalisation", "per-read"], (33, 500, 4), -2.70142698288, 12.7569065094, -0.238316237926],
+        [["--normalisation", "per-chunk"], (33, 500, 4), -2.85386562347, 11.4694499969, -0.237461671233],
+    ])
     def test_chunkify_with_remap_with_normalisation(self, options, chunks_shape, min_value, max_value, median_value):
         strand_input_list = os.path.join(self.data_dir, "remap", "strand_output_list.txt")
         self.assertTrue(os.path.exists(strand_input_list))
@@ -147,7 +144,7 @@ class AcceptanceTest(unittest.TestCase):
         os.remove(output_file_name)
         os.remove(strand_output_list)
 
-    def test_chunkify_with_remap_no_results(self):
+    def test_chunkify_with_remap_no_results_due_to_missing_reference(self):
         strand_input_list = os.path.join(self.data_dir, "remap", "strand_output_list.txt")
         self.assertTrue(os.path.exists(strand_input_list))
 
@@ -178,3 +175,75 @@ class AcceptanceTest(unittest.TestCase):
 
         self.assertTrue(not os.path.exists(output_file_name))
         self.assertTrue(not os.path.exists(strand_output_list))
+
+    @parameterized.expand([
+        [500, 545, 25, 20, 0],
+        [501, 545, 25, 20, 1],
+        [500, 546, 25, 20, 1],
+        [500, 545, 26, 20, 1],
+        [500, 545, 25, 21, 1],
+    ])
+    def test_chunkify_with_remap_no_results_due_to_length(self, chunk_len, min_length, trim_left, trim_right, return_code):
+        strand_input_list = os.path.join(self.data_dir, "remap2", "strand_input_list.txt")
+        self.assertTrue(os.path.exists(strand_input_list))
+
+        reads_dir = os.path.join(self.data_dir, "remap2", "reads")
+        self.assertTrue(os.path.exists(reads_dir))
+
+        model_file = os.path.join(self.data_dir, "remap2", "model.pkl")
+        self.assertTrue(os.path.exists(model_file))
+
+        reference_file = os.path.join(self.data_dir, "remap2", "reference.fa")
+        self.assertTrue(os.path.exists(reference_file))
+
+        with tempfile.NamedTemporaryFile(prefix="strand_output_list", suffix=".txt", delete=False) as fh:
+            strand_output_list = fh.name
+
+        with tempfile.NamedTemporaryFile(suffix=".hdf5", delete=False) as fh:
+            output_file_name = fh.name
+
+        cmd = [self.script, "remap", "--trim", str(trim_left), str(trim_right), "--chunk_len", str(chunk_len), "--kmer_len", "5",
+               "--section", "template", "--input_strand_list", strand_input_list,
+               "--output_strand_list", strand_output_list, "--min_length", str(min_length),
+               reads_dir, output_file_name, model_file, reference_file]
+
+        os.remove(output_file_name)
+        os.remove(strand_output_list)
+
+        expectation = run_cmd(self, cmd).return_code(return_code)
+
+        if return_code != 0:
+            expectation.stderr(last_line_starts_with(u"no chunks were produced"))
+
+            self.assertTrue(not os.path.exists(output_file_name))
+            self.assertTrue(not os.path.exists(strand_output_list))
+
+    @parameterized.expand([
+        [300, 360, 40, 20, 0],
+        [301, 360, 40, 20, 1],
+        [300, 361, 40, 20, 1],
+        [300, 360, 41, 20, 1],
+        [300, 360, 40, 21, 1],
+    ])
+    def test_chunkify_with_identity_no_results_due_to_length(self, chunk_len, min_length, trim_left, trim_right, return_code):
+        strand_input_list = os.path.join(self.data_dir, "remap2", "strand_input_list.txt")
+        self.assertTrue(os.path.exists(strand_input_list))
+
+        reads_dir = os.path.join(self.data_dir, "remap2", "reads")
+        self.assertTrue(os.path.exists(reads_dir))
+
+        with tempfile.NamedTemporaryFile(suffix=".hdf5", delete=False) as fh:
+            output_file_name = fh.name
+
+        cmd = [self.script, "identity", "--trim", str(trim_left), str(trim_right), "--chunk_len", str(chunk_len), "--kmer_len", "5",
+               "--section", "template", "--input_strand_list", strand_input_list, "--min_length", str(min_length),
+               reads_dir, output_file_name]
+
+        os.remove(output_file_name)
+
+        expectation = run_cmd(self, cmd).return_code(return_code)
+
+        if return_code != 0:
+            expectation.stderr(last_line_starts_with(u"no chunks were produced"))
+
+            self.assertTrue(not os.path.exists(output_file_name))
