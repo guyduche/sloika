@@ -37,10 +37,13 @@ def chunkify_with_identity_main(argv, parser):
     bad_list = []
     chunk_list = []
     label_list = []
-    for chunks, labels, bad_ev in imap_mp(batch.chunk_worker, fast5_files, threads=args.jobs,
-                                          unordered=True, fix_kwargs=util.get_kwargs(args, kwarg_names)):
-        if chunks is not None and labels is not None:
+    for res in imap_mp(batch.chunk_worker, fast5_files, threads=args.jobs,
+                       unordered=True, fix_kwargs=util.get_kwargs(args, kwarg_names)):
+        if res is not None:
             i = util.progress_report(i)
+
+            (chunks, labels, bad_ev) = res
+
             chunk_list.append(chunks)
             label_list.append(labels)
             bad_list.append(bad_ev)

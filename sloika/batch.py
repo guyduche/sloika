@@ -120,11 +120,11 @@ def chunk_worker(fn, section, chunk_len, kmer_len, min_length, trim, use_scaled,
         with fast5.Reader(fn) as f5:
             ev, _ = f5.get_any_mapping_data(section)
     except:
-        return None, None, None
+        return None
 
     ev = trim_ends_and_filter(fn, ev, trim, min_length, chunk_len)
     if ev == None:
-        return None, None, None
+        return None
 
     return chunkify(ev, chunk_len, kmer_len, use_scaled, normalisation)
 
