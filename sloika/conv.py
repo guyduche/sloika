@@ -28,8 +28,8 @@ def bf1t(X):
 
 
 def tbf(X):
-    """Tranpsoe from [batch, features, 1, time] to [time, batch, features]"""
-    return X.transpose((3, 0, 1, 2))[:, :, :, 0]
+    """Tranpose from [batch, features, 1, time] to [time, batch, features]"""
+    return X.transpose((3, 0, 1, 2)).flatten(3)
 
 
 def conv_same_1d(X, W, stride=1):
