@@ -29,12 +29,6 @@ wheel_py3:
         paths:
             - dist/*.whl
 
-tox:
-    stage: test
-    script:
-        - make toxTestFromScratchPy2
-        - make toxTestFromScratchPy3
-
 unit_xenial:
     stage: test
     script:
@@ -44,6 +38,16 @@ acceptance_xenial:
     stage: test
     script:
         - make acceptanceTestFromScratch
+
+unit_xenial_py3:
+    stage: test
+    script:
+        - make unitTestFromScratchPy3
+
+acceptance_xenial_py3:
+    stage: test
+    script:
+        - make acceptanceTestFromScratchPy3
 
 unit_trusty:
     image: docker-registry.oxfordnanolabs.local:5000/ont-base-ofan-dev:14.04

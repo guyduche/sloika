@@ -33,6 +33,8 @@ unitTestPy3:
 	${inDevEnvPy3} ${unitTestCmd}
 unitTestFromScratch: cleanTmpEnvWithWheelInstalled
 	${inTmpEnv} ${unitTestCmd}
+unitTestFromScratchPy3: cleanTmpEnvWithWheelInstalledPy3
+	${inTmpEnvPy3} ${unitTestCmd}
 
 accset?=
 acceptanceTestCmd:=${pipInstall} -r test/acceptance/requirements.txt && cd test/acceptance && py.test ${pyTestArgs} -v -s --fulltrace ${accset}
@@ -43,6 +45,8 @@ acceptanceTestPy3:
 	${inDevEnvPy3} ${acceptanceTestCmd}
 acceptanceTestFromScratch: cleanTmpEnvWithWheelInstalled
 	${inTmpEnv} ${acceptanceTestCmd}
+acceptanceTestFromScratchPy3: cleanTmpEnvWithWheelInstalledPy3
+	${inTmpEnvPy3} ${acceptanceTestCmd}
 
 
 toxTestCmdPy2:=${pipInstall} -r test/unit/requirements.txt && tox -e py27-unit -e py27-acceptance
