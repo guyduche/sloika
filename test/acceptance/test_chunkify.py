@@ -183,7 +183,8 @@ class AcceptanceTest(unittest.TestCase):
         [500, 545, 26, 20, 1],
         [500, 545, 25, 21, 1],
     ])
-    def test_chunkify_with_remap_no_results_due_to_length(self, chunk_len, min_length, trim_left, trim_right, return_code):
+    def test_chunkify_with_remap_no_results_due_to_length(self, chunk_len, min_length, trim_left, trim_right,
+                                                          return_code):
         strand_input_list = os.path.join(self.data_dir, "remap2", "strand_input_list.txt")
         self.assertTrue(os.path.exists(strand_input_list))
 
@@ -202,8 +203,8 @@ class AcceptanceTest(unittest.TestCase):
         with tempfile.NamedTemporaryFile(suffix=".hdf5", delete=False) as fh:
             output_file_name = fh.name
 
-        cmd = [self.script, "remap", "--trim", str(trim_left), str(trim_right), "--chunk_len", str(chunk_len), "--kmer_len", "5",
-               "--section", "template", "--input_strand_list", strand_input_list,
+        cmd = [self.script, "remap", "--trim", str(trim_left), str(trim_right), "--chunk_len", str(chunk_len),
+               "--kmer_len", "5", "--section", "template", "--input_strand_list", strand_input_list,
                "--output_strand_list", strand_output_list, "--min_length", str(min_length),
                reads_dir, output_file_name, model_file, reference_file]
 
@@ -225,7 +226,8 @@ class AcceptanceTest(unittest.TestCase):
         [300, 360, 41, 20, 1],
         [300, 360, 40, 21, 1],
     ])
-    def test_chunkify_with_identity_no_results_due_to_length(self, chunk_len, min_length, trim_left, trim_right, return_code):
+    def test_chunkify_with_identity_no_results_due_to_length(self, chunk_len, min_length, trim_left, trim_right,
+                                                             return_code):
         strand_input_list = os.path.join(self.data_dir, "remap2", "strand_input_list.txt")
         self.assertTrue(os.path.exists(strand_input_list))
 
@@ -235,9 +237,9 @@ class AcceptanceTest(unittest.TestCase):
         with tempfile.NamedTemporaryFile(suffix=".hdf5", delete=False) as fh:
             output_file_name = fh.name
 
-        cmd = [self.script, "identity", "--trim", str(trim_left), str(trim_right), "--chunk_len", str(chunk_len), "--kmer_len", "5",
-               "--section", "template", "--input_strand_list", strand_input_list, "--min_length", str(min_length),
-               reads_dir, output_file_name]
+        cmd = [self.script, "identity", "--trim", str(trim_left), str(trim_right), "--chunk_len", str(chunk_len),
+               "--kmer_len", "5", "--section", "template", "--input_strand_list", strand_input_list,
+               "--min_length", str(min_length), reads_dir, output_file_name]
 
         os.remove(output_file_name)
 

@@ -171,7 +171,8 @@ def remap(read_ref, ev, min_prob, transducer, kmer_len, prior, slip):
     return (score, ev, path, seq)
 
 
-def chunk_remap_worker(fn, trim, min_prob, transducer, kmer_len, prior, slip, chunk_len, use_scaled, normalisation, min_length):
+def chunk_remap_worker(fn, trim, min_prob, transducer, kmer_len, prior, slip, chunk_len, use_scaled,
+                       normalisation, min_length):
     try:
         with fast5.Reader(fn) as f5:
             ev = f5.get_read()
