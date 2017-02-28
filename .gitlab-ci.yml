@@ -61,7 +61,6 @@ dev_env_and_style:
     stage: test
     script:
         - make cleanDevEnv
-        - make pep8
 
 pip_install_dot:
     stage: test
