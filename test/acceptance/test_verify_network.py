@@ -11,7 +11,7 @@ import glob
 
 from nose_parameterized import parameterized
 
-from utils import run_cmd, maybe_create_dir, zeroth_line_starts_with
+from util import run_cmd, maybe_create_dir, zeroth_line_starts_with
 
 
 class AcceptanceTest(unittest.TestCase):

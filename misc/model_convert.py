@@ -79,7 +79,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     sys.stdout.write('\nLoading pickled model:  {}\n'.format(args.model))
-    with open(args.model, 'r') as fi:
+    with open(args.model, 'rb') as fi:
         net = pickle.load(fi)
 
     shared_vars = get_var_names(net)
@@ -114,5 +114,5 @@ if __name__ == '__main__':
             raise
 
     sys.stdout.write('\nWriting new pickled model:  {}\n'.format(args.output))
-    with open(args.output, 'w') as fo:
+    with open(args.output, 'wb') as fo:
         pickle.dump(net, fo)
