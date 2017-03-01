@@ -2,7 +2,7 @@
 #  Yaml CI config for Gitlab See. http://docs.gitlab.com/ce/ci/yaml/README.html
 #
 
-image: docker-registry.oxfordnanolabs.local:5000/ont-base-ubuntu:16.04
+image: git.oxfordnanolabs.local:4567/algorithm/sloika_docker:16.04-latest
 
 stages:
     - build
@@ -29,12 +29,6 @@ wheel_py3:
         paths:
             - dist/*.whl
 
-tox:
-    stage: test
-    script:
-        - make toxTestFromScratchPy2
-        - make toxTestFromScratchPy3
-
 unit_xenial:
     stage: test
     script:
@@ -45,14 +39,24 @@ acceptance_xenial:
     script:
         - make acceptanceTestFromScratch
 
+unit_xenial_py3:
+    stage: test
+    script:
+        - make unitTestFromScratchPy3
+
+acceptance_xenial_py3:
+    stage: test
+    script:
+        - make acceptanceTestFromScratchPy3
+
 unit_trusty:
-    image: docker-registry.oxfordnanolabs.local:5000/ont-base-ofan-dev:14.04
+    image: git.oxfordnanolabs.local:4567/algorithm/sloika_docker:14.04-latest
     stage: test
     script:
         - make unitTestFromScratch
 
 acceptance_trusty:
-    image: docker-registry.oxfordnanolabs.local:5000/ont-base-ofan-dev:14.04
+    image: git.oxfordnanolabs.local:4567/algorithm/sloika_docker:14.04-latest
     stage: test
     script:
         - make acceptanceTestFromScratch
@@ -61,7 +65,6 @@ dev_env_and_style:
     stage: test
     script:
         - make cleanDevEnv
-        - make pep8
 
 pip_install_dot:
     stage: test
