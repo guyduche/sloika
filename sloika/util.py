@@ -4,6 +4,7 @@ from __future__ import absolute_import
 from future import standard_library
 standard_library.install_aliases()
 from builtins import *
+import logging
 import os
 import sys
 import h5py
@@ -84,3 +85,37 @@ def create_hdf5(args, chunk_list, label_list, bad_list):
         h5['/'].attrs['section'] = args.section
         h5['/'].attrs['trim'] = args.trim
         h5['/'].attrs['scaled'] = args.use_scaled
+
+
+def get_log_level(maybe_log_level):
+    if maybe_log_level == 'info':
+        return logging.INFO
+    elif maybe_log_level == 'debug':
+        return logging.DEBUG
+    elif maybe_log_level == 'warning':
+        return logging.WARNING
+    elif maybe_log_level == 'error':
+        return logging.ERROR
+    elif maybe_log_level == 'critical':
+        return logging.CRITICAL
+    else:
+        assert maybe_log_level is None
+        return logging.INFO
+
+
+def get_logger(name, maybe_log_level):
+    logger = logging.getLogger(name)
+    logger.propagate = False
+
+    formatter = logging.Formatter('%(levelname)s (%(name)s): %(message)s')
+
+    log_level = get_log_level(maybe_log_level)
+    logger.setLevel(log_level)
+
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(log_level)
+    console_handler.setFormatter(formatter)
+
+    logger.addHandler(console_handler)
+
+    return logger

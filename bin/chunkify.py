@@ -39,6 +39,8 @@ def common_parser(argv, commands):
                         help='Length of kmer to estimate')
     parser.add_argument('--limit', default=None, type=Maybe(Positive(int)),
                         help='Limit number of reads to process')
+    parser.add_argument('--log_level', default="info", choices=set(['debug', 'info', 'warning', 'error', 'critical']),
+                        help='Level or severity of events to track')
     parser.add_argument('--min_length', default=1200, metavar='events',
                         type=Positive(int), help='Minimum events in acceptable read')
     parser.add_argument('--normalisation', default=batch.default_normalisation, choices=batch.available_normalisations,

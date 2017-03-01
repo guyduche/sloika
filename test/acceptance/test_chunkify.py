@@ -171,7 +171,8 @@ class AcceptanceTest(unittest.TestCase):
         os.remove(output_file_name)
         os.remove(strand_output_list)
 
-        run_cmd(self, cmd).return_code(1).stderr(last_line_starts_with(u"no chunks were produced"))
+        run_cmd(self, cmd).return_code(1).stderr(last_line_starts_with(
+            u"ERROR (sloika.chunkify): No chunks were produced"))
 
         self.assertTrue(not os.path.exists(output_file_name))
         self.assertTrue(not os.path.exists(strand_output_list))
@@ -214,7 +215,7 @@ class AcceptanceTest(unittest.TestCase):
         expectation = run_cmd(self, cmd).return_code(return_code)
 
         if return_code != 0:
-            expectation.stderr(last_line_starts_with(u"no chunks were produced"))
+            expectation.stderr(last_line_starts_with(u"ERROR (sloika.chunkify): No chunks were produced"))
 
             self.assertTrue(not os.path.exists(output_file_name))
             self.assertTrue(not os.path.exists(strand_output_list))
@@ -246,6 +247,6 @@ class AcceptanceTest(unittest.TestCase):
         expectation = run_cmd(self, cmd).return_code(return_code)
 
         if return_code != 0:
-            expectation.stderr(last_line_starts_with(u"no chunks were produced"))
+            expectation.stderr(last_line_starts_with(u"ERROR (sloika.chunkify): No chunks were produced"))
 
             self.assertTrue(not os.path.exists(output_file_name))

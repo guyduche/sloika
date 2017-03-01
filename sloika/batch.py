@@ -8,6 +8,7 @@ import h5py
 import numpy as np
 import numpy.lib.recfunctions as nprf
 import sys
+import logging
 
 from Bio import SeqIO
 
@@ -17,15 +18,15 @@ import sloika.util
 
 from untangled import bio, fast5
 
+logger = logging.getLogger('sloika.chunkify')
 
 default_normalisation = 'per-read'
 
 available_normalisations = set(['none', 'per-read', 'per-chunk'])
 
 
-def trim_ends_and_filter(fn, ev, trim, min_length, chunk_len):
+def trim_ends_and_filter(ev, trim, min_length, chunk_len):
     if len(ev) < sum(trim) + chunk_len or len(ev) < min_length:
-        sys.stderr.write('{} with {} events is too short.\n'.format(fn, len(ev)))
         return None
     else:
         begin = trim[0]
@@ -116,14 +117,17 @@ def chunk_worker(fn, section, chunk_len, kmer_len, min_length, trim, use_scaled,
     # Import within worker to avoid initialising GPU in main thread
     import sloika.features
 
+    logger.debug('Processing file {}'.format(fn))
+
     try:
         with fast5.Reader(fn) as f5:
             ev, _ = f5.get_any_mapping_data(section)
     except:
         return None
 
-    ev = trim_ends_and_filter(fn, ev, trim, min_length, chunk_len)
+    ev = trim_ends_and_filter(ev, trim, min_length, chunk_len)
     if ev is None:
+        logger.debug('Read was filtered out')
         return None
 
     return chunkify(ev, chunk_len, kmer_len, use_scaled, normalisation)
@@ -173,6 +177,9 @@ def remap(read_ref, ev, min_prob, transducer, kmer_len, prior, slip):
 
 def chunk_remap_worker(fn, trim, min_prob, transducer, kmer_len, prior, slip, chunk_len, use_scaled,
                        normalisation, min_length):
+
+    logger.debug('Processing file {}'.format(fn))
+
     try:
         with fast5.Reader(fn) as f5:
             ev = f5.get_read()
@@ -187,8 +194,9 @@ def chunk_remap_worker(fn, trim, min_prob, transducer, kmer_len, prior, slip, ch
         sys.stderr.write('No reference found for {}.\n'.format(fn))
         return None
 
-    ev = trim_ends_and_filter(fn, ev, trim, min_length, chunk_len)
+    ev = trim_ends_and_filter(ev, trim, min_length, chunk_len)
     if ev is None:
+        logger.debug('Read was filtered out')
         return None
 
     (score, ev, path, seq) = remap(read_ref, ev, min_prob, transducer, kmer_len, prior, slip)

@@ -51,18 +51,20 @@ def chunkify_with_remap_main(argv, parser):
 
     args = parser.parse_args(argv)
 
+    logger = util.get_logger('sloika.chunkify', args.log_level)
+
     if not args.overwrite:
         if os.path.exists(args.output):
-            print("Cowardly refusing to overwrite {}".format(args.output))
+            logger.error("Cowardly refusing to overwrite {}".format(args.output))
             sys.exit(1)
         if os.path.exists(args.output_strand_list):
-            print("Cowardly refusing to overwrite {}".format(args.output_strand_list))
+            logger.error("Cowardly refusing to overwrite {}".format(args.output_strand_list))
             sys.exit(2)
 
     fast5_files = fast5.iterate_fast5(args.input_folder, paths=True, limit=args.limit,
                                       strand_list=args.input_strand_list)
 
-    print('* Processing data using', args.jobs, 'threads')
+    logger.info('Processing data using {} threads'.format(args.jobs))
 
     kwarg_names = ['trim', 'min_prob', 'transducer', 'kmer_len', 'min_length',
                    'prior', 'slip', 'chunk_len', 'use_scaled', 'normalisation']
@@ -92,11 +94,11 @@ def chunkify_with_remap_main(argv, parser):
         os.remove(compiled_file)
 
     if chunk_list == []:
-        print("no chunks were produced", file=sys.stderr)
+        logger.error("No chunks were produced")
         sys.exit(1)
     else:
-        print('\n* Creating HDF5 file')
+        logger.info('Creating HDF5 file')
         util.create_hdf5(args, chunk_list, label_list, bad_list)
 
-        print('\n* Creating output strand file')
+        logger.info('Creating output strand file')
         create_output_strand_file(output_strand_list_entries, args.output_strand_list)
