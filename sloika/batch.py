@@ -26,7 +26,9 @@ available_normalisations = set(['none', 'per-read', 'per-chunk'])
 
 
 def trim_ends_and_filter(ev, trim, min_length, chunk_len):
-    if len(ev) >= min_length and len(ev) >= sum(trim) + chunk_len:
+    if len(ev) < sum(trim) + chunk_len or len(ev) < min_length:
+        return None
+    else:
         begin = trim[0]
         end = None if trim[1] == 0 else -trim[1]
         return ev[begin : end]
