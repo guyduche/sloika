@@ -31,6 +31,16 @@ testRemap:
 	    strandTrain:=data/test_chunkify/identity/na12878_train.txt \
 	    strandValidate:=data/test_chunkify/identity/na12878_train.txt
 
+d:=/media/scratch/dnewman/results/rna_training/rnn_new_ev/
+.PHONY: remap2
+remap2:
+	${inDevEnv} THEANO_FLAGS=$${THEANO_FLAGS_FOR_ACCTEST} chunkify.py remap \
+	    data/test_chunkify/remap2/reads \
+	    remap_reads.hdf5 \
+	    ${d}sloika_train_v2/models/model_final.pkl \
+	    ${d}remap_reads/refseqs.fasta \
+	    --input_strand_list data/test_chunkify/remap2/strand_input_list.txt --overwrite
+
 niteration?=50000
 device?=gpu${gpu}
 model?=models/baseline_gru.py
