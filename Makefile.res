@@ -35,11 +35,11 @@ d:=/media/scratch/dnewman/results/rna_training/rnn_new_ev/
 .PHONY: remap2
 remap2:
 	${inDevEnv} THEANO_FLAGS=$${THEANO_FLAGS_FOR_ACCTEST} chunkify.py remap \
-	    reads \
+	    data/test_chunkify/remap2/reads \
 	    remap_reads.hdf5 \
 	    ${d}sloika_train_v2/models/model_final.pkl \
 	    ${d}remap_reads/refseqs.fasta \
-	    --input_strand_list strands_train.txt --overwrite
+	    --input_strand_list data/test_chunkify/remap2/strand_input_list.txt --overwrite
 
 niteration?=50000
 device?=gpu${gpu}
