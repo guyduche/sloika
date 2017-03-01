@@ -109,7 +109,12 @@ def saveModel(network, output, index):
 class Logger(object):
 
     def __init__(self, log_file_name, quiet=False):
-        self.fh = open(log_file_name, 'w', 0)
+        #
+        # Can't have unbuffered text I/O at the moment hence 'b' mode below.
+        # See currently open issue http://bugs.python.org/issue17404
+        #
+        self.fh = open(log_file_name, 'wb', 0)
+
         self.quiet = quiet
 
     def write(self, message):
@@ -139,7 +144,7 @@ if __name__ == '__main__':
         netmodule = imp.load_source('netmodule', args.model)
         network = netmodule.network(klen=klen, sd=args.sd)
     elif model_ext == '.pkl':
-        with open(args.model, 'r') as fh:
+        with open(args.model, 'rb') as fh:
             network = pickle.load(fh)
     else:
         log.write('* Model is neither python file nor model pickle\n')

@@ -22,7 +22,7 @@ parser.add_argument('model', action=FileExists, help='Model file to read from')
 
 if __name__ == "__main__":
     args = parser.parse_args()
-    with open(args.model, 'r') as fh:
+    with open(args.model, 'rb') as fh:
         model = pickle.load(fh)
 
     json_out = model.json(args.params)
