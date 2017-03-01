@@ -192,7 +192,7 @@ def chunk_remap_worker(fn, trim, min_prob, transducer, kmer_len, prior, slip, ch
     try:
         read_ref = references[sn]
     except:
-        sys.stderr.write('No reference found for {}.\n'.format(fn))
+        logger.debug('No reference found for {}'.format(fn))
         return None
 
     ev = trim_ends_and_filter(ev, trim, min_length, chunk_len)
