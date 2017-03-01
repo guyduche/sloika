@@ -117,6 +117,8 @@ def chunk_worker(fn, section, chunk_len, kmer_len, min_length, trim, use_scaled,
     # Import within worker to avoid initialising GPU in main thread
     import sloika.features
 
+    logger.debug('Processing file {}'.format(fn))
+
     try:
         with fast5.Reader(fn) as f5:
             ev, _ = f5.get_any_mapping_data(section)
@@ -126,7 +128,7 @@ def chunk_worker(fn, section, chunk_len, kmer_len, min_length, trim, use_scaled,
 
     ev = trim_ends_and_filter(ev, trim, min_length, chunk_len)
     if ev is None:
-        logger.debug('Read from {} was filtered out'.format(fn))
+        logger.debug('Read was filtered out')
         return None
 
     return chunkify(ev, chunk_len, kmer_len, use_scaled, normalisation)
@@ -177,6 +179,8 @@ def remap(read_ref, ev, min_prob, transducer, kmer_len, prior, slip):
 def chunk_remap_worker(fn, trim, min_prob, transducer, kmer_len, prior, slip, chunk_len, use_scaled,
                        normalisation, min_length):
 
+    logger.debug('Processing file {}'.format(fn))
+
     try:
         with fast5.Reader(fn) as f5:
             ev = f5.get_read()
@@ -193,7 +197,7 @@ def chunk_remap_worker(fn, trim, min_prob, transducer, kmer_len, prior, slip, ch
 
     ev = trim_ends_and_filter(ev, trim, min_length, chunk_len)
     if ev is None:
-        logger.debug('Read from {} was filtered out'.format(fn))
+        logger.debug('Read was filtered out')
         return None
 
     (score, ev, path, seq) = remap(read_ref, ev, min_prob, transducer, kmer_len, prior, slip)
