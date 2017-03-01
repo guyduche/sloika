@@ -74,7 +74,7 @@ checkout:
 
 .PHONY: cleanTmpEnv
 cleanTmpEnv:
-	source environment && rm -rf $${TMP_VIRTUALENV_DIR} && virtualenv $${TMP_VIRTUALENV_DIR}
+	source environment && rm -rf $${TMP_VIRTUALENV_DIR} && virtualenv -p python2 $${TMP_VIRTUALENV_DIR}
 	${inTmpEnv} pip install pip --upgrade
 
 .PHONY: cleanTmpEnvPy3
