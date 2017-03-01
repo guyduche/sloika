@@ -123,6 +123,7 @@ def chunk_worker(fn, section, chunk_len, kmer_len, min_length, trim, use_scaled,
         with fast5.Reader(fn) as f5:
             ev, _ = f5.get_any_mapping_data(section)
     except:
+        logger.debug('Failure reading events from {}'.format(fn))
         return None
 
     ev = trim_ends_and_filter(ev, trim, min_length, chunk_len)
@@ -185,7 +186,7 @@ def chunk_remap_worker(fn, trim, min_prob, transducer, kmer_len, prior, slip, ch
             ev = f5.get_read()
             sn = f5.filename_short
     except:
-        sys.stderr.write('Failure reading events from {}.\n'.format(fn))
+        logger.debug('Failure reading events from {}'.format(fn))
         return None
 
     try:
