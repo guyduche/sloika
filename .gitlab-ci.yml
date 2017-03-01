@@ -5,7 +5,6 @@
 image: git.oxfordnanolabs.local:4567/algorithm/sloika_docker:16.04-latest
 
 stages:
-    - style
     - build
     - test
     - release
@@ -63,7 +62,7 @@ acceptance_trusty:
         - make acceptanceTestFromScratch
 
 dev_env_and_style:
-    stage: style
+    stage: test
     script:
         - make cleanDevEnv
 
