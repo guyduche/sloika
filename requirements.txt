@@ -3,4 +3,4 @@ numpy >= 1.7.1
 Theano >= 0.8.2
 untangled >= 0.8.256
 biopython >= 1.63
-future >= 0.15.0
+future >= 0.15.2
