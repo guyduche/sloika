@@ -1,3 +1,9 @@
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
+from future import standard_library
+standard_library.install_aliases()
+from builtins import *
 import numpy as np
 from sloika.config import sloika_dtype
 from untangled.maths import studentise
@@ -8,7 +14,7 @@ def from_events(ev, tag='scaled_', normalise=True, nanonet=False):
 
     :param ev: A :class:`ndrecarray` with fields 'mean', 'stdv' and 'length'
     :param tag: Prefix of which fields to read
-    :param normalised: Perform normalisation (Studentisation) of features.
+    :param normalise: Perform normalisation (Studentisation) of features.
     :param nanonet: Use Nanonet-like features
 
     :returns: A :class:`ndarray` with studentised features

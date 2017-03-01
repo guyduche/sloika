@@ -1,4 +1,10 @@
 #!/usr/bin/env python
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
+from future import standard_library
+standard_library.install_aliases()
+from builtins import *
 import argparse
 import imp
 import os
@@ -7,23 +13,22 @@ import sys
 import theano as th
 import theano.tensor as T
 
-from untangled.cmdargs import (display_version_and_exit, FileExists,
-                               Positive)
+from untangled.cmdargs import (display_version_and_exit, FileExists, Positive)
 
-from sloika import __version__
+from sloika.version import __version__
 
 # This is here, not in main to allow documentation to be built
 parser = argparse.ArgumentParser(
     description='Train a simple transducer neural network',
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('--kmer', default=5, metavar='length', type=Positive(int),
-    help='Length of kmer')
+                    help='Length of kmer')
 parser.add_argument('--sd', default=0.5, metavar='value', type=Positive(float),
-    help='Standard deviation to initialise with')
+                    help='Standard deviation to initialise with')
 parser.add_argument('--version', nargs=0, action=display_version_and_exit,
-    metavar=__version__, help='Display version information.')
-parser.add_argument('model', metavar='file.py', action=FileExists,
-    help='File to read python model description from')
+                    metavar=__version__, help='Display version information.')
+parser.add_argument('model', action=FileExists,
+                    help='File to read python model description from')
 
 
 def wrap_network(network):
@@ -31,7 +36,7 @@ def wrap_network(network):
     labels = T.imatrix()
     post = network.run(x)
     loss = T.mean(th.map(T.nnet.categorical_crossentropy, sequences=[post, labels])[0])
-    ncorrect = T.sum(T.eq(T.argmax(post,  axis=2), labels))
+    ncorrect = T.sum(T.eq(T.argmax(post, axis=2), labels))
 
     fg = th.function([x, labels], [loss, ncorrect])
     return fg

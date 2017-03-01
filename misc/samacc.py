@@ -1,5 +1,10 @@
 #!/usr/bin/env python
 from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
+from future import standard_library
+standard_library.install_aliases()
+from builtins import *
 import argparse
 import numpy as np
 import pysam
@@ -10,11 +15,11 @@ parser = argparse.ArgumentParser(
     description='Output match statistics from SAM',
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('--coverage', metavar='proportion', default=0.8, type=proportion,
-    help='Minimum coverage')
+                    help='Minimum coverage')
 parser.add_argument('sam')
 
-STRAND = { 0 : '+',
-           16 : '-'}
+STRAND = {0 : '+',
+          16 : '-'}
 
 if __name__ == '__main__':
     args = parser.parse_args()

@@ -1,3 +1,9 @@
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
+from future import standard_library
+standard_library.install_aliases()
+from builtins import *
 import itertools
 import numpy as np
 
@@ -28,8 +34,8 @@ def decode_profile(post, trans=None, log=False, slip=0.0):
         trans = itertools.repeat(np.zeros(3))
     else:
         trans = np.copy(trans)
-        trans[:,1] -= _STEP_FACTOR
-        trans[:,2] -= _SKIP_FACTOR
+        trans[:, 1] -= _STEP_FACTOR
+        trans[:, 2] -= _SKIP_FACTOR
 
     log_slip = np.log(_ETA + slip)
 
@@ -37,10 +43,10 @@ def decode_profile(post, trans=None, log=False, slip=0.0):
     trans_iter = trans.__iter__()
     for ev in range(1, len(post)):
         # Forward Viterbi iteration
-        ev_trans = trans_iter.next()
+        ev_trans = next(trans_iter)
         # Stay
         score = pscore + ev_trans[0]
-        iscore = range(nstate)
+        iscore = list(range(nstate))
         # Slip
         scoreNew = np.amax(pscore) + log_slip
         iscoreNew = np.argmax(pscore)
@@ -50,25 +56,25 @@ def decode_profile(post, trans=None, log=False, slip=0.0):
         pscore = pscore.reshape((_NSTEP, -1))
         nrem = pscore.shape[1]
         scoreNew = np.repeat(np.amax(pscore, axis=0), _NSTEP) + ev_trans[1]
-        iscoreNew = np.repeat(nrem * np.argmax(pscore, axis=0) + range(nrem), _NSTEP)
+        iscoreNew = np.repeat(nrem * np.argmax(pscore, axis=0) + list(range(nrem)), _NSTEP)
         iscore = np.where(score > scoreNew, iscore, iscoreNew)
         score = np.fmax(score, scoreNew)
         # Skip
         pscore = pscore.reshape((_NSKIP, -1))
         nrem = pscore.shape[1]
         scoreNew = np.repeat(np.amax(pscore, axis=0), _NSKIP) + ev_trans[2]
-        iscoreNew = np.repeat(nrem * np.argmax(pscore, axis=0) + range(nrem), _NSKIP)
+        iscoreNew = np.repeat(nrem * np.argmax(pscore, axis=0) + list(range(nrem)), _NSKIP)
         iscore = np.where(score > scoreNew, iscore, iscoreNew)
         score = np.fmax(score, scoreNew)
         # Store
-        lpost[ev-1] = iscore
+        lpost[ev - 1] = iscore
         pscore = score + lpost[ev]
 
     state_seq = np.zeros(len(post), dtype=int)
     state_seq[-1] = np.argmax(pscore)
     for ev in range(len(post), 1, -1):
         # Viterbi backtrace
-        state_seq[ev-2] = int(lpost[ev-2][state_seq[ev-1]])
+        state_seq[ev - 2] = int(lpost[ev - 2][state_seq[ev - 1]])
 
     return np.amax(pscore), state_seq
 
@@ -100,18 +106,18 @@ def estimate_transitions(post, trans=None):
     res[:] = _ETA
 
     for ev in range(1, len(post)):
-        stay = np.sum(post[ev-1] * post[ev])
+        stay = np.sum(post[ev - 1] * post[ev])
         p = post[ev].reshape((-1, _NSTEP))
-        step = np.sum(post[ev-1] * np.tile(np.sum(p, axis=1), _NSTEP)) / _NSTEP
+        step = np.sum(post[ev - 1] * np.tile(np.sum(p, axis=1), _NSTEP)) / _NSTEP
         p = post[ev].reshape((-1, _NSKIP))
-        skip = np.sum(post[ev-1] * np.tile(np.sum(p, axis=1), _NSKIP)) / _NSKIP
-        res[ev-1] = [stay, step, skip]
+        skip = np.sum(post[ev - 1] * np.tile(np.sum(p, axis=1), _NSKIP)) / _NSKIP
+        res[ev - 1] = [stay, step, skip]
 
     if trans is None:
         trans = np.sum(res, axis=0)
         trans /= np.sum(trans)
 
     res *= trans
-    res /= np.sum(res, axis=1).reshape((-1,1))
+    res /= np.sum(res, axis=1).reshape((-1, 1))
 
     return res

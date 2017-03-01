@@ -1,13 +1,21 @@
 #!/bin/bash -ex
 
-export ROOT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-
 source environment
 
+if [ -z ${PY3+x} ]; then
+    VIRTUALENV_DIR="${DEV_VIRTUALENV_DIR}"
+else
+    VIRTUALENV_DIR="${DEV_VIRTUALENV_DIR_PY3}"
+fi
 
-mkdir -p ${SLOIKA_SITE_PACKAGES}
+source ${VIRTUALENV_DIR}/bin/activate
 
-pip install -r requirements.txt --trusted-host pypi.oxfordnanolabs.local \
-	-i https://pypi.oxfordnanolabs.local/simple/ 
+# need a version of pip that supports --trusted-host option
+pip install pip --upgrade
 
-python setup.py develop --prefix ${SLOIKA_DEV_DIR}
+pip install \
+    -r setup-dev-env.txt \
+    --trusted-host pypi.oxfordnanolabs.local \
+    --index-url https://pypi.oxfordnanolabs.local/simple/
+
+python setup.py develop

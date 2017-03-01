@@ -1,4 +1,10 @@
 #!/usr/bin/env python
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
+from future import standard_library
+standard_library.install_aliases()
+from builtins import *
 from Bio import SeqIO
 from collections import Counter, OrderedDict
 import math
@@ -15,7 +21,6 @@ for k in kmers:
     all_counts[k] = Counter()
 
 
-
 first = True
 for f in sys.argv[1:]:
     with open(f, 'r') as fh:
@@ -27,30 +32,29 @@ for f in sys.argv[1:]:
     comp = [seqrec.seq.count(b) for b in BASES]
     info['pGC'] = 100.0 * (comp[1] + comp[2]) / len(seqrec.seq)
 
-
     for k in kmers:
         nkmer = len(BASES) ** k
         sk = Counter(seq_to_kmers(str(seqrec.seq), k))
-        sk += Counter({ k : v for k, v in zip(reverse_complement_kmers(sk.keys()), sk.values())})
+        sk += Counter({k : v for k, v in zip(reverse_complement_kmers(list(sk.keys())), list(sk.values()))})
         info['missK' + str(k)] = nkmer - len(sk)
-        info['absrareK' + str(k)] = info['missK' + str(k)] + sum([ i < RARE for i in sk.values()])
+        info['absrareK' + str(k)] = info['missK' + str(k)] + sum([i < RARE for i in list(sk.values())])
         lowcount = math.ceil((0.1 * len(seqrec.seq)) / nkmer)
-        info['relrareK' + str(k)] = info['missK' + str(k)] + sum([ i < lowcount for i in sk.values()])
+        info['relrareK' + str(k)] = info['missK' + str(k)] + sum([i < lowcount for i in list(sk.values())])
 
         all_counts[k] += sk
 
     if first:
-        print ','.join(info.keys())
+        print(','.join(list(info.keys())))
         first = False
-    print ','.join(str(v) for v in info.values())
+    print(','.join(str(v) for v in list(info.values())))
 
-print '\n#Summary kmers'
-print 'kmer\tmissing\tabsrare\trelrare\tlowcount'
+print('\n#Summary kmers')
+print('kmer\tmissing\tabsrare\trelrare\tlowcount')
 for k in kmers:
     nkmer = len(BASES) ** k
     nkmer - len(sk)
     missing = nkmer - len(all_counts[k])
-    absrare = missing + sum([ i < RARE for i in all_counts[k].values()])
-    lowcount = math.ceil((0.1 * sum([i for i in all_counts[k].values()])) / nkmer)
-    relrare = missing + sum([ i < lowcount for i in all_counts[k].values()])
-    print k, missing, absrare, relrare
+    absrare = missing + sum([i < RARE for i in list(all_counts[k].values())])
+    lowcount = math.ceil((0.1 * sum([i for i in list(all_counts[k].values())])) / nkmer)
+    relrare = missing + sum([i < lowcount for i in list(all_counts[k].values())])
+    print(k, missing, absrare, relrare)

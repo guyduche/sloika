@@ -1,6 +1,12 @@
 #!/usr/bin/env python
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
+from future import standard_library
+standard_library.install_aliases()
+from builtins import *
 import argparse
-import cPickle
+import pickle
 import sys
 from untangled.cmdargs import FileExists
 from sloika.layers import Layer
@@ -9,17 +15,19 @@ from theano.sandbox.cuda.var import CudaNdarraySharedVariable
 import theano as th
 
 parser = argparse.ArgumentParser(
-    'Converts pickled sloika model between CPU and GPU (CUDA) versions.', epilog='If you encounter problems please contact joe.harvey@nanoporetech.com')
-parser.add_argument('--target', default='swap', 
-    choices=('cpu', 'gpu', 'swap'), help='Target device (cpu, gpu or swap)')
+    'Converts pickled sloika model between CPU and GPU (CUDA) versions.',
+    epilog='If you encounter problems please contact joe.harvey@nanoporetech.com')
+parser.add_argument('--target', default='swap',
+                    choices=('cpu', 'gpu', 'swap'), help='Target device (cpu, gpu or swap)')
 parser.add_argument('model', action=FileExists,
-    help='Pickled sloika model to convert')
+                    help='Pickled sloika model to convert')
 parser.add_argument('output', help='Output file to write to')
 
 
 def device(obj, name):
     return ('cpu' if isinstance(getattr(obj, name), TensorSharedVariable)
-                  else 'gpu')
+            else 'gpu')
+
 
 def get_var_names(obj, depth=0, max_depth=3):
     """Get names and parent objects of all theano shared variables in obj
@@ -34,7 +42,7 @@ def get_var_names(obj, depth=0, max_depth=3):
         theano shared variable on the specified device
     """
     shared_vars = []
-    for name, value in vars(obj).items():
+    for name, value in list(vars(obj).items()):
         if isinstance(value, TensorSharedVariable):
             shared_vars.append((obj, name, device(obj, name)))
         elif isinstance(value, CudaNdarraySharedVariable):
@@ -47,7 +55,7 @@ def get_var_names(obj, depth=0, max_depth=3):
             if depth < max_depth:
                 for item in value:
                     shared_vars.extend(get_var_names(item, depth + 1,
-                                                    max_depth=max_depth))
+                                                     max_depth=max_depth))
     return shared_vars
 
 SWAP_WARNING = """
@@ -71,8 +79,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     sys.stdout.write('\nLoading pickled model:  {}\n'.format(args.model))
-    with open(args.model, 'r') as fi:
-        net = cPickle.load(fi)
+    with open(args.model, 'rb') as fi:
+        net = pickle.load(fi)
 
     shared_vars = get_var_names(net)
 
@@ -80,11 +88,12 @@ if __name__ == '__main__':
         sys.stderr.write("\nWARNING: Found no shared variables. Nothing to do.\n")
         exit(0)
 
-    objs, names, devices = zip(*shared_vars)
+    objs, names, devices = list(zip(*shared_vars))
 
     if args.target == 'swap':
-        swap = lambda s: ('cpu' if s == 'gpu' else 'gpu')
-        targets = map(swap, devices)
+        def swap(s):
+            return ('cpu' if s == 'gpu' else 'gpu')
+        targets = list(map(swap, devices))
         if len(set(targets)) > 1:
             sys.stderr.write(SWAP_WARNING.format(list(set(targets))))
     elif args.target == 'cpu':
@@ -105,5 +114,5 @@ if __name__ == '__main__':
             raise
 
     sys.stdout.write('\nWriting new pickled model:  {}\n'.format(args.output))
-    with open(args.output, 'w') as fo:
-        cPickle.dump(net, fo)
+    with open(args.output, 'wb') as fo:
+        pickle.dump(net, fo)

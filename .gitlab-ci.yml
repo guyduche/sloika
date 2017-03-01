@@ -1,52 +1,88 @@
+#
 #  Yaml CI config for Gitlab See. http://docs.gitlab.com/ce/ci/yaml/README.html
-#  Machine image on which to build, test etc
-# TODO(semen): any chance we can exercise 16.04 image here?
-image: docker-registry.oxfordnanolabs.local:5000/ont-base-ubuntu:14.04
+#
+
+image: git.oxfordnanolabs.local:4567/algorithm/sloika_docker:16.04-latest
 
 stages:
+    - build
     - test
     - release
 
-# TODO(semen): move these installation steps into a script so that user can run them on a clean box
 before_script:
-    #  Addition setup for machine image.  Here install a few packages
-    - apt-get update
-    - apt-get install -y python-numpy python-h5py python-scipy python-docutils 
-    - apt-get install -y cython python-pip python-all-dev python-setuptools ont-ca-certs
-    - pip install pip --upgrade
+    - make deps
+    - make checkout
 
-# TODO(semen): not all dependencies were captured by setup.py and I see some of these are maintained here. make requirements.txt the source of authority on that and call a setup script here that will use it
-do_testing:
+wheel:
+    stage: build
+    script:
+        - make wheel
+    artifacts:
+        paths:
+            - dist/*.whl
+
+wheel_py3:
+    stage: build
+    script:
+        - make wheelPy3
+    artifacts:
+        paths:
+            - dist/*.whl
+
+unit_xenial:
     stage: test
     script:
-        #  Simple test of Python project.  Could be e.g. `make test`
-        - /usr/local/bin/pip install --trusted-host=pypi.oxfordnanolabs.local --extra-index-url=https://pypi.oxfordnanolabs.local/simple untangled
-        - /usr/local/bin/pip install Theano
-        - python setup.py test
-    except:
-        #  Don't test tags (just branches)
-        - tags
+        - make unitTestFromScratch
 
-#
-# TODO(semen): there's a general problem with this build script: we should build the tarball and upload it to the server and then test target should pick it up and exercise it, rather than the other way around. If the tests pass then the tarball should be marked as releasable. Otherwise it is easy to end up in the state we are in now: the deployable that do_release scp'es is not installable.
-#
-
-do_release:
-    stage: release
+acceptance_xenial:
+    stage: test
     script:
-        #  Build project
-        - python setup.py sdist
-        #  Going to push project via ssh.
-        #  PYPI_KEY and PYPI_HOST should set up as project variables on Gitlab
-        #  PYPI_KEY is private key produced by ssh-keygen
+        - make acceptanceTestFromScratch
+
+unit_xenial_py3:
+    stage: test
+    script:
+        - make unitTestFromScratchPy3
+
+acceptance_xenial_py3:
+    stage: test
+    script:
+        - make acceptanceTestFromScratchPy3
+
+unit_trusty:
+    image: git.oxfordnanolabs.local:4567/algorithm/sloika_docker:14.04-latest
+    stage: test
+    script:
+        - make unitTestFromScratch
+
+acceptance_trusty:
+    image: git.oxfordnanolabs.local:4567/algorithm/sloika_docker:14.04-latest
+    stage: test
+    script:
+        - make acceptanceTestFromScratch
+
+dev_env_and_style:
+    stage: test
+    script:
+        - make cleanDevEnv
+
+pip_install_dot:
+    stage: test
+    before_script:
+        - apt-get install -y virtualenv python2.7 python-dev python3-dev
+        - virtualenv --python=python2.7 hoho
+        - source hoho/bin/activate && pip install numpy cython future
+    script:
+        - source hoho/bin/activate && pip install . --trusted-host pypi.oxfordnanolabs.local --index-url https://pypi.oxfordnanolabs.local/simple/
+
+wheel_upload:
+    stage: release
+    before_script:
         - apt-get install -y openssh-client
         - eval $(ssh-agent -s)
+    script:
         - ssh-add <(set +x; echo "$PYPI_KEY")
-        - scp -o StrictHostKeyChecking=no dist/* gitlab-ci-pypi@${PYPI_HOST}:/opt/ont-pypi/site-packages/
+        - scp -v -o StrictHostKeyChecking=no dist/* gitlab-ci-pypi@${PYPI_HOST}:/opt/ont-pypi/site-packages/
     only:
-        #  Only do a release of tags marked explicit as release (match this regular expression)
-        - /^release_.*$/
-    except:
-        #  Do look for tags in branches
-        - branches
-
+        - release@algorithm/sloika
+        - master@algorithm/sloika
