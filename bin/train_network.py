@@ -139,7 +139,7 @@ if __name__ == '__main__':
         netmodule = imp.load_source('netmodule', args.model)
         network = netmodule.network(klen=klen, sd=args.sd)
     elif model_ext == '.pkl':
-        with open(args.model, 'r') as fh:
+        with open(args.model, 'rb') as fh:
             network = pickle.load(fh)
     else:
         log.write('* Model is neither python file nor model pickle\n')

@@ -62,7 +62,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     sys.stdout.write('* Loading network from {}\n'.format(args.model))
-    with open(args.model, 'r') as fh:
+    with open(args.model, 'rb') as fh:
         network = pickle.load(fh)
     fv = wrap_network(network)
 

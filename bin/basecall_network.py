@@ -61,7 +61,7 @@ _ETA = 1e-10
 def init_worker(model):
     import pickle
     global calc_post
-    with open(model, 'r') as fh:
+    with open(model, 'rb') as fh:
         calc_post = pickle.load(fh)
 
 
