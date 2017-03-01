@@ -109,7 +109,12 @@ def saveModel(network, output, index):
 class Logger(object):
 
     def __init__(self, log_file_name, quiet=False):
-        self.fh = open(log_file_name, 'w', 0)
+        #
+        # Can't have unbuffered text I/O at the moment hence 'b' mode below.
+        # See currently open issue http://bugs.python.org/issue17404
+        #
+        self.fh = open(log_file_name, 'wb', 0)
+
         self.quiet = quiet
 
     def write(self, message):
