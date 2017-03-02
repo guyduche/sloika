@@ -118,10 +118,14 @@ class Logger(object):
         self.quiet = quiet
 
     def write(self, message):
-        self.fh.write(message)
         if not self.quiet:
             sys.stdout.write(message)
             sys.stdout.flush()
+        try:
+            self.fh.write(message)
+        except IOError as e:
+            print("Failed to write to log\n Message: {}\n Error: {}".format(message, repr(e)))
+
 
 
 if __name__ == '__main__':
