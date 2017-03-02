@@ -40,6 +40,8 @@ def chunkify_with_remap_main(argv, parser):
                         help='strand summary output file')
     parser.add_argument('--prior', nargs=2, metavar=('start', 'end'), default=(25.0, 25.0),
                         type=Maybe(NonNegative(float)), help='Mean of start and end positions')
+    parser.add_argument('--segmentation', default=fast5.__default_segmentation_analysis__,
+                        metavar='location', help='Location of segmentation information')
     parser.add_argument('--slip', default=5.0, type=Maybe(NonNegative(float)),
                         help='Slip penalty')
     parser.add_argument('--transducer', default=True, action=AutoBool,
@@ -65,7 +67,8 @@ def chunkify_with_remap_main(argv, parser):
     print('* Processing data using', args.jobs, 'threads')
 
     kwarg_names = ['trim', 'min_prob', 'transducer', 'kmer_len', 'min_length',
-                   'prior', 'slip', 'chunk_len', 'use_scaled', 'normalisation']
+                   'prior', 'slip', 'chunk_len', 'use_scaled', 'normalisation',
+                   'section', 'segmentation']
     i = 0
     compiled_file = helpers.compile_model(args.model, args.compile)
     output_strand_list_entries = []
