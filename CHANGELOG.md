@@ -1,3 +1,18 @@
+Release 1.1 brown bag 2
+=======================
+Updates changelog for bb1 and bb2
+
+Release 1.1 brown bag 1
+=======================
+Addresses the following issues:
+* Remapping doesn't appear to work with 2d reads
+    https://git.oxfordnanolabs.local/algorithm/sloika/issues/40
+* Can't change segmentation in chunkify remap
+    https://git.oxfordnanolabs.local/algorithm/sloika/issues/41
+* Work around Isilon problems  
+    https://git.oxfordnanolabs.local/algorithm/sloika/issues/42
+
+
 Release 1.1
 ===========
 
