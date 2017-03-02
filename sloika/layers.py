@@ -433,13 +433,9 @@ class Convolution(Layer):
                            ("size", self.size),
                            ("winlen", self.winlen),
                            ("stride", self.stride),
-<<<<<<< e6be2b5590044dd8bd0c92f98fbc9de0b677eb6e
-                           ("activation", self.fun.__name__)])
-=======
                            ("padding_mode", self.padding_mode),
                            ("padding", self.padding),
                            ("activation", self.fun.__name__)])
->>>>>>> Added support for different padding modes
         if params:
             res['params'] = OrderedDict([("W", nn._extract(self.W)),
                                          ("b", nn._extract(self.b))])
