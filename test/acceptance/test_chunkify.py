@@ -92,9 +92,9 @@ class AcceptanceTest(unittest.TestCase):
         os.remove(output_file_name)
 
     @parameterized.expand([
-        [[], (33, 500, 4), -2.70142698288, 12.7569065094, -0.238316237926],
-        [["--normalisation", "per-read"], (33, 500, 4), -2.70142698288, 12.7569065094, -0.238316237926],
-        [["--normalisation", "per-chunk"], (33, 500, 4), -2.85386562347, 11.4694499969, -0.237461671233],
+        [[], (33, 500, 4), -2.7013657093, 12.7536773682, -0.238673046231],
+        [["--normalisation", "per-read"], (33, 500, 4), -2.7013657093, 12.7536773682, -0.238673046231],
+        [["--normalisation", "per-chunk"], (33, 500, 4), -2.88131427765, 11.0136013031, -0.238405257463]
     ])
     def test_chunkify_with_remap_with_normalisation(self, options, chunks_shape, min_value, max_value, median_value):
         strand_input_list = os.path.join(self.data_dir, "remap", "strand_output_list.txt")
@@ -177,11 +177,11 @@ class AcceptanceTest(unittest.TestCase):
         self.assertTrue(not os.path.exists(strand_output_list))
 
     @parameterized.expand([
-        [500, 545, 25, 20, 0],
-        [501, 545, 25, 20, 1],
-        [500, 546, 25, 20, 1],
-        [500, 545, 26, 20, 1],
-        [500, 545, 25, 21, 1],
+        [495, 540, 25, 20, 0],
+        [496, 540, 25, 20, 1],
+        [495, 541, 25, 20, 1],
+        [495, 540, 26, 20, 1],
+        [495, 540, 25, 21, 1],
     ])
     def test_chunkify_with_remap_no_results_due_to_length(self, chunk_len, min_length, trim_left, trim_right,
                                                           return_code):
