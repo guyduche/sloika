@@ -127,7 +127,6 @@ class Logger(object):
             print("Failed to write to log\n Message: {}\n Error: {}".format(message, repr(e)))
 
 
-
 if __name__ == '__main__':
     args = parser.parse_args()
     np.random.seed(args.seed)

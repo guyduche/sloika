@@ -41,7 +41,7 @@ def chunkify_with_remap_main(argv, parser):
     parser.add_argument('--prior', nargs=2, metavar=('start', 'end'), default=(25.0, 25.0),
                         type=Maybe(NonNegative(float)), help='Mean of start and end positions')
     parser.add_argument('--segmentation', default=fast5.__default_segmentation_analysis__,
-                    metavar='location', help='Location of segmentation information')
+                        metavar='location', help='Location of segmentation information')
     parser.add_argument('--slip', default=5.0, type=Maybe(NonNegative(float)),
                         help='Slip penalty')
     parser.add_argument('--transducer', default=True, action=AutoBool,
