@@ -115,9 +115,9 @@ class AcceptanceTest(unittest.TestCase):
         with tempfile.NamedTemporaryFile(suffix=".hdf5", delete=False) as fh:
             output_file_name = fh.name
 
-        cmd = [self.script, "remap", "--trim", "200", "200", "--chunk_len", "500", "--kmer_len", "5",
-               "--section", "template", "--input_strand_list", strand_input_list,
-               "--output_strand_list",
+        cmd = [self.script, "remap", "--segmentation", "Segment_Linear", "--trim", "200", "200",
+               "--chunk_len", "500", "--kmer_len", "5", "--section", "template",
+               "--input_strand_list", strand_input_list, "--output_strand_list",
                strand_output_list, reads_dir, output_file_name, model_file, reference_file] + options
 
         run_cmd(self, cmd).return_code(1)
@@ -163,9 +163,9 @@ class AcceptanceTest(unittest.TestCase):
         with tempfile.NamedTemporaryFile(suffix=".hdf5", delete=False) as fh:
             output_file_name = fh.name
 
-        cmd = [self.script, "remap", "--trim", "200", "200", "--chunk_len", "500", "--kmer_len", "5",
-               "--section", "template", "--input_strand_list", strand_input_list,
-               "--output_strand_list", strand_output_list,
+        cmd = [self.script, "remap", "--segmentation", "Segment_Linear", "--trim", "200", "200",
+               "--chunk_len", "500", "--kmer_len", "5", "--section", "template",
+               "--input_strand_list", strand_input_list, "--output_strand_list", strand_output_list,
                reads_dir, output_file_name, model_file, reference_file]
 
         os.remove(output_file_name)
@@ -203,7 +203,8 @@ class AcceptanceTest(unittest.TestCase):
         with tempfile.NamedTemporaryFile(suffix=".hdf5", delete=False) as fh:
             output_file_name = fh.name
 
-        cmd = [self.script, "remap", "--trim", str(trim_left), str(trim_right), "--chunk_len", str(chunk_len),
+        cmd = [self.script, "remap", "--segmentation", "Segment_Linear",
+               "--trim", str(trim_left), str(trim_right), "--chunk_len", str(chunk_len),
                "--kmer_len", "5", "--section", "template", "--input_strand_list", strand_input_list,
                "--output_strand_list", strand_output_list, "--min_length", str(min_length),
                reads_dir, output_file_name, model_file, reference_file]
