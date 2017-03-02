@@ -118,11 +118,11 @@ class Logger(object):
         self.quiet = quiet
 
     def write(self, message):
+        if not self.quiet:
+            sys.stdout.write(message)
+            sys.stdout.flush()
         try:
             self.fh.write(message)
-            if not self.quiet:
-                sys.stdout.write(message)
-                sys.stdout.flush()
         except IOError as e:
             print("IOError possibly Isilon? Continuing regardless!\n Message: {}\n Error: {}").format(message, e)
 
