@@ -384,7 +384,7 @@ class Convolution(Layer):
     """1D convolution over the first dimension
 
     Takes input of shape [time, batch, features] and produces output of shape
-    [ceil(time / stride), batch, features]
+    [ceil((time + padding) / stride), batch, features]
 
     :param insize: number of features on input
     :param size: number of output features
