@@ -10,9 +10,8 @@ import theano as th
 import theano.tensor as T
 import numpy as np
 
-from sloika import activation
+from sloika import activation, conv
 from sloika.config import sloika_dtype
-from sloika.conv import conv_same_1d, pool_same_1d
 from sloika.variables import NBASE, nkmer
 from functools import reduce
 from future.utils import with_metaclass
@@ -394,16 +393,21 @@ class Convolution(Layer):
     :param init: function to initialise tensors with
     :param has_bias: whether layer has bias
     :param fun: the activation function
+    :param padding_mode: str, int or (int, int)
+        Controls the padding applied to the input. See conv.calculate_padding
+        for available modes. Default: 'same'
     """
 
     def __init__(self, insize, size, winlen, stride=1, init=zeros,
-                 has_bias=False, fun=activation.tanh):
+                 has_bias=False, fun=activation.tanh, padding_mode='same'):
         self._insize = insize
         self._size = size
         self.winlen = winlen
         self.stride = stride
         self.fun = fun
         self.has_bias = has_bias
+        self.padding_mode = padding_mode
+        self.padding = conv.calculate_padding(padding_mode, winlen)
 
         # parameters
         fanin = insize * winlen
@@ -429,7 +433,13 @@ class Convolution(Layer):
                            ("size", self.size),
                            ("winlen", self.winlen),
                            ("stride", self.stride),
+<<<<<<< e6be2b5590044dd8bd0c92f98fbc9de0b677eb6e
                            ("activation", self.fun.__name__)])
+=======
+                           ("padding_mode", self.padding_mode),
+                           ("padding", self.padding),
+                           ("activation", self.fun.__name__)])
+>>>>>>> Added support for different padding modes
         if params:
             res['params'] = OrderedDict([("W", nn._extract(self.W)),
                                          ("b", nn._extract(self.b))])
@@ -443,7 +453,8 @@ class Convolution(Layer):
             self.b.set_value(values['b'])
 
     def run(self, inMat):
-        return self.fun(conv_same_1d(inMat, self.W, self.stride) + self.b)
+        c = conv.conv_1d(inMat, self.W, self.stride, self.padding) + self.b
+        return self.fun(c)
 
 
 class MaxPool(Layer):
@@ -453,13 +464,18 @@ class MaxPool(Layer):
     :param pool_size: number of elements in each pool
     :param stride: spacing between adjacent pools
     :param fun: activation function for the layer
+    :param padding_mode: str, int or (int, int)
+        Controls the padding applied to the input. See conv.calculate_padding
+        for available modes. Default: 'same'
     """
 
-    def __init__(self, insize, pool_size, stride, fun=activation.linear):
+    def __init__(self, insize, pool_size, stride, fun=activation.linear, padding_mode='same'):
         self._insize = insize
         self.pool_size = pool_size
         self.stride = stride
         self.fun = fun
+        self.padding_mode = padding_mode
+        self.padding = conv.calculate_padding(padding_mode, pool_size)
 
     @property
     def insize(self):
@@ -476,13 +492,16 @@ class MaxPool(Layer):
         return OrderedDict([("type", "max_pool"),
                             ("pool_size", self.pool_size),
                             ("stride", self.stride),
+                            ("padding_mode", self.padding_mode),
+                            ("padding", self.padding),
                             ("activation", self.fun.__name__)])
 
     def set_params(self, values):
         pass
 
     def run(self, inMat):
-        return self.fun(pool_same_1d(inMat, self.pool_size, self.stride))
+        p = conv.pool_1d(inMat, self.pool_size, self.stride, self.padding)
+        return self.fun(p)
 
 
 class Recurrent(RNN):
