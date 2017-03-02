@@ -124,7 +124,7 @@ class Logger(object):
         try:
             self.fh.write(message)
         except IOError as e:
-            print("IOError possibly Isilon? Continuing regardless!\n Message: {}\n Error: {}").format(message, e)
+            print("Failed to write to log\n Message: {}\n Error: {}".format(message, repr(e)))
 
 
 
