@@ -133,6 +133,17 @@ def prepare_raw(args, fn):
 def basecall(args, fn):
     from sloika import decode, olddecode
 
+    if args.command == "raw":
+        inMat = prepare_raw(args, fn)
+    elif args.command = "events":
+        inMat = prepare_events(args, fn)
+    else:
+        # We should never reach this line, but just in case...
+        raise NotImplementedError("Command '{}' not understood".format(args.command))
+    if inMat is None:
+        sys.stderr.write("Failed to get {} from file {}. Skipping.\n".format(args.datatype, fn))
+        return None
+
     post = calc_post(inMat)
     assert post.shape[2] == nstate(args.kmer, transducer=args.transducer, bad_state=args.bad)
     post = decode.prepare_post(post, min_prob=args.min_prob,
