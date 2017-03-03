@@ -40,21 +40,25 @@ parser.add_argument('--sleep', metavar='seconds', default=30, type=NonNegative(i
 parser.add_argument('database', action=FileExists, help='Database.db file')
 
 
-def is_gitdir(path='.'):
-    return subprocess.call(['git', '-C', path, 'status'], stderr=subprocess.STDOUT,
-                           stdout=open(os.devnull, 'w')) == 0
+def is_git_work_tree(path='.'):
+    try:
+        cmd = 'cd {} && git rev-parse --is-inside-work-tree'.format(path)
+        res = subprocess.check_output(cmd, shell=False).rstrip()
+    except:
+        res = 'false'
+
+    return True if res == 'true' else False
 
 
 def get_git_commit(gitdir, porcelain=False):
     if porcelain:
-        is_clean = subprocess.check_output('cd {} && git status --untracked-files=no --porcelain'.format(gitdir),
-                                          shell=True)
+        cmd = 'cd {} && git status --untracked-files=no --porcelain'.format(gitdir)
+        is_clean = subprocess.check_output(cmd, shell=True)
         if is_clean != '':
             return None
 
-    return subprocess.check_output(
-        'cd {} && git log --pretty=format:"%H" -1'.format(gitdir), shell=True
-    ).rstrip()
+    cmd2 = 'cd {} && git log --pretty=format:"%H" -1'.format(gitdir)
+    return subprocess.check_output(cmd2, shell=True).rstrip()
 
 
 def create_jobs(dbname, sleep=30, limit=None):
@@ -183,8 +187,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     sloika_gitdir = os.path.dirname(os.path.dirname(sloika.version.__file__))
-    if not is_gitdir(sloika_gitdir):
-        print("Sloika dir {} is not a git repository".format(sloika_gitdir))
+    if not is_git_work_tree(sloika_gitdir):
+        print("Sloika dir {} is not in a git work tree. Required to determine commit.".format(sloika_gitdir))
         exit(1)
     print("Running Sloika {} from {}".format(sloika.version.__version__, sloika_gitdir))
 
