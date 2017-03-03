@@ -11,7 +11,10 @@ import multiprocessing
 import os
 import sqlite3
 import subprocess
+import tempfile
 import time
+
+import sloika.version
 from untangled.cmdargs import FileExists, Maybe, NonNegative, Positive
 
 clargs = None
@@ -22,7 +25,6 @@ _SUCCESS = 2
 _FAILURE = 3
 _SUSPEND = 4
 
-sloika_gitdir = os.path.expanduser(os.path.join('~', 'git', 'sloika'))
 
 parser = argparse.ArgumentParser(
     description='server for model training',
@@ -38,10 +40,26 @@ parser.add_argument('--sleep', metavar='seconds', default=30, type=NonNegative(i
 parser.add_argument('database', action=FileExists, help='Database.db file')
 
 
-def get_git_commit(gitdir):
-    return subprocess.check_output(
-        'cd {} && git log --pretty=format:"%H" -1'.format(gitdir), shell=True
-    ).rstrip()
+def is_git_work_tree(path='.'):
+    try:
+        cmd = 'cd {} && git rev-parse --is-inside-work-tree'.format(path)
+        res = subprocess.check_output(cmd, shell=False).rstrip()
+    except:
+        res = 'false'
+
+    return True if res == 'true' else False
+
+
+def get_git_commit(gitdir, porcelain=False):
+    suffix = ''
+    if porcelain:
+        cmd = 'cd {} && git status --porcelain'.format(gitdir)
+        is_clean = subprocess.check_output(cmd, shell=True)
+        if is_clean != '':
+            suffix = '-dirty'
+
+    cmd2 = 'cd {} && git log --pretty=format:"%H" -1'.format(gitdir)
+    return subprocess.check_output(cmd2, shell=True).rstrip() + suffix
 
 
 def create_jobs(dbname, sleep=30, limit=None):
@@ -104,12 +122,16 @@ def run_job(args):
          )
     env['THEANO_FLAGS'] = t.format(gpu, pmem)
 
+    outdir, outpref = os.path.split(args["output_prefix"])
+    output_directory = tempfile.mkdtemp(prefix=outpref + '_', dir=outdir)
+
     # arglist for training
     arglist = [os.path.join(sloika_gitdir, "bin/train_network.py"),
                "--bad",
                "--quiet",
+               "--overwrite",
                args["model"],
-               args["output_directory"],
+               output_directory,
                args["training_data"]]
     if args["training_parameters"] is not None:
         arglist += args["training_parameters"].split()
@@ -118,13 +140,20 @@ def run_job(args):
     else:
         arglist.append("--no-transducer")
 
+    commit = get_git_commit(sloika_gitdir, porcelain=True)
+    if commit is None:
+        commit = 'unclean'
+
     with sqlite3.connect(clargs.database) as conn:
         # Update database
-        commit = get_git_commit(sloika_gitdir)
         c = conn.cursor()
-        c.execute('update runs set sloika_commit = ? where runid = ?',
-                  (commit, args['runid']))
+        c.execute("update runs set sloika_commit = ?, "
+                  "training_start = datetime('now'), "
+                  "output_directory = ? "
+                  "where runid = ?",
+                  (commit, output_directory, args['runid']))
 
+    print('Executing on GPU {}:\n\t'.format(gpu) + ' '.join(arglist))
     proc = subprocess.Popen(arglist, env=env)
     proc.wait()
     returncode = proc.returncode
@@ -132,12 +161,12 @@ def run_job(args):
     status = _SUCCESS if returncode == 0 else _FAILURE
     with sqlite3.connect(clargs.database) as conn:
         c = conn.cursor()
-        c.execute('update runs set status = ? where runid = ?',
+        c.execute("update runs set status = ?, training_end = datetime('now') where runid = ?",
                   (status, args['runid']))
 
     if returncode == 0 and args["validation_data"] is not None:
         # arglist for validation
-        final_model = os.path.join(args["output_directory"], "model_final.pkl")
+        final_model = os.path.join(output_directory, "model_final.pkl")
         arglist = [os.path.join(sloika_gitdir, "bin/validate_network.py"),
                    "--bad",
                    final_model,
@@ -148,7 +177,7 @@ def run_job(args):
         else:
             arglist.append("--no-transducer")
 
-        with open(os.path.join(args["output_directory"], "model_final.validate"), "w") as fh:
+        with open(os.path.join(output_directory, "model_final.validate"), "w") as fh:
             proc = subprocess.Popen(arglist, env=env, stdout=fh)
             proc.wait()
 
@@ -157,6 +186,12 @@ def run_job(args):
 
 if __name__ == '__main__':
     args = parser.parse_args()
+
+    sloika_gitdir = os.path.dirname(os.path.dirname(sloika.version.__file__))
+    if not is_git_work_tree(sloika_gitdir):
+        print("Sloika dir {} is not in a git work tree. Required to determine commit.".format(sloika_gitdir))
+        exit(1)
+    print("Running Sloika {} from {}".format(sloika.version.__version__, sloika_gitdir))
 
     jobs = create_jobs(args.database, sleep=args.sleep, limit=args.limit)
     pool = multiprocessing.Pool(args.jobs, initializer=_set_init_args, initargs=[args])

@@ -52,6 +52,7 @@ parser.add_argument('--min_prob', default=0.0, metavar='p', type=proportion,
                     help='Minimum probability allowed for training')
 parser.add_argument('--niteration', metavar='batches', type=Positive(int), default=50000,
                     help='Maximum number of batches to train for')
+parser.add_argument('--overwrite', default=False, action=AutoBool, help='Overwrite output directory')
 parser.add_argument('--quiet', default=False, action=AutoBool,
                     help="Don't print progess information to stdout")
 parser.add_argument('--reweight', metavar='group', default='weights', type=Maybe(str),
@@ -68,7 +69,7 @@ parser.add_argument('--version', nargs=0, action=display_version_and_exit, metav
                     help='Display version information.')
 parser.add_argument('model', action=FileExists,
                     help='File to read python model description from')
-parser.add_argument('output', action=FileAbsent, help='Prefix for output files')
+parser.add_argument('output', help='Prefix for output files')
 parser.add_argument('input', action=FileExists,
                     help='HDF5 file containing chunks')
 
@@ -101,8 +102,13 @@ def wrap_network(network, min_prob=0.0, l2=0.0, drop=0):
     return fg
 
 
-def saveModel(network, output, index):
-    with open(os.path.join(output, 'model_checkpoint_{:05d}.pkl'.format(index)), 'wb') as fh:
+def save_model(network, output, index=None):
+    if index is not None:
+        model_file = 'model_checkpoint_{:05d}.pkl'.format(index)
+    else:
+        model_file = 'model_final.pkl'
+
+    with open(os.path.join(output, model_file), 'wb') as fh:
         pickle.dump(network, fh, protocol=pickle.HIGHEST_PROTOCOL)
 
 
@@ -131,7 +137,15 @@ if __name__ == '__main__':
     args = parser.parse_args()
     np.random.seed(args.seed)
 
-    os.mkdir(args.output)
+    if not os.path.exists(args.output):
+        os.mkdir(args.output)
+    elif not args.overwrite:
+        log.write('Error: Output directory {} exists but --overwrite is false\n'.format(args.output))
+        exit(1)
+    if not os.path.isdir(args.output):
+        log.write('Error: Output location {} is not directory\n'.format(args.output))
+        exit(1)
+
     copyfile(args.model, os.path.join(args.output, 'model.py'))
 
     log = Logger(os.path.join(args.output, 'model.log'), args.quiet)
@@ -208,7 +222,7 @@ if __name__ == '__main__':
     lrfactor = 0.0 if args.lrdecay is None else (1.0 / args.lrdecay)
 
     log.write('* Dumping initial model\n')
-    saveModel(network, args.output, 0)
+    save_model(network, args.output, 0)
 
     t0 = time.time()
     log.write('* Training\n')
@@ -236,7 +250,7 @@ if __name__ == '__main__':
         wacc = 1.0 + SMOOTH * wacc
 
         if (i + 1) % args.save_every == 0:
-            saveModel(network, args.output, (i + 1) // args.save_every)
+            save_model(network, args.output, (i + 1) // args.save_every)
             log.write('C')
         else:
             log.write('.')
@@ -249,5 +263,4 @@ if __name__ == '__main__':
             total_ev = 0
             t0 = tn
 
-    with open(os.path.join(args.output, 'model_final.pkl'), 'wb') as fh:
-        pickle.dump(network, fh, protocol=pickle.HIGHEST_PROTOCOL)
+    save_model(network, args.output)
