@@ -211,8 +211,7 @@ if __name__ == '__main__':
         nevents += nev
     dt = time.time() - t0
     t = 'Called {} bases in {:.1f} s ({:.1f} bases/s or {:.1f} {}/s)\n'
-    sys.stderr.write(t.format(nbases, dt, nbases /
-                              dt, nevents / dt, args.datatype))
+    sys.stderr.write(t.format(nbases, dt, nbases / dt, nevents / dt, args.datatype))
 
     if compiled_file != args.compile:
         os.remove(compiled_file)
