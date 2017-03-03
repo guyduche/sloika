@@ -11,17 +11,17 @@ Addresses the following issues:
     https://git.oxfordnanolabs.local/algorithm/sloika/issues/40
 * Can't change segmentation in chunkify remap
     https://git.oxfordnanolabs.local/algorithm/sloika/issues/41
-* Work around Isilon problems  
+* Work around Isilon problems
     https://git.oxfordnanolabs.local/algorithm/sloika/issues/42
 
 
 Release 1.1
 ===========
 
-* Activation functions have been separated into their own module and many new functions have been added.  
+* Activation functions have been separated into their own module and many new functions have been added.
     See https://wiki/display/~tmassingham/2016/10/17/Activation+functions
     Note: this rearrangement breaks compatibility with older model pickle files.
-* Refactoring of `NBASE` constant.  
+* Refactoring of `NBASE` constant.
     Now a single source of responsibility `sloika/variables.py`.
     Models importing `_NBASE` from `sloika/module_tools.py` should now import `NBASE` instead.
 * Default for training and basecalling are transducer based models.
@@ -32,16 +32,16 @@ Release 1.1
   * New recurrent unit types have been added.
   * Detailed tests to ensure recurrent layers work.
   * Type of gate function is now an option on layer initialisation.
-* Pekarnya server for scheduling model training jobs.  
+* Pekarnya server for scheduling model training jobs.
     https://wiki/display/RES/Pekarnya
 * Considerable work on the building and testing infrastructure.
   * Stable and development branches were created.
   * Binary artefacts are built for each commit in development branch.
   * Artefacts are automatically versioned in development branch.
   * Unit and acceptance tests are exercising artefact before it is marked as a release candidate.
-* Remapping using RNN from fast5 directly to chunks.  
+* Remapping using RNN from fast5 directly to chunks.
   * `chunkify.py`
-    * `chunkify.py identity` has simliar behaviour to `chunk_hdf5.py`
+    * `chunkify.py identity` has similar behaviour to `chunk_hdf5.py`
     * `chunkify.py remap` will remap a directory of fast5 files using a transducer RNN before chunking.
   * `remap_hdf5.py` and `chunk_hdf5.py` removed in favour of `chunkify.py`
   * Per chunk normalisation optional `--normalisation`
