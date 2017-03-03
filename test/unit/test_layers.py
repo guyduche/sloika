@@ -351,11 +351,14 @@ class LayerTest(with_metaclass(abc.ABCMeta, object)):
         p1 = {p: np.array(v) for (p, v) in list(p1.items())}
         self.assertTrue(all([np.allclose(p0[k], p1[k]) for k in self._PARAMS]))
 
-    def test_005_params(self):
+    def test_005_should_have_params_method(self):
         plist = self.layer.params()
 
-    def test_006_sizes(self):
-        size, insize = self.layer.size, self.layer.insize
+    def test_006_should_have_insize_property(self):
+        insize = self.layer.insize
+
+    def test_007_should_have_size_property(self):
+        size = self.layer.size
 
 
 class RecurrentTest(LayerTest, unittest.TestCase):
