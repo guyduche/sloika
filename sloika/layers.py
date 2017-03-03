@@ -10,7 +10,7 @@ import theano as th
 import theano.tensor as T
 import numpy as np
 
-from sloika import activation
+from sloika import activation, conv
 from sloika.config import sloika_dtype
 from sloika.variables import NBASE, nkmer
 from functools import reduce
@@ -381,21 +381,40 @@ class Window(Layer):
 
 
 class Convolution(Layer):
-    """ Create a 1D convolution over input
+    """1D convolution over the first dimension
 
-    :param insize: Size of input to layer
-    :param size: Layer size (number of filters)
-    :param w: Size of convolution
+    Takes input of shape [time, batch, features] and produces output of shape
+    [ceil((time + padding) / stride), batch, features]
+
+    :param insize: number of features on input
+    :param size: number of output features
+    :param winlen: size of window over input
+    :param stride: step size between successive windows
+    :param init: function to initialise tensors with
+    :param has_bias: whether layer has bias
+    :param fun: the activation function
+    :param padding_mode: str, int or (int, int)
+        Controls the padding applied to the input. See conv.calculate_padding
+        for available modes. Default: 'same'
     """
 
-    def __init__(self, insize, size, w, init=zeros, fun=activation.tanh):
-        assert size > 0, "Size (number of filters) must be positive"
-        assert w > 0, "Window size must be positive"
-        self.w = w
-        self.flt = th.shared(init((size, insize, 1, w)) / np.sqrt(w * insize + size))
+    def __init__(self, insize, size, winlen, stride=1, init=zeros,
+                 has_bias=False, fun=activation.tanh, padding_mode='same'):
         self._insize = insize
         self._size = size
+        self.winlen = winlen
+        self.stride = stride
         self.fun = fun
+        self.has_bias = has_bias
+        self.padding_mode = padding_mode
+        self.padding = conv.calculate_padding(padding_mode, winlen)
+
+        # parameters
+        fanin = insize * winlen
+        fanout = (size * winlen) / float(stride)
+        self.W = th.shared(init((size, insize, winlen)) /
+                           np.sqrt(fanin + fanout))
+        self.b = th.shared(has_bias * init(size))
 
     @property
     def insize(self):
@@ -406,33 +425,79 @@ class Convolution(Layer):
         return self._size
 
     def params(self):
-        return [self.flt]
+        return [self.W, self.b] if self.has_bias else [self.W]
 
     def json(self, params=False):
-        res = OrderedDict([('type', "convolution"),
-                           ('activation', self.fun.__name__),
-                           ('size', self.size),
-                           ('insize', self.insize)])
+        res = OrderedDict([("type", "convolution"),
+                           ("insize", self.insize),
+                           ("size", self.size),
+                           ("winlen", self.winlen),
+                           ("stride", self.stride),
+                           ("padding_mode", self.padding_mode),
+                           ("padding", self.padding),
+                           ("activation", self.fun.__name__)])
         if params:
-            res['params'] = OrderedDict([('w', self.w),
-                                         ('filter', _extract(self.flt))])
+            res['params'] = OrderedDict([("W", nn._extract(self.W)),
+                                         ("b", nn._extract(self.b))])
         return res
 
     def set_params(self, values):
-        assert values['flt'].shape == (self.size, self.insize, 1, self.w)
-        self.flt.set_value(values['flt'])
+        assert values['W'].shape == (self.size, self.insize, self.winlen)
+        self.W.set_value(values['w'])
+        if self.has_bias:
+            assert values['b'].shape[0] == self.size
+            self.b.set_value(values['b'])
 
     def run(self, inMat):
-        # Input to convolution is (batch x channels x row x column)
-        ntime, nbatch, nfeatures = T.shape(inMat)
-        inMatT = T.shape_padaxis(inMat.transpose((1, 2, 0)), axis=2)
-        outMat = T.nnet.conv2d(inMatT, filters=self.flt, border_mode='half',
-                               filter_shape=(self.size, self.insize, 1, self.w))
-        # Output of convolution is (batch x filters x row x col)
+        c = conv.conv_1d(inMat, self.W, self.stride, self.padding) + self.b
+        return self.fun(c)
 
-        outMat = outMat.transpose((3, 0, 1, 2))
-        outMat = outMat.reshape((ntime, nbatch, self.size))
-        return self.fun(outMat)
+
+class MaxPool(Layer):
+    """Max pooling over the first dimension of the input
+
+    :param insize: dimension of input
+    :param pool_size: number of elements in each pool
+    :param stride: spacing between adjacent pools
+    :param fun: activation function for the layer
+    :param padding_mode: str, int or (int, int)
+        Controls the padding applied to the input. See conv.calculate_padding
+        for available modes. Default: 'same'
+    """
+
+    def __init__(self, insize, pool_size, stride, fun=activation.linear, padding_mode='same'):
+        self._insize = insize
+        self.pool_size = pool_size
+        self.stride = stride
+        self.fun = fun
+        self.padding_mode = padding_mode
+        self.padding = conv.calculate_padding(padding_mode, pool_size)
+
+    @property
+    def insize(self):
+        return self._insize
+
+    @property
+    def size(self):
+        return self.insize
+
+    def params(self):
+        return []
+
+    def json(self, params=False):
+        return OrderedDict([("type", "max_pool"),
+                            ("pool_size", self.pool_size),
+                            ("stride", self.stride),
+                            ("padding_mode", self.padding_mode),
+                            ("padding", self.padding),
+                            ("activation", self.fun.__name__)])
+
+    def set_params(self, values):
+        pass
+
+    def run(self, inMat):
+        p = conv.pool_1d(inMat, self.pool_size, self.stride, self.padding)
+        return self.fun(p)
 
 
 class Recurrent(RNN):
