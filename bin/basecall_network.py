@@ -56,6 +56,7 @@ common_parser.add_argument('input_folder', action=FileExists,
 
 # add subparsers for each command
 subparsers = parser.add_subparsers(help='command', dest='command')
+subparsers.required = True
 
 parser_raw = subparsers.add_parser(
     'raw', parents=[common_parser], help='basecall from raw signal')
