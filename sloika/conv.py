@@ -10,6 +10,7 @@ import theano as th
 import theano.tensor as T
 import theano.tensor.signal.pool as tp
 
+PADDING_MODES = frozenset(['same', 'half', 'valid', 'full', 'same_left'])
 
 def calculate_padding(mode, winlen):
     """Calculate padding amount for given convolution mode and window length
@@ -46,6 +47,13 @@ def calculate_padding(mode, winlen):
     :returns: (padding to start, padding to end)
     """
     assert winlen > 0, "winlen must be positive"
+    if isinstance(mode, int):
+        return (mode, mode)
+    if isinstance(mode, tuple):
+        if map(type, mode) == [int, int]:
+            return mode
+
+    assert mode in PADDING_MODES, 'Padding mode "{}" not supported'.format(mode)
     if mode == "same":
         return ((winlen - 1) // 2, winlen // 2)
     if mode == "half":
@@ -56,12 +64,8 @@ def calculate_padding(mode, winlen):
         return (winlen - 1, winlen - 1)
     if mode == "same_left":
         return (winlen // 2, (winlen - 1) // 2)
-    if isinstance(mode, int):
-        return (mode, mode)
-    if isinstance(mode, tuple):
-        if map(type, mode) == [int, int]:
-            return mode
-    raise ValueError("Mode not understood:  {}".format(mode))
+
+    raise NotImplementedError("Padding mode case {} not dealt with".format(mode))
 
 
 def pad_first(X, padding):
