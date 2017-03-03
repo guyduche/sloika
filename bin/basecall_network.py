@@ -34,7 +34,7 @@ common_parser.add_argument('--compile', default=None, action=FileAbsent,
                            help='File output compiled model')
 common_parser.add_argument('--jobs', default=4, metavar='n', type=Positive(int),
                            help='Number of jobs to run in parallel')
-common_parser.add_argument('--kmer', default=5, metavar='length', type=Positive(int),
+common_parser.add_argument('--kmer_len', default=5, metavar='length', type=Positive(int),
                            help='Length of kmer')
 common_parser.add_argument('--limit', default=None, metavar='reads',
                            type=Maybe(Positive(int)), help='Limit number of reads to process.')
@@ -42,7 +42,7 @@ common_parser.add_argument('--min_prob', metavar='proportion', default=1e-5,
                            type=proportion, help='Minimum allowed probabiility for basecalls')
 common_parser.add_argument('--skip', default=0.0,
                            type=Positive(float), help='Skip penalty')
-common_parser.add_argument('--strand_list', default=None, action=FileExists,
+common_parser.add_argument('--input_strand_list', default=None, action=FileExists,
                            help='strand summary file containing subset.')
 common_parser.add_argument('--trans', default=None, action=Vector(proportion), nargs=3,
                            metavar=('stay', 'step', 'skip'), help='Base transition probabilities')
@@ -146,12 +146,12 @@ def basecall(args, fn):
         return None
 
     post = calc_post(inMat)
-    assert post.shape[2] == nstate(args.kmer, transducer=args.transducer, bad_state=args.bad)
+    assert post.shape[2] == nstate(args.kmer_len, transducer=args.transducer, bad_state=args.bad)
     post = decode.prepare_post(post, min_prob=args.min_prob,
                                drop_bad=args.bad and not args.transducer)
 
     if args.transducer:
-        score, call = decode.viterbi(post, args.kmer, skip_pen=args.skip)
+        score, call = decode.viterbi(post, args.kmer_len, skip_pen=args.skip)
     else:
         trans = olddecode.estimate_transitions(post, trans=args.trans)
         score, call = olddecode.decode_profile(post, trans=np.log(_ETA + trans), log=False)
@@ -194,11 +194,11 @@ if __name__ == '__main__':
 
     compiled_file = helpers.compile_model(args.model, args.compile)
 
-    seq_printer = SeqPrinter(args.kmer, datatype=args.datatype,
+    seq_printer = SeqPrinter(args.kmer_len, datatype=args.datatype,
                              transducer=args.transducer)
 
     files = fast5.iterate_fast5(args.input_folder, paths=True, limit=args.limit,
-                                strand_list=args.strand_list)
+                                strand_list=args.input_strand_list)
     nbases = nevents = 0
     t0 = time.time()
     for res in imap_mp(basecall, files, threads=args.jobs, fix_args=[args],
