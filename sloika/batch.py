@@ -18,7 +18,11 @@ import sloika.util
 from untangled import bio, fast5, maths
 
 
-def locate_read(signal, max_op_fraction=0.3, var_method='mad'):
+LOCAL_VAR_METHODS = frozenset(['mad', 'var'])
+
+
+#TODO: this is a hack, find a nicer way
+def trim_open_pore(signal, max_op_fraction=0.3, var_method='mad', window_size=100):
     """Locate raw read in signal by thresholding local variance
 
     :param signal: raw data containing a read
@@ -27,21 +31,23 @@ def locate_read(signal, max_op_fraction=0.3, var_method='mad'):
         cost of slightly truncating longer reads.
     :param var_method: ('var' | 'mad') method used to compute the local
         variation. var: variance, mad: Median Absolute Deviation
+    :param window_size: size of patches used to estimate local variance
     """
-    chunk_len = 100
-    sig_chunks = chunk(signal, chunk_len)
+    assert var_method in LOCAL_VAR_METHODS, "var_method not understood: {}".format(var_method)
+
+    ml = len(signal) // window_size
+    ub = ml * window_size
+
     if var_method == 'var':
-        local_var = chunk(signal, chunk_len).var(1)
-    elif var_method == 'mad':
+        local_var = signal[:ub].reshape((ml, window_size)).var(1)
+    if var_method == 'mad':
+        sig_chunks = signal[:ub].reshape((ml, window_size))
         local_var = np.array(map(maths.mad, sig_chunks))
-    else:
-        raise ValueError(
-            "Did not understand var_method:  {}".format(var_method))
-    probably_read = (local_var >
-                     np.percentile(local_var, 100 * max_op_fraction))
+
+    probably_read = (local_var > np.percentile(local_var, 100 * max_op_fraction))
     ix = np.arange(local_var.shape[0])[probably_read]
-    start = ix.min() * chunk_len
-    end = (ix.max() + 1) * chunk_len
+    start = ix.min() * window_size
+    end = (ix.max() + 1) * window_size
     return signal[start:end]
 
 

@@ -119,7 +119,7 @@ def prepare_raw(args, fn):
     except:
         return None
 
-    signal = batch.locate_read(signal, args.open_pore_fraction)
+    signal = batch.trim_open_pore(signal, args.open_pore_fraction)
 
     if len(signal) <= sum(args.trim):
         return None
