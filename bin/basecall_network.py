@@ -161,20 +161,17 @@ def basecall(args, fn):
 
 class SeqPrinter(object):
 
-    def __init__(self, kmerlen, datatype="events", transducer=False, fh=None):
+    def __init__(self, kmerlen, datatype="events", transducer=False, fname=None):
         self.kmers = bio.all_kmers(kmerlen)
         self.transducer = transducer
-        self.close_fh = False
         self.datatype = datatype
 
-        if fh is None:
+        if fname is None:
             self.fh = sys.stdout
+            self.close_fh = False
         else:
-            if isinstance(fh, file):
-                self.fh = fh
-            else:
-                self.fh = open(fh, 'w')
-                self.close_fh = True
+            self.fh = open(fname, 'w')
+            self.close_fh = True
 
     def __del__(self):
         if self.close_fh:
