@@ -47,9 +47,9 @@ def is_gitdir(path='.'):
 
 def get_git_commit(gitdir, porcelain=False):
     if porcelain:
-        isclean = subprocess.check_output('cd {} && git status --untracked-files=no --porcelain'.format(gitdir),
+        is_clean = subprocess.check_output('cd {} && git status --untracked-files=no --porcelain'.format(gitdir),
                                           shell=True)
-        if isclean != '':
+        if is_clean != '':
             return None
 
     return subprocess.check_output(
