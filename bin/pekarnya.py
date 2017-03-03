@@ -51,14 +51,15 @@ def is_git_work_tree(path='.'):
 
 
 def get_git_commit(gitdir, porcelain=False):
+    suffix = ''
     if porcelain:
-        cmd = 'cd {} && git status --untracked-files=no --porcelain'.format(gitdir)
+        cmd = 'cd {} && git status --porcelain'.format(gitdir)
         is_clean = subprocess.check_output(cmd, shell=True)
         if is_clean != '':
-            return None
+            suffix = '-dirty'
 
     cmd2 = 'cd {} && git log --pretty=format:"%H" -1'.format(gitdir)
-    return subprocess.check_output(cmd2, shell=True).rstrip()
+    return subprocess.check_output(cmd2, shell=True).rstrip() + suffix
 
 
 def create_jobs(dbname, sleep=30, limit=None):
