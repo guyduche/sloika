@@ -94,8 +94,7 @@ def prepare_events(args, fn):
     from sloika import features, config
     try:
         with fast5.Reader(fn) as f5:
-            ev = f5.get_section_events(
-                args.section, analysis=args.segmentation)
+            ev = f5.get_section_events(args.section, analysis=args.segmentation)
             sn = f5.filename_short
     except:
         return None
@@ -135,8 +134,7 @@ def basecall(args, fn):
     from sloika import decode, olddecode
 
     post = calc_post(inMat)
-    assert post.shape[2] == nstate(
-        args.kmer, transducer=args.transducer, bad_state=args.bad)
+    assert post.shape[2] == nstate(args.kmer, transducer=args.transducer, bad_state=args.bad)
     post = decode.prepare_post(post, min_prob=args.min_prob,
                                drop_bad=args.bad and not args.transducer)
 
@@ -144,8 +142,7 @@ def basecall(args, fn):
         score, call = decode.viterbi(post, args.kmer, skip_pen=args.skip)
     else:
         trans = olddecode.estimate_transitions(post, trans=args.trans)
-        score, call = olddecode.decode_profile(
-            post, trans=np.log(_ETA + trans), log=False)
+        score, call = olddecode.decode_profile(post, trans=np.log(_ETA + trans), log=False)
 
     return sn, score, call, inMat.shape[0]
 

@@ -76,7 +76,7 @@ def chunkify(ev, chunk_len, kmer_len, use_scaled, normalisation):
             chunk_finish_maybe_with_padding = min(chunk_finish + 1, len(ev))
 
             chunk_features = sloika.features.from_events(
-                ev[chunk_start: chunk_finish_maybe_with_padding], tag=tag, normalise=True)
+                ev[chunk_start : chunk_finish_maybe_with_padding], tag=tag, normalise=True)
             new_inMat.append(chunk_features[:chunk_len])
         new_inMat = np.concatenate(new_inMat)
     else:
@@ -88,12 +88,11 @@ def chunkify(ev, chunk_len, kmer_len, use_scaled, normalisation):
         # actually use later, so that features could be studentized using
         # moments computed using this bigger range; we reset the range in (*) and (**)
         #
-        new_inMat = sloika.features.from_events(
-            ev, tag=tag, normalise=normalise)
-        new_inMat = new_inMat[0: ub]  # reset range (*)
+        new_inMat = sloika.features.from_events(ev, tag=tag, normalise=normalise)
+        new_inMat = new_inMat[0 : ub]  # reset range (*)
 
     new_inMat = new_inMat.reshape((ml, chunk_len, -1))
-    ev = ev[0: ub]  # reset range (**)
+    ev = ev[0 : ub]  # reset range (**)
 
     #
     # 'model' in the name 'model_kmer_len' refers to the model that was used
@@ -182,8 +181,7 @@ def init_chunk_remap_worker(model, fasta, kmer_len):
 def remap(read_ref, ev, min_prob, transducer, kmer_len, prior, slip):
     inMat = sloika.features.from_events(ev, tag='')
     inMat = np.expand_dims(inMat, axis=1)
-    post = sloika.decode.prepare_post(
-        calc_post(inMat), min_prob=min_prob, drop_bad=(not transducer))
+    post = sloika.decode.prepare_post(calc_post(inMat), min_prob=min_prob, drop_bad=(not transducer))
 
     kmers = np.array(bio.seq_to_kmers(read_ref, kmer_len))
     seq = [kmer_to_state[k] + 1 for k in kmers]

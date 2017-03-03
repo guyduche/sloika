@@ -12,7 +12,6 @@ import numpy as np
 
 from sloika import activation, conv
 from sloika.config import sloika_dtype
-from sloika.conv import conv_same_1d, pool_same_1d
 from sloika.variables import NBASE, nkmer
 from functools import reduce
 from future.utils import with_metaclass
@@ -379,7 +378,6 @@ class Window(Layer):
         padMat = T.concatenate([zeros, inMat, zeros], axis=0)
         tmp = T.concatenate([padMat[i : 1 + i - self.w] for i in range(self.w - 1)], axis=2)
         return T.concatenate([tmp, padMat[self.w - 1 :]], axis=2)
-
 
 
 class Convolution(Layer):
@@ -1518,8 +1516,6 @@ class Reverse(Layer):
 
     def __init__(self, layer):
         self.layer = layer
-        self.insize = layer.insize
-        self.size = layer.size
 
     @property
     def insize(self):
