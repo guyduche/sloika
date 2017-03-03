@@ -1,6 +1,8 @@
 Release 1.1 brown bag 2
 =======================
-Updates changelog for bb1 and bb2
+Addresses the following issues:
+* Brown bag 1 did not update changelog
+    https://git.oxfordnanolabs.local/algorithm/sloika/issues/43
 
 Release 1.1 brown bag 1
 =======================
