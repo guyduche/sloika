@@ -135,7 +135,7 @@ def basecall(args, fn):
 
     if args.command == "raw":
         inMat = prepare_raw(args, fn)
-    elif args.command = "events":
+    elif args.command == "events":
         inMat = prepare_events(args, fn)
     else:
         # We should never reach this line, but just in case...
