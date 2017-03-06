@@ -42,7 +42,7 @@ def trim_open_pore(signal, max_op_fraction=0.3, var_method='mad', window_size=10
         local_var = signal[:ub].reshape((ml, window_size)).var(1)
     if var_method == 'mad':
         sig_chunks = signal[:ub].reshape((ml, window_size))
-        local_var = np.array(map(maths.mad, sig_chunks))
+        local_var = maths.mad(sig_chunks, axis=1)
 
     probably_read = (local_var > np.percentile(local_var, 100 * max_op_fraction))
     ix = np.arange(local_var.shape[0])[probably_read]
