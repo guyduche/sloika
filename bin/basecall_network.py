@@ -20,6 +20,7 @@ from untangled.cmdargs import (AutoBool, FileAbsent, FileExists, Maybe,
                                NonNegative, proportion, Positive, Vector)
 from untangled import fast5
 from untangled.iterators import imap_mp
+from untangled.maths import med_mad
 
 
 # create the top-level parser
@@ -128,7 +129,10 @@ def prepare_raw(args, fn):
     end = None if end is 0 else -end
     signal = signal[begin: end]
 
-    inMat = signal.reshape((-1, 1, 1)).astype(config.sloika_dtype)
+    loc, scale = med_mad(signal)
+    inMat = (signal - loc) / scale
+
+    inMat = inMat.reshape((-1, 1, 1)).astype(config.sloika_dtype)
     return sn, inMat
 
 
