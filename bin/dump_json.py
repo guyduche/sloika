@@ -28,7 +28,7 @@ if __name__ == "__main__":
     json_out = model.json(args.params)
 
     if args.out_file is not None:
-        with open(args.out_file, 'w') as f:
+        with open(args.out_file, 'wb') as f:
             print("Writing to file: ", args.out_file)
             json.dump(json_out, f, indent=4)
     else:
