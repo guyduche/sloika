@@ -108,10 +108,11 @@ def prepare_events(args, fn):
 
     inMat = features.from_events(ev, tag='')
     inMat = np.expand_dims(inMat, axis=1)
-    return inMat
+    return sn, inMat
 
 
 def prepare_raw(args, fn):
+    from sloika import batch, config
     try:
         with fast5.Reader(fn) as f5:
             signal = f5.get_read(raw=True)
@@ -128,16 +129,16 @@ def prepare_raw(args, fn):
     signal = signal[begin: end]
 
     inMat = signal.reshape((-1, 1, 1)).astype(config.sloika_dtype)
-    return inMat
+    return sn, inMat
 
 
 def basecall(args, fn):
     from sloika import decode, olddecode
 
     if args.command == "raw":
-        inMat = prepare_raw(args, fn)
+        sn, inMat = prepare_raw(args, fn)
     elif args.command == "events":
-        inMat = prepare_events(args, fn)
+        sn, inMat = prepare_events(args, fn)
     else:
         # We should never reach this line, but just in case...
         raise NotImplementedError("Command '{}' not understood".format(args.command))
