@@ -43,7 +43,7 @@ parser.add_argument('database', action=FileExists, help='Database.db file')
 def is_git_work_tree(path='.'):
     try:
         cmd = 'cd {} && git rev-parse --is-inside-work-tree'.format(path)
-        res = subprocess.check_output(cmd, shell=False).rstrip()
+        res = subprocess.check_output(cmd, shell=True).rstrip()
     except:
         res = 'false'
 
