@@ -43,7 +43,7 @@ STRAND = {0 : '+',
 QUANTILES = [5, 25, 50, 75, 95]
 
 
-WRITE_MODE = 'w' if sys.version[0] == '3' else 'wb'
+WRITE_MODE = 'w' if sys.version_info.major == 3 else 'wb'
 
 
 def call_bwa_mem(fin, fout, genome, clargs=''):
