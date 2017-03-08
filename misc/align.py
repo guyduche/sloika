@@ -43,6 +43,9 @@ STRAND = {0 : '+',
 QUANTILES = [5, 25, 50, 75, 95]
 
 
+WRITE_MODE = 'w' if sys.version[0] == '3' else 'wb'
+
+
 def call_bwa_mem(fin, fout, genome, clargs=''):
     """Call bwa aligner using the subprocess module
 
@@ -203,12 +206,12 @@ if __name__ == '__main__':
             # align sequences to reference
             sys.stdout.write("Aligning {}...\n".format(fn))
             bwa_output = call_bwa_mem(fn, samfile, args.reference, args.bwa_mem_args)
-            sys.stdout.write(bwa_output)
+            sys.stdout.write(bwa_output.decode(sys.stdout.encoding))
 
             # compile accuracy metrics
             acc_dat = samacc(samfile, min_coverage=args.coverage)
             if len(acc_dat) > 0:
-                with open(samaccfile, 'w') as fs:
+                with open(samaccfile, WRITE_MODE) as fs:
                     fields = list(acc_dat[0].keys())
                     writer = csv.DictWriter(fs, fieldnames=fields, delimiter=' ')
                     writer.writeheader()
@@ -220,7 +223,7 @@ if __name__ == '__main__':
             if f is not None:
                 f.savefig(graphfile)
             sys.stdout.write('\n' + report + '\n')
-            with open(summaryfile, 'w') as fs:
+            with open(summaryfile, WRITE_MODE) as fs:
                 fs.writelines(report)
         except:
             sys.stderr.write("{}: something went wrong, skipping\n\n".format(fn))
