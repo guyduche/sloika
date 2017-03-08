@@ -40,7 +40,7 @@ def _compile_model(outqueue, model_file, output_file=None):
 
     sys.setrecursionlimit(10000)
     with open(model_file, 'rb') as fh:
-        if sys.version_info[0] == 3:
+        if sys.version_info.major == 3:
             network = pickle.load(fh, encoding='latin1')
         else:
             network = pickle.load(fh)
