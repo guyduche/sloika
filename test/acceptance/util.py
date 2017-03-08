@@ -12,13 +12,14 @@ from subprocess import Popen, PIPE
 
 class Result(object):
 
-    def __init__(self, test_case, cmd, cwd, return_code, stdout, stderr):
+    def __init__(self, test_case, cmd, cwd, return_code, stdout, stderr, max_lines=100):
         self.test_case = test_case
         self.cmd = cmd
         self.cwd = cwd
         self._return_code = return_code
         self._stdout = stdout.strip('\n').split('\n')
         self._stderr = stderr.strip('\n').split('\n')
+        self.max_lines = max_lines
 
     def __repr__(self):
         L = ['\n\tCommand: {}'.format(' '.join(self.cmd))]
@@ -29,13 +30,13 @@ class Result(object):
             L.append('\tCommand exit code: %s' % self._return_code)
 
         if self._stdout:
-            L.append('\n\tCommand output:')
-            for line in self._stdout:
+            L.append('\n\tFirst {} lines of stdout:'.format(self.max_lines))
+            for line in self._stdout[:self.max_lines]:
                 L.append("\t\t{}".format(line))
 
         if self._stderr:
-            L.append('\n\tCommand error output:')
-            for line in self._stderr:
+            L.append('\n\tFirst {} lines of stderr:'.format(self.max_lines))
+            for line in self._stderr[:self.max_lines]:
                 L.append("\t\t{}".format(line))
 
         return '\n'.join(L)
@@ -50,9 +51,17 @@ class Result(object):
         self.test_case.assertTrue(f(self._stdout), msg)
         return self
 
+    def stdoutEquals(self, referenceStdout):
+        self.test_case.assertEquals(self._stdout, referenceStdout)
+        return self
+
     def stderr(self, f):
         msg = "expectation on stderr failed for: %s" % self
         self.test_case.assertTrue(f(self._stderr), msg)
+        return self
+
+    def stderrEquals(self, referenceStderr):
+        self.test_case.assertEquals(self._stderr, referenceStderr)
         return self
 
 

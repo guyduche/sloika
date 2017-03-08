@@ -143,7 +143,7 @@ def init_chunk_remap_worker(model, fasta, kmer_len):
         for ref in SeqIO.parse(fh, 'fasta'):
             refseq = str(ref.seq)
             if 'N' not in refseq:
-                if sys.version_info[0] == 3:
+                if sys.version_info.major == 3:
                     references[ref.id] = refseq.encode('utf-8')
                 else:
                     references[ref.id] = refseq
