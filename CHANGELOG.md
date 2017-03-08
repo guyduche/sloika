@@ -4,7 +4,7 @@ Release 1.1 brown bag 2
 Addresses the following issues:
 * Brown bag 1 did not update changelog
     https://git.oxfordnanolabs.local/algorithm/sloika/issues/43
-* Fixes TypeError in json dump script
+* Fixes TypeError in json dump script when invoked with `--out_file` option
     https://git.oxfordnanolabs.local/algorithm/sloika/issues/52
 
 

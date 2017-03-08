@@ -4,19 +4,15 @@ from __future__ import absolute_import
 from future import standard_library
 standard_library.install_aliases()
 from builtins import *
-import unittest
-import os
-import shutil
-import h5py
-import shutil
-import tempfile
-import difflib
-
-import numpy as np
 
 from distutils import dir_util
+import h5py
 from nose_parameterized import parameterized
-
+import numpy as np
+import os
+import shutil
+import tempfile
+import unittest
 
 from util import run_cmd, is_close, maybe_create_dir, zeroth_line_starts_with, last_line_starts_with
 
