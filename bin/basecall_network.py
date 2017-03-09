@@ -62,7 +62,7 @@ subparsers.required = True
 parser_raw = subparsers.add_parser(
     'raw', parents=[common_parser], help='basecall from raw signal')
 parser_raw.add_argument('--bad', default=True, action=AutoBool,
-                       help='Model emits bad signal blocks as a separate state')
+                        help='Model emits bad signal blocks as a separate state')
 parser_raw.add_argument('--open_pore_fraction', metavar='proportion', default=0,
                         type=proportion, help='Max fraction of signal to trim due to open pore')
 parser_raw.add_argument('--trim', default=(200, 10), nargs=2, type=NonNegative(int),

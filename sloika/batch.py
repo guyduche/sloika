@@ -21,7 +21,7 @@ from untangled import bio, fast5, maths
 TRIM_OPEN_PORE_LOCAL_VAR_METHODS = frozenset(['mad', 'std'])
 
 
-#TODO: this is a hack, find a nicer way
+# TODO: this is a hack, find a nicer way
 def trim_open_pore(signal, max_op_fraction=0.3, var_method='mad', window_size=100):
     """Locate raw read in signal by thresholding local variance
 
