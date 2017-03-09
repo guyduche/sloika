@@ -177,14 +177,14 @@ def chunk_remap_worker(fn, trim, min_prob, transducer, kmer_len, prior, slip, ch
         with fast5.Reader(fn) as f5:
             ev = f5.get_section_events(section, analysis=segmentation)
             sn = f5.filename_short
-    except:
-        sys.stderr.write('Failure reading events from {}.\n'.format(fn))
+    except Exception as e:
+        sys.stderr.write('Failure reading events from {}.\n{}\n'.format(fn, repr(e)))
         return None
 
     try:
         read_ref = references[sn]
-    except:
-        sys.stderr.write('No reference found for {}.\n'.format(fn))
+    except Exception as e:
+        sys.stderr.write('No reference found for {}.\n{}\n'.format(fn, repr(e)))
         return None
 
     ev = trim_ends_and_filter(ev, trim, min_length, chunk_len)
@@ -196,3 +196,4 @@ def chunk_remap_worker(fn, trim, min_prob, transducer, kmer_len, prior, slip, ch
     (chunks, labels, bad_ev) = chunkify(ev, chunk_len, kmer_len, use_scaled, normalisation)
 
     return sn + '.fast5', score, len(ev), path, seq, chunks, labels, bad_ev
+
