@@ -27,6 +27,7 @@ parser.add_argument('model', action=FileExists, help='Model file to read from')
 #
 # Some numpy types are not serializable to JSON out-of-the-box in Python3 -- need coersion. See
 # http://stackoverflow.com/questions/27050108/convert-numpy-type-to-python/27050186#27050186
+# If numpy type is used to construct the layer, it will infect the pickle.
 #
 
 
@@ -35,10 +36,6 @@ class CustomEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, np.integer):
             return int(obj)
-        elif isinstance(obj, np.floating):
-            return float(obj)
-        elif isinstance(obj, np.ndarray):
-            return obj.tolist()
         else:
             return super(CustomEncoder, self).default(obj)
 
