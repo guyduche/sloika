@@ -5,22 +5,22 @@ from __future__ import absolute_import
 from future import standard_library
 standard_library.install_aliases()
 from builtins import *
+
 import argparse
-import pickle
 import numpy as np
+import os
+import pickle
 import sys
 import time
-import os
+
+from untangled import bio, fast5
+from untangled.cmdargs import (AutoBool, FileAbsent, FileExists, Maybe,
+                               NonNegative, proportion, Positive, Vector)
+from untangled.iterators import imap_mp
+from untangled.maths import med_mad
 
 from sloika import helpers
 from sloika.variables import nstate
-
-from untangled import bio
-from untangled.cmdargs import (AutoBool, FileAbsent, FileExists, Maybe,
-                               NonNegative, proportion, Positive, Vector)
-from untangled import fast5
-from untangled.iterators import imap_mp
-from untangled.maths import med_mad
 
 
 # create the top-level parser
@@ -185,8 +185,8 @@ class SeqPrinter(object):
     def write(self, read_name, score, call, nev):
         kmer_path = [self.kmers[i] for i in call]
         seq = bio.kmers_to_sequence(kmer_path, always_move=self.transducer)
-        self.fh.write(">{} {} {} {} to {} bases\n".format(read_name, score,
-                                                          nev, self.datatype, len(seq)))
+        self.fh.write(">{}: score {:.2f}, {} {} to {} bases\n".format(read_name, score,
+                                                                      nev, self.datatype, len(seq)))
         self.fh.write(seq + '\n')
         return len(seq)
 
