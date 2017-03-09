@@ -14,6 +14,8 @@ from util import run_cmd, maybe_create_dir, zeroth_line_starts_with
 
 class AcceptanceTest(unittest.TestCase):
 
+    maxDif = None
+
     @classmethod
     def setUpClass(self):
         self.test_directory = os.path.splitext(__file__)[0]
