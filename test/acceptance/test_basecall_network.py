@@ -18,7 +18,7 @@ class AcceptanceTest(unittest.TestCase):
     def setUpClass(self):
         self.test_directory = os.path.splitext(__file__)[0]
         self.test_name = os.path.basename(self.test_directory)
-        self.script = os.path.join(os.environ["BIN_DIR"], "basecall_network.py")
+        self.script = os.path.join(os.environ["BIN_DIR"], "basecall_network")
 
         self.work_dir = os.path.join(os.environ["ACCTEST_WORK_DIR"], self.test_name)
         maybe_create_dir(self.work_dir)
@@ -38,3 +38,17 @@ class AcceptanceTest(unittest.TestCase):
 
         cmd = [self.script, "raw", model_file, reads_dir]
         run_cmd(self, cmd).return_code(0).stderr(last_line_starts_with(u"no raw data to basecall"))
+
+    def test_basecall_network_raw(self):
+        model_file = os.path.join(self.data_dir, "raw_model_1pt2_cpu.pkl")
+        self.assertTrue(os.path.exists(model_file))
+
+        reads_dir = os.path.join(self.data_dir, "raw", "dataset1", "reads")
+        self.assertTrue(os.path.exists(reads_dir))
+
+        expected_output_file = os.path.join(self.data_dir, "raw", "dataset1", "output.txt")
+        self.assertTrue(os.path.exists(expected_output_file))
+        expected_output = open(expected_output_file, 'r').read().splitlines()
+
+        cmd = [self.script, "raw", model_file, reads_dir]
+        run_cmd(self, cmd).return_code(0).stdoutEquals(expected_output)
