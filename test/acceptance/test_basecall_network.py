@@ -29,6 +29,7 @@ class AcceptanceTest(unittest.TestCase):
         cmd = [self.script]
         run_cmd(self, cmd).return_code(2).stderr(zeroth_line_starts_with(u"usage"))
 
+    @unittest.expectedFailure
     def test_raw_iteration_failure_on_files_with_no_raw_data(self):
         model_file = os.path.join(self.data_dir, "raw_model_1pt2_cpu.pkl")
         self.assertTrue(os.path.exists(model_file))
