@@ -14,7 +14,7 @@ from util import run_cmd, maybe_create_dir, zeroth_line_starts_with
 
 class AcceptanceTest(unittest.TestCase):
 
-    maxDif = None
+    maxDiff = None
 
     @classmethod
     def setUpClass(self):
