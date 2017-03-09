@@ -5,9 +5,13 @@ from __future__ import absolute_import
 from future import standard_library
 standard_library.install_aliases()
 from builtins import *
+
 import argparse
-import pickle
 import json
+import numpy as np
+import pickle
+import sys
+
 from untangled.cmdargs import AutoBool, FileExists, FileAbsent
 
 json.encoder.FLOAT_REPR = lambda f: ("%.4f" % f)
@@ -20,16 +24,38 @@ parser.add_argument('--params', default=True, action=AutoBool, help='Output para
 
 parser.add_argument('model', action=FileExists, help='Model file to read from')
 
+#
+# Some numpy types are not serializable to JSON out-of-the-box in Python3 -- need coersion. See
+# http://stackoverflow.com/questions/27050108/convert-numpy-type-to-python/27050186#27050186
+#
+
+
+class CustomEncoder(json.JSONEncoder):
+
+    def default(self, obj):
+        if isinstance(obj, np.integer):
+            return int(obj)
+        elif isinstance(obj, np.floating):
+            return float(obj)
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()
+        else:
+            return super(CustomEncoder, self).default(obj)
+
 if __name__ == "__main__":
     args = parser.parse_args()
     with open(args.model, 'rb') as fh:
-        model = pickle.load(fh)
+        if sys.version_info.major == 3:
+            model = pickle.load(fh, encoding='latin1')
+        else:
+            model = pickle.load(fh)
 
     json_out = model.json(args.params)
 
     if args.out_file is not None:
-        with open(args.out_file, 'w') as f:
+        mode = 'w' if sys.version_info.major == 3 else 'wb'
+        with open(args.out_file, mode) as f:
             print("Writing to file: ", args.out_file)
-            json.dump(json_out, f, indent=4)
+            json.dump(json_out, f, indent=4, cls=CustomEncoder)
     else:
-        print(json.dumps(json_out, indent=4))
+        print(json.dumps(json_out, indent=4, cls=CustomEncoder))
