@@ -12,6 +12,7 @@ import theano.tensor.signal.pool as tp
 
 PADDING_MODES = frozenset(['same', 'half', 'valid', 'full', 'same_left'])
 
+
 def calculate_padding(mode, winlen):
     """Calculate padding amount for given convolution mode and window length
 
