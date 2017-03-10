@@ -5,6 +5,7 @@ from future import standard_library
 standard_library.install_aliases()
 from builtins import *
 
+from nose_parameterized import parameterized
 import os
 import shutil
 import unittest
@@ -41,7 +42,11 @@ class AcceptanceTest(unittest.TestCase):
         cmd = [self.script, "raw", model_file, reads_dir]
         run_cmd(self, cmd).return_code(0).stderr(last_line_starts_with(u"Called 0 bases"))
 
-    def test_basecall_network_raw(self):
+    @parameterized.expand([
+        [[]],
+        [['--open_pore_fraction', '0']],
+    ])
+    def test_basecall_network_raw(self, options):
         model_file = os.path.join(self.data_dir, "raw_model_1pt2_cpu.pkl")
         self.assertTrue(os.path.exists(model_file))
 
@@ -53,5 +58,5 @@ class AcceptanceTest(unittest.TestCase):
         self.assertTrue(os.path.exists(expected_output_file))
         expected_output = open(expected_output_file, 'r').read().splitlines()
 
-        cmd = [self.script, "raw", model_file, reads_dir]
+        cmd = [self.script, "raw", model_file, reads_dir] + options
         run_cmd(self, cmd).return_code(0).stdoutEquals(expected_output)
