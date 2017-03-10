@@ -186,7 +186,7 @@ class SeqPrinter(object):
         kmer_path = [self.kmers[i] for i in call]
         seq = bio.kmers_to_sequence(kmer_path, always_move=self.transducer)
         # TODO: write structured metadata after filename?
-        self.fh.write(">{}: score {:.0f}, {} {} to {} bases\n".format(read_name, score,
+        self.fh.write(">{} score {:.0f}, {} {} to {} bases\n".format(read_name, score,
                                                                       nev, self.datatype, len(seq)))
         self.fh.write(seq + '\n')
         return len(seq)
