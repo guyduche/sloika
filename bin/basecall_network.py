@@ -115,7 +115,7 @@ def basecall_events(args, fn):
             ev = f5.get_section_events(args.section, analysis=args.segmentation)
             sn = f5.filename_short
     except Exception as e:
-        sys.stderr.write("Error getting events for section {!r} in file {}\n{!r}\n".format(arg.section, fn, e))
+        sys.stderr.write("Error getting events for section {!r} in file {}\n{!r}\n".format(args.section, fn, e))
         return None
 
     ev = trim_array(ev, args.trim)
