@@ -9,7 +9,7 @@ import os
 import shutil
 import unittest
 
-from util import run_cmd, maybe_create_dir, zeroth_line_starts_with
+from util import run_cmd, last_line_starts_with, maybe_create_dir, zeroth_line_starts_with
 
 
 class AcceptanceTest(unittest.TestCase):
@@ -37,4 +37,4 @@ class AcceptanceTest(unittest.TestCase):
         self.assertTrue(os.path.exists(reads_dir))
 
         cmd = [self.script, "raw", model_file, reads_dir]
-        run_cmd(self, cmd).return_code(0).stderr(last_line_starts_with(u"no raw data to basecall"))
+        run_cmd(self, cmd).return_code(0).stderr(last_line_starts_with(u"Called 0 bases"))
