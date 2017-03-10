@@ -17,7 +17,7 @@ from untangled import bio, fast5
 from untangled.cmdargs import (AutoBool, FileAbsent, FileExists, Maybe,
                                NonNegative, proportion, Positive, Vector)
 from untangled.iterators import imap_mp
-from untangled.maths import med_mad
+from untangled.maths import mad
 
 from sloika import helpers
 from sloika.variables import nstate
@@ -59,8 +59,7 @@ common_parser.add_argument('input_folder', action=FileExists,
 subparsers = parser.add_subparsers(help='command', dest='command')
 subparsers.required = True
 
-parser_raw = subparsers.add_parser(
-    'raw', parents=[common_parser], help='basecall from raw signal')
+parser_raw = subparsers.add_parser('raw', parents=[common_parser], help='basecall from raw signal')
 parser_raw.add_argument('--bad', default=True, action=AutoBool,
                         help='Model emits bad signal blocks as a separate state')
 parser_raw.add_argument('--open_pore_fraction', metavar='proportion', default=0,
@@ -69,8 +68,7 @@ parser_raw.add_argument('--trim', default=(200, 10), nargs=2, type=NonNegative(i
                         metavar=('beginning', 'end'), help='Number of samples to trim off start and end')
 parser_raw.set_defaults(datatype='samples')
 
-parser_ev = subparsers.add_parser(
-    'events', parents=[common_parser], help='basecall from events')
+parser_ev = subparsers.add_parser('events', parents=[common_parser], help='basecall from events')
 parser_ev.add_argument('--bad', default=True, action=AutoBool,
                        help='Model emits bad events as a separate state')
 parser_ev.add_argument('--section', default='template', choices=['template', 'complement'],
@@ -92,74 +90,64 @@ def init_worker(model):
         calc_post = pickle.load(fh)
 
 
-def prepare_events(args, fn):
-    from sloika import features, config
-    try:
-        with fast5.Reader(fn) as f5:
-            ev = f5.get_section_events(args.section, analysis=args.segmentation)
-            sn = f5.filename_short
-    except:
-        return None, None
-
-    if len(ev) <= sum(args.trim):
-        return sn, None
-    begin = args.trim[0]
-    end = None if args.trim[1] == 0 else -args.trim[1]
-    ev = ev[begin : end]
-
-    inMat = features.from_events(ev, tag='')
-    inMat = np.expand_dims(inMat, axis=1)
-    return sn, inMat
+def trim_array(x, trim):
+    begin = trim[0]
+    end = None if trim[1] == 0 else -trim[1]
+    return x[begin:end]
 
 
-def prepare_raw(args, fn):
-    from sloika import batch, config
-    try:
-        with fast5.Reader(fn) as f5:
-            signal = f5.get_read(raw=True)
-            sn = f5.filename_short
-    except:
-        return None, None
-
-    signal = batch.trim_open_pore(signal, args.open_pore_fraction)
-
-    if len(signal) <= sum(args.trim):
-        return sn, None
-    begin, end = args.trim
-    end = None if end is 0 else -end
-    signal = signal[begin: end]
-
-    loc, scale = med_mad(signal)
-    inMat = (signal - loc) / scale
-
-    inMat = inMat.reshape((-1, 1, 1)).astype(config.sloika_dtype)
-    return sn, inMat
-
-
-def basecall(args, fn):
-    from sloika import decode, olddecode
-
-    if args.command == "raw":
-        sn, inMat = prepare_raw(args, fn)
-    elif args.command == "events":
-        sn, inMat = prepare_events(args, fn)
-    else:
-        # We should never reach this line, but just in case...
-        raise NotImplementedError("Command '{}' not understood".format(args.command))
-    if inMat is None:
-        sys.stderr.write("Failed to get {} from file {}. Skipping.\n".format(args.datatype, fn))
-        return None
-
-    post = calc_post(inMat)
+def decode_post(post, args):
+    from sloika import decode
     assert post.shape[2] == nstate(args.kmer_len, transducer=args.transducer, bad_state=args.bad)
-    post = decode.prepare_post(post, min_prob=args.min_prob,
-                               drop_bad=args.bad and not args.transducer)
-
+    post = decode.prepare_post(post, min_prob=args.min_prob, drop_bad=args.bad and not args.transducer)
     if args.transducer:
         score, call = decode.viterbi(post, args.kmer_len, skip_pen=args.skip)
     else:
         trans = olddecode.estimate_transitions(post, trans=args.trans)
         score, call = olddecode.decode_profile(post, trans=np.log(_ETA + trans), log=False)
+    return score, call
+
+
+def basecall_events(args, fn):
+    from sloika import features
+    try:
+        with fast5.Reader(fn) as f5:
+            ev = f5.get_section_events(args.section, analysis=args.segmentation)
+            sn = f5.filename_short
+    except Exception as e:
+        sys.stderr.write("Error getting events for section {!r} in file {}\n{!r}\n".format(arg.section, fn, e))
+        return None
+
+    ev = trim_array(ev, args.trim)
+    if ev.size == 0:
+        sys.stderr.write("Read too short in file {}\n".format(fn))
+        return None
+
+    inMat = features.from_events(ev, tag='')[:, None, :]
+    score, call = decode_post(calc_post(inMat), args)
+
+    return sn, score, call, inMat.shape[0]
+
+
+def basecall_raw(args, fn):
+    from sloika import batch, config
+    try:
+        with fast5.Reader(fn) as f5:
+            signal = f5.get_read(raw=True)
+            sn = f5.filename_short
+    except Exception as e:
+        sys.stderr.write("Error getting raw data for file {}\n{!r}\n".format(fn, e))
+        return None
+
+    signal = batch.trim_open_pore(signal, args.open_pore_fraction)
+    signal = trim_array(signal, args.trim)
+    if signal.size == 0:
+        sys.stderr.write("Read too short in file {}\n".format(fn))
+        return None
+
+    inMat = (signal - np.median(signal)) / mad(signal)
+    inMat = inMat[:, None, None].astype(config.sloika_dtype)
+    score, call = decode_post(calc_post(inMat), args)
 
     return sn, score, call, inMat.shape[0]
 
@@ -194,6 +182,14 @@ class SeqPrinter(object):
 
 if __name__ == '__main__':
     args = parser.parse_args()
+
+    if args.command == "events":
+        basecall = basecall_events
+    elif args.command == "raw":
+        basecall = basecall_raw
+    else:
+        # We should never reach this line, but just in case...
+        raise NotImplementedError("Command '{!r}' not known".format(args.command))
 
     compiled_file = helpers.compile_model(args.model, args.compile)
 
