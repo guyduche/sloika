@@ -9,7 +9,7 @@ import os
 import shutil
 import unittest
 
-from util import run_cmd, maybe_create_dir, zeroth_line_starts_with
+from util import run_cmd, last_line_starts_with, maybe_create_dir, zeroth_line_starts_with
 
 
 class AcceptanceTest(unittest.TestCase):
@@ -31,7 +31,6 @@ class AcceptanceTest(unittest.TestCase):
         cmd = [self.script]
         run_cmd(self, cmd).return_code(2).stderr(zeroth_line_starts_with(u"usage"))
 
-    @unittest.expectedFailure
     def test_raw_iteration_failure_on_files_with_no_raw_data(self):
         model_file = os.path.join(self.data_dir, "raw_model_1pt2_cpu.pkl")
         self.assertTrue(os.path.exists(model_file))
@@ -40,13 +39,14 @@ class AcceptanceTest(unittest.TestCase):
         self.assertTrue(os.path.exists(reads_dir))
 
         cmd = [self.script, "raw", model_file, reads_dir]
-        run_cmd(self, cmd).return_code(0).stderr(last_line_starts_with(u"no raw data to basecall"))
+        run_cmd(self, cmd).return_code(0).stderr(last_line_starts_with(u"Called 0 bases"))
 
     def test_basecall_network_raw(self):
         model_file = os.path.join(self.data_dir, "raw_model_1pt2_cpu.pkl")
         self.assertTrue(os.path.exists(model_file))
 
         reads_dir = os.path.join(self.data_dir, "raw", "dataset1", "reads")
+        print(self.data_dir, reads_dir)
         self.assertTrue(os.path.exists(reads_dir))
 
         expected_output_file = os.path.join(self.data_dir, "raw", "dataset1", "output.txt")

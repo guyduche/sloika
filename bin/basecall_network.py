@@ -99,10 +99,10 @@ def prepare_events(args, fn):
             ev = f5.get_section_events(args.section, analysis=args.segmentation)
             sn = f5.filename_short
     except:
-        return None
+        return None, None
 
     if len(ev) <= sum(args.trim):
-        return None
+        return sn, None
     begin = args.trim[0]
     end = None if args.trim[1] == 0 else -args.trim[1]
     ev = ev[begin : end]
@@ -119,12 +119,12 @@ def prepare_raw(args, fn):
             signal = f5.get_read(raw=True)
             sn = f5.filename_short
     except:
-        return None
+        return None, None
 
     signal = batch.trim_open_pore(signal, args.open_pore_fraction)
 
     if len(signal) <= sum(args.trim):
-        return None
+        return sn, None
     begin, end = args.trim
     end = None if end is 0 else -end
     signal = signal[begin: end]
