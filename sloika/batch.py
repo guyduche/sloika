@@ -118,7 +118,8 @@ def chunk_worker(fn, section, chunk_len, kmer_len, min_length, trim, use_scaled,
     try:
         with fast5.Reader(fn) as f5:
             ev, _ = f5.get_any_mapping_data(section)
-    except:
+    except Exception as e:
+        sys.stderr.write('Failed to get mapping data from {}.\n{}\n'.format(fn, repr(e)))
         return None
 
     ev = trim_ends_and_filter(ev, trim, min_length, chunk_len)
