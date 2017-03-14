@@ -34,25 +34,24 @@ common_parser = argparse.ArgumentParser(add_help=False)
 common_parser.add_argument('--compile', default=None, action=FileAbsent,
                            help='File output compiled model')
 common_parser.add_argument('--jobs', default=4, metavar='n', type=Positive(int),
-                           help='Number of jobs to run in parallel')
+                           help='Number of threads to use when processing data')
 common_parser.add_argument('--kmer_len', default=5, metavar='length', type=Positive(int),
                            help='Length of kmer')
 common_parser.add_argument('--limit', default=None, metavar='reads',
-                           type=Maybe(Positive(int)), help='Limit number of reads to process.')
+                           type=Maybe(Positive(int)), help='Limit number of reads to process')
 common_parser.add_argument('--min_prob', metavar='proportion', default=1e-5,
                            type=proportion, help='Minimum allowed probabiility for basecalls')
 common_parser.add_argument('--skip', default=0.0,
                            type=Positive(float), help='Skip penalty')
 common_parser.add_argument('--input_strand_list', default=None, action=FileExists,
-                           help='strand summary file containing subset.')
+                           help='Strand summary file containing subset')
 common_parser.add_argument('--trans', default=None, action=Vector(proportion), nargs=3,
                            metavar=('stay', 'step', 'skip'), help='Base transition probabilities')
 common_parser.add_argument('--transducer', default=True, action=AutoBool,
                            help='Model is transducer')
-common_parser.add_argument('model', action=FileExists,
-                           help='Pickled model file')
+common_parser.add_argument('model', action=FileExists, help='Pickled model file')
 common_parser.add_argument('input_folder', action=FileExists,
-                           help='Directory containing single-read fast5 files.')
+                           help='Directory containing single-read fast5 files')
 
 
 # add subparsers for each command
