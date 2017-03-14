@@ -30,6 +30,7 @@ wheel_py3:
     only:
         - release
         - master
+        - /^ci_*/
 
 unit_xenial:
     stage: test
