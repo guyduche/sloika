@@ -38,6 +38,7 @@ unit_xenial:
     only:
         - release
         - master
+        - /^ci_*/
 
 acceptance_xenial:
     stage: test
@@ -46,6 +47,7 @@ acceptance_xenial:
     only:
         - release
         - master
+        - /^ci_*/
 
 unit_xenial_py3:
     stage: test
@@ -54,6 +56,7 @@ unit_xenial_py3:
     only:
         - release
         - master
+        - /^ci_*/
 
 acceptance_xenial_py3:
     stage: test
@@ -62,6 +65,7 @@ acceptance_xenial_py3:
     only:
         - release
         - master
+        - /^ci_*/
 
 unit_trusty:
     image: git.oxfordnanolabs.local:4567/algorithm/sloika_docker:14.04-latest
