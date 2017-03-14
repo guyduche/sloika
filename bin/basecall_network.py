@@ -33,7 +33,7 @@ parser = argparse.ArgumentParser(
 common_parser = argparse.ArgumentParser(add_help=False)
 common_parser.add_argument('--compile', default=None, action=FileAbsent,
                            help='File output compiled model')
-common_parser.add_argument('--jobs', default=4, metavar='n', type=Positive(int),
+common_parser.add_argument('--jobs', default=1, metavar='n', type=Positive(int),
                            help='Number of threads to use when processing data')
 common_parser.add_argument('--kmer_len', default=5, metavar='length', type=Positive(int),
                            help='Length of kmer')
