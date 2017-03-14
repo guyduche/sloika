@@ -10,7 +10,6 @@ stages:
     - release
 
 before_script:
-    - make deps
     - make checkout
 
 wheel:
@@ -28,26 +27,46 @@ wheel_py3:
     artifacts:
         paths:
             - dist/*.whl
+    only:
+        - release
+        - master
+        - /^ci_*/
 
 unit_xenial:
     stage: test
     script:
         - make unitTestFromScratch
+    only:
+        - release
+        - master
+        - /^ci_*/
 
 acceptance_xenial:
     stage: test
     script:
         - make acceptanceTestFromScratch
+    only:
+        - release
+        - master
+        - /^ci_*/
 
 unit_xenial_py3:
     stage: test
     script:
         - make unitTestFromScratchPy3
+    only:
+        - release
+        - master
+        - /^ci_*/
 
 acceptance_xenial_py3:
     stage: test
     script:
         - make acceptanceTestFromScratchPy3
+    only:
+        - release
+        - master
+        - /^ci_*/
 
 unit_trusty:
     image: git.oxfordnanolabs.local:4567/algorithm/sloika_docker:14.04-latest
