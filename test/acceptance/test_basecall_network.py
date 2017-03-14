@@ -51,7 +51,6 @@ class AcceptanceTest(unittest.TestCase):
         self.assertTrue(os.path.exists(model_file))
 
         reads_dir = os.path.join(self.data_dir, "raw", "dataset1", "reads")
-        print(self.data_dir, reads_dir)
         self.assertTrue(os.path.exists(reads_dir))
 
         expected_output_file = os.path.join(self.data_dir, "raw", "dataset1", "output.txt")
@@ -59,4 +58,22 @@ class AcceptanceTest(unittest.TestCase):
         expected_output = open(expected_output_file, 'r').read().splitlines()
 
         cmd = [self.script, "raw", model_file, reads_dir] + options
+        run_cmd(self, cmd).return_code(0).stdoutEquals(expected_output)
+
+    @parameterized.expand([
+        [[]],
+        [['--trim', '50', '1']],
+    ])
+    def test_basecall_network_events(self, options):
+        model_file = os.path.join(self.data_dir, "events_model_cpu.pkl")
+        self.assertTrue(os.path.exists(model_file))
+
+        reads_dir = os.path.join(self.data_dir, "events", "dataset1", "reads")
+        self.assertTrue(os.path.exists(reads_dir))
+
+        expected_output_file = os.path.join(self.data_dir, "events", "dataset1", "output.txt")
+        self.assertTrue(os.path.exists(expected_output_file))
+        expected_output = open(expected_output_file, 'r').read().splitlines()
+
+        cmd = [self.script, "events", "--segmentation", "Segment_Linear", model_file, reads_dir] + options
         run_cmd(self, cmd).return_code(0).stdoutEquals(expected_output)
