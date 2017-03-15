@@ -50,10 +50,12 @@ class AcceptanceTest(unittest.TestCase):
         model_file = os.path.join(self.data_dir, "raw_model_1pt2_cpu.pkl")
         self.assertTrue(os.path.exists(model_file))
 
-        reads_dir = os.path.join(self.data_dir, "raw", "dataset1", "reads")
+        test_data_dir = os.path.join(self.data_dir, "raw", "dataset1")
+
+        reads_dir = os.path.join(test_data_dir, "reads")
         self.assertTrue(os.path.exists(reads_dir))
 
-        expected_output_file = os.path.join(self.data_dir, "raw", "dataset1", "output.txt")
+        expected_output_file = os.path.join(test_data_dir, "output.txt")
         self.assertTrue(os.path.exists(expected_output_file))
         expected_output = open(expected_output_file, 'r').read().splitlines()
 
@@ -68,10 +70,12 @@ class AcceptanceTest(unittest.TestCase):
         model_file = os.path.join(self.data_dir, "events_model_cpu.pkl")
         self.assertTrue(os.path.exists(model_file))
 
-        reads_dir = os.path.join(self.data_dir, "events", "dataset2", "reads")
+        test_data_dir = os.path.join(self.data_dir, "raw", "dataset2")
+
+        reads_dir = os.path.join(test_data_dir, "reads")
         self.assertTrue(os.path.exists(reads_dir))
 
-        expected_output_file = os.path.join(self.data_dir, "events", "dataset2", "output.txt")
+        expected_output_file = os.path.join(test_data_dir, "output.txt")
         self.assertTrue(os.path.exists(expected_output_file))
         expected_output = open(expected_output_file, 'r').read().splitlines()
 
