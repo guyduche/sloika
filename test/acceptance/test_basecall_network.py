@@ -70,7 +70,7 @@ class AcceptanceTest(unittest.TestCase):
         model_file = os.path.join(self.data_dir, "events_model_cpu.pkl")
         self.assertTrue(os.path.exists(model_file))
 
-        test_data_dir = os.path.join(self.data_dir, "raw", "dataset2")
+        test_data_dir = os.path.join(self.data_dir, "events", "dataset2")
 
         reads_dir = os.path.join(test_data_dir, "reads")
         self.assertTrue(os.path.exists(reads_dir))
