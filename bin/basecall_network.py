@@ -83,9 +83,6 @@ parser_raw.add_argument('--trim', default=(200, 10), nargs=2, type=NonNegative(i
 parser_raw.set_defaults(datatype='samples')
 
 
-_ETA = 1e-10
-
-
 def init_worker(model):
     import pickle
     global calc_post
@@ -99,7 +96,7 @@ def trim_array(x, trim):
     return x[begin:end]
 
 
-def decode_post(post, args):
+def decode_post(post, args, eta=1e-10):
     from sloika import decode
     assert post.shape[2] == nstate(args.kmer_len, transducer=args.transducer, bad_state=args.bad)
     post = decode.prepare_post(post, min_prob=args.min_prob, drop_bad=args.bad and not args.transducer)
@@ -107,7 +104,7 @@ def decode_post(post, args):
         score, call = decode.viterbi(post, args.kmer_len, skip_pen=args.skip)
     else:
         trans = olddecode.estimate_transitions(post, trans=args.trans)
-        score, call = olddecode.decode_profile(post, trans=np.log(_ETA + trans), log=False)
+        score, call = olddecode.decode_profile(post, trans=np.log(eta + trans), log=False)
     return score, call
 
 
