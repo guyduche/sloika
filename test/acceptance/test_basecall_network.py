@@ -68,10 +68,10 @@ class AcceptanceTest(unittest.TestCase):
         model_file = os.path.join(self.data_dir, "events_model_cpu.pkl")
         self.assertTrue(os.path.exists(model_file))
 
-        reads_dir = os.path.join(self.data_dir, "events", "dataset1", "reads")
+        reads_dir = os.path.join(self.data_dir, "events", "dataset2", "reads")
         self.assertTrue(os.path.exists(reads_dir))
 
-        expected_output_file = os.path.join(self.data_dir, "events", "dataset1", "output.txt")
+        expected_output_file = os.path.join(self.data_dir, "events", "dataset2", "output.txt")
         self.assertTrue(os.path.exists(expected_output_file))
         expected_output = open(expected_output_file, 'r').read().splitlines()
 
