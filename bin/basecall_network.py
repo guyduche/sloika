@@ -58,7 +58,8 @@ common_parser.add_argument('input_folder', action=FileExists,
 subparsers = parser.add_subparsers(help='command', dest='command')
 subparsers.required = True
 
-parser_raw = subparsers.add_parser('raw', parents=[common_parser], help='basecall from raw signal')
+parser_raw = subparsers.add_parser('raw', parents=[common_parser], help='basecall from raw signal',
+                                   formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser_raw.add_argument('--bad', default=True, action=AutoBool,
                         help='Model emits bad signal blocks as a separate state')
 parser_raw.add_argument('--open_pore_fraction', metavar='proportion', default=0,
@@ -67,7 +68,8 @@ parser_raw.add_argument('--trim', default=(200, 10), nargs=2, type=NonNegative(i
                         metavar=('beginning', 'end'), help='Number of samples to trim off start and end')
 parser_raw.set_defaults(datatype='samples')
 
-parser_ev = subparsers.add_parser('events', parents=[common_parser], help='basecall from events')
+parser_ev = subparsers.add_parser('events', parents=[common_parser], help='basecall from events',
+                                  formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser_ev.add_argument('--bad', default=True, action=AutoBool,
                        help='Model emits bad events as a separate state')
 parser_ev.add_argument('--section', default='template', choices=['template', 'complement'],
