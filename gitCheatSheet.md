@@ -19,14 +19,14 @@ There are some shortcuts, e.g.
 ### Rebase-Push Cycle
 
 Go through this once at the end of the day or more frequently if necessary, e.g. when you want to share your changes with others, make sure your changes are backed up or get continuous integration to build your branch:
-  * `git push origin <NEW_BRANCH_NAME> --set-upstream` -- if remote branch does not existyet, push the branch up, give it name that coincides with local name and start tracking it
+  * `git push origin <NEW_BRANCH_NAME> --set-upstream` -- if remote branch does not exist yet, push the branch up, give it name that coincides with local name and start tracking it
   * `git push` -- push your changes up this way if remote branch was setup already
   * if push did not succeed because remote branch has moved on
      * `git pull --rebase` -- pull down changes from remote and apply your changes on top
-     * resolve the conflicts if any (see [Conflit Resolution Cycle](#conflict-resolution-cycle) section)
+     * resolve the conflicts if any (see [Conflict Resolution Cycle](#conflict-resolution-cycle) section)
      * `git push`
 
-### Conflit Resolution Cycle
+### Conflict Resolution Cycle
 
 `git pull --rebase` does a fetch to get the latest changes from the remote and then rebases your changes on top. In other words, it "replays" your changes commit-by-commit as if you branched off the remote as it is at the time of pull.
 
