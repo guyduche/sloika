@@ -64,6 +64,15 @@ class Result(object):
         self.test_case.assertEquals(self._stderr, referenceStderr)
         return self
 
+    def get_return_code(self):
+        return self._return_code
+
+    def get_stdout(self):
+        return self._stdout
+
+    def get_stderr(self):
+        return self._stderr
+
 
 def run_cmd(test_case, cmd, cwd=None):
     env_with_theano_flags = os.environ.copy()
