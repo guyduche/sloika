@@ -2,6 +2,7 @@
 
 BIN_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-VARS="OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 THEANO_FLAGS=floatX=float32,device=cpu"
+export OMP_NUM_THREADS=1
+export THEANO_FLAGS=floatX=float32
 
-env $VARS ${BIN_DIR}/basecall_network.py $@
+${BIN_DIR}/basecall_network.py $@
