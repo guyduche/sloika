@@ -37,3 +37,17 @@ Moreover, within each file there could be more than one place where the conflict
 Files that await resolution can be inspected by running `git status` which would have files with conflicts in them unstaged and listed with `both modified` suffix.
 
 When all conflicts were resolved, git can be instructed to continue with the rebase: `git rebase --continue`. It will resume applying your work commit-by-commit and may enter the conflict state again, in which case the process will need to be repeated starting from the resolution step.
+
+# How To Write A Good Git Commit Message
+
+  * Separate subject from body with a blank line
+  * Limit the subject line to 50 characters
+  * Capitalize the subject line
+  * Do not end the subject line with a period
+  * Use the imperative mood in the subject line
+  * Wrap the body at 72 characters
+  * Use the body to explain what and why vs. how
+
+Git commit message communicates the context about a change to fellow developers (and indeed to their future selves). Diff tells *what* changed, but only commit message can properly tell *why*. Reestablishing the context of a change is a cost, and commit message helps reduced it and, as a result, shows whether the author of the changeset is a good collaborator.
+
+Distilled from https://chris.beams.io/posts/git-commit/
