@@ -94,7 +94,6 @@ class AcceptanceTest(unittest.TestCase):
         reads_dir = os.path.join(test_data_dir, "reads")
         self.assertTrue(os.path.exists(reads_dir))
 
-        # TODO: add reference output file once the problem with --trans is fixed
         expected_output_file = os.path.join(test_data_dir, "output_no_transducer.txt")
         self.assertTrue(os.path.exists(expected_output_file))
         expected_output = open(expected_output_file, 'r').read().splitlines()
