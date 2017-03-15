@@ -41,7 +41,7 @@ common_parser.add_argument('--limit', default=None, metavar='reads',
 common_parser.add_argument('--min_prob', metavar='proportion', default=1e-5,
                            type=proportion, help='Minimum allowed probabiility for basecalls')
 common_parser.add_argument('--skip', default=0.0,
-                           type=Positive(float), help='Skip penalty')
+                           type=NonNegative(float), help='Skip penalty')
 common_parser.add_argument('--trans', default=None, action=Vector(proportion), nargs=3,
                            metavar=('stay', 'step', 'skip'), help='Base transition probabilities')
 common_parser.add_argument('--transducer', default=True, action=AutoBool,
