@@ -6,6 +6,7 @@ standard_library.install_aliases()
 from builtins import *
 
 import numpy as np
+import sys
 
 from untangled import bio, fast5
 from untangled.maths import mad
