@@ -81,3 +81,23 @@ class AcceptanceTest(unittest.TestCase):
 
         cmd = [self.script, "events", "--segmentation", "Segment_Linear", model_file, reads_dir] + options
         run_cmd(self, cmd).return_code(0).stdoutEquals(expected_output)
+
+    @parameterized.expand([
+        [["--trans", "0.5", "0.5", "0.5"]],
+    ])
+    def test_basecall_network_events_with_non_default_trans(self, options):
+        model_file = os.path.join(self.data_dir, "events_model_cpu.pkl")
+        self.assertTrue(os.path.exists(model_file))
+
+        test_data_dir = os.path.join(self.data_dir, "events", "dataset2")
+
+        reads_dir = os.path.join(test_data_dir, "reads")
+        self.assertTrue(os.path.exists(reads_dir))
+
+        # TODO: add reference output file once the problem with --trans is fixed
+        expected_output_file = os.path.join(test_data_dir, "output_with_trans.txt")
+        self.assertTrue(os.path.exists(expected_output_file))
+        expected_output = open(expected_output_file, 'r').read().splitlines()
+
+        cmd = [self.script, "events", "--segmentation", "Segment_Linear", model_file, reads_dir] + options
+        run_cmd(self, cmd).return_code(0).stdoutEquals(expected_output)
