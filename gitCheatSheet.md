@@ -46,8 +46,12 @@ When all conflicts were resolved, git can be instructed to continue with the reb
   * Do not end the subject line with a period
   * Use the imperative mood in the subject line
   * Wrap the body at 72 characters
-  * Use the body to explain what and why vs. how
+  * Use the body to explain why the change was needed, not what has changed
 
-Git commit message communicates the context about a change to fellow developers (and indeed to their future selves). Diff tells *what* changed, but only commit message can properly tell *why*. Reestablishing the context of a change is a cost, and commit message helps reduced it and, as a result, shows whether the author of the changeset is a good collaborator.
+Git commit message communicates the context about a change to fellow developers
+(and to their future selves). Diff tells *what* changed, but only commit message
+can properly tell *why*. Reestablishing the context of a change is a cost, and
+commit message helps to reduce it and, as a result, shows whether the author
+of the changeset is a good collaborator.
 
 Distilled from https://chris.beams.io/posts/git-commit/
