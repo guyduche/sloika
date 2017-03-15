@@ -4,6 +4,7 @@ from __future__ import absolute_import
 from future import standard_library
 standard_library.install_aliases()
 from builtins import *
+
 import h5py
 import numpy as np
 import numpy.lib.recfunctions as nprf
@@ -11,58 +12,25 @@ import sys
 
 from Bio import SeqIO
 
+from untangled import bio, fast5, maths
+
 # NB: qualified imports here due to a name clash
 import sloika.decode
 import sloika.util
 
-from untangled import bio, fast5, maths
-
 
 TRIM_OPEN_PORE_LOCAL_VAR_METHODS = frozenset(['mad', 'std'])
 
+DEFAULT_NORMALISATION = 'per-read'
 
-# TODO: this is a hack, find a nicer way
-def trim_open_pore(signal, max_op_fraction=0.3, var_method='mad', window_size=100):
-    """Locate raw read in signal by thresholding local variance
-
-    :param signal: raw data containing a read
-    :param max_op_fraction: (float) Maximum expected fraction of signal that
-        consists of open pore. Higher values will find smaller reads at the
-        cost of slightly truncating longer reads.
-    :param var_method: ('std' | 'mad') method used to compute the local
-        variation. std: standard deviation, mad: Median Absolute Deviation
-    :param window_size: size of patches used to estimate local variance
-    """
-    assert var_method in TRIM_OPEN_PORE_LOCAL_VAR_METHODS, "var_method not understood: {}".format(var_method)
-
-    ml = len(signal) // window_size
-    ub = ml * window_size
-
-    if var_method == 'std':
-        local_var = signal[:ub].reshape((ml, window_size)).std(1)
-    if var_method == 'mad':
-        sig_chunks = signal[:ub].reshape((ml, window_size))
-        local_var = maths.mad(sig_chunks, axis=1)
-
-    probably_read = (local_var > np.percentile(local_var, 100 * max_op_fraction))
-    ix = np.arange(local_var.shape[0])[probably_read]
-    start = ix.min() * window_size
-    end = (ix.max() + 1) * window_size
-    return signal[start:end]
-
-
-default_normalisation = 'per-read'
-
-available_normalisations = set(['none', 'per-read', 'per-chunk'])
+AVAILABLE_NORMALISATIONS = frozenset(['none', 'per-read', 'per-chunk'])
 
 
 def trim_ends_and_filter(ev, trim, min_length, chunk_len):
     if len(ev) < sum(trim) + chunk_len or len(ev) < min_length:
         return None
     else:
-        begin = trim[0]
-        end = None if trim[1] == 0 else -trim[1]
-        return ev[begin : end]
+        return sloika.util.trim_array(ev, trim)
 
 
 def chunkify(ev, chunk_len, kmer_len, use_scaled, normalisation):
@@ -229,3 +197,33 @@ def chunk_remap_worker(fn, trim, min_prob, transducer, kmer_len, prior, slip, ch
     (chunks, labels, bad_ev) = chunkify(ev, chunk_len, kmer_len, use_scaled, normalisation)
 
     return sn + '.fast5', score, len(ev), path, seq, chunks, labels, bad_ev
+
+
+# TODO: this is a hack, find a nicer way
+def trim_open_pore(signal, max_op_fraction=0.3, var_method='mad', window_size=100):
+    """Locate raw read in signal by thresholding local variance
+
+    :param signal: raw data containing a read
+    :param max_op_fraction: (float) Maximum expected fraction of signal that
+        consists of open pore. Higher values will find smaller reads at the
+        cost of slightly truncating longer reads.
+    :param var_method: ('std' | 'mad') method used to compute the local
+        variation. std: standard deviation, mad: Median Absolute Deviation
+    :param window_size: size of patches used to estimate local variance
+    """
+    assert var_method in TRIM_OPEN_PORE_LOCAL_VAR_METHODS, "var_method not understood: {}".format(var_method)
+
+    ml = len(signal) // window_size
+    ub = ml * window_size
+
+    if var_method == 'std':
+        local_var = signal[:ub].reshape((ml, window_size)).std(1)
+    if var_method == 'mad':
+        sig_chunks = signal[:ub].reshape((ml, window_size))
+        local_var = maths.mad(sig_chunks, axis=1)
+
+    probably_read = (local_var > np.percentile(local_var, 100 * max_op_fraction))
+    ix = np.arange(local_var.shape[0])[probably_read]
+    start = ix.min() * window_size
+    end = (ix.max() + 1) * window_size
+    return signal[start:end]

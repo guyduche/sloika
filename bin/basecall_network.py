@@ -19,7 +19,7 @@ from untangled.cmdargs import (AutoBool, FileAbsent, FileExists, Maybe,
 from untangled.iterators import imap_mp
 from untangled.maths import mad
 
-from sloika import helpers
+from sloika import helpers, util
 from sloika.variables import nstate
 
 
@@ -90,12 +90,6 @@ def init_worker(model):
         calc_post = pickle.load(fh)
 
 
-def trim_array(x, trim):
-    begin = trim[0]
-    end = None if trim[1] == 0 else -trim[1]
-    return x[begin:end]
-
-
 def decode_post(post, args, eta=1e-10):
     from sloika import decode
     assert post.shape[2] == nstate(args.kmer_len, transducer=args.transducer, bad_state=args.bad)
@@ -118,7 +112,7 @@ def basecall_events(args, fn):
         sys.stderr.write("Error getting events for section {!r} in file {}\n{!r}\n".format(args.section, fn, e))
         return None
 
-    ev = trim_array(ev, args.trim)
+    ev = util.trim_array(ev, args.trim)
     if ev.size == 0:
         sys.stderr.write("Read too short in file {}\n".format(fn))
         return None
@@ -140,7 +134,7 @@ def basecall_raw(args, fn):
         return None
 
     signal = batch.trim_open_pore(signal, args.open_pore_fraction)
-    signal = trim_array(signal, args.trim)
+    signal = util.trim_array(signal, args.trim)
     if signal.size == 0:
         sys.stderr.write("Read too short in file {}\n".format(fn))
         return None

@@ -84,3 +84,9 @@ def create_hdf5(args, chunk_list, label_list, bad_list):
         h5['/'].attrs['section'] = args.section
         h5['/'].attrs['trim'] = args.trim
         h5['/'].attrs['scaled'] = args.use_scaled
+
+
+def trim_array(x, trim):
+    begin = trim[0]
+    end = None if trim[1] == 0 else -trim[1]
+    return x[begin:end]
