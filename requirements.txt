@@ -1,6 +1,6 @@
 h5py >= 2.2.1
 numpy >= 1.9.0
 Theano >= 0.8.2
-untangled >= 0.9.dev293
+untangled >= 0.9.295
 biopython >= 1.63
 future >= 0.15.2
