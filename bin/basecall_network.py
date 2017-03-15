@@ -59,16 +59,6 @@ common_parser.add_argument('input_folder', action=FileExists,
 subparsers = parser.add_subparsers(help='command', dest='command')
 subparsers.required = True
 
-parser_raw = subparsers.add_parser('raw', parents=[common_parser], help='basecall from raw signal',
-                                   formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-parser_raw.add_argument('--bad', default=True, action=AutoBool,
-                        help='Model emits bad signal blocks as a separate state')
-parser_raw.add_argument('--open_pore_fraction', metavar='proportion', default=0,
-                        type=proportion, help='Max fraction of signal to trim due to open pore')
-parser_raw.add_argument('--trim', default=(200, 10), nargs=2, type=NonNegative(int),
-                        metavar=('beginning', 'end'), help='Number of samples to trim off start and end')
-parser_raw.set_defaults(datatype='samples')
-
 parser_ev = subparsers.add_parser('events', parents=[common_parser], help='basecall from events',
                                   formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser_ev.add_argument('--bad', default=True, action=AutoBool,
@@ -80,6 +70,17 @@ parser_ev.add_argument('--segmentation', default=fast5.__default_segmentation_an
 parser_ev.add_argument('--trim', default=(50, 1), nargs=2, type=NonNegative(int),
                        metavar=('beginning', 'end'), help='Number of events to trim off start and end')
 parser_ev.set_defaults(datatype='events')
+
+
+parser_raw = subparsers.add_parser('raw', parents=[common_parser], help='basecall from raw signal',
+                                   formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+parser_raw.add_argument('--bad', default=True, action=AutoBool,
+                        help='Model emits bad signal blocks as a separate state')
+parser_raw.add_argument('--open_pore_fraction', metavar='proportion', default=0,
+                        type=proportion, help='Max fraction of signal to trim due to open pore')
+parser_raw.add_argument('--trim', default=(200, 10), nargs=2, type=NonNegative(int),
+                        metavar=('beginning', 'end'), help='Number of samples to trim off start and end')
+parser_raw.set_defaults(datatype='samples')
 
 
 _ETA = 1e-10
@@ -175,7 +176,6 @@ class SeqPrinter(object):
     def write(self, read_name, score, call, nev):
         kmer_path = [self.kmers[i] for i in call]
         seq = bio.kmers_to_sequence(kmer_path, always_move=self.transducer)
-        # TODO: write structured metadata after filename?
         self.fh.write(">{} score {:.0f}, {} {} to {} bases\n".format(read_name, score,
                                                                      nev, self.datatype, len(seq)))
         self.fh.write(seq + '\n')
@@ -185,13 +185,7 @@ class SeqPrinter(object):
 if __name__ == '__main__':
     args = parser.parse_args()
 
-    if args.command == "events":
-        basecall = basecall_events
-    elif args.command == "raw":
-        basecall = basecall_raw
-    else:
-        # We should never reach this line, but just in case...
-        raise NotImplementedError("Command '{!r}' not known".format(args.command))
+    assert args.command in ["events", "raw"]
 
     compiled_file = helpers.compile_model(args.model, args.compile)
 
@@ -210,6 +204,7 @@ if __name__ == '__main__':
         seq_len = seq_printer.write(read, score, call, nev)
         nbases += seq_len
         nevents += nev
+
     dt = time.time() - t0
     t = 'Called {} bases in {:.1f} s ({:.1f} bases/s or {:.1f} {}/s)\n'
     sys.stderr.write(t.format(nbases, dt, nbases / dt, nevents / dt, args.datatype))
