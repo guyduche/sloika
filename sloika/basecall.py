@@ -23,7 +23,7 @@ def init_worker(model):
 
 
 def decode_post(post, args, eta=1e-10):
-    from sloika import decode
+    from sloika import decode, olddecode
     assert post.shape[2] == nstate(args.kmer_len, transducer=args.transducer, bad_state=args.bad)
     post = decode.prepare_post(post, min_prob=args.min_prob, drop_bad=args.bad and not args.transducer)
     if args.transducer:

@@ -83,7 +83,7 @@ class AcceptanceTest(unittest.TestCase):
         run_cmd(self, cmd).return_code(0).stdoutEquals(expected_output)
 
     @parameterized.expand([
-        [["--trans", "0.5", "0.5", "0.5"]],
+        [["--trans", "0.5", "0.4", "0.1", "--no-transducer"]],
     ])
     def test_basecall_network_events_with_non_default_trans(self, options):
         model_file = os.path.join(self.data_dir, "events_model_cpu.pkl")
@@ -95,7 +95,7 @@ class AcceptanceTest(unittest.TestCase):
         self.assertTrue(os.path.exists(reads_dir))
 
         # TODO: add reference output file once the problem with --trans is fixed
-        expected_output_file = os.path.join(test_data_dir, "output_with_trans.txt")
+        expected_output_file = os.path.join(test_data_dir, "output_no_transducer.txt")
         self.assertTrue(os.path.exists(expected_output_file))
         expected_output = open(expected_output_file, 'r').read().splitlines()
 
