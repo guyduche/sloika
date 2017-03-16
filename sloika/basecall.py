@@ -73,21 +73,21 @@ def events_worker(fn, section, segmentation, trim, kmer_len, transducer, bad, mi
             kmer_len, min_prob, transducer, bad, [trans or skip]:
                 passed to decode_post
         See `basecall_network.py` for usage and defaults
-    :param fn: filename for single-read fast5 file with event detection and
-        segmentation
+    :param fast5_file_name: filename for single-read fast5 file with event
+        detection and segmentation
     """
     from sloika import features
     try:
-        with fast5.Reader(fn) as f5:
+        with fast5.Reader(fast5_file_name) as f5:
             ev = f5.get_section_events(section, analysis=segmentation)
             sn = f5.filename_short
     except Exception as e:
-        sys.stderr.write("Error getting events for section {!r} in file {}\n{!r}\n".format(section, fn, e))
+        sys.stderr.write("Error getting events for section {!r} in file {}\n{!r}\n".format(section, fast5_file_name, e))
         return None
 
     ev = util.trim_array(ev, *trim)
     if ev.size == 0:
-        sys.stderr.write("Read too short in file {}\n".format(fn))
+        sys.stderr.write("Read too short in file {}\n".format(fast5_file_name))
         return None
 
     inMat = features.from_events(ev, tag='')[:, None, :]
@@ -110,21 +110,21 @@ def raw_worker(fn, trim, open_pore_fraction, kmer_len, transducer, bad, min_prob
             kmer_len, min_prob, transducer, bad, [trans or skip]:
                 passed to decode_post
         See `basecall_network.py` for usage and defaults
-    :param fn: filename for single-read fast5 file with raw data
+    :param fast5_file_name: filename for single-read fast5 file with raw data
     """
     from sloika import batch, config
     try:
-        with fast5.Reader(fn) as f5:
+        with fast5.Reader(fast5_file_name) as f5:
             signal = f5.get_read(raw=True)
             sn = f5.filename_short
     except Exception as e:
-        sys.stderr.write("Error getting raw data for file {}\n{!r}\n".format(fn, e))
+        sys.stderr.write("Error getting raw data for file {}\n{!r}\n".format(fast5_file_name, e))
         return None
 
     signal = batch.trim_open_pore(signal, open_pore_fraction)
     signal = util.trim_array(signal, *trim)
     if signal.size == 0:
-        sys.stderr.write("Read too short in file {}\n".format(fn))
+        sys.stderr.write("Read too short in file {}\n".format(fast5_file_name))
         return None
 
     inMat = (signal - np.median(signal)) / mad(signal)
