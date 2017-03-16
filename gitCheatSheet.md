@@ -4,7 +4,8 @@
 `git checkout -b <NEW_BRANCH_NAME> origin/master`
 
 ### Edit-Commit Cycle
-Go through this a few times a day, grouping changes that logically belong together in the same commit and giving them a meaningful commit message:
+Go through this a few times a day, grouping changes that logically belong together
+in the same commit and giving them [a good git commit message](#how-to-write-a-good-git-commit-message):
   * make a change: edit existing files, add new ones, etc.
   * `git status` -- inspect the changes
   * `git add <FILE_NAME>` -- add new file or stage changes in existing file
@@ -23,7 +24,7 @@ Go through this once at the end of the day or more frequently if necessary, e.g.
   * `git push` -- push your changes up this way if remote branch was setup already
   * if push did not succeed because remote branch has moved on
      * `git pull --rebase` -- pull down changes from remote and apply your changes on top
-     * resolve the conflicts if any (see [Conflict Resolution Cycle](#conflict-resolution-cycle) section)
+     * resolve the conflicts if any (see [Conflict Resolution Cycle](#conflict-resolution-cycle) subsection)
      * `git push`
 
 ### Conflict Resolution Cycle
