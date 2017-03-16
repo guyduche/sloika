@@ -36,13 +36,17 @@ def decode_post(post, args, eta=1e-10):
     """ Decodes Viterbi state sequence for posterior matrix over kmer states
 
     :param post: posterior matrix
-    :param args: (arguments from basecall_network.py script) namespace
-        with all of the following names:
-            kmer_len, min_prob, transducer, bad
+    :param args: (arguments from basecall_network.py script)
+        a namespace with all of the following names:
+            kmer_len: kmer length used for decoding
+            min_prob: passed to prepare_post
+            transducer: use transducer model
+            bad: label bad states as 0. If bad and not transducer then bad
+                states will be dropped before decoding.
         and either :
-            trans (required for a non-transducer model) or
-            skip (required for transducer model)
-        Refer to basecall_network.py for documentation
+            trans: baseline transition probabilities for a non-transducer model) or
+            skip: skip penalty for transducer model
+        Refer to `basecall_network.py` for Usage and defaults
 
     :returns: score, Viterbi path
     """
@@ -65,7 +69,14 @@ def events_worker(fn, section, segmentation, trim, kmer_len, transducer, bad, mi
     init_worker. `calc_post` is an unpickled compiled sloika model that
     is used to calculate a posteroir matrix over states
 
-    :param args: command line args for `basecall_network.py events`
+    :param args: command line args for `basecall_network.py events` including:
+            section: part of read to basecall, 'template' or 'complement'
+            segmentation: location of segmentation analysis for extracting
+                target read section
+            trim: (int, int) events to remove from read beginning and end
+            kmer_len, min_prob, transducer, bad, [trans or skip]:
+                passed to decode_post
+        See `basecall_network.py` for usage and defaults
     :param fn: filename for single-read fast5 file with event detection and
         segmentation
     """
@@ -96,7 +107,13 @@ def raw_worker(fn, trim, open_pore_fraction, kmer_len, transducer, bad, min_prob
     init_worker. `calc_post` is an unpickled compiled sloika model that
     is used to calculate a posteroir matrix over states
 
-    :param args: command line args for `basecall_network.py raw`
+    :param args: command line args for `basecall_network.py raw` including:
+            open_pore_fraction: maximum allowed fraction of signal length to
+                trim due to classification as open pore signal
+            trim: (int, int) events to remove from read beginning and end
+            kmer_len, min_prob, transducer, bad, [trans or skip]:
+                passed to decode_post
+        See `basecall_network.py` for usage and defaults
     :param fn: filename for single-read fast5 file with raw data
     """
     from sloika import batch, config

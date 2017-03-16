@@ -17,7 +17,7 @@ def is_close(a, b, rel_tol=1e-09, abs_tol=0.0):
 
 
 def geometric_prior(n, m, rev=False):
-    """ Make a vec
+    """ Vector of densities for random start time with geoemetric distribution
 
     :param n: length of vector
     :param m: mean of distribution.
