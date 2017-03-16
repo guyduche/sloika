@@ -29,10 +29,7 @@ def init_worker(model):
         calc_post = pickle.load(fh)
 
 
-<<<<<<< 05cd03327b87ffeb77c1190d920672aba30fce3e
 def decode_post(post, kmer_len, transducer, bad, min_prob, skip, trans, eta=1e-10):
-=======
-def decode_post(post, args, eta=1e-10):
     """ Decode Viterbi state sequence from posterior matrix
 
     :param post: posterior matrix
@@ -50,7 +47,6 @@ def decode_post(post, args, eta=1e-10):
 
     :returns: score, Viterbi path
     """
->>>>>>> Docstrings for all functions in basecall.py
     from sloika import decode, olddecode
     assert post.shape[2] == nstate(kmer_len, transducer=transducer, bad_state=bad)
     post = decode.prepare_post(post, min_prob=min_prob, drop_bad=bad and not transducer)

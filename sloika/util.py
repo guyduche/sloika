@@ -99,6 +99,9 @@ def create_labelled_chunks_hdf5(output, blanks, attributes, chunk_list, label_li
 
 
 def trim_array(x, from_start, from_end):
+    assert from_start >= 0
+    assert from_end >= 0
+
     from_end = None if from_end == 0 else -from_end
     return x[from_start:from_end]
 
