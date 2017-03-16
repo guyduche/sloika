@@ -26,6 +26,8 @@ parser.add_argument('--kmer', default=5, metavar='length', type=Positive(int),
                     help='Length of kmer')
 parser.add_argument('--sd', default=0.5, metavar='value', type=Positive(float),
                     help='Standard deviation to initialise with')
+parser.add_argument('--stride', default=None, metavar='int', type=Positive(int),
+                    help='Stride of model or None for no stride')
 parser.add_argument('--version', nargs=0, action=display_version_and_exit,
                     metavar=__version__, help='Display version information.')
 parser.add_argument('model', action=FileExists,
@@ -54,7 +56,10 @@ if __name__ == '__main__':
 
     try:
         netmodule = imp.load_source('netmodule', args.model)
-        network = netmodule.network(nfeature=NFEATURE, klen=args.kmer, sd=args.sd)
+        if args.stride is None:
+            network = netmodule.network(nfeature=NFEATURE, klen=args.kmer, sd=args.sd)
+        else:
+            network = netmodule.network(nfeature=NFEATURE, klen=args.kmer, sd=args.sd, stride=args.stride)
         fg = wrap_network(network)
     except:
         sys.stderr.write('Compilation of model {} failed\n'.format(args.model))
@@ -65,11 +70,19 @@ if __name__ == '__main__':
     sys.stderr.write('Compilation of model {} succeeded\n'.format(os.path.basename(args.model)))
     sys.stderr.write('nparam = {}\n'.format(nparam))
 
-    ntime, nbatch = 20, 2
-    x = np.random.normal(size=(ntime, nbatch, NFEATURE)).astype(th.config.floatX)
-    lbls = np.zeros((ntime, nbatch), dtype='i4')
-    try:
-        loss, ncorrect = fg(x, lbls)
-    except:
-        sys.stderr.write('Execution of model {} failed\n'.format(args.model))
-        raise
+    for i in range(5):
+        ntime = np.random.randint(10, 100)
+        nbatch = np.random.randint(2, 10)
+        x = np.random.normal(size=(ntime, nbatch, NFEATURE)).astype(th.config.floatX)
+        if args.stride is None:
+            out_length = ntime
+        else:
+            out_length = int(np.ceil(float(ntime / args.stride)))
+        lbls = np.zeros((out_length, nbatch), dtype='i4')
+        try:
+            sys.stderr.write("Input of shape [{}, {}, {}]...  ".format(ntime, nbatch, NFEATURE))
+            loss, ncorrect = fg(x, lbls)
+            sys.stderr.write("PASS\n")
+        except:
+            sys.stderr.write('Execution of model {} failed\n'.format(args.model))
+            raise
