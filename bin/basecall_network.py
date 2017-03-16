@@ -83,10 +83,15 @@ parser_raw.set_defaults(datatype='samples')
 if __name__ == '__main__':
     args = parser.parse_args()
 
-    assert args.command in ["events", "raw"]
     assert args.datatype in ["events", "samples"]
 
+    assert args.command in ["events", "raw"]
+
     basecall_worker = getattr(basecall, args.command + "_worker")
+    if args.command == "events":
+        kwarg_names = ['section', 'segmentation', 'trim', 'kmer_len', 'transducer', 'bad', 'min_prob', 'skip', 'trans']
+    else:
+        kwarg_names = ['trim', 'open_pore_fraction', 'kmer_len', 'transducer', 'bad', 'min_prob', 'skip', 'trans']
 
     compiled_file = helpers.compile_model(args.model, args.compile)
 
@@ -97,7 +102,7 @@ if __name__ == '__main__':
                                 strand_list=args.input_strand_list)
     nbases = nevents = 0
     t0 = time.time()
-    for res in imap_mp(basecall_worker, files, threads=args.jobs, fix_args=[args],
+    for res in imap_mp(basecall_worker, files, threads=args.jobs, fix_kwargs=util.get_kwargs(args, kwarg_names),
                        unordered=True, init=basecall.init_worker, initargs=[compiled_file]):
         if res is None:
             continue
