@@ -33,7 +33,7 @@ def init_worker(model):
 def decode_post(post, kmer_len, transducer, bad, min_prob, skip, trans, eta=1e-10):
 =======
 def decode_post(post, args, eta=1e-10):
-    """ Decodes Viterbi state sequence for posterior matrix over kmer states
+    """ Decode Viterbi state sequence from posterior matrix
 
     :param post: posterior matrix
     :param args: (arguments from basecall_network.py script)
