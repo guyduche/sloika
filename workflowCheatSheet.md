@@ -24,7 +24,7 @@ Go through this once at the end of the day or more frequently if necessary, e.g.
   * `git push` — push your changes up this way if remote branch was setup already
   * if push did not succeed because remote branch has moved on
      * `git pull --rebase` — pull down changes from remote and apply your changes on top
-     * resolve the conflicts if any (see [Conflict Resolution Cycle](#conflict-resolution-cycle) subsection)
+     * [resolve the conflicts](#conflict-resolution-cycle) if any
      * `git push`
 
 ### Conflict Resolution Cycle
