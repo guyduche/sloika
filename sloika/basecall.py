@@ -29,21 +29,18 @@ def init_worker(model):
         calc_post = pickle.load(fh)
 
 
-def decode_post(post, kmer_len, transducer, bad, min_prob, skip, trans, eta=1e-10):
+def decode_post(post, kmer_len, transducer, bad, min_prob, skip=5.0, trans=None, eta=1e-10):
     """ Decode Viterbi state sequence from posterior matrix
 
     :param post: posterior matrix
-    :param args: (arguments from basecall_network.py script)
-        a namespace with all of the following names:
-            kmer_len: kmer length used for decoding
-            min_prob: passed to prepare_post
-            transducer: use transducer model
-            bad: label bad states as 0. If bad and not transducer then bad
-                states will be dropped before decoding.
-        and either :
-            trans: baseline transition probabilities for a non-transducer model) or
-            skip: skip penalty for transducer model
-        Refer to `basecall_network.py` for usage and defaults
+    :param kmer_len: kmer length used for decoding
+    :param min_prob: passed to prepare_post
+    :param transducer: use transducer model
+    :param bad: label bad states as 0. If bad and not transducer then time
+        points with a bad label will be dropped before decoding
+    :param trans: baseline transition probabilities for a non-transducer model
+    :param skip: skip penalty for transducer model
+    :param eta: small constant for avoiding log(0)
 
     :returns: score, Viterbi path
     """
@@ -58,21 +55,19 @@ def decode_post(post, kmer_len, transducer, bad, min_prob, skip, trans, eta=1e-1
     return score, call
 
 
-def events_worker(fn, section, segmentation, trim, kmer_len, transducer, bad, min_prob, skip, trans):
+def events_worker(fast5_file_name, section, segmentation, trim, kmer_len, transducer, bad, min_prob, skip=5.0, trans=None):
     """ Worker function for basecall_network.py for basecalling from events
 
     This worker used the global variable `calc_post` which is set by
     init_worker. `calc_post` is an unpickled compiled sloika model that
-    is used to calculate a posteroir matrix over states
+    is used to calculate a posterior matrix over states
 
     :param args: command line args for `basecall_network.py events` including:
-            section: part of read to basecall, 'template' or 'complement'
-            segmentation: location of segmentation analysis for extracting
+    :param section: part of read to basecall, 'template' or 'complement'
+    :param segmentation: location of segmentation analysis for extracting
                 target read section
-            trim: (int, int) events to remove from read beginning and end
-            kmer_len, min_prob, transducer, bad, [trans or skip]:
-                passed to decode_post
-        See `basecall_network.py` for usage and defaults
+    :param trim: (int, int) events to remove from read beginning and end
+    :param kmer_len, min_prob, transducer, bad, trans, skip: see `decode_post`
     :param fast5_file_name: filename for single-read fast5 file with event
         detection and segmentation
     """
@@ -96,20 +91,18 @@ def events_worker(fn, section, segmentation, trim, kmer_len, transducer, bad, mi
     return sn, score, call, inMat.shape[0]
 
 
-def raw_worker(fn, trim, open_pore_fraction, kmer_len, transducer, bad, min_prob, skip, trans):
+def raw_worker(fast5_file_name, trim, open_pore_fraction, kmer_len, transducer, bad, min_prob, skip=5.0, trans=None):
     """ Worker function for basecall_network.py for basecalling from raw data
 
     This worker used the global variable `calc_post` which is set by
     init_worker. `calc_post` is an unpickled compiled sloika model that
-    is used to calculate a posteroir matrix over states
+    is used to calculate a posterior matrix over states
 
     :param args: command line args for `basecall_network.py raw` including:
-            open_pore_fraction: maximum allowed fraction of signal length to
-                trim due to classification as open pore signal
-            trim: (int, int) events to remove from read beginning and end
-            kmer_len, min_prob, transducer, bad, [trans or skip]:
-                passed to decode_post
-        See `basecall_network.py` for usage and defaults
+    :param open_pore_fraction: maximum allowed fraction of signal length to
+        trim due to classification as open pore signal
+    :param trim: (int, int) events to remove from read beginning and end
+    :param kmer_len, min_prob, transducer, bad, trans, skip: see `decode_post`
     :param fast5_file_name: filename for single-read fast5 file with raw data
     """
     from sloika import batch, config
