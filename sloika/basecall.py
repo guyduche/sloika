@@ -16,13 +16,37 @@ from sloika.variables import nstate
 
 
 def init_worker(model):
+    """ Worker init function for basecall_network.py
+
+    This function avoids repeated pickling and unpickling of the model
+    by unpickling it once in each process and setting it as a glabal variable.
+
+    :param model: filename for pickled model to use for basecalling
+    """
     import pickle
     global calc_post
     with open(model, 'rb') as fh:
         calc_post = pickle.load(fh)
 
 
+<<<<<<< 05cd03327b87ffeb77c1190d920672aba30fce3e
 def decode_post(post, kmer_len, transducer, bad, min_prob, skip, trans, eta=1e-10):
+=======
+def decode_post(post, args, eta=1e-10):
+    """ Decodes Viterbi state sequence for posterior matrix over kmer states
+
+    :param post: posterior matrix
+    :param args: (arguments from basecall_network.py script) namespace
+        with all of the following names:
+            kmer_len, min_prob, transducer, bad
+        and either :
+            trans (required for a non-transducer model) or
+            skip (required for transducer model)
+        Refer to basecall_network.py for documentation
+
+    :returns: score, Viterbi path
+    """
+>>>>>>> Docstrings for all functions in basecall.py
     from sloika import decode, olddecode
     assert post.shape[2] == nstate(kmer_len, transducer=transducer, bad_state=bad)
     post = decode.prepare_post(post, min_prob=min_prob, drop_bad=bad and not transducer)
@@ -35,6 +59,16 @@ def decode_post(post, kmer_len, transducer, bad, min_prob, skip, trans, eta=1e-1
 
 
 def events_worker(fn, section, segmentation, trim, kmer_len, transducer, bad, min_prob, skip, trans):
+    """ Worker function for basecall_network.py for basecalling from events
+
+    This worker used the global variable `calc_post` which is set by
+    init_worker. `calc_post` is an unpickled compiled sloika model that
+    is used to calculate a posteroir matrix over states
+
+    :param args: command line args for `basecall_network.py events`
+    :param fn: filename for single-read fast5 file with event detection and
+        segmentation
+    """
     from sloika import features
     try:
         with fast5.Reader(fn) as f5:
@@ -56,6 +90,15 @@ def events_worker(fn, section, segmentation, trim, kmer_len, transducer, bad, mi
 
 
 def raw_worker(fn, trim, open_pore_fraction, kmer_len, transducer, bad, min_prob, skip, trans):
+    """ Worker function for basecall_network.py for basecalling from raw data
+
+    This worker used the global variable `calc_post` which is set by
+    init_worker. `calc_post` is an unpickled compiled sloika model that
+    is used to calculate a posteroir matrix over states
+
+    :param args: command line args for `basecall_network.py raw`
+    :param fn: filename for single-read fast5 file with raw data
+    """
     from sloika import batch, config
     try:
         with fast5.Reader(fn) as f5:
@@ -79,9 +122,24 @@ def raw_worker(fn, trim, open_pore_fraction, kmer_len, transducer, bad, min_prob
 
 
 class SeqPrinter(object):
+    """ Formats fasta strings and writes them to stdout or file
 
-    def __init__(self, kmerlen, datatype="events", transducer=False, fname=None):
-        self.kmers = bio.all_kmers(kmerlen)
+    The sequence is calculated on the fly from a Viterbi path of states
+
+    :param kmer_len: length of kmer to use for converting states to kmers
+    :param datatype: collective noun for data time used as model input
+        e.g. "events" or "samples"
+    :param transducer: if True then transitions from a kmer back to itself
+        are not allowed when converting kmers to a sequence
+    :param fname: name of output file or None to use stdoutto use for converting states to kmers
+    :param datatype: collective noun for data time used as model input
+        e.g. "events" or "samples"
+    :param transducer: if True then transitions from a kmer back to itself
+        are not allowed when converting kmers to a sequence
+    :param fname: name of output file or None to use sys.stdout
+    """
+    def __init__(self, kmer_len, datatype="events", transducer=False, fname=None):
+        self.kmers = bio.all_kmers(kmer_len)
         self.transducer = transducer
         self.datatype = datatype
 
