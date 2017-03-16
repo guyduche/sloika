@@ -4,10 +4,11 @@ from __future__ import absolute_import
 from future import standard_library
 standard_library.install_aliases()
 from builtins import *
-import unittest
-import os
-import shutil
 import glob
+import os
+import numpy as np
+import shutil
+import unittest
 
 from nose_parameterized import parameterized
 
@@ -16,6 +17,8 @@ from util import run_cmd, maybe_create_dir, zeroth_line_starts_with
 
 class AcceptanceTest(unittest.TestCase):
     model_files = [[x] for x in glob.glob(os.path.join(os.environ["ROOT_DIR"], "models/*.py"))]
+    events_model_files = filter(lambda x: "raw" not in x[0], model_files)
+    raw_model_files = filter(lambda x: "raw" in x[0], model_files)
 
     @classmethod
     def setUpClass(self):
@@ -36,7 +39,13 @@ class AcceptanceTest(unittest.TestCase):
         '''
         self.assertTrue(len(self.model_files) > 0)
 
-    @parameterized.expand(model_files)
-    def test_sequence(self, model_file):
+    @parameterized.expand(events_model_files)
+    def test_sequence_events(self, model_file):
         cmd = [self.script, "--kmer", "5", model_file]
+        run_cmd(self, cmd).return_code(0)
+
+    @parameterized.expand(raw_model_files)
+    def test_sequence_raw(self, model_file):
+        stride = str(np.random.randint(1, 10))
+        cmd = [self.script, "--kmer", "5", "--stride", stride, model_file]
         run_cmd(self, cmd).return_code(0)
