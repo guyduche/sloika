@@ -46,7 +46,7 @@ def decode_post(post, args, eta=1e-10):
         and either :
             trans: baseline transition probabilities for a non-transducer model) or
             skip: skip penalty for transducer model
-        Refer to `basecall_network.py` for Usage and defaults
+        Refer to `basecall_network.py` for usage and defaults
 
     :returns: score, Viterbi path
     """
