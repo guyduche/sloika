@@ -7,23 +7,23 @@
 Go through this a few times a day, grouping changes that logically belong together
 in the same commit and giving them [a good git commit message](#how-to-write-a-good-git-commit-message):
   * make a change: edit existing files, add new ones, etc.
-  * `git status` -- inspect the changes
-  * `git add <FILE_NAME>` -- add new file or stage changes in existing file
-  * `git rm <FILE_NAME>` -- remove file
-  * `git diff` -- inspect the diff between stage and checkout
-  * `git commit` -- commit once everything you'd like to be part of this commit is staged; this will bring up an editor where commit message could be written
+  * `git status` — inspect the changes
+  * `git add <FILE_NAME>` — add new file or stage changes in existing file
+  * `git rm <FILE_NAME>` — remove file
+  * `git diff` — inspect the diff between stage and checkout
+  * `git commit` — commit once everything you'd like to be part of this commit is staged; this will bring up an editor where commit message could be written
 
 There are some shortcuts, e.g.
-  * `git commit -a` -- stage everything git knows about and commit
-  * `git commit -am"<COMMIT_MESSAGE>"` -- stage everything and commit, providing commit message in-place
+  * `git commit -a` — stage everything git knows about and commit
+  * `git commit -am"<COMMIT_MESSAGE>"` — stage everything and commit, providing commit message in-place
 
 ### Rebase-Push Cycle
 
 Go through this once at the end of the day or more frequently if necessary, e.g. when you want to share your changes with others, make sure your changes are backed up or get continuous integration to build your branch:
-  * `git push origin <NEW_BRANCH_NAME> --set-upstream` -- if remote branch does not exist yet, push the branch up, give it name that coincides with local name and start tracking it
-  * `git push` -- push your changes up this way if remote branch was setup already
+  * `git push origin <NEW_BRANCH_NAME> --set-upstream` — if remote branch does not exist yet, push the branch up, give it name that coincides with local name and start tracking it
+  * `git push` — push your changes up this way if remote branch was setup already
   * if push did not succeed because remote branch has moved on
-     * `git pull --rebase` -- pull down changes from remote and apply your changes on top
+     * `git pull --rebase` — pull down changes from remote and apply your changes on top
      * resolve the conflicts if any (see [Conflict Resolution Cycle](#conflict-resolution-cycle) subsection)
      * `git push`
 
