@@ -1,5 +1,6 @@
 import sloika.module_tools as smt
 
+
 def network(klen, sd, nfeature=1, winlen=11, stride=2, size=64):
     """ Create fat Nanonet with GRUs and convolution input layer
 
