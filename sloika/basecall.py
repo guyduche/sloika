@@ -22,40 +22,40 @@ def init_worker(model):
         calc_post = pickle.load(fh)
 
 
-def decode_post(post, args, eta=1e-10):
+def decode_post(post, kmer_len, transducer, bad, min_prob, skip, trans, eta=1e-10):
     from sloika import decode, olddecode
-    assert post.shape[2] == nstate(args.kmer_len, transducer=args.transducer, bad_state=args.bad)
-    post = decode.prepare_post(post, min_prob=args.min_prob, drop_bad=args.bad and not args.transducer)
-    if args.transducer:
-        score, call = decode.viterbi(post, args.kmer_len, skip_pen=args.skip)
+    assert post.shape[2] == nstate(kmer_len, transducer=transducer, bad_state=bad)
+    post = decode.prepare_post(post, min_prob=min_prob, drop_bad=bad and not transducer)
+    if transducer:
+        score, call = decode.viterbi(post, kmer_len, skip_pen=skip)
     else:
-        trans = olddecode.estimate_transitions(post, trans=args.trans)
+        trans = olddecode.estimate_transitions(post, trans=trans)
         score, call = olddecode.decode_profile(post, trans=np.log(eta + trans), log=False)
     return score, call
 
 
-def events_worker(args, fn):
+def events_worker(fn, section, segmentation, trim, kmer_len, transducer, bad, min_prob, skip, trans):
     from sloika import features
     try:
         with fast5.Reader(fn) as f5:
-            ev = f5.get_section_events(args.section, analysis=args.segmentation)
+            ev = f5.get_section_events(section, analysis=segmentation)
             sn = f5.filename_short
     except Exception as e:
-        sys.stderr.write("Error getting events for section {!r} in file {}\n{!r}\n".format(args.section, fn, e))
+        sys.stderr.write("Error getting events for section {!r} in file {}\n{!r}\n".format(section, fn, e))
         return None
 
-    ev = util.trim_array(ev, args.trim)
+    ev = util.trim_array(ev, trim)
     if ev.size == 0:
         sys.stderr.write("Read too short in file {}\n".format(fn))
         return None
 
     inMat = features.from_events(ev, tag='')[:, None, :]
-    score, call = decode_post(calc_post(inMat), args)
+    score, call = decode_post(calc_post(inMat), kmer_len, transducer, bad, min_prob, skip, trans)
 
     return sn, score, call, inMat.shape[0]
 
 
-def raw_worker(args, fn):
+def raw_worker(fn, trim, open_pore_fraction, kmer_len, transducer, bad, min_prob, skip, trans):
     from sloika import batch, config
     try:
         with fast5.Reader(fn) as f5:
@@ -65,15 +65,15 @@ def raw_worker(args, fn):
         sys.stderr.write("Error getting raw data for file {}\n{!r}\n".format(fn, e))
         return None
 
-    signal = batch.trim_open_pore(signal, args.open_pore_fraction)
-    signal = util.trim_array(signal, args.trim)
+    signal = batch.trim_open_pore(signal, open_pore_fraction)
+    signal = util.trim_array(signal, trim)
     if signal.size == 0:
         sys.stderr.write("Read too short in file {}\n".format(fn))
         return None
 
     inMat = (signal - np.median(signal)) / mad(signal)
     inMat = inMat[:, None, None].astype(config.sloika_dtype)
-    score, call = decode_post(calc_post(inMat), args)
+    score, call = decode_post(calc_post(inMat), kmer_len, transducer, bad, min_prob, skip, trans)
 
     return sn, score, call, inMat.shape[0]
 
