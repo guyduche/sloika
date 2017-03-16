@@ -19,7 +19,7 @@ def init_worker(model):
     """ Worker init function for basecall_network.py
 
     This function avoids repeated pickling and unpickling of the model
-    by unpickling it once in each process and setting it as a glabal variable.
+    by unpickling it once in each process and setting it as a global variable.
 
     :param model: filename for pickled model to use for basecalling
     """
