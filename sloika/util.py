@@ -48,6 +48,7 @@ def get_kwargs(args, names):
 
 
 def progress_report(i):
+    """A dotty way of showing progress"""
     i += 1
     sys.stderr.write('.')
     if i % 50 == 0:
