@@ -105,3 +105,21 @@ def param_sqr(network):
     for param in params[1:]:
         psum += T.sum(T.sqr(param))
     return psum
+
+
+def param_L1(network, penalise_1d=False):
+    """  Return L1 sum of network parameters
+
+    :param network:  Network of which parmeters penalise
+    :param penalise_1d: If True, include 1d tensors in penalty. Intended to
+        avoid penalising biases although this doesn't work with some layers.
+
+    :returns: A :tensor:`scalar` representing the total L1 penalty
+    """
+    params = network.params()
+    if not penalise_1d:
+        params = filter(lambda x: len(x.shape.eval()) > 1, params)
+    psum = T.sum(abs(params[0]))
+    for param in params[1:]:
+        psum += T.sum(abs(param))
+    return psum
