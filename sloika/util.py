@@ -57,6 +57,13 @@ def progress_report(i):
 
 
 def create_labelled_chunks_hdf5(output, blanks, attributes, chunk_list, label_list, bad_list):
+    """ Helper function for chunkify to create hdf5 batch file
+
+    :param chunk_list: event features
+    :param label_list: state labels corresponding to chunks in chunk_list
+    :param bad_list: bad state masks corresponding to chunks in chunk_list
+    """
+
     assert len(chunk_list) == len(label_list) == len(bad_list)
     assert len(chunk_list) > 0
 
