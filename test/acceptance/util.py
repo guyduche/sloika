@@ -4,10 +4,11 @@ from __future__ import absolute_import
 from future import standard_library
 standard_library.install_aliases()
 from builtins import *
-import os
-import itertools
 
+import itertools
+import os
 from subprocess import Popen, PIPE
+import tempfile
 
 
 class Result(object):
@@ -76,7 +77,7 @@ class Result(object):
 
 def run_cmd(test_case, cmd, cwd=None):
     env_with_theano_flags = os.environ.copy()
-    base_compiledir = os.path.join(test_case.work_dir, '.theano')
+    base_compiledir = os.path.join(test_case.testset_work_dir, '.theano')
     env_with_theano_flags["THEANO_FLAGS"] = "base_compiledir={},".format(
         base_compiledir) + os.environ["THEANO_FLAGS_FOR_ACCTEST"]
 
@@ -108,6 +109,12 @@ def maybe_create_dir(directory_name):
             pass
         else:
             raise
+
+
+def create_temporary_file(directory, suffix, delete):
+    with tempfile.NamedTemporaryFile(suffix=suffix, delete=delete, dir=directory) as fh:
+        file_name = fh.name
+    return file_name
 
 
 def nth_line_starts_with(prefix, n):

@@ -11,10 +11,9 @@ from nose_parameterized import parameterized
 import numpy as np
 import os
 import shutil
-import tempfile
 import unittest
 
-from util import run_cmd, is_close, maybe_create_dir, zeroth_line_starts_with, last_line_starts_with
+import util
 
 
 class AcceptanceTest(unittest.TestCase):
@@ -22,32 +21,37 @@ class AcceptanceTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(self):
-        self.test_directory = os.path.splitext(__file__)[0]
-        self.test_name = os.path.basename(self.test_directory)
+        testset_directory = os.path.splitext(__file__)[0]
+        testset_name = os.path.basename(testset_directory)
+
+        self.data_dir = os.path.join(os.environ["DATA_DIR"], testset_name)
+
+        self.testset_work_dir = os.path.join(os.environ["ACCTEST_WORK_DIR"], testset_name)
+
         self.script = os.path.join(os.environ["BIN_DIR"], "chunkify.py")
 
-        self.work_dir = os.path.join(os.environ["ACCTEST_WORK_DIR"], self.test_name)
-        maybe_create_dir(self.work_dir)
-
-        self.data_dir = os.path.join(os.environ["DATA_DIR"], self.test_name)
+    def work_dir(self, test_name):
+        directory = os.path.join(self.testset_work_dir, test_name)
+        util.maybe_create_dir(directory)
+        return directory
 
     def assertClose(self, a, b):
-        if not is_close(a, b, 1e-5):
+        if not util.is_close(a, b, 1e-5):
             msg = '{} is not close {}'.format(a, b)
-            self.assertTrue(is_close(a, b, 1e-5), msg)
+            self.assertTrue(util.is_close(a, b, 1e-5), msg)
 
     def test_commands(self):
         cmd = [self.script]
-        run_cmd(self, cmd).return_code(0).stdout(zeroth_line_starts_with(u"Available commands:"))
+        util.run_cmd(self, cmd).return_code(0).stdout(util.zeroth_line_starts_with(u"Available commands:"))
 
     @parameterized.expand(known_commands)
     def test_usage(self, command_name):
         cmd = [self.script, command_name]
-        run_cmd(self, cmd).return_code(2).stderr(zeroth_line_starts_with(u"usage:"))
+        util.run_cmd(self, cmd).return_code(2).stderr(util.zeroth_line_starts_with(u"usage:"))
 
     def test_unsupported_command(self):
         cmd = [self.script, "hehe"]
-        run_cmd(self, cmd).return_code(1).stdout(zeroth_line_starts_with(u"Unsupported command 'hehe'"))
+        util.run_cmd(self, cmd).return_code(1).stdout(util.zeroth_line_starts_with(u"Unsupported command 'hehe'"))
 
     @parameterized.expand([
         [[], (182, 500, 4), -2.8844583, 14.225174, -0.254353493452],
@@ -55,22 +59,23 @@ class AcceptanceTest(unittest.TestCase):
         [["--normalisation", "per-chunk"], (182, 500, 4), -4.1303601265, 12.2556829453, -0.249717712402],
     ])
     def test_chunkify_with_identity_with_normalisation(self, options, chunks_shape, min_value, max_value, median_value):
+        test_work_dir = self.work_dir("test_chunkify_with_identity_with_normalisation")
+
         strand_input_list = os.path.join(self.data_dir, "identity", "na12878_train.txt")
         self.assertTrue(os.path.exists(strand_input_list))
 
         reads_dir = os.path.join(self.data_dir, "identity", "reads")
         self.assertTrue(os.path.exists(reads_dir))
 
-        with tempfile.NamedTemporaryFile(suffix=".hdf5", delete=False) as fh:
-            output_file_name = fh.name
+        output_file_name = util.create_temporary_file(test_work_dir, ".hdf5", False)
 
         cmd = [self.script, "identity", "--chunk_len", "500", "--kmer_len", "5",
                "--section", "template", "--input_strand_list", strand_input_list,
                reads_dir, output_file_name] + options
 
-        run_cmd(self, cmd).return_code(1)
+        util.run_cmd(self, cmd).return_code(1)
 
-        run_cmd(self, cmd + ['--overwrite']).return_code(0)
+        util.run_cmd(self, cmd + ['--overwrite']).return_code(0)
 
         with h5py.File(output_file_name, 'r') as fh:
             top_level_items = []
@@ -93,6 +98,8 @@ class AcceptanceTest(unittest.TestCase):
         [["--normalisation", "per-chunk"], (33, 500, 4), -2.88131427765, 11.0136013031, -0.238405257463]
     ])
     def test_chunkify_with_remap_with_normalisation(self, options, chunks_shape, min_value, max_value, median_value):
+        test_work_dir = self.work_dir("test_chunkify_with_remap_with_normalisation")
+
         strand_input_list = os.path.join(self.data_dir, "remap", "strand_output_list.txt")
         self.assertTrue(os.path.exists(strand_input_list))
 
@@ -105,24 +112,22 @@ class AcceptanceTest(unittest.TestCase):
         reference_file = os.path.join(self.data_dir, "remap", "reference.fa")
         self.assertTrue(os.path.exists(reference_file))
 
-        with tempfile.NamedTemporaryFile(prefix="strand_output_list", suffix=".txt", delete=False) as fh:
-            strand_output_list = fh.name
+        strand_output_list = util.create_temporary_file(test_work_dir, ".txt", False)
 
-        with tempfile.NamedTemporaryFile(suffix=".hdf5", delete=False) as fh:
-            output_file_name = fh.name
+        output_file_name = util.create_temporary_file(test_work_dir, ".hdf5", False)
 
         cmd = [self.script, "remap", "--segmentation", "Segment_Linear", "--trim", "200", "200",
                "--chunk_len", "500", "--kmer_len", "5", "--section", "template",
                "--input_strand_list", strand_input_list, "--output_strand_list",
                strand_output_list, reads_dir, output_file_name, model_file, reference_file] + options
 
-        run_cmd(self, cmd).return_code(1)
+        util.run_cmd(self, cmd).return_code(1)
 
         os.remove(output_file_name)
 
-        run_cmd(self, cmd).return_code(2)
+        util.run_cmd(self, cmd).return_code(2)
 
-        run_cmd(self, cmd + ['--overwrite']).return_code(0)
+        util.run_cmd(self, cmd + ['--overwrite']).return_code(0)
 
         with h5py.File(output_file_name, 'r') as fh:
             top_level_items = []
@@ -141,6 +146,8 @@ class AcceptanceTest(unittest.TestCase):
         os.remove(strand_output_list)
 
     def test_chunkify_with_remap_no_results_due_to_missing_reference(self):
+        test_work_dir = self.work_dir("test_chunkify_with_remap_no_results_due_to_missing_reference")
+
         strand_input_list = os.path.join(self.data_dir, "remap", "strand_output_list.txt")
         self.assertTrue(os.path.exists(strand_input_list))
 
@@ -153,11 +160,9 @@ class AcceptanceTest(unittest.TestCase):
         reference_file = os.path.join(self.data_dir, "remap", "reference.fa")
         self.assertTrue(os.path.exists(reference_file))
 
-        with tempfile.NamedTemporaryFile(prefix="strand_output_list", suffix=".txt", delete=False) as fh:
-            strand_output_list = fh.name
+        strand_output_list = util.create_temporary_file(test_work_dir, ".txt", False)
 
-        with tempfile.NamedTemporaryFile(suffix=".hdf5", delete=False) as fh:
-            output_file_name = fh.name
+        output_file_name = util.create_temporary_file(test_work_dir, ".hdf5", False)
 
         cmd = [self.script, "remap", "--segmentation", "Segment_Linear", "--trim", "200", "200",
                "--chunk_len", "500", "--kmer_len", "5", "--section", "template",
@@ -167,7 +172,7 @@ class AcceptanceTest(unittest.TestCase):
         os.remove(output_file_name)
         os.remove(strand_output_list)
 
-        run_cmd(self, cmd).return_code(1).stderr(last_line_starts_with(u"no chunks were produced"))
+        util.run_cmd(self, cmd).return_code(1).stderr(util.last_line_starts_with(u"no chunks were produced"))
 
         self.assertTrue(not os.path.exists(output_file_name))
         self.assertTrue(not os.path.exists(strand_output_list))
@@ -181,6 +186,8 @@ class AcceptanceTest(unittest.TestCase):
     ])
     def test_chunkify_with_remap_no_results_due_to_length(self, chunk_len, min_length, trim_left, trim_right,
                                                           return_code):
+        test_work_dir = self.work_dir("test_chunkify_with_remap_no_results_due_to_length")
+
         strand_input_list = os.path.join(self.data_dir, "remap2", "strand_input_list.txt")
         self.assertTrue(os.path.exists(strand_input_list))
 
@@ -193,11 +200,9 @@ class AcceptanceTest(unittest.TestCase):
         reference_file = os.path.join(self.data_dir, "remap2", "reference.fa")
         self.assertTrue(os.path.exists(reference_file))
 
-        with tempfile.NamedTemporaryFile(prefix="strand_output_list", suffix=".txt", delete=False) as fh:
-            strand_output_list = fh.name
+        strand_output_list = util.create_temporary_file(test_work_dir, ".txt", False)
 
-        with tempfile.NamedTemporaryFile(suffix=".hdf5", delete=False) as fh:
-            output_file_name = fh.name
+        output_file_name = util.create_temporary_file(test_work_dir, ".hdf5", False)
 
         cmd = [self.script, "remap", "--segmentation", "Segment_Linear",
                "--trim", str(trim_left), str(trim_right), "--chunk_len", str(chunk_len),
@@ -208,10 +213,10 @@ class AcceptanceTest(unittest.TestCase):
         os.remove(output_file_name)
         os.remove(strand_output_list)
 
-        expectation = run_cmd(self, cmd).return_code(return_code)
+        expectation = util.run_cmd(self, cmd).return_code(return_code)
 
         if return_code != 0:
-            expectation.stderr(last_line_starts_with(u"no chunks were produced"))
+            expectation.stderr(util.last_line_starts_with(u"no chunks were produced"))
 
             self.assertTrue(not os.path.exists(output_file_name))
             self.assertTrue(not os.path.exists(strand_output_list))
@@ -225,14 +230,15 @@ class AcceptanceTest(unittest.TestCase):
     ])
     def test_chunkify_with_identity_no_results_due_to_length(self, chunk_len, min_length, trim_left, trim_right,
                                                              return_code):
+        test_work_dir = self.work_dir("test_chunkify_with_identity_no_results_due_to_length")
+
         strand_input_list = os.path.join(self.data_dir, "remap2", "strand_input_list.txt")
         self.assertTrue(os.path.exists(strand_input_list))
 
         reads_dir = os.path.join(self.data_dir, "remap2", "reads")
         self.assertTrue(os.path.exists(reads_dir))
 
-        with tempfile.NamedTemporaryFile(suffix=".hdf5", delete=False) as fh:
-            output_file_name = fh.name
+        output_file_name = util.create_temporary_file(test_work_dir, ".hdf5", False)
 
         cmd = [self.script, "identity", "--trim", str(trim_left), str(trim_right), "--chunk_len", str(chunk_len),
                "--kmer_len", "5", "--section", "template", "--input_strand_list", strand_input_list,
@@ -240,9 +246,9 @@ class AcceptanceTest(unittest.TestCase):
 
         os.remove(output_file_name)
 
-        expectation = run_cmd(self, cmd).return_code(return_code)
+        expectation = util.run_cmd(self, cmd).return_code(return_code)
 
         if return_code != 0:
-            expectation.stderr(last_line_starts_with(u"no chunks were produced"))
+            expectation.stderr(util.last_line_starts_with(u"no chunks were produced"))
 
             self.assertTrue(not os.path.exists(output_file_name))

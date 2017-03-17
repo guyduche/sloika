@@ -10,7 +10,7 @@ import os
 import shutil
 import unittest
 
-from util import run_cmd, last_line_starts_with, maybe_create_dir, zeroth_line_starts_with
+import util
 
 
 class AcceptanceTest(unittest.TestCase):
@@ -19,18 +19,18 @@ class AcceptanceTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(self):
-        self.test_directory = os.path.splitext(__file__)[0]
-        self.test_name = os.path.basename(self.test_directory)
+        test_directory = os.path.splitext(__file__)[0]
+        testset_name = os.path.basename(test_directory)
+
         self.script = os.path.join(os.environ["BIN_DIR"], "basecall_network")
 
-        self.work_dir = os.path.join(os.environ["ACCTEST_WORK_DIR"], self.test_name)
-        maybe_create_dir(self.work_dir)
+        self.testset_work_dir = os.path.join(os.environ["ACCTEST_WORK_DIR"], testset_name)
 
-        self.data_dir = os.path.join(os.environ["DATA_DIR"], self.test_name)
+        self.data_dir = os.path.join(os.environ["DATA_DIR"], testset_name)
 
     def test_usage(self):
         cmd = [self.script]
-        run_cmd(self, cmd).return_code(2).stderr(zeroth_line_starts_with(u"usage"))
+        util.run_cmd(self, cmd).return_code(2).stderr(util.zeroth_line_starts_with(u"usage"))
 
     def test_raw_iteration_failure_on_files_with_no_raw_data(self):
         model_file = os.path.join(self.data_dir, "raw_model_1pt2_cpu.pkl")
@@ -40,7 +40,7 @@ class AcceptanceTest(unittest.TestCase):
         self.assertTrue(os.path.exists(reads_dir))
 
         cmd = [self.script, "raw", model_file, reads_dir]
-        run_cmd(self, cmd).return_code(0).stderr(last_line_starts_with(u"Called 0 bases"))
+        util.run_cmd(self, cmd).return_code(0).stderr(util.last_line_starts_with(u"Called 0 bases"))
 
     @parameterized.expand([
         [[]],
@@ -60,7 +60,7 @@ class AcceptanceTest(unittest.TestCase):
         expected_output = open(expected_output_file, 'r').read().splitlines()
 
         cmd = [self.script, "raw", model_file, reads_dir] + options
-        run_cmd(self, cmd).return_code(0).stdoutEquals(expected_output)
+        util.run_cmd(self, cmd).return_code(0).stdoutEquals(expected_output)
 
     @parameterized.expand([
         [[]],
@@ -80,7 +80,7 @@ class AcceptanceTest(unittest.TestCase):
         expected_output = open(expected_output_file, 'r').read().splitlines()
 
         cmd = [self.script, "events", "--segmentation", "Segment_Linear", model_file, reads_dir] + options
-        run_cmd(self, cmd).return_code(0).stdoutEquals(expected_output)
+        util.run_cmd(self, cmd).return_code(0).stdoutEquals(expected_output)
 
     @parameterized.expand([
         [["--trans", "0.5", "0.4", "0.1", "--no-transducer"]],
@@ -99,4 +99,4 @@ class AcceptanceTest(unittest.TestCase):
         expected_output = open(expected_output_file, 'r').read().splitlines()
 
         cmd = [self.script, "events", "--segmentation", "Segment_Linear", model_file, reads_dir] + options
-        run_cmd(self, cmd).return_code(0).stdoutEquals(expected_output)
+        util.run_cmd(self, cmd).return_code(0).stdoutEquals(expected_output)
