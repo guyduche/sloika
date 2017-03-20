@@ -42,20 +42,21 @@ remap2:
 	    --input_strand_list data/test_chunkify/remap2/strand_input_list.txt --overwrite
 
 niteration?=50000
+saveEvery?=5000
 device?=gpu${gpu}
 model?=models/baseline_gru.py
 extraFlags?=
 .PHONY: train
 train:
 	${inDevEnv} THEANO_FLAGS="${extraFlags}device=${device},$${COMMON_THEANO_FLAGS_FOR_TRAINING}" \
-	    train_network.py --batch 100 --niteration ${niteration} --save_every 5000 --lrdecay 5000 --bad \
+	    train_network.py --batch 100 --niteration ${niteration} --save_every ${saveEvery} --lrdecay 5000 --bad \
 	    ${model} ${workDir}/output ${workDir}/dataset_train.hdf5
 
 .PHONY: testTrain
 testTrain:
 	${inDevEnv} rm -rf $${BUILD_DIR}/prepare/output/
 	${inDevEnv} ${MAKE} train workDir:=$${BUILD_DIR}/prepare/ \
-	    niteration:=1 device:=cpu extraFlags:=profile=True, model:=models/tiny_gru.py
+	    niteration:=1 saveEvery:=1 device:=cpu model:=models/tiny_gru.py
 
 .PHONY: validate
 validate:
