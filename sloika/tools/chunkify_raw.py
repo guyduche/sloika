@@ -38,26 +38,26 @@ def commensurate_mapping_to_raw(mapping_table, start_sample, sample_rate):
     return new_mapping_table
 
 
-def interpolate_pos(ev, att):
+def interpolate_pos(mapping_table, att):
     """Return a function: time -> reference position by interpolating mapping
 
-    :param ev: mapping table with fields start, length, seq_pos and kmer
+    :param mapping_table: mapping table with fields start, length, seq_pos and kmer
     :param att: mapping attributes direction, ref_start, ref_stop
-        (ev, att) could be returned by f5file.get_any_mapping_data()
+        (mapping_table, att) could be returned by f5file.get_any_mapping_data()
     """
     def interp(t, k=5):
         EPS = 10**-10 # small value for avoiding round to even
 
-        ev_mid = ev['start'] + 0.5 * ev['length']
-        map_k = len(ev['kmer'][0])
+        ev_mid = mapping_table['start'] + 0.5 * mapping_table['length']
+        map_k = len(mapping_table['kmer'][0])
 
         if att['direction'] == "+":
-            map_ref_pos = ev['seq_pos'] + 0.5 * map_k - att['ref_start']
+            map_ref_pos = mapping_table['seq_pos'] + 0.5 * map_k - att['ref_start']
             pos_interp = np.interp(t, ev_mid, map_ref_pos)
             pos = np.around(pos_interp - 0.5 * k + EPS).astype(int)
             return pos
         else:
-            map_ref_pos = att['ref_stop'] - ev['seq_pos'] + 0.5 * map_k
+            map_ref_pos = att['ref_stop'] - mapping_table['seq_pos'] + 0.5 * map_k
             pos_interp = np.around(np.interp(t, ev_mid, map_ref_pos))
             pos = np.around(pos_interp - 0.5 * k + EPS).astype(int)
             return pos
@@ -65,15 +65,15 @@ def interpolate_pos(ev, att):
     return interp
 
 
-def interpolate_labels(ev, att):
+def interpolate_labels(mapping_table, att):
     """Return a function: time -> reference kmer by interpolating mapping
 
-    :param ev: mapping table with fields start, length, seq_pos and kmer
+    :param mapping_table: mapping table with fields start, length, seq_pos and kmer
     :param att: mapping attributes reference, direction, ref_start, ref_stop
-        (ev, att) could be returned by f5file.get_any_mapping_data()
+        (mapping_table, att) could be returned by f5file.get_any_mapping_data()
     """
     def interp(t, k=5):
-        pos = interpolate_pos(ev, att)(t, k)
+        pos = interpolate_pos(mapping_table, att)(t, k)
         return [att['reference'][i: i + k] for i in pos]
 
     return interp
@@ -132,7 +132,7 @@ def raw_chunkify_worker(fn, section, chunk_len, kmer_len, min_length, trim, norm
 
     try:
         with fast5.Reader(fn) as f5:
-            ev, att = f5.get_any_mapping_data(section)
+            mapping_table, att = f5.get_any_mapping_data(section)
             sig = f5.get_read(raw=True)
             sample_rate = f5.sample_rate
             start_sample = f5.get_read(raw=True, group=True).attrs['start_time']
@@ -140,11 +140,11 @@ def raw_chunkify_worker(fn, section, chunk_len, kmer_len, min_length, trim, norm
         sys.stderr.write('Failed to get mapping data from {}.\n{}\n'.format(fn, repr(e)))
         return None
 
-    ev['move'][0] = 1
+    mapping_table['move'][0] = 1
 
     begin, end = trim
-    map_start = int(round(ev['start'][0] * sample_rate - start_sample))
-    map_end = int(round((ev['start'][-1] + ev['length'][-1]) * sample_rate - start_sample))
+    map_start = int(round(mapping_table['start'][0] * sample_rate - start_sample))
+    map_end = int(round((mapping_table['start'][-1] + mapping_table['length'][-1]) * sample_rate - start_sample))
     sig_mapped = sig[map_start:map_end]
     sig_trim = util.trim_array(sig_mapped)
 
@@ -162,16 +162,16 @@ def raw_chunkify_worker(fn, section, chunk_len, kmer_len, min_length, trim, norm
 
     if downsample_method == "simple":
         #  Create label array
-        model_kmer_len = len(ev['kmer'][0])
+        model_kmer_len = len(mapping_table['kmer'][0])
         ub = chunk_len * ml
         # Use rightmost middle kmer
         kl = (model_kmer_len - kmer_len + 1) // 2
         ku = kl + kmer_len
         new_labels = 1 + np.array(map(lambda k: kmer_to_state[k[kl : ku]],
-                                      ev['kmer'][ev['move'] > 0]), dtype=np.int32)
+                                      mapping_table['kmer'][mapping_table['move'] > 0]), dtype=np.int32)
         new_labels = np.concatenate([[0,], new_labels])
 
-        label_start = (np.around(ev['start'][ev['move'] > 0] * sample_rate).astype(int)
+        label_start = (np.around(mapping_table['start'][mapping_table['move'] > 0] * sample_rate).astype(int)
                                       - start_sample - map_start)
         label_start = label_start[label_start < ub].data
 
@@ -188,8 +188,8 @@ def raw_chunkify_worker(fn, section, chunk_len, kmer_len, min_length, trim, norm
         t0 = (map_start + start_sample) / sample_rate
         tch = np.arange(t0, t0 + chunk_delta, downsample_factor * delta)
         t = np.array([tch + i * chunk_delta for i in range(ml)]).flatten()
-        pos = interpolate_pos(ev, att)(t, kmer_len)
-        kmers = interpolate_labels(ev, att)(t, kmer_len)
+        pos = interpolate_pos(mapping_table, att)(t, kmer_len)
+        kmers = interpolate_labels(mapping_table, att)(t, kmer_len)
         sig_labels = 1 + np.array(map(lambda k: kmer_to_state[k], kmers),
                                   dtype=np.int32)
         sig_labels[np.ediff1d(pos, to_begin=1) == 0] = 0
