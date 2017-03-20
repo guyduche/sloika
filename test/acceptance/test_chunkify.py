@@ -66,7 +66,7 @@ class AcceptanceTest(unittest.TestCase):
         reads_dir = os.path.join(self.data_dir, "identity", "reads")
         self.assertTrue(os.path.exists(reads_dir))
 
-        output_file_name = util.create_temporary_file(test_work_dir, ".hdf5", False)
+        output_file_name = util.create_file(test_work_dir, ".hdf5", False)
 
         cmd = [self.script, "identity", "--chunk_len", "500", "--kmer_len", "5",
                "--section", "template", "--input_strand_list", strand_input_list,
@@ -111,9 +111,9 @@ class AcceptanceTest(unittest.TestCase):
         reference_file = os.path.join(self.data_dir, "remap", "reference.fa")
         self.assertTrue(os.path.exists(reference_file))
 
-        strand_output_list = util.create_temporary_file(test_work_dir, ".txt", False)
+        strand_output_list = util.create_file(test_work_dir, ".txt", False)
 
-        output_file_name = util.create_temporary_file(test_work_dir, ".hdf5", False)
+        output_file_name = util.create_file(test_work_dir, ".hdf5", False)
 
         cmd = [self.script, "remap", "--segmentation", "Segment_Linear", "--trim", "200", "200",
                "--chunk_len", "500", "--kmer_len", "5", "--section", "template",
@@ -159,9 +159,9 @@ class AcceptanceTest(unittest.TestCase):
         reference_file = os.path.join(self.data_dir, "remap", "reference.fa")
         self.assertTrue(os.path.exists(reference_file))
 
-        strand_output_list = util.create_temporary_file(test_work_dir, ".txt", False)
+        strand_output_list = util.create_file(test_work_dir, ".txt", False)
 
-        output_file_name = util.create_temporary_file(test_work_dir, ".hdf5", False)
+        output_file_name = util.create_file(test_work_dir, ".hdf5", False)
 
         cmd = [self.script, "remap", "--segmentation", "Segment_Linear", "--trim", "200", "200",
                "--chunk_len", "500", "--kmer_len", "5", "--section", "template",
@@ -199,9 +199,9 @@ class AcceptanceTest(unittest.TestCase):
         reference_file = os.path.join(self.data_dir, "remap2", "reference.fa")
         self.assertTrue(os.path.exists(reference_file))
 
-        strand_output_list = util.create_temporary_file(test_work_dir, ".txt", False)
+        strand_output_list = util.create_file(test_work_dir, ".txt", False)
 
-        output_file_name = util.create_temporary_file(test_work_dir, ".hdf5", False)
+        output_file_name = util.create_file(test_work_dir, ".hdf5", False)
 
         cmd = [self.script, "remap", "--segmentation", "Segment_Linear",
                "--trim", str(trim_left), str(trim_right), "--chunk_len", str(chunk_len),
@@ -237,7 +237,7 @@ class AcceptanceTest(unittest.TestCase):
         reads_dir = os.path.join(self.data_dir, "remap2", "reads")
         self.assertTrue(os.path.exists(reads_dir))
 
-        output_file_name = util.create_temporary_file(test_work_dir, ".hdf5", False)
+        output_file_name = util.create_file(test_work_dir, ".hdf5", False)
 
         cmd = [self.script, "identity", "--trim", str(trim_left), str(trim_right), "--chunk_len", str(chunk_len),
                "--kmer_len", "5", "--section", "template", "--input_strand_list", strand_input_list,

@@ -52,7 +52,7 @@ class AcceptanceTest(unittest.TestCase):
         reads_dir = os.path.join(self.data_dir, "events", "reads")
         self.assertTrue(os.path.exists(reads_dir))
 
-        hdf5_file = util.create_temporary_file(test_work_dir, ".hdf5", False)
+        hdf5_file = util.create_file(test_work_dir, ".hdf5", False)
 
         prepare_cmd = [self.chunkify_script, "identity", "--chunk_len", "500", "--kmer_len", "5",
                        "--section", "template", "--input_strand_list", strand_input_list,
