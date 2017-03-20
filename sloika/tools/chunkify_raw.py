@@ -116,6 +116,58 @@ def fill_zeros_with_prev(arr):
     return arr[arr != 0][ix]
 
 
+def raw_chunkify(signal, mapping_table, chunk_len, kmer_len, normalisation, downsample_factor, interpolation):
+    assert len(signal) >= chunk_len
+
+    ml = len(sig_trim) // chunk_len
+    new_inMat = sig_trim[:ml * chunk_len].reshape((ml, chunk_len, 1))
+
+    if normalisation == "per-chunk":
+        chunk_medians = np.median(new_inMat, axis=1, keepdims=True)
+        chunk_mads = mad(new_inMat, axis=1, keepdims=True)
+        new_inMat = (new_inMat - chunk_medians) / chunk_mads
+    elif normalisation == "per-read":
+        new_inMat = (new_inMat - np.median(new_inMat)) / mad(new_inMat)
+    else:
+        assert normalisation == "none"
+
+    if interpolation:
+        t = np.arange(ml * chunk_len)
+        pos = interpolate_pos(mapping_table, att)(t, kmer_len)
+        kmers = interpolate_labels(mapping_table, att)(t, kmer_len)
+        sig_labels = 1 + np.array(map(lambda k: kmer_to_state[k], kmers),
+                                  dtype=np.int32)
+        sig_labels[np.ediff1d(pos, to_begin=1) == 0] = 0
+        sig_labels = sig_labels.reshape((ml, chunk_len))
+    else:
+        #  Create label array
+        model_kmer_len = len(mapping_table['kmer'][0])
+        ub = chunk_len * ml
+        # Use rightmost middle kmer
+        kl = (model_kmer_len - kmer_len + 1) // 2
+        ku = kl + kmer_len
+        new_labels = 1 + np.array(map(lambda k: kmer_to_state[k[kl : ku]],
+                                      mapping_table['kmer'][mapping_table['move'] > 0]), dtype=np.int32)
+        new_labels = np.concatenate([[0,], new_labels])
+
+        label_start = (np.around(mapping_table['start'][mapping_table['move'] > 0] * sample_rate).astype(int)
+                                      - start_sample - map_start)
+        label_start = label_start[label_start < ub].data
+
+        idx = np.zeros(ub, dtype=int)
+        idx[label_start] = np.arange(label_start.shape[0]) + 1
+        idx = fill_zeros_with_prev(idx)
+        idx = idx.reshape((ml, chunk_len))[:,::downsample_factor]
+        idx = np.apply_along_axis(remove_same, 1, idx)
+
+        sig_labels = new_labels[idx]
+
+    # Bad state isn't supported yet with raw models
+    sig_bad = np.zeros((ml, chunk_len), dtype=bool)
+
+    return new_inMat, sig_labels, sig_bad
+
+
 def raw_chunk_worker(fn, chunk_len, kmer_len, min_length, trim, normalise,
                 downsample_factor, interpolation=False):
     """  Worker for creating labelled features from raw data
@@ -143,11 +195,10 @@ def raw_chunk_worker(fn, chunk_len, kmer_len, min_length, trim, normalise,
         return None
 
     mapping_table['move'][0] = 1
+    mapping_table = commensurate_events(mapping_table, start_sample, sample_rate)
 
-    map_start_time = mapping_table['start'][0]
-    map_start_sample = int(round(map_start_time * sample_rate - start_sample))
-    map_end_time = mapping_table['start'][-1] + mapping_table['length'][-1]
-    map_end_sample = int(round(map_end_time * sample_rate - start_sample))
+    map_start = mapping_table['start'][0]
+    map_end = mapping_table['start'][-1] + mapping_table['length'][-1]
     sig_mapped = sig[map_start_sample:map_end_sample]
 
     sig_trim = util.trim_array(sig_mapped, *trim)
@@ -156,52 +207,9 @@ def raw_chunk_worker(fn, chunk_len, kmer_len, min_length, trim, normalise,
         sys.stderr.write('{} is too short.\n'.format(fn))
         return None
 
-    if normalise:
-        loc, scale = med_mad(sig_trim)
-        sig_trim = (sig_trim - loc) / scale
-
-    #  Create feature array
-    ml = len(sig_trim) // chunk_len
-    sig_trim = sig_trim[:ml * chunk_len].reshape((ml, chunk_len, 1))
-
-    if downsample_method == "simple":
-        #  Create label array
-        model_kmer_len = len(mapping_table['kmer'][0])
-        ub = chunk_len * ml
-        # Use rightmost middle kmer
-        kl = (model_kmer_len - kmer_len + 1) // 2
-        ku = kl + kmer_len
-        new_labels = 1 + np.array(map(lambda k: kmer_to_state[k[kl : ku]],
-                                      mapping_table['kmer'][mapping_table['move'] > 0]), dtype=np.int32)
-        new_labels = np.concatenate([[0,], new_labels])
-
-        label_start = (np.around(mapping_table['start'][mapping_table['move'] > 0] * sample_rate).astype(int)
-                                      - start_sample - map_start)
-        label_start = label_start[label_start < ub].data
-
-        idx = np.zeros(ub, dtype=int)
-        idx[label_start] = np.arange(label_start.shape[0]) + 1
-        idx = fill_zeros_with_prev(idx)
-        idx = idx.reshape((ml, chunk_len))[:,::downsample_factor]
-        idx = np.apply_along_axis(remove_same, 1, idx)
-
-        sig_labels = new_labels[idx]
-    elif downsample_method == "interpolation":
-        delta = 1.0 / sample_rate
-        chunk_delta = delta * chunk_len
-        t0 = (map_start + start_sample) / sample_rate
-        tch = np.arange(t0, t0 + chunk_delta, downsample_factor * delta)
-        t = np.array([tch + i * chunk_delta for i in range(ml)]).flatten()
-        pos = interpolate_pos(mapping_table, att)(t, kmer_len)
-        kmers = interpolate_labels(mapping_table, att)(t, kmer_len)
-        sig_labels = 1 + np.array(map(lambda k: kmer_to_state[k], kmers),
-                                  dtype=np.int32)
-        sig_labels[np.ediff1d(pos, to_begin=1) == 0] = 0
-        sig_labels = sig_labels.reshape((ml, -1))
-    else:
-        raise ValueError("downsample_method not understood")
-
     sig_bad = np.zeros((ml, chunk_len), dtype=bool)
+
+    new_inMat, sig_labels, sig_bad = raw_chunkify(sig_trim, mapping_table, chunk_len, kmer_len, normalisation, downsample_factor, interpolation)
 
     return (np.ascontiguousarray(sig_trim),
             np.ascontiguousarray(sig_labels),
