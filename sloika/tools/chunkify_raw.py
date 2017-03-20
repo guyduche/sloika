@@ -11,6 +11,9 @@ from untangled import bio, fast5
 from untangled.iterators import imap_mp
 from untangled.maths import med_mad, studentise, mad
 
+from untangled.cmdargs import (AutoBool, FileAbsent, FileExists, Maybe,
+                               NonNegative, Positive, proportion)
+
 
 def commensurate_mapping_to_raw(mapping_table, start_sample, sample_rate):
     """Replace time coordinates in mapping_table with indices into raw signal
@@ -211,7 +214,7 @@ def raw_chunkify_with_identity_main(argv, parser):
                         help='Rate of label downsampling')
     parser.add_argument('--interpolation', default=False, action=AutoBool,
                         help='Interpolate reference sequence positions between mapped samples')
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     pass
 
 
@@ -235,7 +238,7 @@ def raw_chunkify_with_remap_main(argv, parser):
 
     parser.add_argument('model', action=FileExists, help='Pickled model file')
     parser.add_argument('references', action=FileExists,
-                        help='Reference sequences in fasta format'
+                        help='Reference sequences in fasta format')
 
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     pass
