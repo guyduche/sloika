@@ -116,26 +116,25 @@ def fill_zeros_with_prev(arr):
     return arr[arr != 0][ix]
 
 
-def raw_chunk_worker(fn, section, chunk_len, kmer_len, min_length, trim, normalise,
-                downsample_factor, downsample_method="simple"):
+def raw_chunk_worker(fn, chunk_len, kmer_len, min_length, trim, normalise,
+                downsample_factor, interpolation=False):
     """  Worker for creating labelled features from raw data
 
     :param fn: A filename to read from.
-    :param section: Section of read to process (template / complement)
     :param chunk_len: Length on each chunk
     :param kmer_len: Kmer length for training
     :param min_length: Minumum number of samples before read can be considered.
     :param trim: Tuple (beginning, end) of number of samples to trim from read.
     :param normalise: Do per-strand normalisation
     :param downsample_factor: factor by which to downsample labels
-    :param downsample_method: method to use for downsampling, either
-        "simple" or "interpolation"
+    :param interpolation: interpolate sequence positions between those in
+        mapping table
     """
     kmer_to_state = bio.kmer_mapping(kmer_len)
 
     try:
         with fast5.Reader(fn) as f5:
-            mapping_table, att = f5.get_any_mapping_data(section)
+            mapping_table, att = f5.get_any_mapping_data()
             sig = f5.get_read(raw=True)
             sample_rate = f5.sample_rate
             start_sample = f5.get_read(raw=True, group=True).attrs['start_time']
