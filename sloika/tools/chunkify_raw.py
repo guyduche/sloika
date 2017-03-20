@@ -93,7 +93,7 @@ def interpolate_pos(ev, att):
     """Return a function: time -> reference position by interpolating mapping
 
     :param ev: mapping table with fields start, length, seq_pos and kmer
-    :param att: mapping attributes reference, direction, ref_start, ref_stop
+    :param att: mapping attributes direction, ref_start, ref_stop
         (ev, att) could be returned by f5file.get_any_mapping_data()
     """
     def interp(t, k=5):
@@ -105,17 +105,16 @@ def interpolate_pos(ev, att):
         if att['direction'] == "+":
             map_ref_pos = ev['seq_pos'] + 0.5 * map_k - att['ref_start']
             pos_interp = np.interp(t, ev_mid, map_ref_pos)
-            ref = att['reference']
             pos = np.around(pos_interp - 0.5 * k + EPS).astype(int)
             return pos
         else:
             map_ref_pos = att['ref_stop'] - ev['seq_pos'] + 0.5 * map_k
             pos_interp = np.around(np.interp(t, ev_mid, map_ref_pos))
-            ref = att['reference']
             pos = np.around(pos_interp - 0.5 * k + EPS).astype(int)
             return pos
 
     return interp
+
 
 def interpolate_labels(ev, att):
     """Return a function: time -> reference kmer by interpolating mapping
@@ -131,71 +130,23 @@ def interpolate_labels(ev, att):
     return interp
 
 
-def chunk(x, size):
-    """Split an array into chunks of a given length along first axis """
-    n = x.shape[0] // size
-    chunks = x[:n * size].reshape((n, size) + x.shape[1:])
-    return chunks
-
-
-def trim_array(x, trim):
-    """Remove elements from start and end of array
-
-    :param trim: (int | tuple) elements to remove from start and end of array
-    """
-    start, end = (trim, trim) if isinstance(trim, int) else trim
-    return x[start:(-end or None)]
-
-
-def sub_kmers(kmer_array, kmer_len, mode='middle'):
+def kmers_to_labels(kmer_array, kmer_len, index_from=1):
     """Extract shortened kmers from an array of kmers
 
     :param kmer_array: a numpy array of kmers
-    :param kmer_len: (int) length of kmers to extract, must be <= length of
-        kmers in kmer_array
-    :param mode: (middle | start | end) whether to take the new kmers from the
-        rightmost middle (default), beginning or end of the kmers in kmer_array
+    :param kmer_len: length of sequence context used to determine label
 
-    :returns: an array of extracted kmers copied from the input array
+    :returns: an array of labels
     """
     kmer_array = np.ascontiguousarray(kmer_array)
 
     old_kmer_len = len(kmer_array.flat[0])
     assert kmer_len <= old_kmer_len
 
-    modes = ['middle', 'start', 'end']
-
-    if mode == 'start':
-        offset = 0
-    elif mode == 'end':
-        offset = old_kmer_len - kmer_len
-    elif mode == 'middle':
-        offset = (old_kmer_len - kmer_len + 1) // 2
-    else:
-        raise ValueError(
-            'Unrecognised mode: {}, should be one of {}'.format(mode, modes))
-
+    offset = (old_kmer_len - kmer_len + 1) // 2
     extracted = np.chararray(kmer_array.shape, kmer_len,
             buffer=kmer_array.data, offset=offset, strides=kmer_array.strides)
-
-    return extracted
-
-
-def kmers_to_labels(kmer_array, index_from=1):
-    """Map an array of kmers to state labels
-
-    :param kmer_array: a numpy array of kmers to label
-
-    Labels are assigned in lexicographical order, up to
-    (number of bases)**(length of kmers). The kmer length is inferred from
-    the array.
-
-    :param index_from: (int) first label to use. Default is 1, leaving 0
-        to be used for 'blank', 'stay' or 'bad'.
-    """
-    kmer_len = len(kmer_array.flat[0])
     mapping = bio.kmer_mapping(kmer_len)
-
     labels = np.array(map(lambda k: mapping[k], kmer_array.flat)) + index_from
 
     return labels.reshape(kmer_array.shape)
