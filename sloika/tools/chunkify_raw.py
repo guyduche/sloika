@@ -12,6 +12,32 @@ from untangled.iterators import imap_mp
 from untangled.maths import med_mad, studentise, mad
 
 
+def commensurate_mapping_to_raw(mapping_table, start_sample, sample_rate):
+    """Replace time coordinates in mapping_table with indices into raw signal
+
+    :param mapping_table: array of events (or similar) for a mapped read with
+        start times and and lengths measured in seconds
+    :param start_sample: start sample of the read raw signal
+    :param sample_rate: number of samples per second
+
+    :returns: mapping table with start times measured in samples from the start
+        of the raw signal, and lengths measured in samples
+    """
+    new_field_types = {'start': '<i8', 'length': '<i8'}
+
+    old_dtype = mapping_table.dtype.descr
+    new_dtype = list(map(lambda (name, dtype): (name, new_field_types.get(name, dtype)), old_dtype))
+
+    starts = np.around(mapping_table['start'] * sample_rate - start_sample).astype(int)
+    lengths = np.around(mapping_table['length'] * sample_rate).astype(int)
+
+    new_mapping_table = mapping_table.astype(new_dtype)
+    new_mapping_table['start'] = starts
+    new_mapping_table['length'] = lengths
+
+    return new_mapping_table
+
+
 def interpolate_pos(ev, att):
     """Return a function: time -> reference position by interpolating mapping
 
