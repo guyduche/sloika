@@ -116,7 +116,7 @@ def fill_zeros_with_prev(arr):
     return arr[arr != 0][ix]
 
 
-def raw_chunkify_worker(fn, section, chunk_len, kmer_len, min_length, trim, normalise,
+def raw_chunk_worker(fn, section, chunk_len, kmer_len, min_length, trim, normalise,
                 downsample_factor, downsample_method="simple"):
     """  Worker for creating labelled features from raw data
 
@@ -215,7 +215,40 @@ def raw_chunkify_with_identity_main(argv, parser):
     parser.add_argument('--interpolation', default=False, action=AutoBool,
                         help='Interpolate reference sequence positions between mapped samples')
     args = parser.parse_args(argv)
-    pass
+
+    if not args.overwrite:
+        if os.path.exists(args.output):
+            print("Cowardly refusing to overwrite {}".format(args.output))
+            sys.exit(1)
+
+    fast5_files = fast5.iterate_fast5(args.input_folder, paths=True,
+                                      limit=args.limit,
+                                      strand_list=args.input_strand_list)
+
+    print('* Processing data using', args.jobs, 'threads')
+
+    kwarg_names = ['chunk_len', 'kmer_len', 'min_length', 'trim', 'normalisation', 'downsample_factor', 'interpolation']
+    i = 0
+    bad_list = []
+    chunk_list = []
+    label_list = []
+    for res in imap_mp(raw_chunk_worker, fast5_files, threads=args.jobs,
+                       unordered=True, fix_kwargs=util.get_kwargs(args, kwarg_names)):
+        if res is not None:
+            i = util.progress_report(i)
+
+            (chunks, labels, bad_ev) = res
+
+            chunk_list.append(chunks)
+            label_list.append(labels)
+            bad_list.append(bad_ev)
+
+    if chunk_list == []:
+        print("no chunks were produced", file=sys.stderr)
+        sys.exit(1)
+    else:
+        print('\n* Writing out to HDF5')
+        util.create_hdf5(args, chunk_list, label_list, bad_list)
 
 
 def raw_chunkify_with_remap_main(argv, parser):
