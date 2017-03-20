@@ -6,7 +6,7 @@ standard_library.install_aliases()
 from builtins import *
 
 import numpy as np
-from sloika import features
+from sloika import util
 from untangled import bio, fast5
 from untangled.iterators import imap_mp
 from untangled.maths import med_mad, studentise, mad
@@ -118,11 +118,10 @@ def raw_chunkify_worker(fn, section, chunk_len, kmer_len, min_length, trim, norm
     # start_sample is a uint64. When you do arithmetic with it,
     # numpy tends to return a float
     begin, end = trim
-    map_start = int(round(ev['start'][0] * sample_rate)
-                    - start_sample + begin)
-    map_end = int(round((ev['start'][-1] + ev['length'][-1]) * sample_rate)
-                    - start_sample - end)
-    sig_trim = sig[map_start:map_end]
+    map_start = int(round(ev['start'][0] * sample_rate - start_sample))
+    map_end = int(round((ev['start'][-1] + ev['length'][-1]) * sample_rate - start_sample))
+    sig_mapped = sig[map_start:map_end]
+    sig_trim = util.trim_array(sig_mapped)
 
     if len(sig_trim) < min(chunk_len, min_length):
         return fn, None, None, None
