@@ -248,6 +248,14 @@ def raw_chunkify_with_identity_main(argv, parser):
         sys.exit(1)
     else:
         print('\n* Writing out to HDF5')
+        hdf5_attributes = {
+            'chunk': args.chunk_len,
+            'kmer': args.kmer_len,
+            'trim': args.trim,
+            'normalisation': args.normalisation,
+            'downsample_factor': args.downsample_factor,
+            'interpolation': args.interpolation
+        }
         util.create_hdf5(args, chunk_list, label_list, bad_list)
 
 
