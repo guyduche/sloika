@@ -194,7 +194,6 @@ def raw_chunk_worker(fn, chunk_len, kmer_len, min_length, trim, normalise,
         sys.stderr.write('Failed to get mapping data from {}.\n{}\n'.format(fn, repr(e)))
         return None
 
-    mapping_table['move'][0] = 1
     mapping_table = commensurate_events(mapping_table, start_sample, sample_rate)
 
     map_start = mapping_table['start'][0]
