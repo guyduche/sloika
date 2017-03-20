@@ -12,6 +12,7 @@ import sys
 from untangled.cmdargs import (AutoBool, FileAbsent, FileExists, Maybe,
                                NonNegative, Positive, proportion)
 
+from sloika.tools.chunkify_raw import chunkify_with_identity_main, raw_chunkify_with_remap_main
 from sloika.tools.chunkify_with_identity import chunkify_with_identity_main
 from sloika.tools.chunkify_with_remap import chunkify_with_remap_main
 from sloika import batch
@@ -84,7 +85,9 @@ def main(argv):
 
     commands = Commands({
         'identity': (chunkify_with_identity_main, "Create HDF file from reads as is"),
-        'remap': (chunkify_with_remap_main, "Create HDF file remapping reads on the fly using transducer network")
+        'raw_identity': (raw_chunkify_with_identity_main), "Create HDF file from reads as is using raw data"),
+        'remap': (chunkify_with_remap_main, "Create HDF file remapping reads on the fly using transducer network"),
+        'raw_remap': (raw_chunkify_with_remap_main, "Create HDF file of raw data, remapping reads on the fly using transducer network")
     })
 
     if 1 == len(argv):

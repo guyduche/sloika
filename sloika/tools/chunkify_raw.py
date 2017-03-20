@@ -147,7 +147,7 @@ def raw_chunkify_worker(fn, section, chunk_len, kmer_len, min_length, trim, norm
     map_end_time = mapping_table['start'][-1] + mapping_table['length'][-1]
     map_end_sample = int(round(map_end_time * sample_rate - start_sample))
     sig_mapped = sig[map_start_sample:map_end_sample]
-    
+
     sig_trim = util.trim_array(sig_mapped, *trim)
 
     if len(sig_trim) < min(chunk_len, min_length):
@@ -204,3 +204,38 @@ def raw_chunkify_worker(fn, section, chunk_len, kmer_len, min_length, trim, norm
     return (np.ascontiguousarray(sig_trim),
             np.ascontiguousarray(sig_labels),
             np.ascontiguousarray(sig_bad))
+
+
+def raw_chunkify_with_identity_main(argv, parser):
+    parser.add_argument('--downsample_factor', default=1, type=Positive(int),
+                        help='Rate of label downsampling')
+    parser.add_argument('--interpolation', default=False, action=AutoBool,
+                        help='Interpolate reference sequence positions between mapped samples')
+    args = parser.parse_args()
+    pass
+
+
+def raw_chunkify_with_remap_main(argv, parser):
+    parser.add_argument('--compile', default=None, type=Maybe(str),
+                        help='File output compiled model')
+    parser.add_argument('--downsample_factor', default=1, type=Positive(int),
+                        help='Rate of label downsampling')
+    parser.add_argument('--interpolation', default=False, action=AutoBool,
+                        help='Interpolate reference sequence positions between mapped samples')
+    parser.add_argument('--min_prob', metavar='proportion', default=1e-5,
+                        type=proportion, help='Minimum allowed probabiility for basecalls')
+    parser.add_argument('--output_strand_list', default="strand_output_list.txt",
+                        help='strand summary output file')
+    parser.add_argument('--prior', nargs=2, metavar=('start', 'end'), default=(25.0, 25.0),
+                        type=Maybe(NonNegative(float)), help='Mean of start and end positions')
+    parser.add_argument('--slip', default=5.0, type=Maybe(NonNegative(float)),
+                        help='Slip penalty')
+    parser.add_argument('--stride', default=4, type=int,
+                        help='Stride of the model used for remapping')
+
+    parser.add_argument('model', action=FileExists, help='Pickled model file')
+    parser.add_argument('references', action=FileExists,
+                        help='Reference sequences in fasta format'
+
+    args = parser.parse_args()
+    pass
