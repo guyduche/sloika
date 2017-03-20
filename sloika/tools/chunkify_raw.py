@@ -115,8 +115,6 @@ def raw_chunkify_worker(fn, section, chunk_len, kmer_len, min_length, trim, norm
 
     ev['move'][0] = 1
 
-    # start_sample is a uint64. When you do arithmetic with it,
-    # numpy tends to return a float
     begin, end = trim
     map_start = int(round(ev['start'][0] * sample_rate - start_sample))
     map_end = int(round((ev['start'][-1] + ev['length'][-1]) * sample_rate - start_sample))
