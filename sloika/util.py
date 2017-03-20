@@ -49,7 +49,7 @@ def progress_report(i):
     return i
 
 
-def create_hdf5(args, chunk_list, label_list, bad_list):
+def create_hdf5(attributes, chunk_list, label_list, bad_list):
     assert len(chunk_list) == len(label_list) == len(bad_list)
     assert len(chunk_list) > 0
 
@@ -79,11 +79,9 @@ def create_hdf5(args, chunk_list, label_list, bad_list):
         chunk_ds[:] = all_chunks
         label_ds[:] = all_labels
         weight_ds[:] = all_weights
-        h5['/'].attrs['chunk'] = args.chunk_len
-        h5['/'].attrs['kmer'] = args.kmer_len
-        h5['/'].attrs['section'] = args.section
-        h5['/'].attrs['trim'] = args.trim
-        h5['/'].attrs['scaled'] = args.use_scaled
+
+        for (key, value) in attributes.items():
+            h5['/'].attrs[key] = value
 
 
 def trim_array(x, trim):

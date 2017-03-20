@@ -53,4 +53,11 @@ def chunkify_with_identity_main(argv, parser):
         sys.exit(1)
     else:
         print('\n* Writing out to HDF5')
-        util.create_hdf5(args, chunk_list, label_list, bad_list)
+        hdf5_attributes = {
+            'chunk': args.chunk_len,
+            'kmer': args.kmer_len,
+            'section': args.section,
+            'trim': args.trim,
+            'scaled': args.use_scaled,
+        }
+        util.create_hdf5(hdf5_attributes, chunk_list, label_list, bad_list)
