@@ -142,11 +142,13 @@ def raw_chunkify_worker(fn, section, chunk_len, kmer_len, min_length, trim, norm
 
     mapping_table['move'][0] = 1
 
-    begin, end = trim
-    map_start = int(round(mapping_table['start'][0] * sample_rate - start_sample))
-    map_end = int(round((mapping_table['start'][-1] + mapping_table['length'][-1]) * sample_rate - start_sample))
-    sig_mapped = sig[map_start:map_end]
-    sig_trim = util.trim_array(sig_mapped)
+    map_start_time = mapping_table['start'][0]
+    map_start_sample = int(round(map_start_time * sample_rate - start_sample))
+    map_end_time = mapping_table['start'][-1] + mapping_table['length'][-1]
+    map_end_sample = int(round(map_end_time * sample_rate - start_sample))
+    sig_mapped = sig[map_start_sample:map_end_sample]
+    
+    sig_trim = util.trim_array(sig_mapped, *trim)
 
     if len(sig_trim) < min(chunk_len, min_length):
         sys.stderr.write('{} is too short.\n'.format(fn))
