@@ -164,7 +164,7 @@ def fill_zeros_with_prev(arr):
     return arr[arr != 0][ix]
 
 
-def _raw_worker(fn, section, chunk_len, kmer_len, min_length, trim, normalise,
+def raw_chunkify_worker(fn, section, chunk_len, kmer_len, min_length, trim, normalise,
                 downsample_factor, downsample_method="interpolation"):
     """  Worker for creating labelled features from raw data
 
@@ -265,47 +265,6 @@ def _raw_worker(fn, section, chunk_len, kmer_len, min_length, trim, normalise,
 
     sig_bad = np.zeros((ml, chunk_len), dtype=bool)
 
-    return fn, sig_trim, sig_labels, sig_bad
-
-
-def kmers(files, section, chunk_len, kmer_len, min_length=0, trim=(0, 0),
-          use_scaled=False, normalise=True, raw=False):
-    """ Batch data together for kmer training
-
-    :param files: A `set` of files to read
-    :param section: Section of read to process (template / complement)
-    :param chunk_len: Length on each chunk
-    :param kmer_len: Kmer length for training
-    :param min_length: Minumum number of events before read can be considered.
-    :param trim: Tuple (beginning, end) of number of events to trim from read.
-    :param use_scaled: Use prescaled event statistics
-    :param normalise: Do per-strand normalisation
-    :param raw: Return raw data rather than events
-
-    :yields: A tuple containing a 3D :class:`ndarray` of size
-    (X, chunk_len, nfeatures) containing the features for the batch
-    and a 2D :class`ndarray` of size (X, chunk_len) containing the
-    associated labels.  1 <= X <= batch_size.
-    """
-
-    pfiles = list(files)
-
-    wargs = {'chunk_len' : chunk_len,
-             'kmer_len' : kmer_len,
-             'min_length' : min_length,
-             'normalise' : normalise,
-             'section' : section,
-             'trim' : trim,
-             'use_scaled' : use_scaled
-            }
-
-    worker = _raw_worker if raw else _event_worker
-
-    for fn, chunks, labels, bad_ev in imap_mp(worker, pfiles, threads=8,
-                                              fix_kwargs=wargs):
-        if chunks is None or labels is None:
-            continue
-
-        yield (np.ascontiguousarray(chunks),
-               np.ascontiguousarray(labels),
-               np.ascontiguousarray(bad_ev))
+    return (np.ascontiguousarray(sig_trim),
+            np.ascontiguousarray(sig_labels),
+            np.ascontiguousarray(sig_bad))
