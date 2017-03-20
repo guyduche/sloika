@@ -137,7 +137,8 @@ def raw_chunkify_worker(fn, section, chunk_len, kmer_len, min_length, trim, norm
             sample_rate = f5.sample_rate
             start_sample = f5.get_read(raw=True, group=True).attrs['start_time']
     except:
-        return fn, None, None, None
+        sys.stderr.write('Failed to get mapping data from {}.\n{}\n'.format(fn, repr(e)))
+        return None
 
     ev['move'][0] = 1
 
@@ -148,7 +149,8 @@ def raw_chunkify_worker(fn, section, chunk_len, kmer_len, min_length, trim, norm
     sig_trim = util.trim_array(sig_mapped)
 
     if len(sig_trim) < min(chunk_len, min_length):
-        return fn, None, None, None
+        sys.stderr.write('{} is too short.\n'.format(fn))
+        return None
 
     if normalise:
         loc, scale = med_mad(sig_trim)
