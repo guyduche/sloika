@@ -10,7 +10,6 @@ import h5py
 from nose_parameterized import parameterized
 import numpy as np
 import os
-import shutil
 import unittest
 
 import util

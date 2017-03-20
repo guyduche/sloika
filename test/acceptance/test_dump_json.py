@@ -7,7 +7,6 @@ from builtins import *
 
 from nose_parameterized import parameterized
 import os
-import shutil
 import sys
 import unittest
 

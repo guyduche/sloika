@@ -7,7 +7,6 @@ from builtins import *
 import glob
 import os
 import numpy as np
-import shutil
 import unittest
 
 from nose_parameterized import parameterized

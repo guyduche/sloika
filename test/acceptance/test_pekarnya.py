@@ -6,7 +6,6 @@ standard_library.install_aliases()
 from builtins import *
 import unittest
 import os
-import shutil
 
 import util
 
