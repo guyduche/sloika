@@ -109,7 +109,7 @@ def raw_chunkify_worker(fn, section, chunk_len, kmer_len, min_length, trim, norm
             ev, att = f5.get_any_mapping_data(section)
             sig = f5.get_read(raw=True)
             sample_rate = f5.sample_rate
-            start_sample = int(f5['Raw/Reads'].values()[0].attrs['start_time'])
+            start_sample = f5.get_read(raw=True, group=True).attrs['start_time']
     except:
         return fn, None, None, None
 
