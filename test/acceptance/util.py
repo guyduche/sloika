@@ -110,6 +110,7 @@ def maybe_create_dir(directory_name):
         else:
             raise
 
+
 def create_file(directory, suffix, delete):
     path = os.path.join(directory, "file{}".format(suffix))
     if os.path.exists(path):
@@ -119,6 +120,7 @@ def create_file(directory, suffix, delete):
         if not delete:
             open(path, 'w').close()
     return path
+
 
 def create_temporary_file(directory, suffix, delete):
     with tempfile.NamedTemporaryFile(suffix=suffix, delete=delete, dir=directory) as fh:
