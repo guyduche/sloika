@@ -164,7 +164,7 @@ if __name__ == '__main__':
             all_weights = np.ones(len(all_chunks))
     all_weights /= np.sum(all_weights)
 
-    # check chunk length arguments
+    # check arguments
     data_chunk = all_chunks.shape[1]
     if args.chunk_len_range is None:
         # --chunk_len_range was not defined, use data file chunk size
