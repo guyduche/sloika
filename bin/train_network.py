@@ -147,7 +147,10 @@ class Logger(object):
             sys.stdout.write(message)
             sys.stdout.flush()
         try:
-            self.fh.write(message)
+            if sys.version_info.major == 3:
+                self.fh.write(message.encode('utf-8'))
+            else:
+                self.fh.write(message)
         except IOError as e:
             print("Failed to write to log\n Message: {}\n Error: {}".format(message, repr(e)))
 

@@ -8,6 +8,7 @@ from builtins import *
 import itertools
 import os
 from subprocess import Popen, PIPE
+import sys
 import tempfile
 
 
@@ -85,8 +86,9 @@ def run_cmd(test_case, cmd, cwd=None):
     stdout, stderr = proc.communicate(None)
 
     return_code = proc.returncode
-    stdout = stdout.decode('UTF-8')
-    stderr = stderr.decode('UTF-8')
+    if sys.version_info.major == 3:
+        stdout = stdout.decode('UTF-8')
+        stderr = stderr.decode('UTF-8')
 
     return Result(test_case, cmd, cwd, return_code, stdout, stderr)
 

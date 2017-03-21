@@ -53,12 +53,13 @@ class AcceptanceTest(unittest.TestCase):
         util.run_cmd(self, cmd).return_code(1).stdout(util.zeroth_line_starts_with(u"Unsupported command 'hehe'"))
 
     @parameterized.expand([
-        [[], (182, 500, 4), -2.8844583, 14.225174, -0.254353493452],
-        [["--normalisation", "per-read"], (182, 500, 4), -2.8844583, 14.225174, -0.254353493452],
-        [["--normalisation", "per-chunk"], (182, 500, 4), -4.1303601265, 12.2556829453, -0.249717712402],
+        [[], (182, 500, 4), -2.8844583, 14.225174, -0.254353493452, "0"],
+        [["--normalisation", "per-read"], (182, 500, 4), -2.8844583, 14.225174, -0.254353493452, "1"],
+        [["--normalisation", "per-chunk"], (182, 500, 4), -4.1303601265, 12.2556829453, -0.249717712402, "2"],
     ])
-    def test_chunkify_with_identity_with_normalisation(self, options, chunks_shape, min_value, max_value, median_value):
-        test_work_dir = self.work_dir("test_chunkify_with_identity_with_normalisation")
+    def test_chunkify_with_identity_with_normalisation(self, options, chunks_shape, min_value, max_value, median_value,
+                                                       subdir):
+        test_work_dir = self.work_dir(os.path.join("test_chunkify_with_identity_with_normalisation", subdir))
 
         strand_input_list = os.path.join(self.data_dir, "identity", "na12878_train.txt")
         self.assertTrue(os.path.exists(strand_input_list))
@@ -92,12 +93,13 @@ class AcceptanceTest(unittest.TestCase):
         os.remove(output_file_name)
 
     @parameterized.expand([
-        [[], (33, 500, 4), -2.7013657093, 12.7536773682, -0.238673046231],
-        [["--normalisation", "per-read"], (33, 500, 4), -2.7013657093, 12.7536773682, -0.238673046231],
-        [["--normalisation", "per-chunk"], (33, 500, 4), -2.88131427765, 11.0136013031, -0.238405257463]
+        [[], (33, 500, 4), -2.7013657093, 12.7536773682, -0.238673046231, "0"],
+        [["--normalisation", "per-read"], (33, 500, 4), -2.7013657093, 12.7536773682, -0.238673046231, "1"],
+        [["--normalisation", "per-chunk"], (33, 500, 4), -2.88131427765, 11.0136013031, -0.238405257463, "2"]
     ])
-    def test_chunkify_with_remap_with_normalisation(self, options, chunks_shape, min_value, max_value, median_value):
-        test_work_dir = self.work_dir("test_chunkify_with_remap_with_normalisation")
+    def test_chunkify_with_remap_with_normalisation(self, options, chunks_shape, min_value, max_value, median_value,
+                                                    subdir):
+        test_work_dir = self.work_dir(os.path.join("test_chunkify_with_remap_with_normalisation", subdir))
 
         strand_input_list = os.path.join(self.data_dir, "remap", "strand_output_list.txt")
         self.assertTrue(os.path.exists(strand_input_list))
@@ -177,15 +179,15 @@ class AcceptanceTest(unittest.TestCase):
         self.assertTrue(not os.path.exists(strand_output_list))
 
     @parameterized.expand([
-        [495, 540, 25, 20, 0],
-        [496, 540, 25, 20, 1],
-        [495, 541, 25, 20, 1],
-        [495, 540, 26, 20, 1],
-        [495, 540, 25, 21, 1],
+        [495, 540, 25, 20, 0, "0"],
+        [496, 540, 25, 20, 1, "1"],
+        [495, 541, 25, 20, 1, "2"],
+        [495, 540, 26, 20, 1, "3"],
+        [495, 540, 25, 21, 1, "4"],
     ])
     def test_chunkify_with_remap_no_results_due_to_length(self, chunk_len, min_length, trim_left, trim_right,
-                                                          return_code):
-        test_work_dir = self.work_dir("test_chunkify_with_remap_no_results_due_to_length")
+                                                          return_code, subdir):
+        test_work_dir = self.work_dir(os.path.join("test_chunkify_with_remap_no_results_due_to_length", subdir))
 
         strand_input_list = os.path.join(self.data_dir, "remap2", "strand_input_list.txt")
         self.assertTrue(os.path.exists(strand_input_list))
@@ -221,15 +223,15 @@ class AcceptanceTest(unittest.TestCase):
             self.assertTrue(not os.path.exists(strand_output_list))
 
     @parameterized.expand([
-        [300, 360, 40, 20, 0],
-        [301, 360, 40, 20, 1],
-        [300, 361, 40, 20, 1],
-        [300, 360, 41, 20, 1],
-        [300, 360, 40, 21, 1],
+        [300, 360, 40, 20, 0, "0"],
+        [301, 360, 40, 20, 1, "1"],
+        [300, 361, 40, 20, 1, "2"],
+        [300, 360, 41, 20, 1, "3"],
+        [300, 360, 40, 21, 1, "4"],
     ])
     def test_chunkify_with_identity_no_results_due_to_length(self, chunk_len, min_length, trim_left, trim_right,
-                                                             return_code):
-        test_work_dir = self.work_dir("test_chunkify_with_identity_no_results_due_to_length")
+                                                             return_code, subdir):
+        test_work_dir = self.work_dir(os.path.join("test_chunkify_with_identity_no_results_due_to_length", subdir))
 
         strand_input_list = os.path.join(self.data_dir, "remap2", "strand_input_list.txt")
         self.assertTrue(os.path.exists(strand_input_list))

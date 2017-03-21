@@ -9,6 +9,7 @@ import h5py
 from nose_parameterized import parameterized
 import os
 import shutil
+import sys
 import unittest
 
 import util
@@ -40,20 +41,27 @@ class AcceptanceTest(unittest.TestCase):
 
     def test_usage(self):
         cmd = [self.script]
-        msg = u"train_network.py: error: too few arguments"
+        if sys.version_info.major == 3:
+            msg = "train_network.py: error: the following arguments are required: command"
+        else:
+            msg = "train_network.py: error: too few arguments"
         util.run_cmd(self, cmd).return_code(2).stderr(util.last_line_starts_with(msg))
 
     @parameterized.expand(known_commands)
     def test_commands_usage(self, command_name):
         cmd = [self.script, command_name]
-        msg = u"train_network.py {}: error: too few arguments".format(command_name)
+        if sys.version_info.major == 3:
+            msg = "train_network.py {}: error: the following arguments are required: model, output, input".format(
+                command_name)
+        else:
+            msg = "train_network.py {}: error: too few arguments".format(command_name)
         util.run_cmd(self, cmd).return_code(2).stderr(util.last_line_starts_with(msg))
 
     @parameterized.expand([
-        [[]],
+        [[], "0"],
     ])
-    def test_baseline_lstm_training(self, options):
-        test_work_dir = self.work_dir("test_baseline_lstm_training")
+    def test_baseline_lstm_training(self, options, subdir):
+        test_work_dir = self.work_dir(os.path.join("test_baseline_lstm_training", subdir))
 
         strand_input_list = os.path.join(self.data_dir, "events", "na12878_train.txt")
         self.assertTrue(os.path.exists(strand_input_list))

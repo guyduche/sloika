@@ -54,12 +54,12 @@ class AcceptanceTest(unittest.TestCase):
         util.run_cmd(self, cmd).return_code(0).stdoutEquals(reference_dump)
 
     @parameterized.expand([
-        [[], "model_py{}.json"],
-        [["--params"], "model_py{}.json"],
-        [["--no-params"], "model_without_params_py{}.json"]
+        [[], "model_py{}.json", "0"],
+        [["--params"], "model_py{}.json", "1"],
+        [["--no-params"], "model_without_params_py{}.json", "2"]
     ])
-    def test_dump_to_a_file(self, options, reference_dump_file_name_template):
-        test_work_dir = self.work_dir("test_dump_to_a_file")
+    def test_dump_to_a_file(self, options, reference_dump_file_name_template, subdir):
+        test_work_dir = self.work_dir(os.path.join("test_dump_to_a_file", subdir))
 
         model_file = os.path.join(self.data_dir, "model.pkl")
         self.assertTrue(os.path.exists(model_file))
