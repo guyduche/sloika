@@ -6,6 +6,8 @@ standard_library.install_aliases()
 from builtins import *
 
 import numpy as np
+import os
+
 from sloika import util
 from untangled import bio, fast5
 from untangled.iterators import imap_mp
@@ -82,7 +84,7 @@ def interpolate_labels(mapping_table, att):
     return interp
 
 
-def kmers_to_labels(kmer_array, kmer_len, index_from=1):
+def labels_from_mapping_table(kmer_array, kmer_len, index_from=1):
     """Extract shortened kmers from an array of kmers
 
     :param kmer_array: a numpy array of kmers
@@ -99,9 +101,9 @@ def kmers_to_labels(kmer_array, kmer_len, index_from=1):
     extracted = np.chararray(kmer_array.shape, kmer_len,
             buffer=kmer_array.data, offset=offset, strides=kmer_array.strides)
     mapping = bio.kmer_mapping(kmer_len)
-    labels = np.array(map(lambda k: mapping[k], kmer_array.flat)) + index_from
+    labels = np.array(list(map(lambda k: mapping[k], extracted.flat))) + index_from
 
-    return labels.reshape(kmer_array.shape)
+    return labels.reshape(kmer_array.shape).astype('i4')
 
 
 def remove_same(arr):
@@ -112,15 +114,15 @@ def remove_same(arr):
 
 def fill_zeros_with_prev(arr):
     """Fills zero values with previous value"""
-    ix = np.add.accumulate(arr != 0).astype(int) - 1
+    ix = np.add.accumulate(arr != 0).astype(np.int) - 1
     return arr[arr != 0][ix]
 
 
 def raw_chunkify(signal, mapping_table, chunk_len, kmer_len, normalisation, downsample_factor, interpolation):
     assert len(signal) >= chunk_len
 
-    ml = len(sig_trim) // chunk_len
-    new_inMat = sig_trim[:ml * chunk_len].reshape((ml, chunk_len, 1))
+    ml = len(signal) // chunk_len
+    new_inMat = signal[:ml * chunk_len].reshape((ml, chunk_len, 1))
 
     if normalisation == "per-chunk":
         chunk_medians = np.median(new_inMat, axis=1, keepdims=True)
@@ -146,16 +148,15 @@ def raw_chunkify(signal, mapping_table, chunk_len, kmer_len, normalisation, down
         # Use rightmost middle kmer
         kl = (model_kmer_len - kmer_len + 1) // 2
         ku = kl + kmer_len
-        new_labels = 1 + np.array(map(lambda k: kmer_to_state[k[kl : ku]],
-                                      mapping_table['kmer'][mapping_table['move'] > 0]), dtype=np.int32)
+        new_labels = labels_from_mapping_table(mapping_table['kmer'][mapping_table['move'] > 0], kmer_len)
         new_labels = np.concatenate([[0,], new_labels])
 
-        label_start = (np.around(mapping_table['start'][mapping_table['move'] > 0] * sample_rate).astype(int)
-                                      - start_sample - map_start)
+        mapping_table[0]['move'] = 1
+        label_start = mapping_table['start'][mapping_table['move'] > 0]
         label_start = label_start[label_start < ub].data
 
-        idx = np.zeros(ub, dtype=int)
-        idx[label_start] = np.arange(label_start.shape[0]) + 1
+        idx = np.zeros(ub, dtype=np.int)
+        idx[label_start] = np.arange(label_start.shape[0], dtype=np.int) + 1
         idx = fill_zeros_with_prev(idx)
         idx = idx.reshape((ml, chunk_len))[:,::downsample_factor]
         idx = np.apply_along_axis(remove_same, 1, idx)
@@ -168,7 +169,7 @@ def raw_chunkify(signal, mapping_table, chunk_len, kmer_len, normalisation, down
     return new_inMat, sig_labels, sig_bad
 
 
-def raw_chunk_worker(fn, chunk_len, kmer_len, min_length, trim, normalise,
+def raw_chunk_worker(fn, chunk_len, kmer_len, min_length, trim, normalisation,
                 downsample_factor, interpolation=False):
     """  Worker for creating labelled features from raw data
 
@@ -177,7 +178,7 @@ def raw_chunk_worker(fn, chunk_len, kmer_len, min_length, trim, normalise,
     :param kmer_len: Kmer length for training
     :param min_length: Minumum number of samples before read can be considered.
     :param trim: Tuple (beginning, end) of number of samples to trim from read.
-    :param normalise: Do per-strand normalisation
+    :param normalisation: Normalisation method [per-chunk | per-read | none]
     :param downsample_factor: factor by which to downsample labels
     :param interpolation: interpolate sequence positions between those in
         mapping table
@@ -194,11 +195,12 @@ def raw_chunk_worker(fn, chunk_len, kmer_len, min_length, trim, normalise,
         sys.stderr.write('Failed to get mapping data from {}.\n{}\n'.format(fn, repr(e)))
         return None
 
-    mapping_table = commensurate_events(mapping_table, start_sample, sample_rate)
+    mapping_table = commensurate_mapping_to_raw(mapping_table, start_sample, sample_rate)
 
     map_start = mapping_table['start'][0]
     map_end = mapping_table['start'][-1] + mapping_table['length'][-1]
-    sig_mapped = sig[map_start_sample:map_end_sample]
+    sig_mapped = sig[map_start:map_end]
+    mapping_table['start'] -= map_start
 
     sig_trim = util.trim_array(sig_mapped, *trim)
 
@@ -206,21 +208,14 @@ def raw_chunk_worker(fn, chunk_len, kmer_len, min_length, trim, normalise,
         sys.stderr.write('{} is too short.\n'.format(fn))
         return None
 
-    sig_bad = np.zeros((ml, chunk_len), dtype=bool)
-
     new_inMat, sig_labels, sig_bad = raw_chunkify(sig_trim, mapping_table, chunk_len, kmer_len, normalisation, downsample_factor, interpolation)
 
-    return (np.ascontiguousarray(sig_trim),
+    return (np.ascontiguousarray(new_inMat),
             np.ascontiguousarray(sig_labels),
             np.ascontiguousarray(sig_bad))
 
 
-def raw_chunkify_with_identity_main(argv, parser):
-    parser.add_argument('--downsample_factor', default=1, type=Positive(int),
-                        help='Rate of label downsampling')
-    parser.add_argument('--interpolation', default=False, action=AutoBool,
-                        help='Interpolate reference sequence positions between mapped samples')
-    args = parser.parse_args(argv)
+def raw_chunkify_with_identity_main(args):
 
     if not args.overwrite:
         if os.path.exists(args.output):
@@ -262,30 +257,8 @@ def raw_chunkify_with_identity_main(argv, parser):
             'downsample_factor': args.downsample_factor,
             'interpolation': args.interpolation
         }
-        util.create_hdf5(args, chunk_list, label_list, bad_list)
+        util.create_hdf5(args.output, args.blanks, hdf5_attributes, chunk_list, label_list, bad_list)
 
 
-def raw_chunkify_with_remap_main(argv, parser):
-    parser.add_argument('--compile', default=None, type=Maybe(str),
-                        help='File output compiled model')
-    parser.add_argument('--downsample_factor', default=1, type=Positive(int),
-                        help='Rate of label downsampling')
-    parser.add_argument('--interpolation', default=False, action=AutoBool,
-                        help='Interpolate reference sequence positions between mapped samples')
-    parser.add_argument('--min_prob', metavar='proportion', default=1e-5,
-                        type=proportion, help='Minimum allowed probabiility for basecalls')
-    parser.add_argument('--output_strand_list', default="strand_output_list.txt",
-                        help='strand summary output file')
-    parser.add_argument('--prior', nargs=2, metavar=('start', 'end'), default=(25.0, 25.0),
-                        type=Maybe(NonNegative(float)), help='Mean of start and end positions')
-    parser.add_argument('--slip', default=5.0, type=Maybe(NonNegative(float)),
-                        help='Slip penalty')
-    parser.add_argument('--stride', default=4, type=int,
-                        help='Stride of the model used for remapping')
-
-    parser.add_argument('model', action=FileExists, help='Pickled model file')
-    parser.add_argument('references', action=FileExists,
-                        help='Reference sequences in fasta format')
-
-    args = parser.parse_args(argv)
+def raw_chunkify_with_remap_main(args):
     pass

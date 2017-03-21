@@ -18,8 +18,7 @@ from untangled.iterators import imap_mp
 from untangled import fast5
 
 
-def chunkify_with_identity_main(argv, parser):
-    args = parser.parse_args(argv)
+def chunkify_with_identity_main(args):
 
     if not args.overwrite:
         if os.path.exists(args.output):
@@ -60,4 +59,4 @@ def chunkify_with_identity_main(argv, parser):
             'trim': args.trim,
             'scaled': args.use_scaled,
         }
-        util.create_hdf5(hdf5_attributes, chunk_list, label_list, bad_list)
+        util.create_hdf5(args.output, args.blanks, hdf5_attributes, chunk_list, label_list, bad_list)

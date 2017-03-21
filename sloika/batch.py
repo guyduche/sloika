@@ -30,7 +30,7 @@ def trim_ends_and_filter(ev, trim, min_length, chunk_len):
     if len(ev) < sum(trim) + chunk_len or len(ev) < min_length:
         return None
     else:
-        return sloika.util.trim_array(ev, trim)
+        return sloika.util.trim_array(ev, *trim)
 
 
 def chunkify(ev, chunk_len, kmer_len, use_scaled, normalisation):

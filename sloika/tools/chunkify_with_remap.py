@@ -31,27 +31,7 @@ def create_output_strand_file(output_strand_list_entries, output_file_name):
             sl.write('\t'.join([str(x) for x in strand_data]) + '\n')
 
 
-def chunkify_with_remap_main(argv, parser):
-    parser.add_argument('--compile', default=None, type=Maybe(str),
-                        help='File output compiled model')
-    parser.add_argument('--min_prob', metavar='proportion', default=1e-5,
-                        type=proportion, help='Minimum allowed probabiility for basecalls')
-    parser.add_argument('--output_strand_list', default="strand_output_list.txt",
-                        help='strand summary output file')
-    parser.add_argument('--prior', nargs=2, metavar=('start', 'end'), default=(25.0, 25.0),
-                        type=Maybe(NonNegative(float)), help='Mean of start and end positions')
-    parser.add_argument('--segmentation', default=fast5.__default_segmentation_analysis__,
-                        metavar='location', help='Location of segmentation information')
-    parser.add_argument('--slip', default=5.0, type=Maybe(NonNegative(float)),
-                        help='Slip penalty')
-    parser.add_argument('--transducer', default=True, action=AutoBool,
-                        help='Model is transducer')
-
-    parser.add_argument('model', action=FileExists, help='Pickled model file')
-    parser.add_argument('references', action=FileExists,
-                        help='Reference sequences in fasta format')
-
-    args = parser.parse_args(argv)
+def chunkify_with_remap_main(args):
 
     if not args.overwrite:
         if os.path.exists(args.output):
@@ -106,7 +86,7 @@ def chunkify_with_remap_main(argv, parser):
             'trim': args.trim,
             'scaled': args.use_scaled,
         }
-        util.create_hdf5(hdf5_attributes, chunk_list, label_list, bad_list)
+        util.create_hdf5(args.output, args.blanks, hdf5_attributes, chunk_list, label_list, bad_list)
 
         print('\n* Creating output strand file')
         create_output_strand_file(output_strand_list_entries, args.output_strand_list)
