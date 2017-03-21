@@ -16,6 +16,8 @@ import util
 
 class AcceptanceTest(unittest.TestCase):
 
+    known_commands = ["events", "raw"]
+
     @classmethod
     def setUpClass(self):
         test_directory = os.path.splitext(__file__)[0]
@@ -38,7 +40,14 @@ class AcceptanceTest(unittest.TestCase):
 
     def test_usage(self):
         cmd = [self.script]
-        util.run_cmd(self, cmd).return_code(2).stderr(util.zeroth_line_starts_with(u"usage"))
+        msg = u"train_network.py: error: too few arguments"
+        util.run_cmd(self, cmd).return_code(2).stderr(util.last_line_starts_with(msg))
+
+    @parameterized.expand(known_commands)
+    def test_commands_usage(self, command_name):
+        cmd = [self.script, command_name]
+        msg = u"train_network.py {}: error: too few arguments".format(command_name)
+        util.run_cmd(self, cmd).return_code(2).stderr(util.last_line_starts_with(msg))
 
     @parameterized.expand([
         [[]],
@@ -74,8 +83,8 @@ class AcceptanceTest(unittest.TestCase):
         if os.path.exists(output_directory):
             shutil.rmtree(output_directory)
 
-        train_cmd = [self.script, "--batch", "100", "--niteration", "1", "--save_every", "1", "--lrdecay", "5000",
-                     "--bad", model, output_directory, hdf5_file]
+        train_cmd = [self.script, "events", "--batch", "100", "--niteration", "1", "--save_every", "1",
+                     "--lrdecay", "5000", "--bad", model, output_directory, hdf5_file]
 
         util.run_cmd(self, train_cmd).return_code(0)
 
