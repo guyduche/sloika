@@ -69,7 +69,7 @@ parser.add_argument('--version', nargs=0, action=display_version_and_exit, metav
                     help='Display version information.')
 parser.add_argument('model', action=FileExists,
                     help='File to read python model description from')
-parser.add_argument('output', help='Prefix for output files')
+parser.add_argument('output', action=FileAbsent, help='Prefix for output files')
 parser.add_argument('input', action=FileExists,
                     help='HDF5 file containing chunks')
 
