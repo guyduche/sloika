@@ -153,21 +153,6 @@ if __name__ == '__main__':
     log.write('* Command line\n')
     log.write(' '.join(sys.argv) + '\n')
 
-    log.write('* Reading network from {}\n'.format(args.model))
-    model_ext = os.path.splitext(args.model)[1]
-    if model_ext == '.py':
-        with h5py.File(args.input, 'r') as h5:
-            klen = h5.attrs['kmer']
-        netmodule = imp.load_source('netmodule', args.model)
-        network = netmodule.network(klen=klen, sd=args.sd)
-    elif model_ext == '.pkl':
-        with open(args.model, 'rb') as fh:
-            network = pickle.load(fh)
-    else:
-        log.write('* Model is neither python file nor model pickle\n')
-        exit(1)
-    fg = wrap_network(network, min_prob=args.min_prob, l2=args.l2, drop=args.drop)
-
     log.write('* Loading data from {}\n'.format(args.input))
     with h5py.File(args.input, 'r') as h5:
         all_chunks = h5['chunks'][:]
@@ -214,6 +199,21 @@ if __name__ == '__main__':
         label_weights = np.ones(np.max(all_labels) + 1, dtype='f4')
     label_weights = np.reciprocal(label_weights)
     label_weights /= np.mean(label_weights)
+
+    log.write('* Reading network from {}\n'.format(args.model))
+    model_ext = os.path.splitext(args.model)[1]
+    if model_ext == '.py':
+        with h5py.File(args.input, 'r') as h5:
+            klen = h5.attrs['kmer']
+        netmodule = imp.load_source('netmodule', args.model)
+        network = netmodule.network(klen=klen, sd=args.sd)
+    elif model_ext == '.pkl':
+        with open(args.model, 'rb') as fh:
+            network = pickle.load(fh)
+    else:
+        log.write('* Model is neither python file nor model pickle\n')
+        exit(1)
+    fg = wrap_network(network, min_prob=args.min_prob, l2=args.l2, drop=args.drop)
 
     total_ev = 0
     score = wscore = 0.0
