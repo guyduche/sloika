@@ -17,6 +17,11 @@ from untangled.cmdargs import (AutoBool, FileAbsent, FileExists, Maybe,
                                NonNegative, Positive, proportion)
 
 
+DEFAULT_NORMALISATION = 'per-read'
+
+AVAILABLE_NORMALISATIONS = frozenset(['none', 'per-read', 'per-chunk'])
+
+
 def commensurate_mapping_to_raw(mapping_table, start_sample, sample_rate):
     """Replace time coordinates in mapping_table with indices into raw signal
 

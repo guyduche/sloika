@@ -9,9 +9,11 @@ from builtins import *
 import argparse
 import sys
 
+from untangled import fast5
 from untangled.cmdargs import (AutoBool, FileAbsent, FileExists, Maybe,
                                NonNegative, Positive, proportion)
 
+import sloika.tools.chunkify_raw
 from sloika.tools.chunkify_raw import raw_chunkify_with_identity_main, raw_chunkify_with_remap_main
 from sloika.tools.chunkify_with_identity import chunkify_with_identity_main
 from sloika.tools.chunkify_with_remap import chunkify_with_remap_main
@@ -23,19 +25,19 @@ parser = argparse.ArgumentParser(description=program_description,
                                  formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
 common_parser = argparse.ArgumentParser(add_help=False)
-parser.add_argument('--input_strand_list', default=None, action=FileExists,
+common_parser.add_argument('--input_strand_list', default=None, action=FileExists,
                     help='strand summary file containing subset')
-parser.add_argument('--jobs', default=1, metavar='n', type=Positive(int),
+common_parser.add_argument('--jobs', default=1, metavar='n', type=Positive(int),
                     help='Number of threads to use when processing data')
-parser.add_argument('--kmer_len', default=5, metavar='k', type=Positive(int),
+common_parser.add_argument('--kmer_len', default=5, metavar='k', type=Positive(int),
                     help='Length of kmer to estimate')
-parser.add_argument('--limit', default=None, type=Maybe(Positive(int)),
+common_parser.add_argument('--limit', default=None, type=Maybe(Positive(int)),
                     help='Limit number of reads to process')
-parser.add_argument('--overwrite', default=False, action=AutoBool,
+common_parser.add_argument('--overwrite', default=False, action=AutoBool,
                     help='Whether to overwrite any output files')
-parser.add_argument('input_folder', action=FileExists,
+common_parser.add_argument('input_folder', action=FileExists,
                     help='Directory containing single-read fast5 files')
-parser.add_argument('output', help='Output HDF5 file')
+common_parser.add_argument('output', help='Output HDF5 file')
 
 
 common_raw_parser = argparse.ArgumentParser(add_help=False)
@@ -102,7 +104,7 @@ parser_identity.set_defaults(command_action=chunkify_with_identity_main)
 
 
 parser_remap = subparsers.add_parser('remap', parents=[common_parser, common_events_parser, common_remap_parser],
-                                     help='Create HDF file from reads as is using raw data',
+                                            help='Create HDF file remapping reads on the fly using transducer network',
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser_remap.add_argument('--segmentation', default=fast5.__default_segmentation_analysis__,
                           metavar='location', help='Location of segmentation information')
@@ -110,7 +112,7 @@ parser_remap.set_defaults(command_action=chunkify_with_remap_main)
 
 
 parser_raw_identity = subparsers.add_parser('raw_identity', parents=[common_parser, common_raw_parser],
-                                            help='Create HDF file remapping reads on the fly using transducer network',
+                                     help='Create HDF file from reads as is using raw data',
                                             formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser_raw_identity.add_argument('--downsample_factor', default=1, type=Positive(int),
                                  help='Rate of label downsampling')
