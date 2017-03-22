@@ -202,6 +202,7 @@ if __name__ == '__main__':
     if args.chunk_len_range[1] is None:
         args.chunk_len_range[1] = data_chunk
     min_chunk, max_chunk = args.chunk_len_range
+    log.write('* Will use min_chunk, max_chunk = {}, {}\n'.format(min_chunk, max_chunk))
 
     assert max_chunk >= min_chunk, "Min chunk size (got {}) must be <= chunk size (got {})".format(min_chunk, max_chunk)
     assert data_chunk >= max_chunk, "Max chunk size (got {}) must be <= data chunk size (got {})".format(
