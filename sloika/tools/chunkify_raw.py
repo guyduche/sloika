@@ -193,11 +193,11 @@ def raw_chunk_worker(fn, chunk_len, kmer_len, min_length, trim, normalisation,
 
     try:
         with fast5.Reader(fn) as f5:
-            mapping_table, att = f5.get_any_mapping_data()
+            mapping_table, att = f5.get_any_mapping_data('template')
             sig = f5.get_read(raw=True)
             sample_rate = f5.sample_rate
             start_sample = f5.get_read(raw=True, group=True).attrs['start_time']
-    except:
+    except Exception as e:
         sys.stderr.write('Failed to get mapping data from {}.\n{}\n'.format(fn, repr(e)))
         return None
 

@@ -138,7 +138,7 @@ def main(argv):
     except SystemExit as e:
         sys.exit(e.code)
     except:
-        print('Exception when running command {!r}'.format(command_name))
+        print('Exception when running command {!r}'.format(args.command))
         raise
 
 
