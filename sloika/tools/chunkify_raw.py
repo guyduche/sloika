@@ -118,9 +118,9 @@ def remove_same(arr):
 
 
 def fill_zeros_with_prev(arr):
-    """Fills zero values with previous value"""
-    ix = np.add.accumulate(arr != 0).astype(np.int) - 1
-    return arr[arr != 0][ix]
+    """Fills non-leading zero values with previous value in 1d array"""
+    ix = np.arange(len(arr)) * (arr != 0)
+    return arr[np.maximum.accumulate(ix)]
 
 
 def raw_chunkify(signal, mapping_table, chunk_len, kmer_len, normalisation, downsample_factor, interpolation):
