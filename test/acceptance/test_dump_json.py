@@ -44,8 +44,8 @@ class AcceptanceTest(unittest.TestCase):
         model_file = os.path.join(self.data_dir, "model.pkl")
         self.assertTrue(os.path.exists(model_file))
 
-        reference_dump_path = os.path.join(
-            self.data_dir, reference_dump_file_name_template.format(sys.version_info.major))
+        majorMinor = "{}{}".format(sys.version_info.major, sys.version_info.minor)
+        reference_dump_path = os.path.join(self.data_dir, reference_dump_file_name_template.format(majorMinor))
         self.assertTrue(os.path.exists(reference_dump_path))
 
         reference_dump = open(reference_dump_path, 'r').read().splitlines()
@@ -64,8 +64,8 @@ class AcceptanceTest(unittest.TestCase):
         model_file = os.path.join(self.data_dir, "model.pkl")
         self.assertTrue(os.path.exists(model_file))
 
-        reference_dump_path = os.path.join(
-            self.data_dir, reference_dump_file_name_template.format(sys.version_info.major))
+        majorMinor = "{}{}".format(sys.version_info.major, sys.version_info.minor)
+        reference_dump_path = os.path.join(self.data_dir, reference_dump_file_name_template.format(majorMinor))
         self.assertTrue(os.path.exists(reference_dump_path))
 
         reference_dump = open(reference_dump_path, 'r').read().splitlines()
