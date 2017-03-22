@@ -125,6 +125,7 @@ def fill_zeros_with_prev(arr):
 
 def raw_chunkify(signal, mapping_table, chunk_len, kmer_len, normalisation, downsample_factor, interpolation):
     assert len(signal) >= chunk_len
+    assert normalisation in AVAILABLE_NORMALISATIONS
 
     ml = len(signal) // chunk_len
     new_inMat = signal[:ml * chunk_len].reshape((ml, chunk_len, 1))

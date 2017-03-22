@@ -16,7 +16,7 @@ import util
 
 
 class AcceptanceTest(unittest.TestCase):
-    known_commands = ["identity", "remap"]
+    known_commands = ["identity", "remap", "raw_identity", "raw_remap"]
 
     @classmethod
     def setUpClass(self):
@@ -40,18 +40,18 @@ class AcceptanceTest(unittest.TestCase):
             self.assertTrue(util.is_close(a, b, 1e-5), msg)
 
     def test_commands(self):
-        cmd = [self.script]
-        util.run_cmd(self, cmd).expect_exit_code(0).expect_stdout(util.zeroth_line_starts_with(u"Available commands:"))
+        cmd = [self.script, "--help"]
+        util.run_cmd(self, cmd).return_code(0).stdout(util.zeroth_line_starts_with(u"usage:"))
 
     @parameterized.expand(known_commands)
     def test_usage(self, command_name):
-        cmd = [self.script, command_name]
-        util.run_cmd(self, cmd).expect_exit_code(2).expect_stderr(util.zeroth_line_starts_with(u"usage:"))
+        cmd = [self.script, command_name, "--help"]
+        util.run_cmd(self, cmd).return_code(0).stdout(util.zeroth_line_starts_with(u"usage:"))
 
     def test_unsupported_command(self):
         cmd = [self.script, "hehe"]
-        util.run_cmd(self, cmd).expect_exit_code(1).expect_stdout(
-            util.zeroth_line_starts_with(u"Unsupported command 'hehe'"))
+        msg = u"chunkify.py: error: argument command: invalid choice:"
+        util.run_cmd(self, cmd).return_code(2).stderr(util.nth_line_starts_with(msg, 1))
 
     @parameterized.expand([
         [[], (182, 500, 4), -2.8844583, 14.225174, -0.254353493452, "0"],
