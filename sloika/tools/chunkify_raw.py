@@ -148,12 +148,6 @@ def raw_chunkify(signal, mapping_table, chunk_len, kmer_len, normalisation, down
         sig_labels[np.ediff1d(pos, to_begin=1) == 0] = 0
         sig_labels = sig_labels.reshape((ml, chunk_len))
     else:
-        #  Create label array
-        model_kmer_len = len(mapping_table['kmer'][0])
-        ub = chunk_len * ml
-        # Use rightmost middle kmer
-        kl = (model_kmer_len - kmer_len + 1) // 2
-        ku = kl + kmer_len
         new_labels = labels_from_mapping_table(mapping_table['kmer'][mapping_table['move'] > 0], kmer_len)
         new_labels = np.concatenate([[0,], new_labels])
 
