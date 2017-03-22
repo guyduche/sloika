@@ -10,6 +10,7 @@ import argparse
 import pickle
 import h5py
 import imp
+import logging
 import numpy as np
 import os
 from shutil import copyfile
@@ -25,6 +26,8 @@ from untangled.cmdargs import (AutoBool, display_version_and_exit, FileAbsent,
 
 from sloika import updates
 from sloika.version import __version__
+
+logging.getLogger("theano.gof.compilelock").setLevel(logging.WARNING)
 
 # This is here, not in main to allow documentation to be built
 parser = argparse.ArgumentParser(

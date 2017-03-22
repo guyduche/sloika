@@ -5,8 +5,10 @@ from __future__ import absolute_import
 from future import standard_library
 standard_library.install_aliases()
 from builtins import *
+
 import argparse
 import imp
+import logging
 import numpy as np
 import os
 import sys
@@ -17,6 +19,8 @@ import theano.tensor as T
 from untangled.cmdargs import (display_version_and_exit, FileExists, Positive)
 
 from sloika.version import __version__
+
+logging.getLogger("theano.gof.compilelock").setLevel(logging.WARNING)
 
 # This is here, not in main to allow documentation to be built
 parser = argparse.ArgumentParser(
