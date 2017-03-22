@@ -26,17 +26,17 @@ parser = argparse.ArgumentParser(description=program_description,
 
 common_parser = argparse.ArgumentParser(add_help=False)
 common_parser.add_argument('--input_strand_list', default=None, action=FileExists,
-                    help='strand summary file containing subset')
+                           help='strand summary file containing subset')
 common_parser.add_argument('--jobs', default=1, metavar='n', type=Positive(int),
-                    help='Number of threads to use when processing data')
+                           help='Number of threads to use when processing data')
 common_parser.add_argument('--kmer_len', default=5, metavar='k', type=Positive(int),
-                    help='Length of kmer to estimate')
+                           help='Length of kmer to estimate')
 common_parser.add_argument('--limit', default=None, type=Maybe(Positive(int)),
-                    help='Limit number of reads to process')
+                           help='Limit number of reads to process')
 common_parser.add_argument('--overwrite', default=False, action=AutoBool,
-                    help='Whether to overwrite any output files')
+                           help='Whether to overwrite any output files')
 common_parser.add_argument('input_folder', action=FileExists,
-                    help='Directory containing single-read fast5 files')
+                           help='Directory containing single-read fast5 files')
 common_parser.add_argument('output', help='Output HDF5 file')
 
 
@@ -104,7 +104,7 @@ parser_identity.set_defaults(command_action=chunkify_with_identity_main)
 
 
 parser_remap = subparsers.add_parser('remap', parents=[common_parser, common_events_parser, common_remap_parser],
-                                            help='Create HDF file remapping reads on the fly using transducer network',
+                                     help='Create HDF file remapping reads on the fly using transducer network',
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser_remap.add_argument('--segmentation', default=fast5.__default_segmentation_analysis__,
                           metavar='location', help='Location of segmentation information')
@@ -112,7 +112,7 @@ parser_remap.set_defaults(command_action=chunkify_with_remap_main)
 
 
 parser_raw_identity = subparsers.add_parser('raw_identity', parents=[common_parser, common_raw_parser],
-                                     help='Create HDF file from reads as is using raw data',
+                                            help='Create HDF file from reads as is using raw data',
                                             formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser_raw_identity.add_argument('--downsample_factor', default=1, type=Positive(int),
                                  help='Rate of label downsampling')
@@ -121,7 +121,8 @@ parser_raw_identity.add_argument('--interpolation', default=False, action=AutoBo
 parser_raw_identity.set_defaults(command_action=raw_chunkify_with_identity_main)
 
 
-parser_raw_remap = subparsers.add_parser('raw_remap', parents=[common_parser, common_raw_parser, common_remap_parser],
+parser_raw_remap = subparsers.add_parser('raw_remap',
+                                         parents=[common_parser, common_raw_parser, common_remap_parser],
                                          help='Create HDF file of raw data, remapping reads on the fly',
                                          formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser_raw_remap.add_argument('--stride', default=4, type=int,
