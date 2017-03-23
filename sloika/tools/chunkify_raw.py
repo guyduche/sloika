@@ -74,6 +74,17 @@ def trim_signal_and_mapping(signal, mapping_table, start_sample, end_sample):
     return sig_trim, new_mapping_table
 
 
+def mapping_table_is_registered(mapped_signal, mapping_table):
+    tests = [
+        mapping_table['start'][0] == 0,
+        mapping_table['start'][-1] + mapping_table['length'][-1] == len(mapped_signal),
+        (mapping_table['start'] >= 0).all(),
+        (mapping_table['start'] < len(mapped_signal)).all(),
+        (mapping_table['start'][:-1] + mapping_table['length'][:-1] == mapping_table['start'][1:]).all(),
+    ]
+    return all(tests)
+
+
 def interpolate_pos(mapping_table, att):
     """Return a function: time -> reference position by interpolating mapping
 
@@ -163,6 +174,7 @@ def first_sample_at_same_ref_position(starts, moves):
 def raw_chunkify(signal, mapping_table, chunk_len, kmer_len, normalisation, downsample_factor, interpolation):
     assert len(signal) >= chunk_len
     assert normalisation in AVAILABLE_NORMALISATIONS
+    assert mapping_table_is_registered(mapped_signal, mapping_table)
 
     ml = len(signal) // chunk_len
     new_inMat = signal[:ml * chunk_len].reshape((ml, chunk_len, 1))
@@ -177,7 +189,7 @@ def raw_chunkify(signal, mapping_table, chunk_len, kmer_len, normalisation, down
         assert normalisation == "none"
 
     if interpolation:
-        t = np.arange(ml * chunk_len)
+        t = np.arange(0, ml * chunk_len, downsample_factor)
         pos = interpolate_pos(mapping_table, att)(t, kmer_len)
         sig_labels = interpolate_labels(mapping_table, att)(t, kmer_len)
         sig_labels[np.ediff1d(pos, to_begin=1) == 0] = 0
@@ -231,11 +243,7 @@ def raw_chunk_worker(fn, chunk_len, kmer_len, min_length, trim, normalisation,
     mapped_signal, mapping_table = trim_signal_and_mapping(sig, mapping_table, map_start, map_end)
 
     try:
-        assert mapping_table['start'][0] == 0
-        assert mapping_table['start'][-1] + mapping_table['length'][-1] == len(mapped_signal)
-        assert (mapping_table['start'] >= 0).all()
-        assert (mapping_table['start'] < len(mapped_signal)).all()
-        assert (mapping_table['start'][:-1] + mapping_table['length'][:-1] == mapping_table['start'][1:]).all()
+        assert mapping_table_is_registered(mapped_signal, mapping_table)
     except Exception as e:
         sys.stderr.write('Failed to properly register raw signal and mapping table in {}.\n{}\n'.format(fn, repr(e)))
         return None
