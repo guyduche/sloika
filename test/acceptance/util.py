@@ -113,17 +113,6 @@ def maybe_create_dir(directory_name):
             raise
 
 
-def create_file(directory, suffix, delete):
-    path = os.path.join(directory, "file{}".format(suffix))
-    if os.path.exists(path):
-        if delete:
-            os.remove(path)
-    else:
-        if not delete:
-            open(path, 'w').close()
-    return path
-
-
 def nth_line_starts_with(prefix, n):
     def f(L):
         try:
