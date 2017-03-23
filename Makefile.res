@@ -1,5 +1,5 @@
 n?=0
-workDir?=run/$n/
+workDir?=run/$n
 fast5Dir?=/mnt/data/human/training/reads
 strandTrain?=/mnt/data/human/training/na12878_train.txt
 strandValidate?=/mnt/data/human/training/na12878_validation.txt
@@ -8,10 +8,10 @@ strandValidate?=/mnt/data/human/training/na12878_validation.txt
 prepare:
 	${inDevEnv} $${BIN_DIR}/chunkify.py identity --chunk_len 500 --kmer_len 5 --section template --jobs 1 --overwrite \
 	    --input_strand_list ${strandTrain} \
-	    ${fast5Dir} ${workDir}dataset_train.hdf5
+	    ${fast5Dir} ${workDir}/dataset_train.hdf5
 	${inDevEnv} $${BIN_DIR}/chunkify.py identity --chunk_len 500 --kmer_len 5 --section template --jobs 1 --overwrite \
 	    --input_strand_list ${strandValidate} \
-	    ${fast5Dir} ${workDir}dataset_validate.hdf5
+	    ${fast5Dir} ${workDir}/dataset_validate.hdf5
 
 .PHONY: testPrepare
 testPrepare:
@@ -23,7 +23,7 @@ testPrepare:
 remap:
 	${inDevEnv} $${BIN_DIR}/chunkify.py remap --chunk_len 500 --kmer_len 5 --section template --jobs 1 --overwrite \
 	    --input_strand_list ${strandTrain} \
-	    ${fast5Dir} ${workDir}dataset_train.hdf5 data/test_chunkify/remap/model.pkl data/test_chunkify/remap/reference.fa
+	    ${fast5Dir} ${workDir}/dataset_train.hdf5 data/test_chunkify/remap/model.pkl data/test_chunkify/remap/reference.fa
 
 .PHONY: testRemap
 testRemap:
@@ -49,7 +49,7 @@ extraFlags?=
 train:
 	${inDevEnv} THEANO_FLAGS="${extraFlags}device=${device},$${COMMON_THEANO_FLAGS_FOR_TRAINING}" \
 	    train_network.py --batch 100 --niteration ${niteration} --save_every 5000 --lrdecay 5000 --bad \
-	    ${model} ${workDir}output ${workDir}dataset_train.hdf5
+	    ${model} ${workDir}/output ${workDir}/dataset_train.hdf5
 
 .PHONY: testTrain
 testTrain:
@@ -59,4 +59,4 @@ testTrain:
 
 .PHONY: validate
 validate:
-	${inDevEnv} validate_network.py --bad --batch 200 ${model} ${workDir}dataset_validate.hdf5
+	${inDevEnv} validate_network.py --bad --batch 200 ${model} ${workDir}/dataset_validate.hdf5
