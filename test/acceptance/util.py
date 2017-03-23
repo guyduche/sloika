@@ -124,12 +124,6 @@ def create_file(directory, suffix, delete):
     return path
 
 
-def create_temporary_file(directory, suffix, delete):
-    with tempfile.NamedTemporaryFile(suffix=suffix, delete=delete, dir=directory) as fh:
-        file_name = fh.name
-    return file_name
-
-
 def nth_line_starts_with(prefix, n):
     def f(L):
         try:
