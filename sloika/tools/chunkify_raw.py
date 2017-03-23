@@ -33,19 +33,45 @@ def commensurate_mapping_to_raw(mapping_table, start_sample, sample_rate):
     :returns: mapping table with start times measured in samples from the start
         of the raw signal, and lengths measured in samples
     """
-    new_field_types = {'start': '<i8', 'length': '<i8'}
+    def maybe_change_field_dtype(nd):
+        new_field_types = {'start': '<i8', 'length': '<i8'}
+        name, dtype = nd
+        return (name, new_field_types.get(name, dtype))
 
     old_dtype = mapping_table.dtype.descr
-    new_dtype = list(map(lambda (name, dtype): (name, new_field_types.get(name, dtype)), old_dtype))
+    new_dtype = list(map(maybe_change_field_dtype, old_dtype))
+
+    assert np.allclose(mapping_table['start'][:-1] + mapping_table['length'][:-1],
+                       mapping_table['start'][1:])
 
     starts = np.around(mapping_table['start'] * sample_rate - start_sample).astype(int)
     lengths = np.around(mapping_table['length'] * sample_rate).astype(int)
 
-    new_mapping_table = mapping_table.astype(new_dtype)
+    assert np.alltrue(starts[:-1] + lengths[:-1] == starts[1:])
+
+    new_mapping_table = mapping_table.copy().astype(new_dtype)
     new_mapping_table['start'] = starts
     new_mapping_table['length'] = lengths
 
     return new_mapping_table
+
+
+def trim_signal_and_mapping(signal, mapping_table, start_sample, end_sample):
+    sig_trim = signal[start_sample:end_sample]
+
+    end_sample = start_sample + len(sig_trim)
+
+    ix = np.arange(len(mapping_table))
+    lb = int(ix[mapping_table['start'] > start_sample].min()) - 1
+    ub = int(ix[mapping_table['start'] < end_sample].max()) + 1
+    new_mapping_table = mapping_table[lb:ub].copy()
+
+    new_mapping_table['start'] -= start_sample
+    new_mapping_table['start'][0] = 0
+    new_mapping_table['length'][0] = new_mapping_table['start'][1]
+    new_mapping_table['length'][-1] = len(sig_trim) - new_mapping_table['start'][-1]
+
+    return sig_trim, new_mapping_table
 
 
 def interpolate_pos(mapping_table, att):
@@ -83,8 +109,9 @@ def interpolate_labels(mapping_table, att):
         (mapping_table, att) could be returned by f5file.get_any_mapping_data()
     """
     def interp(t, k=5):
+        mapping = bio.kmer_mapping(k)
         pos = interpolate_pos(mapping_table, att)(t, k)
-        return [att['reference'][i: i + k] for i in pos]
+        return [mapping(att['reference'][i: i + k]) for i in pos]
 
     return interp
 
@@ -111,7 +138,7 @@ def labels_from_mapping_table(kmer_array, kmer_len, index_from=1):
     return labels.reshape(kmer_array.shape).astype('i4')
 
 
-def remove_same(arr):
+def replace_repeats_with_zero(arr):
     """Replace repeated elements in 1d array with 0"""
     arr[np.ediff1d(arr, to_begin=1) == 0] = 0
     return arr
@@ -121,6 +148,16 @@ def fill_zeros_with_prev(arr):
     """Fills non-leading zero values with previous value in 1d array"""
     ix = np.arange(len(arr)) * (arr != 0)
     return arr[np.maximum.accumulate(ix)]
+
+
+def first_row_at_same_ref_position(moves):
+    ix_moves = np.arange(len(moves)) * (moves > 0)
+    return np.maximum.accumulate(ix_moves)
+
+
+def first_sample_at_same_ref_position(starts, moves):
+    rows = first_row_at_same_ref_position(moves)
+    return starts[rows]
 
 
 def raw_chunkify(signal, mapping_table, chunk_len, kmer_len, normalisation, downsample_factor, interpolation):
@@ -142,26 +179,21 @@ def raw_chunkify(signal, mapping_table, chunk_len, kmer_len, normalisation, down
     if interpolation:
         t = np.arange(ml * chunk_len)
         pos = interpolate_pos(mapping_table, att)(t, kmer_len)
-        kmers = interpolate_labels(mapping_table, att)(t, kmer_len)
-        sig_labels = 1 + np.array(map(lambda k: kmer_to_state[k], kmers),
-                                  dtype=np.int32)
+        sig_labels = interpolate_labels(mapping_table, att)(t, kmer_len)
         sig_labels[np.ediff1d(pos, to_begin=1) == 0] = 0
         sig_labels = sig_labels.reshape((ml, chunk_len))
     else:
-        new_labels = labels_from_mapping_table(mapping_table['kmer'][mapping_table['move'] > 0], kmer_len)
-        new_labels = np.concatenate([[0,], new_labels])
+        new_labels = labels_from_mapping_table(mapping_table['kmer'], kmer_len)
 
-        mapping_table[0]['move'] = 1
-        label_start = mapping_table['start'][mapping_table['move'] > 0]
-        label_start = label_start[label_start < ub].data
-
-        idx = np.zeros(ub, dtype=np.int)
-        idx[label_start] = np.arange(label_start.shape[0], dtype=np.int) + 1
+        idx = np.zeros(ml * chunk_len, dtype=np.int)
+        starts = first_sample_at_same_ref_position(mapping_table['start'], mapping_table['move'])
+        starts = starts[starts < ml * chunk_len]
+        idx[starts] = np.arange(len(starts))
         idx = fill_zeros_with_prev(idx)
         idx = idx.reshape((ml, chunk_len))[:,::downsample_factor]
-        idx = np.apply_along_axis(remove_same, 1, idx)
+        idx = np.apply_along_axis(replace_repeats_with_zero, 1, idx)
 
-        sig_labels = new_labels[idx]
+        sig_labels = np.concatenate([[0], new_labels])[idx]
 
     # Bad state isn't supported yet with raw models
     sig_bad = np.zeros((ml, chunk_len), dtype=bool)
@@ -196,15 +228,17 @@ def raw_chunk_worker(fn, chunk_len, kmer_len, min_length, trim, normalisation,
         return None
 
     mapping_table = commensurate_mapping_to_raw(mapping_table, start_sample, sample_rate)
+    map_start = new_mapping_table['start'][0] + trim[0]
+    map_end = new_mapping_table['start'][-1] + new_mapping_table['length'][-1] - trim[1]
+    mapped_signal, mapping_table = trim_signal_and_mapping(sig, mapping_table, map_start, map_end)
 
-    map_start = mapping_table['start'][0]
-    map_end = mapping_table['start'][-1] + mapping_table['length'][-1]
-    sig_mapped = sig[map_start:map_end]
-    mapping_table['start'] -= map_start
+    assert mapping_table['start'][0] == 0
+    assert mapping_table['start'][-1] + mapping_table['length'][-1] == len(mapped_signal)
+    assert (mapping_table['start'] >= 0).all()
+    assert (mapping_table['start'] < len(mapped_signal)).all()
+    assert (mapping_table['start'][:-1] + mapping_table['length'][:-1] == mapping_table['start'][1:]).all()
 
-    sig_trim = util.trim_array(sig_mapped, *trim)
-
-    if len(sig_trim) < min(chunk_len, min_length):
+    if len(mapped_signal) < min(chunk_len, min_length):
         sys.stderr.write('{} is too short.\n'.format(fn))
         return None
 
