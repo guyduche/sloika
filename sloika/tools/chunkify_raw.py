@@ -215,8 +215,6 @@ def raw_chunk_worker(fn, chunk_len, kmer_len, min_length, trim, normalisation,
     :param interpolation: interpolate sequence positions between those in
         mapping table
     """
-    kmer_to_state = bio.kmer_mapping(kmer_len)
-
     try:
         with fast5.Reader(fn) as f5:
             mapping_table, att = f5.get_any_mapping_data('template')
@@ -232,11 +230,15 @@ def raw_chunk_worker(fn, chunk_len, kmer_len, min_length, trim, normalisation,
     map_end = new_mapping_table['start'][-1] + new_mapping_table['length'][-1] - trim[1]
     mapped_signal, mapping_table = trim_signal_and_mapping(sig, mapping_table, map_start, map_end)
 
-    assert mapping_table['start'][0] == 0
-    assert mapping_table['start'][-1] + mapping_table['length'][-1] == len(mapped_signal)
-    assert (mapping_table['start'] >= 0).all()
-    assert (mapping_table['start'] < len(mapped_signal)).all()
-    assert (mapping_table['start'][:-1] + mapping_table['length'][:-1] == mapping_table['start'][1:]).all()
+    try:
+        assert mapping_table['start'][0] == 0
+        assert mapping_table['start'][-1] + mapping_table['length'][-1] == len(mapped_signal)
+        assert (mapping_table['start'] >= 0).all()
+        assert (mapping_table['start'] < len(mapped_signal)).all()
+        assert (mapping_table['start'][:-1] + mapping_table['length'][:-1] == mapping_table['start'][1:]).all()
+    except Exception as e:
+        sys.stderr.write('Failed to properly register raw signal and mapping table in {}.\n{}\n'.format(fn, repr(e)))
+        return None
 
     if len(mapped_signal) < min(chunk_len, min_length):
         sys.stderr.write('{} is too short.\n'.format(fn))
