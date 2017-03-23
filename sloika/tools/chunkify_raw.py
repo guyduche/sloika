@@ -174,7 +174,7 @@ def first_sample_at_same_ref_position(starts, moves):
 def raw_chunkify(signal, mapping_table, chunk_len, kmer_len, normalisation, downsample_factor, interpolation):
     assert len(signal) >= chunk_len
     assert normalisation in AVAILABLE_NORMALISATIONS
-    assert mapping_table_is_registered(mapped_signal, mapping_table)
+    assert mapping_table_is_registered(signal, mapping_table)
 
     ml = len(signal) // chunk_len
     new_inMat = signal[:ml * chunk_len].reshape((ml, chunk_len, 1))
