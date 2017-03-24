@@ -62,7 +62,7 @@ def create_hdf5(output, blanks, attributes, chunk_list, label_list, bad_list):
     all_bad = np.concatenate(bad_list)
 
     #  Mark chunks with too many blanks with a zero weight
-    nblank = np.mean(all_labels == 0, axis=1)
+    nblank = np.sum(all_labels == 0, axis=1)
     max_blanks = int(all_labels.shape[1] * blanks)
     all_weights = nblank < max_blanks
 

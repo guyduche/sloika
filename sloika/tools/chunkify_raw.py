@@ -7,8 +7,11 @@ from builtins import *
 
 import numpy as np
 import os
+import sys
 
-from sloika import util
+from Bio import SeqIO
+import sloika
+from sloika import util, helpers, batch, config
 from untangled import bio, fast5
 from untangled.iterators import imap_mp
 from untangled.maths import med_mad, studentise, mad
@@ -263,6 +266,97 @@ def raw_chunk_worker(fn, chunk_len, kmer_len, min_length, trim, normalisation,
             np.ascontiguousarray(sig_bad))
 
 
+def init_raw_chunk_remap_worker(model, fasta, kmer_len):
+    import pickle
+    # Import within worker to avoid initialising GPU in main thread
+    import sloika.features
+    import sloika.transducer
+    global calc_post, kmer_to_state, references
+    with open(model, 'rb') as fh:
+        calc_post = pickle.load(fh)
+
+    references = dict()
+    with open(fasta, 'r') as fh:
+        for ref in SeqIO.parse(fh, 'fasta'):
+            refseq = str(ref.seq)
+            if 'N' not in refseq:
+                if sys.version_info.major == 3:
+                    references[ref.id] = refseq.encode('utf-8')
+                else:
+                    references[ref.id] = refseq
+
+
+def raw_remap(ref, signal, min_prob, kmer_len, prior, slip, stride):
+    inMat = (signal - np.median(signal)) / mad(signal)
+    inMat = inMat[:, None, None].astype(config.sloika_dtype)
+    post = sloika.decode.prepare_post(calc_post(inMat), min_prob=min_prob, drop_bad=False)
+
+    kmers = np.array(bio.seq_to_kmers(ref, kmer_len))
+    kmer_to_state = bio.kmer_mapping(kmer_len)
+    seq = [kmer_to_state[k.decode('utf-8')] + 1 for k in kmers]
+    prior0 = None if prior[0] is None else sloika.util.geometric_prior(len(seq), prior[0])
+    prior1 = None if prior[1] is None else sloika.util.geometric_prior(len(seq), prior[1], rev=True)
+
+    score, path = sloika.transducer.map_to_sequence(post, seq, slip=slip,
+                                                    prior_initial=prior0,
+                                                    prior_final=prior1, log=False)
+
+    mapping_dtype = [
+        ('start', '<i8'),
+        ('length', '<i8'),
+        ('seq_pos', '<i8'),
+        ('move', '<i8'),
+        ('kmer', 'S{}'.format(kmer_len)),
+        ('good_emission', '?'),
+    ]
+    mapping_table = np.zeros(post.shape[0], dtype=mapping_dtype)
+    mapping_table['start'] = np.arange(0, signal.shape[0], stride, dtype=np.int) - stride // 2
+    mapping_table['length'] = stride
+    mapping_table['seq_pos'] = path
+    mapping_table['move'] = np.ediff1d(path, to_begin=1)
+    mapping_table['kmer'] = kmers[path]
+    mapping_table['good_emission'] = True
+
+    _, mapping_table = trim_signal_and_mapping(signal, mapping_table, 0, len(signal))
+
+    return (score, mapping_table, path, seq)
+
+
+def raw_chunk_remap_worker(fn, trim, min_prob, kmer_len, min_length,
+               prior, slip, chunk_len, normalisation, downsample_factor,
+               interpolation, stride, open_pore_fraction):
+    try:
+        with fast5.Reader(fn) as f5:
+            signal = f5.get_read(raw=True)
+            sn = f5.filename_short
+    except Exception as e:
+        sys.stderr.write('Failure reading events from {}.\n{}\n'.format(fn, repr(e)))
+        return None
+
+    try:
+        read_ref = references[sn]
+    except Exception as e:
+        sys.stderr.write('No reference found for {}.\n{}\n'.format(fn, repr(e)))
+        return None
+
+    signal = batch.trim_open_pore(signal, open_pore_fraction)
+    signal = util.trim_array(signal, *trim)
+
+    if len(signal) < min(chunk_len, min_length):
+        sys.stderr.write('{} is too short.\n'.format(fn))
+        return None
+
+    (score, mapping_table, path, seq) = raw_remap(read_ref, signal, min_prob, kmer_len, prior, slip, stride)
+    mapping_attrs = {
+        'reference': read_ref,
+        'direction': '+',
+        'ref_start': 0,
+    }
+    (chunks, labels, bad_ev) = raw_chunkify(signal, mapping_table, chunk_len, kmer_len, normalisation, downsample_factor, interpolation, mapping_attrs=None)
+
+    return sn + '.fast5', score, len(mapping_table), path, seq, chunks, labels, bad_ev
+
+
 def raw_chunkify_with_identity_main(args):
 
     if not args.overwrite:
@@ -305,8 +399,79 @@ def raw_chunkify_with_identity_main(args):
             'downsample_factor': args.downsample_factor,
             'interpolation': args.interpolation
         }
-        util.create_hdf5(args.output, args.blanks, hdf5_attributes, chunk_list, label_list, bad_list)
+        blanks_per_chunk = np.concatenate([(l == 0).mean(1) for l in label_list])
+        blanks = np.percentile(blanks_per_chunk, args.blanks_percentile)
+        util.create_hdf5(args.output, blanks, hdf5_attributes, chunk_list, label_list, bad_list)
+
+
+def create_output_strand_file(output_strand_list_entries, output_file_name):
+    output_strand_list_entries.sort()
+
+    with open(output_file_name, "w") as sl:
+        sl.write(u'\t'.join(['filename', 'nblocks', 'score', 'nstay', 'seqlen', 'start', 'end']) + u'\n')
+        for strand_data in output_strand_list_entries:
+            sl.write('\t'.join([str(x) for x in strand_data]) + '\n')
 
 
 def raw_chunkify_with_remap_main(args):
-    pass
+
+    if not args.overwrite:
+        if os.path.exists(args.output):
+            print("Cowardly refusing to overwrite {}".format(args.output))
+            sys.exit(1)
+        if os.path.exists(args.output_strand_list):
+            print("Cowardly refusing to overwrite {}".format(args.output_strand_list))
+            sys.exit(2)
+
+    fast5_files = fast5.iterate_fast5(args.input_folder, paths=True, limit=args.limit,
+                                      strand_list=args.input_strand_list)
+
+    print('* Processing data using', args.jobs, 'threads')
+
+    kwarg_names = ['trim', 'min_prob', 'kmer_len', 'min_length',
+                   'prior', 'slip', 'chunk_len', 'normalisation', 'downsample_factor',
+                   'interpolation', 'stride', 'open_pore_fraction']
+    i = 0
+    compiled_file = helpers.compile_model(args.model, args.compile)
+    output_strand_list_entries = []
+    bad_list = []
+    chunk_list = []
+    label_list = []
+    for res in imap_mp(raw_chunk_remap_worker, fast5_files, threads=args.jobs,
+                       fix_kwargs=util.get_kwargs(args, kwarg_names),
+                       unordered=True, init=init_raw_chunk_remap_worker,
+                       initargs=[compiled_file, args.references, args.kmer_len]):
+        if res is not None:
+            i = util.progress_report(i)
+
+            read, score, nblocks, path, seq, chunks, labels, bad_ev = res
+
+            chunk_list.append(chunks)
+            label_list.append(labels)
+            bad_list.append(bad_ev)
+            output_strand_list_entries.append([read, nblocks, -score / nblocks,
+                                               np.sum(np.ediff1d(path, to_begin=1) == 0),
+                                               len(seq), min(path), max(path)])
+
+    if compiled_file != args.compile:
+        os.remove(compiled_file)
+
+    if chunk_list == []:
+        print("no chunks were produced", file=sys.stderr)
+        sys.exit(1)
+    else:
+        print('\n* Creating HDF5 file')
+        hdf5_attributes = {
+            'chunk': args.chunk_len,
+            'kmer': args.kmer_len,
+            'trim': args.trim,
+            'normalisation': args.normalisation,
+            'downsample_factor': args.downsample_factor,
+            'interpolation': args.interpolation,
+        }
+        blanks_per_chunk = np.concatenate([(l == 0).mean(1) for l in label_list])
+        blanks = np.percentile(blanks_per_chunk, args.blanks_percentile)
+        util.create_hdf5(args.output, blanks, hdf5_attributes, chunk_list, label_list, bad_list)
+
+        print('\n* Creating output strand file')
+        create_output_strand_file(output_strand_list_entries, args.output_strand_list)
