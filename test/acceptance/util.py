@@ -53,7 +53,7 @@ class Result(object):
         self.test_case.assertTrue(f(self._stdout), msg)
         return self
 
-    def stdout_equals(self, referenceStdout):
+    def expect_stdout_equals(self, referenceStdout):
         self.test_case.assertEquals(self._stdout, referenceStdout)
         return self
 
@@ -62,7 +62,7 @@ class Result(object):
         self.test_case.assertTrue(f(self._stderr), msg)
         return self
 
-    def stderr_equals(self, referenceStderr):
+    def expect_stderr_equals(self, referenceStderr):
         self.test_case.assertEquals(self._stderr, referenceStderr)
         return self
 
