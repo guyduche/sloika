@@ -50,8 +50,8 @@ common_parser.add_argument('--ilf', default=False, action=AutoBool,
                            help='Weight objective function by Inverse Label Frequency')
 common_parser.add_argument('--l2', default=0.0, metavar='penalty', type=NonNegative(float),
                            help='L2 penalty on parameters')
-common_parser.add_argument('--lrdecay', default=5000, metavar='batches', type=Positive(float),
-                           help='Number of batches to halving of learning rate')
+common_parser.add_argument('--lrdecay', default=5000, metavar='n', type=Positive(float),
+                           help='Learning rate for batch i is adam.rate / (1.0 + i / n)')
 common_parser.add_argument('--min_prob', default=0.0, metavar='p', type=proportion,
                            help='Minimum probability allowed for training')
 common_parser.add_argument('--niteration', metavar='batches', type=Positive(int), default=50000,
@@ -254,7 +254,6 @@ if __name__ == '__main__':
     score = wscore = 0.0
     acc = wacc = 0.0
     SMOOTH = 0.8
-    lrfactor = 1.0 / args.lrdecay
 
     log.write('* Dumping initial model\n')
     save_model(network, args.output, 0)
@@ -262,7 +261,7 @@ if __name__ == '__main__':
     t0 = time.time()
     log.write('* Training\n')
     for i in range(args.niteration):
-        learning_rate = args.adam.rate / (1.0 + i * lrfactor)
+        learning_rate = args.adam.rate / (1.0 + i / args.lrdecay)
 
         if args.command == "events":
             chunk_len = np.random.randint(min_chunk, max_chunk + 1)
