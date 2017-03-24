@@ -33,7 +33,7 @@ class AcceptanceTest(unittest.TestCase):
 
     def test_usage(self):
         cmd = [self.script]
-        util.run_cmd(self, cmd).return_code(2).stderr(util.zeroth_line_starts_with(u"usage"))
+        util.run_cmd(self, cmd).expect_exit_code(2).stderr(util.zeroth_line_starts_with(u"usage"))
 
     @parameterized.expand([
         [[], "model_py{}.json"],
@@ -51,7 +51,7 @@ class AcceptanceTest(unittest.TestCase):
         reference_dump = open(reference_dump_path, 'r').read().splitlines()
 
         cmd = [self.script, model_file] + options
-        util.run_cmd(self, cmd).return_code(0).stdout_equals(reference_dump)
+        util.run_cmd(self, cmd).expect_exit_code(0).stdout_equals(reference_dump)
 
     @parameterized.expand([
         [[], "model_py{}.json", "0"],
@@ -74,12 +74,12 @@ class AcceptanceTest(unittest.TestCase):
 
         cmd = [self.script, model_file, "--out_file", output_file] + options
         error_message = "RuntimeError: File/path for 'out_file' exists, {}".format(output_file)
-        util.run_cmd(self, cmd).return_code(1).stderr(util.last_line_starts_with(error_message))
+        util.run_cmd(self, cmd).expect_exit_code(1).stderr(util.last_line_starts_with(error_message))
 
         os.remove(output_file)
 
         info_message = "Writing to file:  {}".format(output_file)
-        util.run_cmd(self, cmd).return_code(0).stdout(lambda o: o == [info_message])
+        util.run_cmd(self, cmd).expect_exit_code(0).stdout(lambda o: o == [info_message])
 
         self.assertTrue(os.path.exists(output_file))
         dump = open(output_file, 'r').read().splitlines()

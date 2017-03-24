@@ -45,7 +45,7 @@ class AcceptanceTest(unittest.TestCase):
             msg = "train_network.py: error: the following arguments are required: command"
         else:
             msg = "train_network.py: error: too few arguments"
-        util.run_cmd(self, cmd).return_code(2).stderr(util.last_line_starts_with(msg))
+        util.run_cmd(self, cmd).expect_exit_code(2).stderr(util.last_line_starts_with(msg))
 
     @parameterized.expand(known_commands)
     def test_commands_usage(self, command_name):
@@ -55,7 +55,7 @@ class AcceptanceTest(unittest.TestCase):
                 command_name)
         else:
             msg = "train_network.py {}: error: too few arguments".format(command_name)
-        util.run_cmd(self, cmd).return_code(2).stderr(util.last_line_starts_with(msg))
+        util.run_cmd(self, cmd).expect_exit_code(2).stderr(util.last_line_starts_with(msg))
 
     @parameterized.expand([
         ["0"],
@@ -75,7 +75,7 @@ class AcceptanceTest(unittest.TestCase):
                        "--section", "template", "--input_strand_list", strand_input_list,
                        reads_dir, hdf5_file, "--overwrite"]
 
-        util.run_cmd(self, prepare_cmd).return_code(0)
+        util.run_cmd(self, prepare_cmd).expect_exit_code(0)
 
         with h5py.File(hdf5_file, 'r') as fh:
             top_level_items = []
@@ -94,7 +94,7 @@ class AcceptanceTest(unittest.TestCase):
         train_cmd = [self.script, "events", "--batch_size", "100", "--niteration", "1", "--save_every", "1",
                      "--lrdecay", "5000", "--bad", model, output_directory, hdf5_file]
 
-        util.run_cmd(self, train_cmd).return_code(0)
+        util.run_cmd(self, train_cmd).expect_exit_code(0)
 
         self.assertTrue(os.path.exists(output_directory))
         self.assertTrue(os.path.exists(os.path.join(output_directory, "model_checkpoint_00000.pkl")))
@@ -124,7 +124,7 @@ class AcceptanceTest(unittest.TestCase):
                      "--lrdecay", "1000", "--winlen", "11", "--stride", str(stride),
                      "--chunk_len_range", "100", "100", model, output_directory, hdf5_file]
 
-        util.run_cmd(self, train_cmd).return_code(0)
+        util.run_cmd(self, train_cmd).expect_exit_code(0)
 
         self.assertTrue(os.path.exists(output_directory))
         self.assertTrue(os.path.exists(os.path.join(output_directory, "model_checkpoint_00000.pkl")))

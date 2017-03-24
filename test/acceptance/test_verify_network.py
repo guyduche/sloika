@@ -30,7 +30,7 @@ class AcceptanceTest(unittest.TestCase):
 
     def test_usage(self):
         cmd = [self.script]
-        util.run_cmd(self, cmd).return_code(2).stderr(util.zeroth_line_starts_with(u"usage"))
+        util.run_cmd(self, cmd).expect_exit_code(2).stderr(util.zeroth_line_starts_with(u"usage"))
 
     def test_number_of_models(self):
         '''
@@ -41,10 +41,10 @@ class AcceptanceTest(unittest.TestCase):
     @parameterized.expand(events_model_files)
     def test_sequence_events(self, model_file):
         cmd = [self.script, "--kmer", "5", model_file]
-        util.run_cmd(self, cmd).return_code(0)
+        util.run_cmd(self, cmd).expect_exit_code(0)
 
     @parameterized.expand(raw_model_files)
     def test_sequence_raw(self, model_file):
         stride = str(np.random.randint(1, 10))
         cmd = [self.script, "--kmer", "5", "--stride", stride, model_file]
-        util.run_cmd(self, cmd).return_code(0)
+        util.run_cmd(self, cmd).expect_exit_code(0)

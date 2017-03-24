@@ -41,16 +41,16 @@ class AcceptanceTest(unittest.TestCase):
 
     def test_commands(self):
         cmd = [self.script]
-        util.run_cmd(self, cmd).return_code(0).stdout(util.zeroth_line_starts_with(u"Available commands:"))
+        util.run_cmd(self, cmd).expect_exit_code(0).stdout(util.zeroth_line_starts_with(u"Available commands:"))
 
     @parameterized.expand(known_commands)
     def test_usage(self, command_name):
         cmd = [self.script, command_name]
-        util.run_cmd(self, cmd).return_code(2).stderr(util.zeroth_line_starts_with(u"usage:"))
+        util.run_cmd(self, cmd).expect_exit_code(2).stderr(util.zeroth_line_starts_with(u"usage:"))
 
     def test_unsupported_command(self):
         cmd = [self.script, "hehe"]
-        util.run_cmd(self, cmd).return_code(1).stdout(util.zeroth_line_starts_with(u"Unsupported command 'hehe'"))
+        util.run_cmd(self, cmd).expect_exit_code(1).stdout(util.zeroth_line_starts_with(u"Unsupported command 'hehe'"))
 
     @parameterized.expand([
         [[], (182, 500, 4), -2.8844583, 14.225174, -0.254353493452, "0"],
@@ -73,9 +73,9 @@ class AcceptanceTest(unittest.TestCase):
                "--section", "template", "--input_strand_list", strand_input_list,
                reads_dir, output_file_name] + options
 
-        util.run_cmd(self, cmd).return_code(1)
+        util.run_cmd(self, cmd).expect_exit_code(1)
 
-        util.run_cmd(self, cmd + ['--overwrite']).return_code(0)
+        util.run_cmd(self, cmd + ['--overwrite']).expect_exit_code(0)
 
         with h5py.File(output_file_name, 'r') as fh:
             top_level_items = []
@@ -122,13 +122,13 @@ class AcceptanceTest(unittest.TestCase):
                "--input_strand_list", strand_input_list, "--output_strand_list",
                strand_output_list, reads_dir, output_file_name, model_file, reference_file] + options
 
-        util.run_cmd(self, cmd).return_code(1)
+        util.run_cmd(self, cmd).expect_exit_code(1)
 
         os.remove(output_file_name)
 
-        util.run_cmd(self, cmd).return_code(2)
+        util.run_cmd(self, cmd).expect_exit_code(2)
 
-        util.run_cmd(self, cmd + ['--overwrite']).return_code(0)
+        util.run_cmd(self, cmd + ['--overwrite']).expect_exit_code(0)
 
         with h5py.File(output_file_name, 'r') as fh:
             top_level_items = []
@@ -173,7 +173,7 @@ class AcceptanceTest(unittest.TestCase):
         os.remove(output_file_name)
         os.remove(strand_output_list)
 
-        util.run_cmd(self, cmd).return_code(1).stderr(util.last_line_starts_with(u"no chunks were produced"))
+        util.run_cmd(self, cmd).expect_exit_code(1).stderr(util.last_line_starts_with(u"no chunks were produced"))
 
         self.assertTrue(not os.path.exists(output_file_name))
         self.assertTrue(not os.path.exists(strand_output_list))
@@ -186,7 +186,7 @@ class AcceptanceTest(unittest.TestCase):
         [495, 540, 25, 21, 1, "4"],
     ])
     def test_chunkify_with_remap_no_results_due_to_length(self, chunk_len, min_length, trim_left, trim_right,
-                                                          return_code, subdir):
+                                                          exit_code, subdir):
         test_work_dir = self.work_dir(os.path.join("test_chunkify_with_remap_no_results_due_to_length", subdir))
 
         strand_input_list = os.path.join(self.data_dir, "remap2", "strand_input_list.txt")
@@ -214,9 +214,9 @@ class AcceptanceTest(unittest.TestCase):
         os.remove(output_file_name)
         os.remove(strand_output_list)
 
-        expectation = util.run_cmd(self, cmd).return_code(return_code)
+        expectation = util.run_cmd(self, cmd).expect_exit_code(exit_code)
 
-        if return_code != 0:
+        if exit_code != 0:
             expectation.stderr(util.last_line_starts_with(u"no chunks were produced"))
 
             self.assertTrue(not os.path.exists(output_file_name))
@@ -230,7 +230,7 @@ class AcceptanceTest(unittest.TestCase):
         [300, 360, 40, 21, 1, "4"],
     ])
     def test_chunkify_with_identity_no_results_due_to_length(self, chunk_len, min_length, trim_left, trim_right,
-                                                             return_code, subdir):
+                                                             exit_code, subdir):
         test_work_dir = self.work_dir(os.path.join("test_chunkify_with_identity_no_results_due_to_length", subdir))
 
         strand_input_list = os.path.join(self.data_dir, "remap2", "strand_input_list.txt")
@@ -247,9 +247,9 @@ class AcceptanceTest(unittest.TestCase):
 
         os.remove(output_file_name)
 
-        expectation = util.run_cmd(self, cmd).return_code(return_code)
+        expectation = util.run_cmd(self, cmd).expect_exit_code(exit_code)
 
-        if return_code != 0:
+        if exit_code != 0:
             expectation.stderr(util.last_line_starts_with(u"no chunks were produced"))
 
             self.assertTrue(not os.path.exists(output_file_name))

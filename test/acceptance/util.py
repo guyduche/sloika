@@ -14,11 +14,11 @@ import tempfile
 
 class Result(object):
 
-    def __init__(self, test_case, cmd, cwd, return_code, stdout, stderr, max_lines=100):
+    def __init__(self, test_case, cmd, cwd, exit_code, stdout, stderr, max_lines=100):
         self.test_case = test_case
         self.cmd = cmd
         self.cwd = cwd
-        self._return_code = return_code
+        self._exit_code = exit_code
         self._stdout = stdout.strip('\n').split('\n')
         self._stderr = stderr.strip('\n').split('\n')
         self.max_lines = max_lines
@@ -28,8 +28,8 @@ class Result(object):
         if self.cwd:
             L.append('\n\tCwd: {}'.format(self.cwd))
 
-        if self._return_code:
-            L.append('\tCommand exit code: %s' % self._return_code)
+        if self._exit_code:
+            L.append('\tCommand exit code: %s' % self._exit_code)
 
         if self._stdout:
             L.append('\n\tFirst {} lines of stdout:'.format(self.max_lines))
@@ -43,9 +43,9 @@ class Result(object):
 
         return '\n'.join(L)
 
-    def return_code(self, expected_return_code):
-        msg = "expected return code %s but got %s in: %s" % (expected_return_code, self._return_code, self)
-        self.test_case.assertEqual(expected_return_code, self._return_code, msg)
+    def expect_exit_code(self, expected_exit_code):
+        msg = "expected return code %s but got %s in: %s" % (expected_exit_code, self._exit_code, self)
+        self.test_case.assertEqual(expected_exit_code, self._exit_code, msg)
         return self
 
     def stdout(self, f):
@@ -66,8 +66,8 @@ class Result(object):
         self.test_case.assertEquals(self._stderr, referenceStderr)
         return self
 
-    def get_return_code(self):
-        return self._return_code
+    def get_exit_code(self):
+        return self._exit_code
 
     def get_stdout(self):
         return self._stdout
@@ -85,12 +85,12 @@ def run_cmd(test_case, cmd, cwd=None):
     proc = Popen(cmd, env=env_with_theano_flags, stdout=PIPE, stderr=PIPE, cwd=cwd)
     stdout, stderr = proc.communicate(None)
 
-    return_code = proc.returncode
+    exit_code = proc.returncode
     if sys.version_info.major == 3:
         stdout = stdout.decode('UTF-8')
         stderr = stderr.decode('UTF-8')
 
-    return Result(test_case, cmd, cwd, return_code, stdout, stderr)
+    return Result(test_case, cmd, cwd, exit_code, stdout, stderr)
 
 
 def is_close(a, b, rel_tol=1e-09, abs_tol=0.0):
