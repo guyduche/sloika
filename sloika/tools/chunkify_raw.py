@@ -14,10 +14,7 @@ import sloika
 from sloika import util, helpers, batch, config
 from untangled import bio, fast5
 from untangled.iterators import imap_mp
-from untangled.maths import med_mad, studentise, mad
-
-from untangled.cmdargs import (AutoBool, FileAbsent, FileExists, Maybe,
-                               NonNegative, Positive, proportion)
+from untangled.maths import mad
 
 
 DEFAULT_NORMALISATION = 'per-read'
@@ -148,8 +145,8 @@ def labels_from_mapping_table(kmer_array, kmer_len, index_from=1):
     assert kmer_len <= old_kmer_len
 
     offset = (old_kmer_len - kmer_len + 1) // 2
-    extracted = np.chararray(kmer_array.shape, kmer_len,
-            buffer=kmer_array.data, offset=offset, strides=kmer_array.strides)
+    extracted = np.chararray(kmer_array.shape, kmer_len, buffer=kmer_array.data,
+                             offset=offset, strides=kmer_array.strides)
     labels = np.array(list(map(lambda k: kmer_to_state[k], extracted.flat))) + index_from
 
     return labels.reshape(kmer_array.shape).astype('i4')
@@ -174,7 +171,8 @@ def index_of_previous_non_zero(input_array):
     return output_array
 
 
-def raw_chunkify(signal, mapping_table, chunk_len, kmer_len, normalisation, downsample_factor, interpolation, mapping_attrs=None):
+def raw_chunkify(signal, mapping_table, chunk_len, kmer_len, normalisation,
+                 downsample_factor, interpolation, mapping_attrs=None):
     """ Generate labelled data chunks from raw signal and mapping table
     """
     assert len(signal) >= chunk_len
@@ -211,7 +209,7 @@ def raw_chunkify(signal, mapping_table, chunk_len, kmer_len, normalisation, down
         idx = np.zeros(ub, dtype=np.int)
         idx[starts] = np.arange(len(labels)) + 1
         idx = fill_zeros_with_prev(idx)
-        idx = idx.reshape((ml, chunk_len))[:,::downsample_factor]
+        idx = idx.reshape((ml, chunk_len))[:, ::downsample_factor]
         idx = np.apply_along_axis(replace_repeats_with_zero, 1, idx)
 
         sig_labels = np.concatenate([[0], labels])[idx].astype('i4')
@@ -223,7 +221,7 @@ def raw_chunkify(signal, mapping_table, chunk_len, kmer_len, normalisation, down
 
 
 def raw_chunk_worker(fn, chunk_len, kmer_len, min_length, trim, normalisation,
-                downsample_factor, interpolation=False):
+                     downsample_factor, interpolation=False):
     """ Worker for creating labelled features from raw data
 
     :param fn: A filename to read from.
@@ -261,7 +259,8 @@ def raw_chunk_worker(fn, chunk_len, kmer_len, min_length, trim, normalisation,
         sys.stderr.write('{} is too short.\n'.format(fn))
         return None
 
-    new_inMat, sig_labels, sig_bad = raw_chunkify(mapped_signal, mapping_table, chunk_len, kmer_len, normalisation, downsample_factor, interpolation, att)
+    new_inMat, sig_labels, sig_bad = raw_chunkify(mapped_signal, mapping_table, chunk_len, kmer_len, normalisation,
+                                                  downsample_factor, interpolation, att)
 
     return (np.ascontiguousarray(new_inMat),
             np.ascontiguousarray(sig_labels),
@@ -331,8 +330,8 @@ def raw_remap(ref, signal, min_prob, kmer_len, prior, slip, stride):
 
 
 def raw_chunk_remap_worker(fn, trim, min_prob, kmer_len, min_length,
-               prior, slip, chunk_len, normalisation, downsample_factor,
-               interpolation, stride, open_pore_fraction):
+                           prior, slip, chunk_len, normalisation, downsample_factor,
+                           interpolation, stride, open_pore_fraction):
     """ Worker function for `chunkify raw_remap` remapping reads using raw signal"""
     try:
         with fast5.Reader(fn) as f5:
@@ -362,7 +361,8 @@ def raw_chunk_remap_worker(fn, trim, min_prob, kmer_len, min_length,
         'direction': '+',
         'ref_start': 0,
     }
-    (chunks, labels, bad_ev) = raw_chunkify(signal, mapping_table, chunk_len, kmer_len, normalisation, downsample_factor, interpolation, mapping_attrs=None)
+    (chunks, labels, bad_ev) = raw_chunkify(signal, mapping_table, chunk_len, kmer_len, normalisation,
+                                            downsample_factor, interpolation, mapping_attrs=None)
 
     return sn + '.fast5', score, len(mapping_table), path, seq, chunks, labels, bad_ev
 
@@ -416,9 +416,9 @@ def raw_chunkify_with_identity_main(args):
 
 
 def create_output_strand_file(output_strand_list_entries, output_file_name):
-    output_strand_list_entries.sort()
     """ Helper function for `chunkify.py raw_remap` writing read statistics to csv file
     """
+    output_strand_list_entries.sort()
     with open(output_file_name, "w") as sl:
         sl.write(u'\t'.join(['filename', 'nblocks', 'score', 'nstay', 'seqlen', 'start', 'end']) + u'\n')
         for strand_data in output_strand_list_entries:
