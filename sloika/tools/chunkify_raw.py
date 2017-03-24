@@ -170,11 +170,6 @@ def index_of_previous_non_zero(input_array):
     return output_array
 
 
-def first_sample_at_same_ref_position(starts, moves):
-    rows = index_of_previous_non_zero(moves)
-    return starts[rows]
-
-
 def raw_chunkify(signal, mapping_table, chunk_len, kmer_len, normalisation, downsample_factor, interpolation, mapping_attrs=None):
     assert len(signal) >= chunk_len
     assert normalisation in AVAILABLE_NORMALISATIONS
