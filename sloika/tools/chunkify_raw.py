@@ -60,6 +60,8 @@ def commensurate_mapping_to_raw(mapping_table, start_sample, sample_rate):
 
 
 def trim_signal_and_mapping(signal, mapping_table, start_sample, end_sample):
+    """Trim samples and mapped blocks outside of range [start_sample, end_sample]
+    """
     sig_trim = signal[start_sample:end_sample]
 
     end_sample = start_sample + len(sig_trim)
@@ -78,6 +80,8 @@ def trim_signal_and_mapping(signal, mapping_table, start_sample, end_sample):
 
 
 def mapping_table_is_registered(mapped_signal, mapping_table):
+    """Test that signal and mapping table cover the same range of samples
+    """
     tests = [
         mapping_table['start'][0] == 0,
         mapping_table['start'][-1] + mapping_table['length'][-1] == len(mapped_signal),
@@ -171,6 +175,8 @@ def index_of_previous_non_zero(input_array):
 
 
 def raw_chunkify(signal, mapping_table, chunk_len, kmer_len, normalisation, downsample_factor, interpolation, mapping_attrs=None):
+    """ Generate labelled data chunks from raw signal and mapping table
+    """
     assert len(signal) >= chunk_len
     assert normalisation in AVAILABLE_NORMALISATIONS
     assert mapping_table_is_registered(signal, mapping_table)
@@ -218,7 +224,7 @@ def raw_chunkify(signal, mapping_table, chunk_len, kmer_len, normalisation, down
 
 def raw_chunk_worker(fn, chunk_len, kmer_len, min_length, trim, normalisation,
                 downsample_factor, interpolation=False):
-    """  Worker for creating labelled features from raw data
+    """ Worker for creating labelled features from raw data
 
     :param fn: A filename to read from.
     :param chunk_len: Length on each chunk
@@ -284,6 +290,11 @@ def init_raw_chunk_remap_worker(model, fasta, kmer_len):
 
 
 def raw_remap(ref, signal, min_prob, kmer_len, prior, slip, stride):
+    """ Map raw signal to reference sequence using transducer model
+
+    This worker function relies on `init_raw_chunk_remap_worker` setting several
+    global variables.
+    """
     inMat = (signal - np.median(signal)) / mad(signal)
     inMat = inMat[:, None, None].astype(config.sloika_dtype)
     post = sloika.decode.prepare_post(calc_post(inMat), min_prob=min_prob, drop_bad=False)
@@ -322,6 +333,7 @@ def raw_remap(ref, signal, min_prob, kmer_len, prior, slip, stride):
 def raw_chunk_remap_worker(fn, trim, min_prob, kmer_len, min_length,
                prior, slip, chunk_len, normalisation, downsample_factor,
                interpolation, stride, open_pore_fraction):
+    """ Worker function for `chunkify raw_remap` remapping reads using raw signal"""
     try:
         with fast5.Reader(fn) as f5:
             signal = f5.get_read(raw=True)
@@ -356,7 +368,8 @@ def raw_chunk_remap_worker(fn, trim, min_prob, kmer_len, min_length,
 
 
 def raw_chunkify_with_identity_main(args):
-
+    """ Main function for `chunkify.py raw_identity` producing batch file for model training
+    """
     if not args.overwrite:
         if os.path.exists(args.output):
             print("Cowardly refusing to overwrite {}".format(args.output))
@@ -404,7 +417,8 @@ def raw_chunkify_with_identity_main(args):
 
 def create_output_strand_file(output_strand_list_entries, output_file_name):
     output_strand_list_entries.sort()
-
+    """ Helper function for `chunkify.py raw_remap` writing read statistics to csv file
+    """
     with open(output_file_name, "w") as sl:
         sl.write(u'\t'.join(['filename', 'nblocks', 'score', 'nstay', 'seqlen', 'start', 'end']) + u'\n')
         for strand_data in output_strand_list_entries:
@@ -412,7 +426,8 @@ def create_output_strand_file(output_strand_list_entries, output_file_name):
 
 
 def raw_chunkify_with_remap_main(args):
-
+    """ Main function for `chunkify.py raw_remap` producing batch file for model training
+    """
     if not args.overwrite:
         if os.path.exists(args.output):
             print("Cowardly refusing to overwrite {}".format(args.output))
