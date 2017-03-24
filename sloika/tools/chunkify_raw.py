@@ -265,7 +265,6 @@ def raw_chunk_worker(fn, chunk_len, kmer_len, min_length, trim, normalisation,
 def init_raw_chunk_remap_worker(model, fasta, kmer_len):
     import pickle
     # Import within worker to avoid initialising GPU in main thread
-    import sloika.features
     import sloika.transducer
     global calc_post, kmer_to_state, references
     with open(model, 'rb') as fh:
