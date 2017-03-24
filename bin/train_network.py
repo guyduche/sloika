@@ -254,7 +254,7 @@ if __name__ == '__main__':
     score = wscore = 0.0
     acc = wacc = 0.0
     SMOOTH = 0.8
-    lrfactor = 0.0 if args.lrdecay is None else (1.0 / args.lrdecay)
+    lrfactor = 1.0 / args.lrdecay
 
     log.write('* Dumping initial model\n')
     save_model(network, args.output, 0)
