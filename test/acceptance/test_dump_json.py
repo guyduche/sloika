@@ -71,6 +71,7 @@ class AcceptanceTest(unittest.TestCase):
         reference_dump = open(reference_dump_path, 'r').read().splitlines()
 
         output_file = os.path.join(test_work_dir, "output.json")
+        open(output_file, "w").close()
 
         cmd = [self.script, model_file, "--out_file", output_file] + options
         error_message = "RuntimeError: File/path for 'out_file' exists, {}".format(output_file)

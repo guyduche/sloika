@@ -69,6 +69,7 @@ class AcceptanceTest(unittest.TestCase):
         self.assertTrue(os.path.exists(reads_dir))
 
         output_file_name = os.path.join(test_work_dir, "output.hdf5")
+        open(output_file_name, "w").close()
 
         cmd = [self.script, "identity", "--chunk_len", "500", "--kmer_len", "5",
                "--section", "template", "--input_strand_list", strand_input_list,
@@ -115,8 +116,10 @@ class AcceptanceTest(unittest.TestCase):
         self.assertTrue(os.path.exists(reference_file))
 
         strand_output_list = os.path.join(test_work_dir, "strand_output_list.txt")
+        open(strand_output_list, 'w').close()
 
         output_file_name = os.path.join(test_work_dir, "output.hdf5")
+        open(output_file_name, 'w').close()
 
         cmd = [self.script, "remap", "--segmentation", "Segment_Linear", "--trim", "200", "200",
                "--chunk_len", "500", "--kmer_len", "5", "--section", "template",
@@ -163,16 +166,17 @@ class AcceptanceTest(unittest.TestCase):
         self.assertTrue(os.path.exists(reference_file))
 
         strand_output_list = os.path.join(test_work_dir, "strand_output_list.txt")
+        if os.path.exists(strand_output_list):
+            os.remove(strand_output_list)
 
         output_file_name = os.path.join(test_work_dir, "output.hdf5")
+        if os.path.exists(output_file_name):
+            os.remove(output_file_name)
 
         cmd = [self.script, "remap", "--segmentation", "Segment_Linear", "--trim", "200", "200",
                "--chunk_len", "500", "--kmer_len", "5", "--section", "template",
                "--input_strand_list", strand_input_list, "--output_strand_list", strand_output_list,
                reads_dir, output_file_name, model_file, reference_file]
-
-        os.remove(output_file_name)
-        os.remove(strand_output_list)
 
         util.run_cmd(self, cmd).expect_exit_code(1).expect_stderr(
             util.last_line_starts_with(u"no chunks were produced"))
@@ -204,17 +208,18 @@ class AcceptanceTest(unittest.TestCase):
         self.assertTrue(os.path.exists(reference_file))
 
         strand_output_list = os.path.join(test_work_dir, "strand_output_list.txt")
+        if os.path.exists(strand_output_list):
+            os.remove(strand_output_list)
 
         output_file_name = os.path.join(test_work_dir, "output.hdf5")
+        if os.path.exists(output_file_name):
+            os.remove(output_file_name)
 
         cmd = [self.script, "remap", "--segmentation", "Segment_Linear",
                "--trim", str(trim_left), str(trim_right), "--chunk_len", str(chunk_len),
                "--kmer_len", "5", "--section", "template", "--input_strand_list", strand_input_list,
                "--output_strand_list", strand_output_list, "--min_length", str(min_length),
                reads_dir, output_file_name, model_file, reference_file]
-
-        os.remove(output_file_name)
-        os.remove(strand_output_list)
 
         expectation = util.run_cmd(self, cmd).expect_exit_code(exit_code)
 
@@ -242,12 +247,12 @@ class AcceptanceTest(unittest.TestCase):
         self.assertTrue(os.path.exists(reads_dir))
 
         output_file_name = os.path.join(test_work_dir, "output.hdf5")
+        if os.path.exists(output_file_name):
+            os.remove(output_file_name)
 
         cmd = [self.script, "identity", "--trim", str(trim_left), str(trim_right), "--chunk_len", str(chunk_len),
                "--kmer_len", "5", "--section", "template", "--input_strand_list", strand_input_list,
                "--min_length", str(min_length), reads_dir, output_file_name]
-
-        os.remove(output_file_name)
 
         expectation = util.run_cmd(self, cmd).expect_exit_code(exit_code)
 
