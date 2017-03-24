@@ -51,7 +51,7 @@ class AcceptanceTest(unittest.TestCase):
         reference_dump = open(reference_dump_path, 'r').read().splitlines()
 
         cmd = [self.script, model_file] + options
-        util.run_cmd(self, cmd).return_code(0).stdoutEquals(reference_dump)
+        util.run_cmd(self, cmd).return_code(0).stdout_equals(reference_dump)
 
     @parameterized.expand([
         [[], "model_py{}.json", "0"],

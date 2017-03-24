@@ -59,7 +59,7 @@ class AcceptanceTest(unittest.TestCase):
         expected_output = open(expected_output_file, 'r').read().splitlines()
 
         cmd = [self.script, "raw", model_file, reads_dir] + options
-        util.run_cmd(self, cmd).return_code(0).stdoutEquals(expected_output)
+        util.run_cmd(self, cmd).return_code(0).stdout_equals(expected_output)
 
     @parameterized.expand([
         [[]],
@@ -79,7 +79,7 @@ class AcceptanceTest(unittest.TestCase):
         expected_output = open(expected_output_file, 'r').read().splitlines()
 
         cmd = [self.script, "events", "--segmentation", "Segment_Linear", model_file, reads_dir] + options
-        util.run_cmd(self, cmd).return_code(0).stdoutEquals(expected_output)
+        util.run_cmd(self, cmd).return_code(0).stdout_equals(expected_output)
 
     @parameterized.expand([
         [["--trans", "0.5", "0.4", "0.1", "--no-transducer"]],
@@ -98,4 +98,4 @@ class AcceptanceTest(unittest.TestCase):
         expected_output = open(expected_output_file, 'r').read().splitlines()
 
         cmd = [self.script, "events", "--segmentation", "Segment_Linear", model_file, reads_dir] + options
-        util.run_cmd(self, cmd).return_code(0).stdoutEquals(expected_output)
+        util.run_cmd(self, cmd).return_code(0).stdout_equals(expected_output)
