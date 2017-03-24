@@ -46,7 +46,7 @@ def chunkify_with_remap_main(args):
 
     print('* Processing data using', args.jobs, 'threads')
 
-    kwarg_names = ['trim', 'min_prob', 'transducer', 'kmer_len', 'min_length',
+    kwarg_names = ['trim', 'min_prob', 'kmer_len', 'min_length',
                    'prior', 'slip', 'chunk_len', 'use_scaled', 'normalisation',
                    'section', 'segmentation']
     i = 0

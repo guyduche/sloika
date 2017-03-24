@@ -89,8 +89,6 @@ common_remap_parser.add_argument('--prior', nargs=2, metavar=('start', 'end'), d
                                  type=Maybe(NonNegative(float)), help='Mean of start and end positions')
 common_remap_parser.add_argument('--slip', default=5.0, type=Maybe(NonNegative(float)),
                                  help='Slip penalty')
-common_remap_parser.add_argument('--transducer', default=True, action=AutoBool,
-                                 help='Model is transducer')
 common_remap_parser.add_argument('model', action=FileExists, help='Pickled model file')
 common_remap_parser.add_argument('references', action=FileExists,
                                  help='Reference sequences in fasta format')
