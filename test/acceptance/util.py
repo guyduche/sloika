@@ -48,7 +48,7 @@ class Result(object):
         self.test_case.assertEqual(expected_exit_code, self._exit_code, msg)
         return self
 
-    def stdout(self, f):
+    def expect_stdout(self, f):
         msg = "expectation on stdout failed for: %s" % self
         self.test_case.assertTrue(f(self._stdout), msg)
         return self
@@ -57,7 +57,7 @@ class Result(object):
         self.test_case.assertEquals(self._stdout, referenceStdout)
         return self
 
-    def stderr(self, f):
+    def expect_stderr(self, f):
         msg = "expectation on stderr failed for: %s" % self
         self.test_case.assertTrue(f(self._stderr), msg)
         return self

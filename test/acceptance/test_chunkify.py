@@ -41,16 +41,17 @@ class AcceptanceTest(unittest.TestCase):
 
     def test_commands(self):
         cmd = [self.script]
-        util.run_cmd(self, cmd).expect_exit_code(0).stdout(util.zeroth_line_starts_with(u"Available commands:"))
+        util.run_cmd(self, cmd).expect_exit_code(0).expect_stdout(util.zeroth_line_starts_with(u"Available commands:"))
 
     @parameterized.expand(known_commands)
     def test_usage(self, command_name):
         cmd = [self.script, command_name]
-        util.run_cmd(self, cmd).expect_exit_code(2).stderr(util.zeroth_line_starts_with(u"usage:"))
+        util.run_cmd(self, cmd).expect_exit_code(2).expect_stderr(util.zeroth_line_starts_with(u"usage:"))
 
     def test_unsupported_command(self):
         cmd = [self.script, "hehe"]
-        util.run_cmd(self, cmd).expect_exit_code(1).stdout(util.zeroth_line_starts_with(u"Unsupported command 'hehe'"))
+        util.run_cmd(self, cmd).expect_exit_code(1).expect_stdout(
+            util.zeroth_line_starts_with(u"Unsupported command 'hehe'"))
 
     @parameterized.expand([
         [[], (182, 500, 4), -2.8844583, 14.225174, -0.254353493452, "0"],
@@ -173,7 +174,8 @@ class AcceptanceTest(unittest.TestCase):
         os.remove(output_file_name)
         os.remove(strand_output_list)
 
-        util.run_cmd(self, cmd).expect_exit_code(1).stderr(util.last_line_starts_with(u"no chunks were produced"))
+        util.run_cmd(self, cmd).expect_exit_code(1).expect_stderr(
+            util.last_line_starts_with(u"no chunks were produced"))
 
         self.assertTrue(not os.path.exists(output_file_name))
         self.assertTrue(not os.path.exists(strand_output_list))
@@ -217,7 +219,7 @@ class AcceptanceTest(unittest.TestCase):
         expectation = util.run_cmd(self, cmd).expect_exit_code(exit_code)
 
         if exit_code != 0:
-            expectation.stderr(util.last_line_starts_with(u"no chunks were produced"))
+            expectation.expect_stderr(util.last_line_starts_with(u"no chunks were produced"))
 
             self.assertTrue(not os.path.exists(output_file_name))
             self.assertTrue(not os.path.exists(strand_output_list))
@@ -250,6 +252,6 @@ class AcceptanceTest(unittest.TestCase):
         expectation = util.run_cmd(self, cmd).expect_exit_code(exit_code)
 
         if exit_code != 0:
-            expectation.stderr(util.last_line_starts_with(u"no chunks were produced"))
+            expectation.expect_stderr(util.last_line_starts_with(u"no chunks were produced"))
 
             self.assertTrue(not os.path.exists(output_file_name))

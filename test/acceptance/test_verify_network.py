@@ -30,7 +30,7 @@ class AcceptanceTest(unittest.TestCase):
 
     def test_usage(self):
         cmd = [self.script]
-        util.run_cmd(self, cmd).expect_exit_code(2).stderr(util.zeroth_line_starts_with(u"usage"))
+        util.run_cmd(self, cmd).expect_exit_code(2).expect_stderr(util.zeroth_line_starts_with(u"usage"))
 
     def test_number_of_models(self):
         '''

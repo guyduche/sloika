@@ -29,7 +29,7 @@ class AcceptanceTest(unittest.TestCase):
 
     def test_usage(self):
         cmd = [self.script]
-        util.run_cmd(self, cmd).expect_exit_code(2).stderr(util.zeroth_line_starts_with(u"usage"))
+        util.run_cmd(self, cmd).expect_exit_code(2).expect_stderr(util.zeroth_line_starts_with(u"usage"))
 
     def test_raw_iteration_failure_on_files_with_no_raw_data(self):
         model_file = os.path.join(self.data_dir, "raw_model_1pt2_cpu.pkl")
@@ -39,7 +39,7 @@ class AcceptanceTest(unittest.TestCase):
         self.assertTrue(os.path.exists(reads_dir))
 
         cmd = [self.script, "raw", model_file, reads_dir]
-        util.run_cmd(self, cmd).expect_exit_code(0).stderr(util.last_line_starts_with(u"Called 0 bases"))
+        util.run_cmd(self, cmd).expect_exit_code(0).expect_stderr(util.last_line_starts_with(u"Called 0 bases"))
 
     @parameterized.expand([
         [[]],

@@ -45,7 +45,7 @@ class AcceptanceTest(unittest.TestCase):
             msg = "train_network.py: error: the following arguments are required: command"
         else:
             msg = "train_network.py: error: too few arguments"
-        util.run_cmd(self, cmd).expect_exit_code(2).stderr(util.last_line_starts_with(msg))
+        util.run_cmd(self, cmd).expect_exit_code(2).expect_stderr(util.last_line_starts_with(msg))
 
     @parameterized.expand(known_commands)
     def test_commands_usage(self, command_name):
@@ -55,7 +55,7 @@ class AcceptanceTest(unittest.TestCase):
                 command_name)
         else:
             msg = "train_network.py {}: error: too few arguments".format(command_name)
-        util.run_cmd(self, cmd).expect_exit_code(2).stderr(util.last_line_starts_with(msg))
+        util.run_cmd(self, cmd).expect_exit_code(2).expect_stderr(util.last_line_starts_with(msg))
 
     @parameterized.expand([
         ["0"],
