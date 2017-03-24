@@ -288,7 +288,7 @@ def init_raw_chunk_remap_worker(model, fasta, kmer_len):
     kmer_to_state = bio.kmer_mapping(kmer_len, alphabet=b'ACGT')
 
 
-def raw_remap(ref, signal, min_prob, kmer_len, prior, slip, stride):
+def raw_remap(ref, signal, min_prob, kmer_len, prior, slip):
     """ Map raw signal to reference sequence using transducer model
 
     This worker function relies on `init_raw_chunk_remap_worker` setting several
@@ -317,11 +317,13 @@ def raw_remap(ref, signal, min_prob, kmer_len, prior, slip, stride):
         ('good_emission', '?'),
     ]
     mapping_table = np.zeros(post.shape[0], dtype=mapping_dtype)
+    stride = int(np.ceil(signal.shape[0] / float(post.shape[0])))
     mapping_table['start'] = np.arange(0, signal.shape[0], stride, dtype=np.int) - stride // 2
     mapping_table['length'] = stride
     mapping_table['seq_pos'] = path
     mapping_table['move'] = np.ediff1d(path, to_begin=1)
     mapping_table['kmer'] = kmers[path]
+    # We set 'good_emission' for compatability only
     mapping_table['good_emission'] = True
 
     _, mapping_table = trim_signal_and_mapping(signal, mapping_table, 0, len(signal))
@@ -331,7 +333,7 @@ def raw_remap(ref, signal, min_prob, kmer_len, prior, slip, stride):
 
 def raw_chunk_remap_worker(fn, trim, min_prob, kmer_len, min_length,
                            prior, slip, chunk_len, normalisation, downsample_factor,
-                           interpolation, stride, open_pore_fraction):
+                           interpolation, open_pore_fraction):
     """ Worker function for `chunkify raw_remap` remapping reads using raw signal"""
     try:
         with fast5.Reader(fn) as f5:
@@ -354,7 +356,7 @@ def raw_chunk_remap_worker(fn, trim, min_prob, kmer_len, min_length,
         sys.stderr.write('{} is too short.\n'.format(fn))
         return None
 
-    (score, mapping_table, path, seq) = raw_remap(read_ref, signal, min_prob, kmer_len, prior, slip, stride)
+    (score, mapping_table, path, seq) = raw_remap(read_ref, signal, min_prob, kmer_len, prior, slip)
     # mapping_attrs required if using interpolation
     mapping_attrs = {
         'reference': read_ref,
@@ -443,7 +445,7 @@ def raw_chunkify_with_remap_main(args):
 
     kwarg_names = ['trim', 'min_prob', 'kmer_len', 'min_length',
                    'prior', 'slip', 'chunk_len', 'normalisation', 'downsample_factor',
-                   'interpolation', 'stride', 'open_pore_fraction']
+                   'interpolation', 'open_pore_fraction']
     i = 0
     compiled_file = helpers.compile_model(args.model, args.compile)
     output_strand_list_entries = []

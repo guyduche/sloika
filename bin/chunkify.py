@@ -125,9 +125,7 @@ parser_raw_remap = subparsers.add_parser('raw_remap',
                                          parents=[common_parser, common_raw_parser, common_remap_parser],
                                          help='Create HDF file of raw data, remapping reads on the fly',
                                          formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-parser_raw_remap.add_argument('--stride', default=4, type=int,
-                              help='Stride of the model used for remapping')
-parser_raw_remap.add_argument('--open_pore_fraction', metavar='proportion', default=0,
+parser_raw_remap.add_argument('--open_pore_fraction', metavar='proportion', default=0.0,
                         type=proportion, help='Max fraction of signal to trim due to open pore')
 parser_raw_remap.set_defaults(command_action=raw_chunkify_with_remap_main)
 
