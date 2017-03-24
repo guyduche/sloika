@@ -146,8 +146,7 @@ def labels_from_mapping_table(kmer_array, kmer_len, index_from=1):
     offset = (old_kmer_len - kmer_len + 1) // 2
     extracted = np.chararray(kmer_array.shape, kmer_len,
             buffer=kmer_array.data, offset=offset, strides=kmer_array.strides)
-    mapping = bio.kmer_mapping(kmer_len)
-    labels = np.array(list(map(lambda k: mapping[k.decode('utf-8')], extracted.flat))) + index_from
+    labels = np.array(list(map(lambda k: kmer_to_state[k], extracted.flat))) + index_from
 
     return labels.reshape(kmer_array.shape).astype('i4')
 
@@ -164,13 +163,15 @@ def fill_zeros_with_prev(arr):
     return arr[np.maximum.accumulate(ix)]
 
 
-def first_row_at_same_ref_position(moves):
-    ix_moves = np.arange(len(moves)) * (moves > 0)
-    return np.maximum.accumulate(ix_moves)
+def index_of_previous_non_zero(input_array):
+    """output[i] is the index of the last non-zero element in input[:i]"""
+    ix = np.arange(len(input_array)) * (input_array > 0)
+    output_array = np.maximum.accumulate(ix)
+    return output_array
 
 
 def first_sample_at_same_ref_position(starts, moves):
-    rows = first_row_at_same_ref_position(moves)
+    rows = index_of_previous_non_zero(moves)
     return starts[rows]
 
 
@@ -203,7 +204,7 @@ def raw_chunkify(signal, mapping_table, chunk_len, kmer_len, normalisation, down
     else:
         all_labels = labels_from_mapping_table(mapping_table['kmer'], kmer_len)
         labels = all_labels[mapping_table['move'] > 0]
-        all_starts = first_sample_at_same_ref_position(mapping_table['start'], mapping_table['move'])
+        all_starts = mapping_table['start'][index_of_previous_non_zero(mapping_table['move'])]
         starts = all_starts[mapping_table['move'] > 0]
 
         idx = np.zeros(ub, dtype=np.int)
@@ -285,6 +286,8 @@ def init_raw_chunk_remap_worker(model, fasta, kmer_len):
                 else:
                     references[ref.id] = refseq
 
+    kmer_to_state = bio.kmer_mapping(kmer_len, alphabet=b'ACGT')
+
 
 def raw_remap(ref, signal, min_prob, kmer_len, prior, slip, stride):
     inMat = (signal - np.median(signal)) / mad(signal)
@@ -347,6 +350,7 @@ def raw_chunk_remap_worker(fn, trim, min_prob, kmer_len, min_length,
         return None
 
     (score, mapping_table, path, seq) = raw_remap(read_ref, signal, min_prob, kmer_len, prior, slip, stride)
+    # mapping_attrs required if using interpolation
     mapping_attrs = {
         'reference': read_ref,
         'direction': '+',
