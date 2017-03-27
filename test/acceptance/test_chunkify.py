@@ -13,6 +13,7 @@ import os
 import unittest
 
 import util
+from sloika.util import is_close
 
 
 class AcceptanceTest(unittest.TestCase):
@@ -35,23 +36,23 @@ class AcceptanceTest(unittest.TestCase):
         return directory
 
     def assertClose(self, a, b):
-        if not util.is_close(a, b, 1e-5):
+        if not is_close(a, b, 1e-5):
             msg = '{} is not close {}'.format(a, b)
-            self.assertTrue(util.is_close(a, b, 1e-5), msg)
+            self.assertTrue(is_close(a, b, 1e-5), msg)
 
     def test_commands(self):
         cmd = [self.script, "--help"]
-        util.run_cmd(self, cmd).return_code(0).stdout(util.zeroth_line_starts_with(u"usage:"))
+        util.run_cmd(self, cmd).expect_exit_code(0).expect_stdout(util.zeroth_line_starts_with(u"usage:"))
 
     @parameterized.expand(known_commands)
     def test_usage(self, command_name):
         cmd = [self.script, command_name, "--help"]
-        util.run_cmd(self, cmd).return_code(0).stdout(util.zeroth_line_starts_with(u"usage:"))
+        util.run_cmd(self, cmd).expect_exit_code(0).expect_stdout(util.zeroth_line_starts_with(u"usage:"))
 
     def test_unsupported_command(self):
         cmd = [self.script, "hehe"]
         msg = u"chunkify.py: error: argument command: invalid choice:"
-        util.run_cmd(self, cmd).return_code(2).stderr(util.nth_line_starts_with(msg, 1))
+        util.run_cmd(self, cmd).expect_exit_code(2).expect_stderr(util.nth_line_starts_with(msg, 1))
 
     @parameterized.expand([
         [[], (182, 500, 4), -2.8844583, 14.225174, -0.254353493452, "0"],
