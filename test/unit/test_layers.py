@@ -458,3 +458,23 @@ class GenmutTest(LayerTest, unittest.TestCase):
 
     def setUp(self):
         self.layer = nn.Genmut(12, 64)
+
+
+class ConvolutionTest(LayerTest, unittest.TestCase):
+    _INPUTS = [np.random.uniform(size=(100, 20, 12))]
+    _PARAMS =['W', 'b']
+
+    def setUp(self):
+        self.layer = nn.Convolution(12, 32, 11, 5, has_bias=True)
+
+
+class MaxPoolTest(LayerTest, unittest.TestCase):
+    _INPUTS = [np.random.uniform(size=(100, 20, 12))]
+    _PARAMS = []
+
+    def setUp(self):
+        self.layer = nn.MaxPool(12, 5, 5)
+
+    @unittest.skip('No params to get or set')
+    def test_004_get_set_params(self):
+        pass

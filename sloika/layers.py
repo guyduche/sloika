@@ -443,7 +443,7 @@ class Convolution(Layer):
 
     def set_params(self, values):
         assert values['W'].shape == (self.size, self.insize, self.winlen)
-        self.W.set_value(values['w'])
+        self.W.set_value(values['W'])
         if self.has_bias:
             assert values['b'].shape[0] == self.size
             self.b.set_value(values['b'])
