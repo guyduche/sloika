@@ -144,6 +144,8 @@ def labels_from_mapping_table(kmer_array, kmer_len, index_from=1):
     offset = (old_kmer_len - kmer_len + 1) // 2
     extracted = np.chararray(kmer_array.shape, kmer_len, buffer=kmer_array.data,
                              offset=offset, strides=kmer_array.strides)
+
+    kmer_to_state = bio.kmer_mapping(kmer_len, alphabet=b'ACGT')
     labels = np.array(list(map(lambda k: kmer_to_state[k], extracted.flat))) + index_from
 
     return labels.reshape(kmer_array.shape).astype('i4')
@@ -268,7 +270,7 @@ def init_raw_chunk_remap_worker(model, fasta, kmer_len):
     import pickle
     # Import within worker to avoid initialising GPU in main thread
     import sloika.transducer
-    global calc_post, kmer_to_state, references
+    global calc_post, references
     with open(model, 'rb') as fh:
         calc_post = pickle.load(fh)
 
@@ -282,8 +284,6 @@ def init_raw_chunk_remap_worker(model, fasta, kmer_len):
                 else:
                     references[ref.id] = refseq
 
-    kmer_to_state = bio.kmer_mapping(kmer_len, alphabet=b'ACGT')
-
 
 def raw_remap(ref, signal, min_prob, kmer_len, prior, slip):
     """ Map raw signal to reference sequence using transducer model
@@ -296,8 +296,8 @@ def raw_remap(ref, signal, min_prob, kmer_len, prior, slip):
     post = sloika.decode.prepare_post(calc_post(inMat), min_prob=min_prob, drop_bad=False)
 
     kmers = np.array(bio.seq_to_kmers(ref, kmer_len))
-    kmer_to_state = bio.kmer_mapping(kmer_len)
-    seq = [kmer_to_state[k.decode('utf-8')] + 1 for k in kmers]
+    kmer_to_state = bio.kmer_mapping(kmer_len, alphabet=b'ACGT')
+    seq = [kmer_to_state[k] + 1 for k in kmers]
     prior0 = None if prior[0] is None else sloika.util.geometric_prior(len(seq), prior[0])
     prior1 = None if prior[1] is None else sloika.util.geometric_prior(len(seq), prior[1], rev=True)
 
@@ -331,7 +331,11 @@ def raw_remap(ref, signal, min_prob, kmer_len, prior, slip):
 def raw_chunk_remap_worker(fn, trim, min_prob, kmer_len, min_length,
                            prior, slip, chunk_len, normalisation, downsample_factor,
                            interpolation, open_pore_fraction):
-    """ Worker function for `chunkify raw_remap` remapping reads using raw signal"""
+    """ Worker function for `chunkify raw_remap` remapping reads using raw signal
+
+    This worker function relies on `init_raw_chunk_remap_worker` setting several
+    global variables.
+    """
     try:
         with fast5.Reader(fn) as f5:
             signal = f5.get_read(raw=True)
