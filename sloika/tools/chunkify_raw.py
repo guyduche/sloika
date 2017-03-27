@@ -22,7 +22,7 @@ DEFAULT_NORMALISATION = 'per-read'
 AVAILABLE_NORMALISATIONS = frozenset(['none', 'per-read', 'per-chunk'])
 
 
-def commensurate_mapping_to_raw(mapping_table, start_sample, sample_rate):
+def convert_mapping_times_to_samples(mapping_table, start_sample, sample_rate):
     """Replace time coordinates in mapping_table with indices into raw signal
 
     :param mapping_table: array of events (or similar) for a mapped read with
@@ -243,7 +243,7 @@ def raw_chunk_worker(fn, chunk_len, kmer_len, min_length, trim, normalisation,
         sys.stderr.write('Failed to get mapping data from {}.\n{}\n'.format(fn, repr(e)))
         return None
 
-    mapping_table = commensurate_mapping_to_raw(mapping_table, start_sample, sample_rate)
+    mapping_table = convert_mapping_times_to_samples(mapping_table, start_sample, sample_rate)
     map_start = mapping_table['start'][0] + trim[0]
     map_end = mapping_table['start'][-1] + mapping_table['length'][-1] - trim[1]
     mapped_signal, mapping_table = trim_signal_and_mapping(sig, mapping_table, map_start, map_end)
