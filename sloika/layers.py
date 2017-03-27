@@ -437,8 +437,8 @@ class Convolution(Layer):
                            ("padding", self.padding),
                            ("activation", self.fun.__name__)])
         if params:
-            res['params'] = OrderedDict([("W", nn._extract(self.W)),
-                                         ("b", nn._extract(self.b))])
+            res['params'] = OrderedDict([("W", _extract(self.W)),
+                                         ("b", _extract(self.b))])
         return res
 
     def set_params(self, values):
