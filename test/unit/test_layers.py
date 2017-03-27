@@ -462,7 +462,7 @@ class GenmutTest(LayerTest, unittest.TestCase):
 
 class ConvolutionTest(LayerTest, unittest.TestCase):
     _INPUTS = [np.random.uniform(size=(100, 20, 12))]
-    _PARAMS =['W', 'b']
+    _PARAMS = ['W', 'b']
 
     def setUp(self):
         self.layer = nn.Convolution(12, 32, 11, 5, has_bias=True)
