@@ -12,13 +12,13 @@ import tempfile
 import unittest
 
 from sloika.config import sloika_dtype
-from sloika.tools.chunkify_raw import commensurate_mapping_to_raw
+from sloika.tools.chunkify_raw import convert_mapping_times_to_samples
 from sloika.util import is_close
 
 
 class RawChunkifyUtilTest(unittest.TestCase):
 
-    def test_commensurate_mapping(self):
+    def test_convert_mapping_times_to_samples(self):
         events = np.array([(99.80953125, 11355.1985 , 0.00075, 'TTTGCC', 1),
                            (102.37074939, 11355.19925, 0.0025 , 'TTTGCC', 0),
                            (88.89286377, 11355.20175, 0.0015 , 'TTGCCG', 1),
@@ -40,7 +40,7 @@ class RawChunkifyUtilTest(unittest.TestCase):
                           73.9574231 ])
         sample_rate = 4000.0
         start_sample = 45420787
-        commensurate_events = commensurate_mapping_to_raw(events, start_sample, sample_rate)
+        commensurate_events = convert_mapping_times_to_samples(events, start_sample, sample_rate)
 
         self.assertTrue(commensurate_events.dtype == [('mean', '<f8'), ('start', '<i8'), ('length', '<i8'), ('kmer', 'S6'), ('move', '<i8')])
         for e in commensurate_events:
