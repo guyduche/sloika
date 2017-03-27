@@ -42,7 +42,8 @@ common_parser.add_argument('output', help='Output HDF5 file')
 
 common_raw_parser = argparse.ArgumentParser(add_help=False)
 common_raw_parser.add_argument('--blanks_percentile', metavar='percentage', default=95,
-                               type=Bounded(float, 0, 100), help='Percentile above which to filter out chunks with too many blanks')
+                               type=Bounded(float, 0, 100),
+                               help='Percentile above which to filter out chunks with too many blanks')
 common_raw_parser.add_argument('--chunk_len', default=2000, metavar='samples', type=Positive(int),
                                help='Length of each read chunk')
 common_raw_parser.add_argument('--normalisation', default=sloika.tools.chunkify_raw.DEFAULT_NORMALISATION,
@@ -54,9 +55,9 @@ common_raw_parser.add_argument('--trim', default=(200, 50), nargs=2, type=NonNeg
 common_raw_parser.add_argument('--min_length', default=2500, metavar='samples',
                                type=Positive(int), help='Minimum samples in acceptable read')
 common_raw_parser.add_argument('--downsample_factor', default=1, type=Positive(int),
-                                 help='Rate of label downsampling')
+                               help='Rate of label downsampling')
 common_raw_parser.add_argument('--interpolation', default=False, action=AutoBool,
-                                 help='Interpolate reference sequence positions between mapped samples')
+                               help='Interpolate reference sequence positions between mapped samples')
 
 
 common_events_parser = argparse.ArgumentParser(add_help=False)
@@ -124,7 +125,7 @@ parser_raw_remap = subparsers.add_parser('raw_remap',
                                          help='Create HDF file of raw data, remapping reads on the fly',
                                          formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser_raw_remap.add_argument('--open_pore_fraction', metavar='proportion', default=0.0,
-                        type=proportion, help='Max fraction of signal to trim due to open pore')
+                              type=proportion, help='Max fraction of signal to trim due to open pore')
 parser_raw_remap.set_defaults(command_action=raw_chunkify_with_remap_main)
 
 
