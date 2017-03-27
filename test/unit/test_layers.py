@@ -51,7 +51,6 @@ class ANNTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(self):
-        print('* Layers')
         np.random.seed(0xdeadbeef)
         self._NSTEP = 25
         self._NFEATURES = 3
@@ -311,10 +310,6 @@ class LayerTest(with_metaclass(abc.ABCMeta, object)):
         def setUp(self):
             self.layer = nn.Recurrent(12, 64)
     """
-
-    @classmethod
-    def setUpClass(cls):
-        print("* LayerTest: " + cls.__name__)
 
     _INPUTS = None  # List of input matrices for testing the layer's run method
     _PARAMS = None  # List of names for the learned parameters of the layer

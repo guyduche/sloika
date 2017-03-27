@@ -21,10 +21,6 @@ def is_close(a, b, rel_tol=1e-09, abs_tol=0.0):
 
 class RawChunkifyUtilTest(unittest.TestCase):
 
-    @classmethod
-    def setUpClass(self):
-        print('* Raw chunkify utils')
-
     def test_commensurate_mapping(self):
         events = np.array([(99.80953125, 11355.1985 , 0.00075, 'TTTGCC', 1),
                            (102.37074939, 11355.19925, 0.0025 , 'TTTGCC', 0),

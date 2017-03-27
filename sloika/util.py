@@ -84,6 +84,6 @@ def create_hdf5(output, blanks, attributes, chunk_list, label_list, bad_list):
             h5['/'].attrs[key] = value
 
 
-def trim_array(x, begin, end):
-    end = None if end == 0 else -end
-    return x[begin:end]
+def trim_array(x, from_start, from_end):
+    from_end = None if from_end == 0 else -from_end
+    return x[from_start:from_end]
