@@ -353,7 +353,11 @@ def raw_chunk_remap_worker(fn, trim, min_prob, kmer_len, min_length,
         sys.stderr.write('{} is too short.\n'.format(fn))
         return None
 
-    (score, mapping_table, path, seq) = raw_remap(read_ref, signal, min_prob, kmer_len, prior, slip)
+    try:
+        (score, mapping_table, path, seq) = raw_remap(read_ref, signal, min_prob, kmer_len, prior, slip)
+    except Exception as e:
+        sys.stderr.write("Failure remapping read {}.\n{}\n".format(sn, repr(e)))
+        return None
     # mapping_attrs required if using interpolation
     mapping_attrs = {
         'reference': read_ref,
