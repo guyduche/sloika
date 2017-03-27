@@ -1,14 +1,15 @@
 #!/usr/bin/env python
 from __future__ import division
-from __future__ import unicode_literals
 from __future__ import print_function
 from __future__ import absolute_import
 from future import standard_library
 standard_library.install_aliases()
 from builtins import *
+
 import argparse
 import pickle
 import h5py
+import logging
 import numpy as np
 import sys
 import time
@@ -20,6 +21,8 @@ from untangled.cmdargs import (AutoBool, display_version_and_exit, FileExists,
                                Positive)
 
 from sloika.version import __version__
+
+logging.getLogger("theano.gof.compilelock").setLevel(logging.WARNING)
 
 # This is here, not in main to allow documentation to be built
 parser = argparse.ArgumentParser(

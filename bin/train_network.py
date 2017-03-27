@@ -1,15 +1,16 @@
 #!/usr/bin/env python
 from __future__ import division
-from __future__ import unicode_literals
 from __future__ import print_function
 from __future__ import absolute_import
 from future import standard_library
 standard_library.install_aliases()
 from builtins import *
+
 import argparse
 import pickle
 import h5py
 import imp
+import logging
 import numpy as np
 import os
 from shutil import copyfile
@@ -26,52 +27,73 @@ from untangled.cmdargs import (AutoBool, display_version_and_exit, FileAbsent,
 from sloika import updates
 from sloika.version import __version__
 
+logging.getLogger("theano.gof.compilelock").setLevel(logging.WARNING)
+
 # This is here, not in main to allow documentation to be built
 parser = argparse.ArgumentParser(
     description='Train a simple neural network',
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-parser.add_argument('--adam', nargs=3, metavar=('rate', 'decay1', 'decay2'),
-                    default=(1e-3, 0.9, 0.999), type=(NonNegative(float), NonNegative(float), NonNegative(float)),
-                    action=ParseToNamedTuple, help='Parameters for Exponential Decay Adaptive Momementum')
-parser.add_argument('--bad', default=True, action=AutoBool,
-                    help='Use bad events as a separate state')
-parser.add_argument('--batch_size', default=100, metavar='chunks', type=Positive(int),
-                    help='Number of chunks to run in parallel')
-parser.add_argument('--chunk_len_range', nargs=2, metavar=('min', 'max'),
-                    type=Maybe(int), default=None,
-                    help="Randomly sample chunk sizes between min and max")
-parser.add_argument('--drop', default=20, metavar='events', type=NonNegative(int),
-                    help='Drop a number of events from start and end of chunk before evaluating loss')
-parser.add_argument('--ilf', default=False, action=AutoBool,
-                    help='Weight objective function by Inverse Label Frequency')
-parser.add_argument('--l2', default=0.0, metavar='penalty', type=NonNegative(float),
-                    help='L2 penalty on parameters')
-parser.add_argument('--lrdecay', default=5000, metavar='batches', type=Positive(float),
-                    help='Number of batches to halving of learning rate')
-parser.add_argument('--min_prob', default=0.0, metavar='p', type=proportion,
-                    help='Minimum probability allowed for training')
-parser.add_argument('--niteration', metavar='batches', type=Positive(int), default=50000,
-                    help='Maximum number of batches to train for')
-parser.add_argument('--overwrite', default=False, action=AutoBool, help='Overwrite output directory')
-parser.add_argument('--quiet', default=False, action=AutoBool,
-                    help="Don't print progess information to stdout")
-parser.add_argument('--reweight', metavar='group', default='weights', type=Maybe(str),
-                    help="Select chunk according to weights in 'group'")
-parser.add_argument('--save_every', metavar='x', type=Positive(int), default=5000,
-                    help='Save model every x batches')
-parser.add_argument('--sd', default=0.5, metavar='value', type=Positive(float),
-                    help='Standard deviation to initialise with')
-parser.add_argument('--seed', default=None, metavar='integer', type=Positive(int),
-                    help='Set random number seed')
-parser.add_argument('--transducer', default=True, action=AutoBool,
-                    help='Train a transducer based model')
-parser.add_argument('--version', nargs=0, action=display_version_and_exit, metavar=__version__,
-                    help='Display version information.')
-parser.add_argument('model', action=FileExists,
-                    help='File to read python model description from')
-parser.add_argument('output', help='Prefix for output files')
-parser.add_argument('input', action=FileExists,
-                    help='HDF5 file containing chunks')
+
+common_parser = argparse.ArgumentParser(add_help=False)
+common_parser.add_argument('--adam', nargs=3, metavar=('rate', 'decay1', 'decay2'),
+                           default=(1e-3, 0.9, 0.999), type=(NonNegative(float), NonNegative(float),
+                           NonNegative(float)), action=ParseToNamedTuple,
+                           help='Parameters for Exponential Decay Adaptive Momementum')
+common_parser.add_argument('--bad', default=True, action=AutoBool,
+                           help='Use bad events as a separate state')
+common_parser.add_argument('--batch_size', default=100, metavar='chunks', type=Positive(int),
+                           help='Number of chunks to run in parallel')
+common_parser.add_argument('--chunk_len_range', nargs=2, metavar=('min', 'max'),
+                           type=Maybe(int), default=None,
+                           help="Randomly sample chunk sizes between min and max")
+common_parser.add_argument('--ilf', default=False, action=AutoBool,
+                           help='Weight objective function by Inverse Label Frequency')
+common_parser.add_argument('--l2', default=0.0, metavar='penalty', type=NonNegative(float),
+                           help='L2 penalty on parameters')
+common_parser.add_argument('--lrdecay', default=5000, metavar='n', type=Positive(float),
+                           help='Learning rate for batch i is adam.rate / (1.0 + i / n)')
+common_parser.add_argument('--min_prob', default=0.0, metavar='p', type=proportion,
+                           help='Minimum probability allowed for training')
+common_parser.add_argument('--niteration', metavar='batches', type=Positive(int), default=50000,
+                           help='Maximum number of batches to train for')
+common_parser.add_argument('--overwrite', default=False, action=AutoBool, help='Overwrite output directory')
+common_parser.add_argument('--quiet', default=False, action=AutoBool,
+                           help="Don't print progess information to stdout")
+common_parser.add_argument('--reweight', metavar='group', default='weights', type=Maybe(str),
+                           help="Select chunk according to weights in 'group'")
+common_parser.add_argument('--save_every', metavar='x', type=Positive(int), default=5000,
+                           help='Save model every x batches')
+common_parser.add_argument('--sd', default=0.5, metavar='value', type=Positive(float),
+                           help='Standard deviation to initialise with')
+common_parser.add_argument('--seed', default=None, metavar='integer', type=Positive(int),
+                           help='Set random number seed')
+common_parser.add_argument('--transducer', default=True, action=AutoBool,
+                           help='Train a transducer based model')
+common_parser.add_argument('--version', nargs=0, action=display_version_and_exit, metavar=__version__,
+                           help='Display version information.')
+common_parser.add_argument('model', action=FileExists,
+                           help='File to read python model description from')
+
+common_parser.add_argument('output', action=FileAbsent, help='Prefix for output files')
+common_parser.add_argument('input', action=FileExists,
+                           help='HDF5 file containing chunks')
+
+subparsers = parser.add_subparsers(help='command', dest='command')
+subparsers.required = True
+
+parser_ev = subparsers.add_parser('events', parents=[common_parser], help='Train from events',
+                                  formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+parser_ev.add_argument('--drop', default=20, metavar='events', type=NonNegative(int),
+                       help='Number of events to drop from start and end of chunk before evaluating loss')
+
+parser_raw = subparsers.add_parser('raw', parents=[common_parser], help='Train from raw signal',
+                                   formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+parser_raw.add_argument('--drop', default=0, metavar='samples', type=NonNegative(int),  # to change to 20
+                        help='Number of labels to drop from start and end of chunk before evaluating loss')
+parser_raw.add_argument('--stride', default=1, type=Positive(int),
+                        help='Length of stride over data')
+parser_raw.add_argument('--winlen', default=11, type=Positive(int),
+                        help='Length of window over data')
 
 
 def remove_blanks(labels):
@@ -128,13 +150,19 @@ class Logger(object):
             sys.stdout.write(message)
             sys.stdout.flush()
         try:
-            self.fh.write(message)
+            if sys.version_info.major == 3:
+                self.fh.write(message.encode('utf-8'))
+            else:
+                self.fh.write(message)
         except IOError as e:
             print("Failed to write to log\n Message: {}\n Error: {}".format(message, repr(e)))
 
 
 if __name__ == '__main__':
     args = parser.parse_args()
+
+    assert args.command in ["events", "raw"]
+
     np.random.seed(args.seed)
 
     if not os.path.exists(args.output):
@@ -153,21 +181,6 @@ if __name__ == '__main__':
     log.write('* Command line\n')
     log.write(' '.join(sys.argv) + '\n')
 
-    log.write('* Reading network from {}\n'.format(args.model))
-    model_ext = os.path.splitext(args.model)[1]
-    if model_ext == '.py':
-        with h5py.File(args.input, 'r') as h5:
-            klen = h5.attrs['kmer']
-        netmodule = imp.load_source('netmodule', args.model)
-        network = netmodule.network(klen=klen, sd=args.sd)
-    elif model_ext == '.pkl':
-        with open(args.model, 'rb') as fh:
-            network = pickle.load(fh)
-    else:
-        log.write('* Model is neither python file nor model pickle\n')
-        exit(1)
-    fg = wrap_network(network, min_prob=args.min_prob, l2=args.l2, drop=args.drop)
-
     log.write('* Loading data from {}\n'.format(args.input))
     with h5py.File(args.input, 'r') as h5:
         all_chunks = h5['chunks'][:]
@@ -177,10 +190,9 @@ if __name__ == '__main__':
             all_weights = h5[args.reweight][:]
         else:
             all_weights = np.ones(len(all_chunks))
-
     all_weights /= np.sum(all_weights)
 
-    # check chunk length arguments
+    # check arguments (and mutate them!)
     data_chunk = all_chunks.shape[1]
     if args.chunk_len_range is None:
         # --chunk_len_range was not defined, use data file chunk size
@@ -190,6 +202,7 @@ if __name__ == '__main__':
     if args.chunk_len_range[1] is None:
         args.chunk_len_range[1] = data_chunk
     min_chunk, max_chunk = args.chunk_len_range
+    log.write('* Will use min_chunk, max_chunk = {}, {}\n'.format(min_chunk, max_chunk))
 
     assert max_chunk >= min_chunk, "Min chunk size (got {}) must be <= chunk size (got {})".format(min_chunk, max_chunk)
     assert data_chunk >= max_chunk, "Max chunk size (got {}) must be <= data chunk size (got {})".format(
@@ -206,20 +219,41 @@ if __name__ == '__main__':
         all_labels[all_bad] = 0
 
     if args.ilf:
-        #  Calculate label weights using inverse frequency
+        #  Calculate frequency of labels and convert into inverse frequency
         label_weights = np.zeros(np.max(all_labels) + 1, dtype='f4')
         for i, lbls in enumerate(all_labels):
             label_weights += all_weights[i] * np.bincount(lbls, minlength=len(label_weights))
+        label_weights = np.reciprocal(label_weights)
+        label_weights /= np.mean(label_weights)
     else:
+        # Default equally weighted
         label_weights = np.ones(np.max(all_labels) + 1, dtype='f4')
-    label_weights = np.reciprocal(label_weights)
-    label_weights /= np.mean(label_weights)
+
+    log.write('* Reading network from {}\n'.format(args.model))
+    model_ext = os.path.splitext(args.model)[1]
+    if model_ext == '.py':
+        with h5py.File(args.input, 'r') as h5:
+            klen = h5.attrs['kmer']
+        netmodule = imp.load_source('netmodule', args.model)
+
+        if args.command == 'events':
+            network = netmodule.network(klen=klen, sd=args.sd)
+        else:
+            network = netmodule.network(klen=klen, sd=args.sd,
+                                        nfeature=all_chunks.shape[-1],
+                                        winlen=args.winlen, stride=args.stride)
+    elif model_ext == '.pkl':
+        with open(args.model, 'rb') as fh:
+            network = pickle.load(fh)
+    else:
+        log.write('* Model is neither python file nor model pickle\n')
+        exit(1)
+    fg = wrap_network(network, min_prob=args.min_prob, l2=args.l2, drop=args.drop)
 
     total_ev = 0
     score = wscore = 0.0
     acc = wacc = 0.0
     SMOOTH = 0.8
-    lrfactor = 0.0 if args.lrdecay is None else (1.0 / args.lrdecay)
 
     log.write('* Dumping initial model\n')
     save_model(network, args.output, 0)
@@ -227,16 +261,33 @@ if __name__ == '__main__':
     t0 = time.time()
     log.write('* Training\n')
     for i in range(args.niteration):
-        learning_rate = args.adam.rate / (1.0 + i * lrfactor)
+        learning_rate = args.adam.rate / (1.0 + i / args.lrdecay)
 
-        chunk_len = np.random.randint(min_chunk, max_chunk + 1)
+        if args.command == "events":
+            chunk_len = np.random.randint(min_chunk, max_chunk + 1)
+        else:
+            chunk_len = np.random.randint(min_chunk, max_chunk + 1)
+            chunk_len = chunk_len - (chunk_len % args.stride)
+
         batch_size = int(args.batch_size * float(max_chunk) / chunk_len)
-        start = np.random.randint(data_chunk - chunk_len + 1)
+
+        if args.command == "events":
+            start = np.random.randint(data_chunk - chunk_len + 1)
+        else:
+            start = np.random.randint(data_chunk - chunk_len + 1)
+            start = start - (start % args.stride)
+
+        if args.command == "events":
+            label_lb = start
+            label_ub = start + chunk_len
+        else:
+            label_lb = start // args.stride
+            label_ub = (start + chunk_len) // args.stride
 
         idx = np.sort(np.random.choice(len(all_chunks), size=batch_size,
                                        replace=False, p=all_weights))
         events = np.ascontiguousarray(all_chunks[idx, start : start + chunk_len].transpose((1, 0, 2)))
-        labels = np.ascontiguousarray(all_labels[idx, start : start + chunk_len].transpose())
+        labels = np.ascontiguousarray(all_labels[idx, label_lb : label_ub].transpose())
         weights = label_weights[labels]
 
         fval, ncorr = fg(events, labels, weights, learning_rate)
