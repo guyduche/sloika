@@ -13,7 +13,6 @@ class ViterbiTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(self):
-        print('* Viterbi helpers')
         np.random.seed(0xdeadbeef)
         self.n = 10
         self.slip = 5.0

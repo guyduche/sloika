@@ -13,10 +13,7 @@ import unittest
 
 from sloika.config import sloika_dtype
 from sloika.tools.chunkify_raw import commensurate_mapping_to_raw
-
-
-def is_close(a, b, rel_tol=1e-09, abs_tol=0.0):
-    return abs(a - b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
+from sloika.util import is_close
 
 
 class RawChunkifyUtilTest(unittest.TestCase):

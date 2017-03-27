@@ -10,6 +10,10 @@ import h5py
 import numpy as np
 
 
+def is_close(a, b, rel_tol=1e-09, abs_tol=0.0):
+    return abs(a - b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
+
+
 def geometric_prior(n, m, rev=False):
     """ Make a vec
 

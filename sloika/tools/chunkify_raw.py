@@ -5,11 +5,11 @@ from future import standard_library
 standard_library.install_aliases()
 from builtins import *
 
+from Bio import SeqIO
 import numpy as np
 import os
 import sys
 
-from Bio import SeqIO
 import sloika
 from sloika import util, helpers, batch, config
 from untangled import bio, fast5
@@ -97,21 +97,18 @@ def interpolate_pos(mapping_table, att):
         (mapping_table, att) could be returned by f5file.get_any_mapping_data()
     """
     def interp(t, k=5):
-        EPS = 10**-10 # small value for avoiding round to even
+        EPS = 10**-10  # small value for avoiding round to even
 
         ev_mid = mapping_table['start'] + 0.5 * mapping_table['length']
         map_k = len(mapping_table['kmer'][0])
 
         if att['direction'] == "+":
             map_ref_pos = mapping_table['seq_pos'] + 0.5 * map_k - att['ref_start']
-            pos_interp = np.interp(t, ev_mid, map_ref_pos)
-            pos = np.around(pos_interp - 0.5 * k + EPS).astype(np.int)
-            return pos
         else:
             map_ref_pos = att['ref_stop'] - mapping_table['seq_pos'] + 0.5 * map_k
-            pos_interp = np.around(np.interp(t, ev_mid, map_ref_pos))
-            pos = np.around(pos_interp - 0.5 * k + EPS).astype(np.int)
-            return pos
+        pos_interp = np.interp(t, ev_mid, map_ref_pos)
+        pos = np.around(pos_interp - 0.5 * k + EPS).astype(np.int)
+        return pos
 
     return interp
 
