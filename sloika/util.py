@@ -4,10 +4,12 @@ from __future__ import absolute_import
 from future import standard_library
 standard_library.install_aliases()
 from builtins import *
-import os
-import sys
+
+from Bio import SeqIO
 import h5py
 import numpy as np
+import os
+import sys
 
 
 def is_close(a, b, rel_tol=1e-09, abs_tol=0.0):
@@ -91,3 +93,17 @@ def create_hdf5(output, blanks, attributes, chunk_list, label_list, bad_list):
 def trim_array(x, from_start, from_end):
     from_end = None if from_end == 0 else -from_end
     return x[from_start:from_end]
+
+
+def fasta_file_to_dict(fasta_file_name):
+    """Load records from fasta file as a dictionary"""
+    references = dict()
+    with open(fasta_file_name, 'r') as fh:
+        for ref in SeqIO.parse(fh, 'fasta'):
+            refseq = str(ref.seq)
+            if 'N' not in refseq:
+                if sys.version_info.major == 3:
+                    references[ref.id] = refseq.encode('utf-8')
+                else:
+                    references[ref.id] = refseq
+    return references

@@ -11,7 +11,7 @@ import os
 import sys
 
 import sloika
-from sloika import util, helpers, batch, config
+from sloika import util, helpers, batch
 from untangled import bio, fast5
 from untangled.iterators import imap_mp
 from untangled.maths import mad
@@ -266,34 +266,17 @@ def raw_chunk_worker(fn, chunk_len, kmer_len, min_length, trim, normalisation,
             np.ascontiguousarray(sig_bad))
 
 
-def init_raw_chunk_remap_worker(model, fasta, kmer_len):
-    import pickle
-    # Import within worker to avoid initialising GPU in main thread
-    import sloika.transducer
-    global calc_post, references
-    with open(model, 'rb') as fh:
-        calc_post = pickle.load(fh)
-
-    references = dict()
-    with open(fasta, 'r') as fh:
-        for ref in SeqIO.parse(fh, 'fasta'):
-            refseq = str(ref.seq)
-            if 'N' not in refseq:
-                if sys.version_info.major == 3:
-                    references[ref.id] = refseq.encode('utf-8')
-                else:
-                    references[ref.id] = refseq
-
-
 def raw_remap(ref, signal, min_prob, kmer_len, prior, slip):
     """ Map raw signal to reference sequence using transducer model
 
     This worker function relies on `init_raw_chunk_remap_worker` setting several
     global variables.
     """
+    from sloika import config  # local import to avoid CUDA init in main thread
+
     inMat = (signal - np.median(signal)) / mad(signal)
     inMat = inMat[:, None, None].astype(config.sloika_dtype)
-    post = sloika.decode.prepare_post(calc_post(inMat), min_prob=min_prob, drop_bad=False)
+    post = sloika.decode.prepare_post(batch.calc_post(inMat), min_prob=min_prob, drop_bad=False)
 
     kmers = np.array(bio.seq_to_kmers(ref, kmer_len))
     kmer_to_state = bio.kmer_mapping(kmer_len, alphabet=b'ACGT')
@@ -446,11 +429,16 @@ def raw_chunkify_with_remap_main(args):
     fast5_files = fast5.iterate_fast5(args.input_folder, paths=True, limit=args.limit,
                                       strand_list=args.input_strand_list)
 
+    references = util.fasta_file_to_dict(args.references)
+
     print('* Processing data using', args.jobs, 'threads')
 
     kwarg_names = ['trim', 'min_prob', 'kmer_len', 'min_length',
                    'prior', 'slip', 'chunk_len', 'normalisation', 'downsample_factor',
                    'interpolation', 'open_pore_fraction']
+    kwargs = util.get_kwargs(args, kwarg_names)
+    kwargs['references'] = references
+
     i = 0
     compiled_file = helpers.compile_model(args.model, args.compile)
     output_strand_list_entries = []
@@ -459,8 +447,8 @@ def raw_chunkify_with_remap_main(args):
     label_list = []
     for res in imap_mp(raw_chunk_remap_worker, fast5_files, threads=args.jobs,
                        fix_kwargs=util.get_kwargs(args, kwarg_names),
-                       unordered=True, init=init_raw_chunk_remap_worker,
-                       initargs=[compiled_file, args.references, args.kmer_len]):
+                       unordered=True, init=batch.init_chunk_remap_worker,
+                       initargs=[compiled_file]):
         if res is not None:
             i = util.progress_report(i)
 
