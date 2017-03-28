@@ -41,6 +41,6 @@ class RawChunkifyUtilTest(unittest.TestCase):
 
         self.assertTrue(commensurate_events.dtype == [
                         ('mean', '<f8'), ('start', '<i8'), ('length', '<i8'), ('kmer', 'S6'), ('move', '<i8')])
-        for i in range(len(events)):
-            e = commensurate_events[i]
+        self.assertTrue(len(events) == len(commensurate_events))
+        for e in commensurate_events:
             self.assertTrue(is_close(raw[e['start']: e['start'] + e['length']].mean(), e['mean']))
