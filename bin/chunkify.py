@@ -26,7 +26,7 @@ parser = argparse.ArgumentParser(description=program_description,
 
 common_parser = argparse.ArgumentParser(add_help=False)
 common_parser.add_argument('--input_strand_list', default=None, action=FileExists,
-                           help='strand summary file containing subset')
+                           help='Strand summary file containing subset')
 common_parser.add_argument('--jobs', default=1, metavar='n', type=Positive(int),
                            help='Number of threads to use when processing data')
 common_parser.add_argument('--kmer_len', default=5, metavar='k', type=Positive(int),
@@ -85,7 +85,7 @@ common_remap_parser.add_argument('--compile', default=None, type=Maybe(str),
 common_remap_parser.add_argument('--min_prob', metavar='proportion', default=1e-5,
                                  type=proportion, help='Minimum allowed probabiility for basecalls')
 common_remap_parser.add_argument('--output_strand_list', default="strand_output_list.txt",
-                                 help='strand summary output file')
+                                 help='Strand summary output file')
 common_remap_parser.add_argument('--prior', nargs=2, metavar=('start', 'end'), default=(25.0, 25.0),
                                  type=Maybe(NonNegative(float)), help='Mean of start and end positions')
 common_remap_parser.add_argument('--slip', default=5.0, type=Maybe(NonNegative(float)),
