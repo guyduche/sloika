@@ -313,7 +313,7 @@ def raw_remap(ref, signal, min_prob, kmer_len, prior, slip):
 
 def raw_chunk_remap_worker(fn, trim, min_prob, kmer_len, min_length,
                            prior, slip, chunk_len, normalisation, downsample_factor,
-                           interpolation, open_pore_fraction):
+                           interpolation, open_pore_fraction, references):
     """ Worker function for `chunkify raw_remap` remapping reads using raw signal
 
     This worker function relies on `init_raw_chunk_remap_worker` setting several
@@ -446,8 +446,7 @@ def raw_chunkify_with_remap_main(args):
     chunk_list = []
     label_list = []
     for res in imap_mp(raw_chunk_remap_worker, fast5_files, threads=args.jobs,
-                       fix_kwargs=util.get_kwargs(args, kwarg_names),
-                       unordered=True, init=batch.init_chunk_remap_worker,
+                       fix_kwargs=kwargs, unordered=True, init=batch.init_chunk_remap_worker,
                        initargs=[compiled_file]):
         if res is not None:
             i = util.progress_report(i)
