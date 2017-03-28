@@ -394,15 +394,17 @@ def raw_chunkify_with_identity_main(args):
         print('\n* Writing out to HDF5')
         hdf5_attributes = {
             'chunk': args.chunk_len,
-            'kmer': args.kmer_len,
-            'trim': args.trim,
-            'normalisation': args.normalisation,
             'downsample_factor': args.downsample_factor,
-            'interpolation': args.interpolation
+            'input_type': 'raw',
+            'interpolation': args.interpolation,
+            'kmer': args.kmer_len,
+            'normalisation': args.normalisation,
+            'section': 'template',
+            'trim': args.trim,
         }
         blanks_per_chunk = np.concatenate([(l == 0).mean(1) for l in label_list])
         blanks = np.percentile(blanks_per_chunk, args.blanks_percentile)
-        util.create_hdf5(args.output, blanks, hdf5_attributes, chunk_list, label_list, bad_list)
+        util.create_labelled_chunks_hdf5(args.output, blanks, hdf5_attributes, chunk_list, label_list, bad_list)
 
 
 def create_output_strand_file(output_strand_list_entries, output_file_name):
@@ -467,18 +469,20 @@ def raw_chunkify_with_remap_main(args):
         print("no chunks were produced", file=sys.stderr)
         sys.exit(1)
     else:
-        print('\n* Creating HDF5 file')
+        print('\n* Writing out to HDF5')
         hdf5_attributes = {
             'chunk': args.chunk_len,
-            'kmer': args.kmer_len,
-            'trim': args.trim,
-            'normalisation': args.normalisation,
             'downsample_factor': args.downsample_factor,
+            'input_type': 'raw',
             'interpolation': args.interpolation,
+            'kmer': args.kmer_len,
+            'normalisation': args.normalisation,
+            'section': 'template',
+            'trim': args.trim,
         }
         blanks_per_chunk = np.concatenate([(l == 0).mean(1) for l in label_list])
         blanks = np.percentile(blanks_per_chunk, args.blanks_percentile)
-        util.create_hdf5(args.output, blanks, hdf5_attributes, chunk_list, label_list, bad_list)
+        util.create_labelled_chunks_hdf5(args.output, blanks, hdf5_attributes, chunk_list, label_list, bad_list)
 
         print('\n* Creating output strand file')
         create_output_strand_file(output_strand_list_entries, args.output_strand_list)

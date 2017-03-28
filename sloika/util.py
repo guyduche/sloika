@@ -55,7 +55,7 @@ def progress_report(i):
     return i
 
 
-def create_hdf5(output, blanks, attributes, chunk_list, label_list, bad_list):
+def create_labelled_chunks_hdf5(output, blanks, attributes, chunk_list, label_list, bad_list):
     assert len(chunk_list) == len(label_list) == len(bad_list)
     assert len(chunk_list) > 0
 

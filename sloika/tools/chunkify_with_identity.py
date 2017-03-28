@@ -54,9 +54,11 @@ def chunkify_with_identity_main(args):
         print('\n* Writing out to HDF5')
         hdf5_attributes = {
             'chunk': args.chunk_len,
+            'input_type': 'events',
             'kmer': args.kmer_len,
+            'normalisation': args.normalisation,
+            'scaled': args.use_scaled,
             'section': args.section,
             'trim': args.trim,
-            'scaled': args.use_scaled,
         }
-        util.create_hdf5(args.output, args.blanks, hdf5_attributes, chunk_list, label_list, bad_list)
+        util.create_labelled_chunks_hdf5(args.output, args.blanks, hdf5_attributes, chunk_list, label_list, bad_list)
