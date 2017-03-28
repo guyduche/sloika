@@ -101,7 +101,7 @@ def fasta_file_to_dict(fasta_file_name):
     with open(fasta_file_name, 'r') as fh:
         for ref in SeqIO.parse(fh, 'fasta'):
             refseq = str(ref.seq)
-            if 'N' not in refseq:
+            if 'N' not in refseq and len(refseq) > 0:
                 if sys.version_info.major == 3:
                     references[ref.id] = refseq.encode('utf-8')
                 else:
