@@ -77,8 +77,10 @@ def samacc(sam, min_coverage=0.6):
     :min_coverage: alignments are filtered by coverage
 
     :returns: list of row dictionaries with keys:
-        name1: reference name
-        name2: query name
+        reference: reference name
+        query: query name
+        reference_start: first base of reference match
+        reference_end: last base of reference match
         strand: + or -
         match: number of matches
         mismatch: number of mismatches
@@ -109,9 +111,11 @@ def samacc(sam, min_coverage=0.6):
             correct = alnlen - mismatch
 
             row = OrderedDict([
-                ('name1', ref_name[read.reference_id]),
-                ('name2', read.qname),
+                ('reference', ref_name[read.reference_id]),
+                ('query', read.qname),
                 ('strand', STRAND[read.flag]),
+                ('reference_start', read.reference_start),
+                ('reference_end', read.reference_end),
                 ('match', bins[0]),
                 ('mismatch', mismatch),
                 ('insertion', bins[1]),
@@ -169,7 +173,7 @@ def summary(acc_dat, name):
 
     a90 = (acc > 0.9).mean()
     n_gt_90 = (acc > 0.9).sum()
-    nmapped = len(set([r['name2'] for r in acc_dat]))
+    nmapped = len(set([r['query'] for r in acc_dat]))
 
     res = """Summary report for {}:
     Number of mapped reads:  {}
