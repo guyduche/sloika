@@ -93,10 +93,6 @@ def run_cmd(test_case, cmd, cwd=None):
     return Result(test_case, cmd, cwd, exit_code, stdout, stderr)
 
 
-def is_close(a, b, rel_tol=1e-09, abs_tol=0.0):
-    return abs(a - b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
-
-
 def maybe_create_dir(directory_name):
     '''
     Create a directory if it does not exist already.

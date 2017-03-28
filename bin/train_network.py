@@ -37,7 +37,7 @@ parser = argparse.ArgumentParser(
 common_parser = argparse.ArgumentParser(add_help=False)
 common_parser.add_argument('--adam', nargs=3, metavar=('rate', 'decay1', 'decay2'),
                            default=(1e-3, 0.9, 0.999), type=(NonNegative(float), NonNegative(float),
-                           NonNegative(float)), action=ParseToNamedTuple,
+                                                             NonNegative(float)), action=ParseToNamedTuple,
                            help='Parameters for Exponential Decay Adaptive Momementum')
 common_parser.add_argument('--bad', default=True, action=AutoBool,
                            help='Use bad events as a separate state')

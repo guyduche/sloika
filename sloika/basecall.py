@@ -44,7 +44,7 @@ def events_worker(fn, section, segmentation, trim, kmer_len, transducer, bad, mi
         sys.stderr.write("Error getting events for section {!r} in file {}\n{!r}\n".format(section, fn, e))
         return None
 
-    ev = util.trim_array(ev, trim)
+    ev = util.trim_array(ev, *trim)
     if ev.size == 0:
         sys.stderr.write("Read too short in file {}\n".format(fn))
         return None
@@ -66,7 +66,7 @@ def raw_worker(fn, trim, open_pore_fraction, kmer_len, transducer, bad, min_prob
         return None
 
     signal = batch.trim_open_pore(signal, open_pore_fraction)
-    signal = util.trim_array(signal, trim)
+    signal = util.trim_array(signal, *trim)
     if signal.size == 0:
         sys.stderr.write("Read too short in file {}\n".format(fn))
         return None

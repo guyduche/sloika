@@ -63,8 +63,11 @@ def compile_model(model_file, output_file=None):
     """  Compile network in separate thread
 
     To avoid initialising Theano in main thread, compilation must be done in a
-    separate process.  Where the network is already compiled, a temporary copy
-    is created.
+    separate process. The reason for avoidance is that forking a process after
+    CUDA context is initialised is not supported, so, if this is a multiprocess
+    run, processes must be created before importing theano.sandbox.cuda.
+
+    Where the network is already compiled, a temporary copy is created.
 
     :param model_file: File to read network from
     :param output_file: File to output to.  If None, generate a filename

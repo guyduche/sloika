@@ -4,10 +4,16 @@ from __future__ import absolute_import
 from future import standard_library
 standard_library.install_aliases()
 from builtins import *
-import os
-import sys
+
+from Bio import SeqIO
 import h5py
 import numpy as np
+import os
+import sys
+
+
+def is_close(a, b, rel_tol=1e-09, abs_tol=0.0):
+    return abs(a - b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
 
 
 def geometric_prior(n, m, rev=False):
@@ -49,11 +55,11 @@ def progress_report(i):
     return i
 
 
-def create_hdf5(args, chunk_list, label_list, bad_list):
+def create_labelled_chunks_hdf5(output, blanks, attributes, chunk_list, label_list, bad_list):
     assert len(chunk_list) == len(label_list) == len(bad_list)
     assert len(chunk_list) > 0
 
-    output_dir = os.path.dirname(args.output)
+    output_dir = os.path.dirname(output)
     if output_dir and not os.path.exists(output_dir):
         os.makedirs(os.path.normpath(output_dir))
 
@@ -63,10 +69,10 @@ def create_hdf5(args, chunk_list, label_list, bad_list):
 
     #  Mark chunks with too many blanks with a zero weight
     nblank = np.sum(all_labels == 0, axis=1)
-    max_blanks = int(all_labels.shape[1] * args.blanks)
+    max_blanks = int(all_labels.shape[1] * blanks)
     all_weights = nblank < max_blanks
 
-    with h5py.File(args.output, 'w') as h5:
+    with h5py.File(output, 'w') as h5:
         bad_ds = h5.create_dataset('bad', all_bad.shape, dtype='i1',
                                    compression="gzip")
         chunk_ds = h5.create_dataset('chunks', all_chunks.shape, dtype='f4',
@@ -79,14 +85,25 @@ def create_hdf5(args, chunk_list, label_list, bad_list):
         chunk_ds[:] = all_chunks
         label_ds[:] = all_labels
         weight_ds[:] = all_weights
-        h5['/'].attrs['chunk'] = args.chunk_len
-        h5['/'].attrs['kmer'] = args.kmer_len
-        h5['/'].attrs['section'] = args.section
-        h5['/'].attrs['trim'] = args.trim
-        h5['/'].attrs['scaled'] = args.use_scaled
+
+        for (key, value) in attributes.items():
+            h5['/'].attrs[key] = value
 
 
-def trim_array(x, trim):
-    begin = trim[0]
-    end = None if trim[1] == 0 else -trim[1]
-    return x[begin:end]
+def trim_array(x, from_start, from_end):
+    from_end = None if from_end == 0 else -from_end
+    return x[from_start:from_end]
+
+
+def fasta_file_to_dict(fasta_file_name):
+    """Load records from fasta file as a dictionary"""
+    references = dict()
+    with open(fasta_file_name, 'r') as fh:
+        for ref in SeqIO.parse(fh, 'fasta'):
+            refseq = str(ref.seq)
+            if 'N' not in refseq and len(refseq) > 0:
+                if sys.version_info.major == 3:
+                    references[ref.id] = refseq.encode('utf-8')
+                else:
+                    references[ref.id] = refseq
+    return references
