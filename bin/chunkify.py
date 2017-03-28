@@ -134,10 +134,8 @@ def main(argv):
 
     try:
         return args.command_action(args)
-    except SystemExit as e:
-        sys.exit(e.code)
-    except:
-        print('Exception when running command {!r}'.format(args.command))
+    except Exception as e:
+        print('Exception when running command {!r}.\n{!r}\n'.format(args.command, e))
         raise
 
 
