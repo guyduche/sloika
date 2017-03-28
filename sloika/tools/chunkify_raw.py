@@ -267,11 +267,7 @@ def raw_chunk_worker(fn, chunk_len, kmer_len, min_length, trim, normalisation,
 
 
 def raw_remap(ref, signal, min_prob, kmer_len, prior, slip):
-    """ Map raw signal to reference sequence using transducer model
-
-    This worker function relies on `init_raw_chunk_remap_worker` setting several
-    global variables.
-    """
+    """ Map raw signal to reference sequence using transducer model"""
     from sloika import config  # local import to avoid CUDA init in main thread
 
     inMat = (signal - np.median(signal)) / mad(signal)
@@ -314,11 +310,7 @@ def raw_remap(ref, signal, min_prob, kmer_len, prior, slip):
 def raw_chunk_remap_worker(fn, trim, min_prob, kmer_len, min_length,
                            prior, slip, chunk_len, normalisation, downsample_factor,
                            interpolation, open_pore_fraction, references):
-    """ Worker function for `chunkify raw_remap` remapping reads using raw signal
-
-    This worker function relies on `init_raw_chunk_remap_worker` setting several
-    global variables.
-    """
+    """ Worker function for `chunkify raw_remap` remapping reads using raw signal"""
     try:
         with fast5.Reader(fn) as f5:
             signal = f5.get_read(raw=True)
