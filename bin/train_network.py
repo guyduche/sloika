@@ -88,7 +88,7 @@ parser_ev.add_argument('--drop', default=20, metavar='events', type=NonNegative(
 
 parser_raw = subparsers.add_parser('raw', parents=[common_parser], help='Train from raw signal',
                                    formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-parser_raw.add_argument('--drop', default=20, metavar='samples', type=NonNegative(int),  # to change to 20
+parser_raw.add_argument('--drop', default=20, metavar='samples', type=NonNegative(int),
                         help='Number of labels to drop from start and end of chunk before evaluating loss')
 parser_raw.add_argument('--stride', default=1, type=Positive(int),
                         help='Length of stride over data')
@@ -192,7 +192,7 @@ if __name__ == '__main__':
             all_weights = np.ones(len(all_chunks))
     all_weights /= np.sum(all_weights)
 
-    # check arguments (and mutate them!)
+    # check chunk_len_range args
     data_chunk = all_chunks.shape[1]
     chunk_len_range = [2 * args.drop + 1, data_chunk]
     if args.chunk_len_range[0] is not None:
