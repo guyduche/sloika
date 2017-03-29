@@ -195,11 +195,14 @@ if __name__ == '__main__':
     # check chunk_len_range args
     data_chunk = all_chunks.shape[1]
     chunk_len_range = [2 * args.drop + 1, data_chunk]
-    if args.chunk_len_range[0] is not None:
-        chunk_len_range[0] = int(np.around(args.chunk_len_range[0] * data_chunk))
-    if args.chunk_len_range[1] is not None:
-        chunk_len_range[1] = int(np.around(args.chunk_len_range[1] * data_chunk))
-    min_chunk, max_chunk = chunk_len_range
+    if args.chunk_len_range[0] is None:
+        min_chunk = 2 * args.drop + 1
+    else:
+        min_chunk = int(np.around(args.chunk_len_range[0] * data_chunk))
+    if args.chunk_len_range[1] is None:
+        max_chunk = data_chunk
+    else:
+        max_chunk = int(np.around(args.chunk_len_range[1] * data_chunk))
     log.write('* Will use min_chunk, max_chunk = {}, {}\n'.format(min_chunk, max_chunk))
 
     assert max_chunk >= min_chunk, "Min chunk size (got {}) must be <= chunk size (got {})".format(min_chunk, max_chunk)
