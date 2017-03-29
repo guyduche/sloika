@@ -44,8 +44,8 @@ common_parser.add_argument('--bad', default=True, action=AutoBool,
 common_parser.add_argument('--batch_size', default=100, metavar='chunks', type=Positive(int),
                            help='Number of chunks to run in parallel')
 common_parser.add_argument('--chunk_len_range', nargs=2, metavar=('min', 'max'),
-                           type=Maybe(int), default=None,
-                           help="Randomly sample chunk sizes between min and max")
+                           type=Maybe(proportion), default=(0.5, 1.0),
+                           help="Randomly sample chunk sizes between min and max (fraction of chunk size in input file)")
 common_parser.add_argument('--ilf', default=False, action=AutoBool,
                            help='Weight objective function by Inverse Label Frequency')
 common_parser.add_argument('--l2', default=0.0, metavar='penalty', type=NonNegative(float),
@@ -88,7 +88,7 @@ parser_ev.add_argument('--drop', default=20, metavar='events', type=NonNegative(
 
 parser_raw = subparsers.add_parser('raw', parents=[common_parser], help='Train from raw signal',
                                    formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-parser_raw.add_argument('--drop', default=0, metavar='samples', type=NonNegative(int),  # to change to 20
+parser_raw.add_argument('--drop', default=20, metavar='samples', type=NonNegative(int),  # to change to 20
                         help='Number of labels to drop from start and end of chunk before evaluating loss')
 parser_raw.add_argument('--stride', default=1, type=Positive(int),
                         help='Length of stride over data')
@@ -194,14 +194,12 @@ if __name__ == '__main__':
 
     # check arguments (and mutate them!)
     data_chunk = all_chunks.shape[1]
-    if args.chunk_len_range is None:
-        # --chunk_len_range was not defined, use data file chunk size
-        args.chunk_len_range = (data_chunk, data_chunk)
-    if args.chunk_len_range[0] is None:
-        args.chunk_len_range[0] = 2 * args.drop + 1
-    if args.chunk_len_range[1] is None:
-        args.chunk_len_range[1] = data_chunk
-    min_chunk, max_chunk = args.chunk_len_range
+    chunk_len_range = [2 * args.drop + 1, data_chunk]
+    if args.chunk_len_range[0] is not None:
+        chunk_len_range[0] = int(np.around(args.chunk_len_range[0] * data_chunk))
+    if args.chunk_len_range[1] is not None:
+        chunk_len_range[1] = int(np.around(args.chunk_len_range[1] * data_chunk))
+    min_chunk, max_chunk = chunk_len_range
     log.write('* Will use min_chunk, max_chunk = {}, {}\n'.format(min_chunk, max_chunk))
 
     assert max_chunk >= min_chunk, "Min chunk size (got {}) must be <= chunk size (got {})".format(min_chunk, max_chunk)
