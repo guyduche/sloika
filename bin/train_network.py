@@ -194,7 +194,6 @@ if __name__ == '__main__':
 
     # check chunk_len_range args
     data_chunk = all_chunks.shape[1]
-    chunk_len_range = [2 * args.drop + 1, data_chunk]
     if args.chunk_len_range[0] is None:
         min_chunk = 2 * args.drop + 1
     else:
