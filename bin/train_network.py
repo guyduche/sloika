@@ -20,7 +20,7 @@ import time
 import theano as th
 import theano.tensor as T
 
-from untangled.cmdargs import (AutoBool, display_version_and_exit, FileAbsent,
+from untangled.cmdargs import (AutoBool, display_version_and_exit,
                                FileExists, Maybe, NonNegative, ParseToNamedTuple,
                                Positive, proportion)
 
@@ -74,7 +74,7 @@ common_parser.add_argument('--version', nargs=0, action=display_version_and_exit
 common_parser.add_argument('model', action=FileExists,
                            help='File to read python model description from')
 
-common_parser.add_argument('output', action=FileAbsent, help='Prefix for output files')
+common_parser.add_argument('output', help='Prefix for output files')
 common_parser.add_argument('input', action=FileExists,
                            help='HDF5 file containing chunks')
 
