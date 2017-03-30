@@ -12,8 +12,6 @@ import numpy as np
 
 from sloika import batch, util
 
-from untangled.cmdargs import (AutoBool, FileAbsent, FileExists, Maybe,
-                               NonNegative, Positive, proportion)
 from untangled.iterators import imap_mp
 from untangled import fast5
 

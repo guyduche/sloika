@@ -13,9 +13,6 @@ import sys
 import time
 import numpy as np
 
-from untangled import bio
-from untangled.cmdargs import (AutoBool, FileExists, Maybe, NonNegative,
-                               proportion, Positive, Vector, FileAbsent)
 from untangled import fast5
 from untangled.iterators import imap_mp
 
