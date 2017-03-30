@@ -20,7 +20,7 @@ import time
 import theano as th
 import theano.tensor as T
 
-from untangled.cmdargs import (AutoBool, display_version_and_exit, FileAbsent,
+from untangled.cmdargs import (AutoBool, display_version_and_exit,
                                FileExists, Maybe, NonNegative, ParseToNamedTuple,
                                Positive, proportion)
 
