@@ -58,7 +58,7 @@ common_parser.add_argument('--niteration', metavar='batches', type=Positive(int)
                            help='Maximum number of batches to train for')
 common_parser.add_argument('--overwrite', default=False, action=AutoBool, help='Overwrite output directory')
 common_parser.add_argument('--quiet', default=False, action=AutoBool,
-                           help="Don't print progess information to stdout")
+                           help="Don't print progress information to stdout")
 common_parser.add_argument('--reweight', metavar='group', default='weights', type=Maybe(str),
                            help="Select chunk according to weights in 'group'")
 common_parser.add_argument('--save_every', metavar='x', type=Positive(int), default=5000,
