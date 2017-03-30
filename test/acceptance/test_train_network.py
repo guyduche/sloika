@@ -122,7 +122,7 @@ class AcceptanceTest(unittest.TestCase):
 
         train_cmd = [self.script, "raw", "--batch_size", "50", "--niteration", "1", "--save_every", "1",
                      "--lrdecay", "1000", "--winlen", "11", "--stride", str(stride),
-                     "--chunk_len_range", "100", "100", model, output_directory, hdf5_file]
+                     "--chunk_len_range", "0.1", "0.1", model, output_directory, hdf5_file]
 
         util.run_cmd(self, train_cmd).expect_exit_code(0)
 
