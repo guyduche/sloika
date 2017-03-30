@@ -191,6 +191,7 @@ if __name__ == '__main__':
         else:
             all_weights = np.ones(len(all_chunks))
     all_weights /= np.sum(all_weights)
+    max_batch_size = (all_weights > 0).sum()
 
     # check chunk_len_range args
     data_chunk = all_chunks.shape[1]
@@ -284,7 +285,7 @@ if __name__ == '__main__':
             label_lb = start // args.stride
             label_ub = (start + chunk_len) // args.stride
 
-        idx = np.sort(np.random.choice(len(all_chunks), size=batch_size,
+        idx = np.sort(np.random.choice(len(all_chunks), size=min(batch_size, max_batch_size),
                                        replace=False, p=all_weights))
         events = np.ascontiguousarray(all_chunks[idx, start : start + chunk_len].transpose((1, 0, 2)))
         labels = np.ascontiguousarray(all_labels[idx, label_lb : label_ub].transpose())
