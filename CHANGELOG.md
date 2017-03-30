@@ -17,6 +17,7 @@ Release 1.2
   * Updated database schema
   * Runs are marked with time stamps and git commits
   * Uniquely generated output directories facilitate restart of failed jobs
+* New script `./bin/extract_reference.py` for extraction of references from a directory of fast5 files
 
 
 ### Minor changes
