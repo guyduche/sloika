@@ -190,6 +190,7 @@ if __name__ == '__main__':
             all_weights = h5[args.reweight][:]
         else:
             all_weights = np.ones(len(all_chunks))
+    all_weights = all_weights.astype('float64')
     all_weights /= np.sum(all_weights)
 
     # check chunk_len_range args
