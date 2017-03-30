@@ -45,7 +45,8 @@ common_parser.add_argument('--batch_size', default=100, metavar='chunks', type=P
                            help='Number of chunks to run in parallel')
 common_parser.add_argument('--chunk_len_range', nargs=2, metavar=('min', 'max'),
                            type=Maybe(proportion), default=(0.5, 1.0),
-                           help="Randomly sample chunk sizes between min and max (fraction of chunk size in input file)")
+                           help="Randomly sample chunk sizes between min and max (fraction of chunk size in input file)"
+                           )
 common_parser.add_argument('--ilf', default=False, action=AutoBool,
                            help='Weight objective function by Inverse Label Frequency')
 common_parser.add_argument('--l2', default=0.0, metavar='penalty', type=NonNegative(float),
