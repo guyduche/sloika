@@ -11,8 +11,8 @@ Release 1.2
 * Executable workflow documentation was added (mirrored on the company wiki)
 * Full builds are performed on CI only for `master`, `release` and branches with names having `ci_` prefix
 * Layers:
-  * All layers now have insize and size attributes; models pickled with previous versions of Sloika will not be unpicklabe in Sloika 1.2
-  * Added Convolution and MaxPool layers
+  * All layers now have `insize` and `size` attributes; models pickled with previous versions of Sloika will not be unpicklabe in Sloika 1.2
+  * Added `Convolution` and `MaxPool` layers
 * Improvements to `pekarnya.py`:
   * Updated database schema
   * Runs are marked with time stamps and git commits
