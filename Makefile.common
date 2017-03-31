@@ -69,6 +69,11 @@ cleanVirtualenvPy3:
 
 .PHONY: checkout
 checkout:
+	git submodule update --init
+
+.PHONY: ciCheckout
+ciCheckout:
+	rm -rf data
 	for i in 1 2 3 4 5; do git submodule update --init && break || sleep 9; done
 
 .PHONY: cleanTmpEnv
