@@ -1,13 +1,10 @@
 #! /bin/bash -eu
 
 apt-get install bwa
+pip install pysam matplotlib
 
 # move to sloika top-level dir
 SLOIKA_ROOT=$(git rev-parse --show-toplevel)
-
-(cd $SLOIKA_ROOT && make checkout && make cleanDevEnv)
-source $SLOIKA_ROOT/build/env/bin/activate
-pip install pysam matplotlib
 
 # Create working directory
 WORK_DIR=$SLOIKA_ROOT/build/workflow
