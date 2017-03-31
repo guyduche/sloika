@@ -18,7 +18,7 @@ deps:
 	    libblas3 libblas-dev python-dev python3-dev lsb-release
 
 .PHONY: workflow
-workflow:
+workflow: cleanDevEnv
 	${inEnv} $${SCRIPTS_DIR}/workflow.sh
 
 include Makefile.res
