@@ -17,4 +17,8 @@ deps:
 	    python-virtualenv python-pip python-setuptools ont-ca-certs git \
 	    libblas3 libblas-dev python-dev python3-dev lsb-release
 
+.PHONY: workflow
+workflow:
+	${inEnv} $${SCRIPTS_DIR}/workflow.sh
+
 include Makefile.res

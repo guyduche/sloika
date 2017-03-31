@@ -171,7 +171,3 @@ python-future: cleanTmpEnv
 	ls -l deb_dist/*.deb
 	dpkg --info deb_dist/python-future*.deb
 
-.PHONY: workflow
-workflow:
-	${inEnv} $${SCRIPTS_DIR}/workflow.sh
-
