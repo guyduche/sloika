@@ -6,7 +6,7 @@ apt-get install bwa
 SLOIKA_ROOT=$(git rev-parse --show-toplevel)
 
 (cd $SLOIKA_ROOT && make checkout && make cleanDevEnv)
-source sloika/build/env/bin/activate
+source $SLOIKA_ROOT/build/env/bin/activate
 pip install pysam matplotlib
 
 # Create working directory
