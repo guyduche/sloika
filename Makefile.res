@@ -62,6 +62,3 @@ testTrain:
 validate:
 	${inDevEnv} validate_network.py --bad --batch 200 ${model} ${workDir}/dataset_validate.hdf5
 
-.PHONY: workflow
-workflow:
-  scripts/workflow.sh
