@@ -10,7 +10,7 @@ stages:
     - release
 
 before_script:
-    - make checkout
+    - make ci_checkout
 
 wheel:
     stage: build
