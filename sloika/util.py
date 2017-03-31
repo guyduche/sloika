@@ -17,11 +17,11 @@ def is_close(a, b, rel_tol=1e-09, abs_tol=0.0):
 
 
 def geometric_prior(n, m, rev=False):
-    """ Make a vec
+    """ Log probabilities for random start time with geoemetric distribution
 
-    :param n: length of vector
-    :param m: mean of distribution.
-    :param rev: Reverse distribution
+    :param n: length of output vector
+    :param m: mean of distribution
+    :param rev: reverse distribution
 
     :returns: A 1D :class:`ndarray` containing log probabilities
     """
@@ -48,6 +48,7 @@ def get_kwargs(args, names):
 
 
 def progress_report(i):
+    """A dotty way of showing progress"""
     i += 1
     sys.stderr.write('.')
     if i % 50 == 0:
@@ -56,6 +57,13 @@ def progress_report(i):
 
 
 def create_labelled_chunks_hdf5(output, blanks, attributes, chunk_list, label_list, bad_list):
+    """ Helper function for chunkify to create hdf5 batch file
+
+    :param chunk_list: event features
+    :param label_list: state labels corresponding to chunks in chunk_list
+    :param bad_list: bad state masks corresponding to chunks in chunk_list
+    """
+
     assert len(chunk_list) == len(label_list) == len(bad_list)
     assert len(chunk_list) > 0
 
@@ -91,6 +99,9 @@ def create_labelled_chunks_hdf5(output, blanks, attributes, chunk_list, label_li
 
 
 def trim_array(x, from_start, from_end):
+    assert from_start >= 0
+    assert from_end >= 0
+
     from_end = None if from_end == 0 else -from_end
     return x[from_start:from_end]
 

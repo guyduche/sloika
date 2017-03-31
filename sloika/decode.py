@@ -25,6 +25,14 @@ def argmax(post, zero_is_blank=True):
 
 
 def prepare_post(post, min_prob=1e-5, drop_bad=False):
+    """ Sanitised posterior matrix for decoding
+
+    :param post: posterior matrix
+    :param min_prob: very small posterior probabilies might cause numerical
+        problems, so post is replaced by (min_prob + (1 - min_prob) * post)
+    :param drop_bad: if True, positions where the most likely state is 0
+        are dropped. The 0 state is removed and post is renormalised
+    """
     post = np.squeeze(post, axis=1)
     if drop_bad:
         maxcall = np.argmax(post, axis=1)
