@@ -8,7 +8,6 @@ Release 1.2
     * `./bin/basecall_network` and `./bin/train_network.py` provide `raw` and `events` routes
     * `./bin/chunkify.py` provides `identity`, `remap`, `raw_identity` and `raw_remap` routes
 * `./bin/basecall_network.py` may be used via `./bin/basecall_network` entry point that sets up its environment
-* Executable workflow documentation was added (mirrored on the company wiki)
 * Full builds are performed on CI only for `master`, `release` and branches with names having `ci_` prefix
 * Layers:
   * All layers now have `insize` and `size` attributes; models pickled with previous versions of Sloika will not be unpicklabe in Sloika 1.2
