@@ -10,7 +10,7 @@ source sloika/build/env/bin/activate
 pip install pysam matplotlib
 
 # Create working directory
-$WORK_DIR=$SLOIKA_ROOT/build/workflow
+WORK_DIR=$SLOIKA_ROOT/build/workflow
 mkdir -p $WORK_DIR && cd $WORK_DIR
 
 READ_DIR=$SLOIKA_ROOT/data/test_chunkify/identity/reads
@@ -44,8 +44,7 @@ sloika/bin/chunkify.py raw_remap --overwrite --quiet --input_strand_list to_map.
 # You may need to adjust these flags for your machine, GPU, and current system load
 # see TODO: link to wiki
 #export THEANO_FLAGS=openmp=True,floatX=float32,warn_float64=warn,optimizer=fast_run,device=gpu0,lib.cnmem=0.4
-mkdir -p $WORK_DIR/training
-TRAIN_DIR=$(mktemp -d $WORK_DIR/training/baseline_raw_gru_XXXXX)
+TRAIN_DIR=$WORK_DIR/training
 $SLOIKA_ROOT/bin/train_network.py raw --batch 50 --stride 5 --overwrite --niteration 1 sloika/models/baseline_raw_gru.py $TRAIN_DIR batch_remapped.hdf5
 
 
