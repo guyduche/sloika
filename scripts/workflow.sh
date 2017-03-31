@@ -1,5 +1,6 @@
 #! /bin/bash -eu
 
+echo "# 0. Install dependencies"
 apt-get install bwa
 pip install pysam matplotlib
 
@@ -15,27 +16,27 @@ REFERENCE=$SLOIKA_ROOT/data/test_chunkify/identity/reference.fa
 MODEL=$SLOIKA_ROOT/data/test_basecall_network/raw_model_1pt2_cpu.pkl
 
 
-# 1. Basecall with existing model
+echo "# 1. Basecall with existing model"
 export OMP_NUM_THREADS=1
 export THEANO_FLAGS=device=cpu,floatX=float32
 $SLOIKA_ROOT/bin/basecall_network.py raw $MODEL $READ_DIR > to_map.fa
 
 
-# 2. Align reads to reference
+echo "# 2. Align reads to reference"
 
 # align.py calls BWA to align the basecalls to the reference
-$SLOIKA_ROOT/misc/align.py $GENOME to_map.fa
+$SLOIKA_ROOT/misc/align.py $REFERENCE to_map.fa
 # This command extracts a reference sequence for each read using coordinates from the SAM file.
-sloika/misc/refs_from_sam.py --output_strand_list to_map.txt --pad 50 $GENOME to_map.sam > to_map_refs.fa
+sloika/misc/refs_from_sam.py --output_strand_list to_map.txt --pad 50 $REFERENCE to_map.sam > to_map_refs.fa
 
 
-# 3. Remap reads using existing model
+echo "# 3. Remap reads using existing model"
 export OMP_NUM_THREADS=1
 export THEANO_FLAGS=device=cpu,floatX=float32
 sloika/bin/chunkify.py raw_remap --overwrite --quiet --input_strand_list to_map.txt --downsample 5 $READ_DIR batch_remapped.hdf5 $MODEL to_map_refs.fa
 
 
-# 4. Train a new model
+echo "# 4. Train a new model"
 
 # Comment the following line to train on the CPU.
 # You may need to adjust these flags for your machine, GPU, and current system load
@@ -61,4 +62,4 @@ scrappie/misc/parse_gru_raw.py $TRAIN_DIR/model_final.pkl > scrappie/src/nanonet
 export OMP_NUM_THREADS=$NPROC
 export OPENBLAS_NUM_THREADS=1
 tail -n +2 test.txt | xargs scrappie/test/scrappie raw > test.fa
-sloika/misc/align.py $GENOME test.fa
+sloika/misc/align.py $REFERENCE test.fa
