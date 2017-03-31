@@ -55,21 +55,19 @@ def decode_post(post, kmer_len, transducer, bad, min_prob, skip=5.0, trans=None,
     return score, call
 
 
-def events_worker(fast5_file_name, section, segmentation, trim, kmer_len, transducer, bad, min_prob, skip=5.0, trans=None):
+def events_worker(fast5_file_name, section, segmentation, trim, kmer_len, transducer,
+                  bad, min_prob, skip=5.0, trans=None):
     """ Worker function for basecall_network.py for basecalling from events
 
     This worker used the global variable `calc_post` which is set by
     init_worker. `calc_post` is an unpickled compiled sloika model that
     is used to calculate a posterior matrix over states
 
-    :param args: command line args for `basecall_network.py events` including:
     :param section: part of read to basecall, 'template' or 'complement'
-    :param segmentation: location of segmentation analysis for extracting
-                target read section
+    :param segmentation: location of segmentation analysis for extracting target read section
     :param trim: (int, int) events to remove from read beginning and end
     :param kmer_len, min_prob, transducer, bad, trans, skip: see `decode_post`
-    :param fast5_file_name: filename for single-read fast5 file with event
-        detection and segmentation
+    :param fast5_file_name: filename for single-read fast5 file with event detection and segmentation
     """
     from sloika import features
     try:
@@ -98,7 +96,6 @@ def raw_worker(fast5_file_name, trim, open_pore_fraction, kmer_len, transducer, 
     init_worker. `calc_post` is an unpickled compiled sloika model that
     is used to calculate a posterior matrix over states
 
-    :param args: command line args for `basecall_network.py raw` including:
     :param open_pore_fraction: maximum allowed fraction of signal length to
         trim due to classification as open pore signal
     :param trim: (int, int) events to remove from read beginning and end
