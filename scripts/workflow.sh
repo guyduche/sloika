@@ -25,6 +25,7 @@ $SLOIKA_ROOT/bin/basecall_network.py raw $MODEL $READ_DIR | tee to_map.fa
 echo "# 2. Align reads to reference"
 
 # align.py calls BWA to align the basecalls to the reference
+bwa index $REFERENCE
 $SLOIKA_ROOT/misc/align.py $REFERENCE to_map.fa
 # This command extracts a reference sequence for each read using coordinates from the SAM file.
 $SLOIKA_ROOT/misc/refs_from_sam.py --output_strand_list to_map.txt --pad 50 $REFERENCE to_map.sam | tee to_map_refs.fa
