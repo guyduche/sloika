@@ -28,7 +28,7 @@ echo "# 2. Align reads to reference"
 bwa index $REFERENCE
 $SLOIKA_ROOT/misc/align.py $REFERENCE to_map.fa
 # This command extracts a reference sequence for each read using coordinates from the SAM file.
-$SLOIKA_ROOT/misc/refs_from_sam.py --output_strand_list to_map.txt --pad 50 $REFERENCE to_map.sam | tee to_map_refs.fa
+$SLOIKA_ROOT/misc/get_refs_from_sam.py --output_strand_list to_map.txt --pad 50 $REFERENCE to_map.sam | tee to_map_refs.fa
 
 
 echo "# 3. Remap reads using existing model"
