@@ -210,7 +210,11 @@ if __name__ == '__main__':
             # align sequences to reference
             sys.stdout.write("Aligning {}...\n".format(fn))
             bwa_output = call_bwa_mem(fn, samfile, args.reference, args.bwa_mem_args)
-            sys.stdout.write(bwa_output.decode(sys.stdout.encoding))
+            try:
+                assert "bwa" in bwa_output
+                sys.stdout.write(bwa_output)
+            except:
+                sys.stdout.write(bwa.output.decode(sys.stdout.encoding))
 
             # compile accuracy metrics
             acc_dat = samacc(samfile, min_coverage=args.coverage)
