@@ -1,7 +1,9 @@
 #! /bin/bash -eu
 
 echo "# 0. Install dependencies"
-apt-get install bwa
+if [ $(uname) = "Linux" ]; then
+  apt-get install bwa
+fi
 pip install pysam matplotlib
 
 # move to sloika top-level dir
@@ -34,7 +36,7 @@ $SLOIKA_ROOT/misc/get_refs_from_sam.py --output_strand_list to_map.txt --pad 50 
 echo "# 3. Remap reads using existing model"
 export OMP_NUM_THREADS=1
 export THEANO_FLAGS=device=cpu,floatX=float32
-$SLOIKA_ROOT/bin/chunkify.py raw_remap --input_strand_list to_map.txt --downsample 5 $READ_DIR batch_remapped.hdf5 $MODEL to_map_refs.fa
+$SLOIKA_ROOT/bin/chunkify.py raw_remap --overwrite --input_strand_list to_map.txt --downsample 5 $READ_DIR batch_remapped.hdf5 $MODEL to_map_refs.fa
 
 
 echo "# 4. Train a new model"
@@ -44,7 +46,7 @@ echo "# 4. Train a new model"
 # see TODO: link to wiki
 #export THEANO_FLAGS=openmp=True,floatX=float32,warn_float64=warn,optimizer=fast_run,device=gpu0,lib.cnmem=0.4
 TRAIN_DIR=$WORK_DIR/training
-$SLOIKA_ROOT/bin/train_network.py raw --batch 50 --stride 5 --niteration 1 sloika/models/baseline_raw_gru.py $TRAIN_DIR batch_remapped.hdf5
+$SLOIKA_ROOT/bin/train_network.py raw --overwrite --batch 50 --stride 5 --niteration 1 $SLOIKA_ROOT/models/baseline_raw_gru.py $TRAIN_DIR batch_remapped.hdf5
 
 
 # We exit here as the remaining steps are a work in progress
@@ -63,4 +65,4 @@ scrappie/misc/parse_gru_raw.py $TRAIN_DIR/model_final.pkl > scrappie/src/nanonet
 export OMP_NUM_THREADS=$NPROC
 export OPENBLAS_NUM_THREADS=1
 tail -n +2 test.txt | xargs scrappie/test/scrappie raw > test.fa
-sloika/misc/align.py $REFERENCE test.fa
+$SLOIKA_ROOT/misc/align.py $REFERENCE test.fa

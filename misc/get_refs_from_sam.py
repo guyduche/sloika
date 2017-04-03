@@ -75,7 +75,7 @@ def get_refs(sam, ref_seq_dict, min_coverage=0.6, pad=50):
 
             fasta = ">{}\n{}\n".format(trim_fast5_extension(read.qname), read_ref)
 
-            yield (read.qname, fasta)
+            yield (read.qname + ".fast5", fasta)
 
 
 if __name__ == '__main__':

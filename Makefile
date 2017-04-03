@@ -20,6 +20,6 @@ deps:
 .PHONY: workflow
 workflow: cleanDevEnv
 	${inDevEnv} $${SCRIPTS_DIR}/workflow.sh
-	if [[ ! -e $${ROOT_DIR}/build/workflow/training/model_final.pkl ]]; then exit 1; fi
+	${inEnv} if [[ ! -e $${BUILD_DIR}/workflow/training/model_final.pkl ]]; then exit 1; fi
 
 include Makefile.res
