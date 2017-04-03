@@ -94,6 +94,6 @@ if __name__ == '__main__':
 
     if args.output_strand_list is not None:
         sys.stderr.write("* Writing strand-list\n")
-        with open(args.output_strand_list, 'w') as f:
+        with open(args.output_strand_list, WRITE_MODE) as f:
             f.write('filename\n')
             f.write('\n'.join(strand_list))
