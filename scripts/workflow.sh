@@ -1,9 +1,7 @@
 #! /bin/bash -eu
 
 echo "# 0. Install dependencies"
-if [ $(uname) = "Linux" ]; then
-  apt-get install bwa
-fi
+if [ $(which bwa) == "bwa not found" ]; then echo "BWA not found, trying to install..."; apt-get install bwa || exit 1; fi
 pip install pysam matplotlib
 
 # move to sloika top-level dir
