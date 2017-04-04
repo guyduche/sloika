@@ -80,10 +80,10 @@ acceptance_trusty:
     script:
         - make acceptanceTestFromScratch
 
-workflow:
-    stage: test
-    script:
-        - make workflow
+#workflow:
+#    stage: test
+#    script:
+#        - make workflow
 
 dev_env_and_style:
     stage: test
