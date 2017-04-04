@@ -169,10 +169,10 @@ if __name__ == '__main__':
     if not os.path.exists(args.output):
         os.mkdir(args.output)
     elif not args.overwrite:
-        log.write('Error: Output directory {} exists but --overwrite is false\n'.format(args.output))
+        sys.stderr.write('Error: Output directory {} exists but --overwrite is false\n'.format(args.output))
         exit(1)
     if not os.path.isdir(args.output):
-        log.write('Error: Output location {} is not directory\n'.format(args.output))
+        sys.stderr.write('Error: Output location {} is not directory\n'.format(args.output))
         exit(1)
 
     copyfile(args.model, os.path.join(args.output, 'model.py'))
