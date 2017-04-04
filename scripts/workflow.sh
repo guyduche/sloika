@@ -1,7 +1,10 @@
 #! /bin/bash -eu
 
 echo "# 0. Install dependencies"
-if [ "$(which bwa)" == "bwa not found" ]; then echo "BWA not found, trying to install..."; apt-get install bwa || exit 1; fi
+
+# This line is for CI. Please make sure bwa is installed and on your path
+apt-get install bwa
+# Dependencies for the align.py script
 pip install pysam matplotlib
 
 # move to sloika top-level dir
