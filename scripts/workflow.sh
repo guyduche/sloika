@@ -1,5 +1,8 @@
 #! /bin/bash -eu
 
+# TODO: speed up by compiling model once and reusing it
+# TODO: finish remaining step 5
+
 echo "# Prerequisite: make deps"
 echo "# Prerequisite: make cleanDevEnv"
 
@@ -50,7 +53,6 @@ $SLOIKA_ROOT/bin/train_network.py raw --overwrite --batch 50 --stride 5 --nitera
 
 # We exit here as the remaining steps are a work in progress
 exit 0
-
 
 # 5. Evaluate new model on test data
 
