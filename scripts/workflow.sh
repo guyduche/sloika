@@ -1,11 +1,7 @@
 #! /bin/bash -eu
 
-echo "# 0. Install dependencies"
-
-# This line is for CI. Please make sure bwa is installed and on your path
-apt-get install bwa
-# Dependencies for the align.py script
-pip install pysam matplotlib
+echo "# Prerequisite: make deps"
+echo "# Prerequisite: make cleanDevEnv"
 
 # move to sloika top-level dir
 SLOIKA_ROOT=$(git rev-parse --show-toplevel)
@@ -14,12 +10,13 @@ SLOIKA_ROOT=$(git rev-parse --show-toplevel)
 WORK_DIR=$SLOIKA_ROOT/build/workflow
 mkdir -p $WORK_DIR && cd $WORK_DIR
 
-READ_DIR=$SLOIKA_ROOT/data/test_chunkify/identity/reads
+READ_DIR=$SLOIKA_ROOT/data/test_workflow/reads
 REFERENCE=$SLOIKA_ROOT/data/test_chunkify/identity/reference.fa
 MODEL=$SLOIKA_ROOT/data/test_basecall_network/raw_model_1pt2_cpu.pkl
 
 
 echo "# 1. Basecall with existing model"
+
 export OMP_NUM_THREADS=1
 export THEANO_FLAGS=device=cpu,floatX=float32
 $SLOIKA_ROOT/bin/basecall_network.py raw $MODEL $READ_DIR | tee to_map.fa
@@ -35,6 +32,7 @@ $SLOIKA_ROOT/misc/get_refs_from_sam.py --output_strand_list to_map.txt --pad 50 
 
 
 echo "# 3. Remap reads using existing model"
+
 export OMP_NUM_THREADS=1
 export THEANO_FLAGS=device=cpu,floatX=float32
 $SLOIKA_ROOT/bin/chunkify.py raw_remap --overwrite --input_strand_list to_map.txt --downsample 5 $READ_DIR batch_remapped.hdf5 $MODEL to_map_refs.fa
