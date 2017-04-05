@@ -61,3 +61,4 @@ testTrain:
 .PHONY: validate
 validate:
 	${inDevEnv} validate_network.py --bad --batch 200 ${model} ${workDir}/dataset_validate.hdf5
+
