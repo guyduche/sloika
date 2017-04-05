@@ -83,6 +83,7 @@ acceptance_trusty:
 workflow:
     stage: test
     before_script:
+        - make ciCheckout
         - make cleanDevEnv
     script:
         - make workflow
