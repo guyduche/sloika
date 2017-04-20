@@ -151,6 +151,51 @@ class AcceptanceTest(unittest.TestCase):
         os.remove(output_file_name)
         os.remove(strand_output_list)
 
+    @parameterized.expand([
+        [[], (57, 2000, 1), -2.82059764862, 3.37245368958, 0.0, "0"],
+        [["--normalisation", "per-read"], (57, 2000, 1), -2.82059764862, 3.37245368958, 0.0, "0"],
+        [["--normalisation", "per-chunk"], (57, 2000, 1), -12.6804265976, 22.79778862, 0.0, "2"]
+    ])
+    def test_chunkify_with_raw_remap_with_normalisation(self, options, chunks_shape, min_value, max_value, median_value,
+                                                        subdir):
+        test_work_dir = self.work_dir(os.path.join("test_chunkify_with_raw_remap_with_normalisation", subdir))
+
+        reads_dir = os.path.join(self.data_dir, "raw_remap", "reads")
+        self.assertTrue(os.path.exists(reads_dir))
+
+        model_file = os.path.join(self.data_dir, "raw_remap", "model.pkl")
+        self.assertTrue(os.path.exists(model_file))
+
+        reference_file = os.path.join(self.data_dir, "raw_remap", "reference.fa")
+        self.assertTrue(os.path.exists(reference_file))
+
+        strand_output_list = os.path.join(test_work_dir, "strand_output_list.txt")
+        open(strand_output_list, 'w').close()
+
+        output_file_name = os.path.join(test_work_dir, "output.hdf5")
+        open(output_file_name, 'w').close()
+
+        cmd = [self.script, "raw_remap", "--overwrite", "--downsample", "5",
+               reads_dir, output_file_name, model_file, reference_file] + options
+
+        util.run_cmd(self, cmd).expect_exit_code(0)
+
+        with h5py.File(output_file_name, 'r') as fh:
+            top_level_items = []
+            for item in fh:
+                top_level_items.append(item)
+            top_level_items.sort()
+            self.assertEqual(top_level_items, [u'bad', u'chunks', u'labels', u'weights'])
+
+            self.assertEqual(fh['chunks'].shape, chunks_shape)
+            chunks = fh['chunks'][:]
+            self.assertClose(chunks.min(), min_value)
+            self.assertClose(chunks.max(), max_value)
+            self.assertClose(np.median(chunks), median_value)
+
+        os.remove(output_file_name)
+        os.remove(strand_output_list)
+
     def test_chunkify_with_remap_no_results_due_to_missing_reference(self):
         test_work_dir = self.work_dir("test_chunkify_with_remap_no_results_due_to_missing_reference")
 
