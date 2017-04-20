@@ -104,7 +104,7 @@ class AcceptanceTest(unittest.TestCase):
                                                     median_value, test_id):
         test_work_dir = self.work_dir(os.path.join("test_chunkify_with_remap_with_normalisation", test_id))
 
-        strand_input_list = os.path.join(self.data_dir, subdir, "strand_output_list.txt")
+        strand_input_list = os.path.join(self.data_dir, subdir, "output_strand_list.txt")
         self.assertTrue(os.path.exists(strand_input_list))
 
         reads_dir = os.path.join(self.data_dir, subdir, "reads")
@@ -116,8 +116,8 @@ class AcceptanceTest(unittest.TestCase):
         reference_file = os.path.join(self.data_dir, subdir, "reference.fa")
         self.assertTrue(os.path.exists(reference_file))
 
-        strand_output_list = os.path.join(test_work_dir, "strand_output_list.txt")
-        open(strand_output_list, 'w').close()
+        output_strand_list = os.path.join(test_work_dir, "output_strand_list.txt")
+        open(output_strand_list, 'w').close()
 
         output_file_name = os.path.join(test_work_dir, "output.hdf5")
         open(output_file_name, 'w').close()
@@ -125,7 +125,7 @@ class AcceptanceTest(unittest.TestCase):
         cmd = [self.script, "remap", "--segmentation", "Segment_Linear", "--trim", "200", "200",
                "--chunk_len", "500", "--kmer_len", "5", "--section", "template",
                "--input_strand_list", strand_input_list, "--output_strand_list",
-               strand_output_list, reads_dir, output_file_name, model_file, reference_file] + options
+               output_strand_list, reads_dir, output_file_name, model_file, reference_file] + options
 
         util.run_cmd(self, cmd).expect_exit_code(1)
 
@@ -149,7 +149,7 @@ class AcceptanceTest(unittest.TestCase):
             self.assertClose(np.median(chunks), median_value)
 
         os.remove(output_file_name)
-        os.remove(strand_output_list)
+        os.remove(output_strand_list)
 
     @parameterized.expand([
         [[], (57, 2000, 1), -2.82059764862, 3.37245368958, 0.0, "0"],
@@ -169,15 +169,15 @@ class AcceptanceTest(unittest.TestCase):
         reference_file = os.path.join(self.data_dir, "raw_remap", "reference.fa")
         self.assertTrue(os.path.exists(reference_file))
 
-        strand_output_list = os.path.join(test_work_dir, "strand_output_list.txt")
-        open(strand_output_list, 'w').close()
+        output_strand_list = os.path.join(test_work_dir, "output_strand_list.txt")
+        open(output_strand_list, 'w').close()
 
         output_file_name = os.path.join(test_work_dir, "output.hdf5")
         open(output_file_name, 'w').close()
 
         cmd = [self.script, "raw_remap", "--overwrite", "--downsample", "5",
                reads_dir, output_file_name, model_file, reference_file,
-               '--output_strand_list', strand_output_list] + options
+               '--output_strand_list', output_strand_list] + options
 
         util.run_cmd(self, cmd).expect_exit_code(0)
 
@@ -195,12 +195,12 @@ class AcceptanceTest(unittest.TestCase):
             self.assertClose(np.median(chunks), median_value)
 
         os.remove(output_file_name)
-        os.remove(strand_output_list)
+        os.remove(output_strand_list)
 
     def test_chunkify_with_remap_no_results_due_to_missing_reference(self):
         test_work_dir = self.work_dir("test_chunkify_with_remap_no_results_due_to_missing_reference")
 
-        strand_input_list = os.path.join(self.data_dir, "remap", "strand_output_list.txt")
+        strand_input_list = os.path.join(self.data_dir, "remap", "output_strand_list.txt")
         self.assertTrue(os.path.exists(strand_input_list))
 
         reads_dir = os.path.join(self.data_dir, "identity", "reads")
@@ -212,9 +212,9 @@ class AcceptanceTest(unittest.TestCase):
         reference_file = os.path.join(self.data_dir, "remap", "reference.fa")
         self.assertTrue(os.path.exists(reference_file))
 
-        strand_output_list = os.path.join(test_work_dir, "strand_output_list.txt")
-        if os.path.exists(strand_output_list):
-            os.remove(strand_output_list)
+        output_strand_list = os.path.join(test_work_dir, "output_strand_list.txt")
+        if os.path.exists(output_strand_list):
+            os.remove(output_strand_list)
 
         output_file_name = os.path.join(test_work_dir, "output.hdf5")
         if os.path.exists(output_file_name):
@@ -222,14 +222,14 @@ class AcceptanceTest(unittest.TestCase):
 
         cmd = [self.script, "remap", "--segmentation", "Segment_Linear", "--trim", "200", "200",
                "--chunk_len", "500", "--kmer_len", "5", "--section", "template",
-               "--input_strand_list", strand_input_list, "--output_strand_list", strand_output_list,
+               "--input_strand_list", strand_input_list, "--output_strand_list", output_strand_list,
                reads_dir, output_file_name, model_file, reference_file]
 
         util.run_cmd(self, cmd).expect_exit_code(1).expect_stderr(
             util.last_line_starts_with(u"no chunks were produced"))
 
         self.assertTrue(not os.path.exists(output_file_name))
-        self.assertTrue(not os.path.exists(strand_output_list))
+        self.assertTrue(not os.path.exists(output_strand_list))
 
     @parameterized.expand([
         [495, 540, 25, 20, 0, "0"],
@@ -254,9 +254,9 @@ class AcceptanceTest(unittest.TestCase):
         reference_file = os.path.join(self.data_dir, "remap2", "reference.fa")
         self.assertTrue(os.path.exists(reference_file))
 
-        strand_output_list = os.path.join(test_work_dir, "strand_output_list.txt")
-        if os.path.exists(strand_output_list):
-            os.remove(strand_output_list)
+        output_strand_list = os.path.join(test_work_dir, "output_strand_list.txt")
+        if os.path.exists(output_strand_list):
+            os.remove(output_strand_list)
 
         output_file_name = os.path.join(test_work_dir, "output.hdf5")
         if os.path.exists(output_file_name):
@@ -265,7 +265,7 @@ class AcceptanceTest(unittest.TestCase):
         cmd = [self.script, "remap", "--segmentation", "Segment_Linear",
                "--trim", str(trim_left), str(trim_right), "--chunk_len", str(chunk_len),
                "--kmer_len", "5", "--section", "template", "--input_strand_list", strand_input_list,
-               "--output_strand_list", strand_output_list, "--min_length", str(min_length),
+               "--output_strand_list", output_strand_list, "--min_length", str(min_length),
                reads_dir, output_file_name, model_file, reference_file]
 
         expectation = util.run_cmd(self, cmd).expect_exit_code(exit_code)
@@ -274,7 +274,7 @@ class AcceptanceTest(unittest.TestCase):
             expectation.expect_stderr(util.last_line_starts_with(u"no chunks were produced"))
 
             self.assertTrue(not os.path.exists(output_file_name))
-            self.assertTrue(not os.path.exists(strand_output_list))
+            self.assertTrue(not os.path.exists(output_strand_list))
 
     @parameterized.expand([
         [300, 360, 40, 20, 0, "0"],
