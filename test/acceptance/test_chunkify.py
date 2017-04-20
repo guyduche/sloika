@@ -96,12 +96,17 @@ class AcceptanceTest(unittest.TestCase):
         os.remove(output_file_name)
 
     @parameterized.expand([
-        ['remap', [], (33, 500, 4), -2.7013657093, 12.7536773682, -0.238673046231, "0"],
-        ['remap', ["--normalisation", "per-read"], (33, 500, 4), -2.7013657093, 12.7536773682, -0.238673046231, "1"],
-        ['remap', ["--normalisation", "per-chunk"], (33, 500, 4), -2.88131427765, 11.0136013031, -0.238405257463, "2"]
+        ['remap', 'Segment_Linear', [],
+            (33, 500, 4), -2.7013657093, 12.7536773682, -0.238673046231, "0"],
+        ['remap', 'Segment_Linear', ["--normalisation", "per-read"],
+            (33, 500, 4), -2.7013657093, 12.7536773682, -0.238673046231, "1"],
+        ['remap', 'Segment_Linear', ["--normalisation", "per-chunk"],
+            (33, 500, 4), -2.88131427765, 11.0136013031, -0.238405257463, "2"],
+        ['remap3', 'Segmentation', ["--normalisation", "per-chunk"],
+            (17, 500, 4), -3.07923054695, 11.3292417526, -0.212918192148, "3"],
     ])
-    def test_chunkify_with_remap_with_normalisation(self, subdir, options, chunks_shape, min_value, max_value,
-                                                    median_value, test_id):
+    def test_chunkify_with_remap_with_normalisation(self, subdir, segmentation, options, chunks_shape, min_value,
+                                                    max_value, median_value, test_id):
         test_work_dir = self.work_dir(os.path.join("test_chunkify_with_remap_with_normalisation", test_id))
 
         strand_input_list = os.path.join(self.data_dir, subdir, "output_strand_list.txt")
@@ -122,9 +127,9 @@ class AcceptanceTest(unittest.TestCase):
         output_file_name = os.path.join(test_work_dir, "output.hdf5")
         open(output_file_name, 'w').close()
 
-        cmd = [self.script, "remap", "--segmentation", "Segment_Linear", "--trim", "200", "200",
+        cmd = [self.script, "remap", "--segmentation", segmentation, "--trim", "200", "200",
                "--chunk_len", "500", "--kmer_len", "5", "--section", "template",
-               "--input_strand_list", strand_input_list, "--output_strand_list",
+               "--output_strand_list",
                output_strand_list, reads_dir, output_file_name, model_file, reference_file] + options
 
         util.run_cmd(self, cmd).expect_exit_code(1)

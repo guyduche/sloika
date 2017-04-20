@@ -166,8 +166,11 @@ def chunk_remap_worker(fn, trim, min_prob, kmer_len, prior, slip, chunk_len, use
                        normalisation, min_length, section, segmentation, references):
     try:
         with fast5.Reader(fn) as f5:
-            ev = f5.get_section_events(section, analysis=segmentation)
             sn = f5.filename_short
+            try:
+                ev = f5.get_section_events(section, analysis=segmentation)
+            except ValueError:
+                ev = f5.get_basecall_data(section)
     except Exception as e:
         sys.stderr.write('Failure reading events from {}.\n{}\n'.format(fn, repr(e)))
         return None
