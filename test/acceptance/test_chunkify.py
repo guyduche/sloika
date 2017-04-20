@@ -96,24 +96,24 @@ class AcceptanceTest(unittest.TestCase):
         os.remove(output_file_name)
 
     @parameterized.expand([
-        [[], (33, 500, 4), -2.7013657093, 12.7536773682, -0.238673046231, "0"],
-        [["--normalisation", "per-read"], (33, 500, 4), -2.7013657093, 12.7536773682, -0.238673046231, "1"],
-        [["--normalisation", "per-chunk"], (33, 500, 4), -2.88131427765, 11.0136013031, -0.238405257463, "2"]
+        ['remap', [], (33, 500, 4), -2.7013657093, 12.7536773682, -0.238673046231, "0"],
+        ['remap', ["--normalisation", "per-read"], (33, 500, 4), -2.7013657093, 12.7536773682, -0.238673046231, "1"],
+        ['remap', ["--normalisation", "per-chunk"], (33, 500, 4), -2.88131427765, 11.0136013031, -0.238405257463, "2"]
     ])
-    def test_chunkify_with_remap_with_normalisation(self, options, chunks_shape, min_value, max_value, median_value,
-                                                    subdir):
-        test_work_dir = self.work_dir(os.path.join("test_chunkify_with_remap_with_normalisation", subdir))
+    def test_chunkify_with_remap_with_normalisation(self, subdir, options, chunks_shape, min_value, max_value,
+                                                    median_value, test_id):
+        test_work_dir = self.work_dir(os.path.join("test_chunkify_with_remap_with_normalisation", test_id))
 
-        strand_input_list = os.path.join(self.data_dir, "remap", "strand_output_list.txt")
+        strand_input_list = os.path.join(self.data_dir, subdir, "strand_output_list.txt")
         self.assertTrue(os.path.exists(strand_input_list))
 
-        reads_dir = os.path.join(self.data_dir, "remap", "reads")
+        reads_dir = os.path.join(self.data_dir, subdir, "reads")
         self.assertTrue(os.path.exists(reads_dir))
 
-        model_file = os.path.join(self.data_dir, "remap", "model.pkl")
+        model_file = os.path.join(self.data_dir, subdir, "model.pkl")
         self.assertTrue(os.path.exists(model_file))
 
-        reference_file = os.path.join(self.data_dir, "remap", "reference.fa")
+        reference_file = os.path.join(self.data_dir, subdir, "reference.fa")
         self.assertTrue(os.path.exists(reference_file))
 
         strand_output_list = os.path.join(test_work_dir, "strand_output_list.txt")
@@ -176,7 +176,8 @@ class AcceptanceTest(unittest.TestCase):
         open(output_file_name, 'w').close()
 
         cmd = [self.script, "raw_remap", "--overwrite", "--downsample", "5",
-               reads_dir, output_file_name, model_file, reference_file] + options
+               reads_dir, output_file_name, model_file, reference_file,
+               '--output_strand_list', strand_output_list] + options
 
         util.run_cmd(self, cmd).expect_exit_code(0)
 
