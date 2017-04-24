@@ -27,9 +27,8 @@ def softplus(x):
     """  Softplus function log(1 + exp(x))
 
         Calculated in a way stable to large and small values of x.  The version
-        of this routine in theano.tensor.nnet clips the range of x, causing
-        potential causing NaN's to occur in the softmax (all inputs clipped to
-        zero).
+        of this routine in theano.tensor.nnet clips the range of x, potential
+        causing NaN's to occur in the softmax (all inputs clipped to zero).
 
         x >=0  -->  x + log1p(exp(-x))
         x < 0  -->  log1p(exp(x))
