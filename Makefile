@@ -21,5 +21,3 @@ deps:
 workflow:
 	${inDevEnv} $${SCRIPTS_DIR}/workflow.sh
 	${inEnv} if [[ ! -e $${BUILD_DIR}/workflow/training/model_final.pkl ]]; then exit 1; fi
-
-include Makefile.res
