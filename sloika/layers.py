@@ -234,7 +234,7 @@ class NormaliseL1(Layer):
         return inMat / T.shape_padright(f)
 
 
-class Softmax(Layer):
+class SoftmaxTheano(Layer):
     """  Softmax layer
          tmp = exp( inmat W + b )
          out = row_normalise( tmp )
@@ -286,7 +286,7 @@ class Softmax(Layer):
         return out
 
 
-class SoftmaxOld(Layer):
+class Softmax(Layer):
     """  Softmax layer
          tmp = exp( inmat W + b )
          out = row_normalise( tmp )
@@ -335,10 +335,10 @@ class SoftmaxOld(Layer):
 
     def run(self, inMat):
         tmp = T.tensordot(inMat, self.W, axes=(2, 1)) + self.b
-        m = T.shape_padright(T.max(tmp, axis=2))
+        m = T.max(tmp, axis=2, keepdims=True)
         out = T.exp(tmp - m)
-        rowsum = T.sum(out, axis=2)
-        return out / T.shape_padright(rowsum)
+        rowsum = T.sum(out, axis=2, keepdims=True)
+        return out / rowsum
 
 
 class Window(Layer):
