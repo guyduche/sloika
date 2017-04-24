@@ -23,6 +23,7 @@ def relu_smooth(x):
     y = T.clip(x, 0.0, 1.0)
     return T.square(y) - 2.0 * y + x + T.abs_(x)
 
+
 def softplus(x):
     """  Softplus function log(1 + exp(x))
 
@@ -32,9 +33,13 @@ def softplus(x):
 
         x >=0  -->  x + log1p(exp(-x))
         x < 0  -->  log1p(exp(x))
+
+        This is equivalent to relu(x) + log1p(exp(-|x|))
     """
-    tmp = T.log1p(T.exp(T.abs_(x)))
-    return relu(x) + tmp
+    absx = T.abs_(x)
+    softplus_neg = T.log1p(T.exp(-absx))
+    return relu(x) + softplus_neg
+
 
 def exp(x):
     return T.exp(x)
