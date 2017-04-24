@@ -5,8 +5,10 @@ from __future__ import absolute_import
 from future import standard_library
 standard_library.install_aliases()
 from builtins import *
+
 import argparse
 import imp
+import logging
 import numpy as np
 import os
 import sys
@@ -18,9 +20,11 @@ from untangled.cmdargs import (display_version_and_exit, FileExists, Positive)
 
 from sloika.version import __version__
 
+logging.getLogger("theano.gof.compilelock").setLevel(logging.WARNING)
+
 # This is here, not in main to allow documentation to be built
 parser = argparse.ArgumentParser(
-    description='Train a simple transducer neural network',
+    description='Test compilation and execution of a sloika model',
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('--kmer', default=5, metavar='length', type=Positive(int),
                     help='Length of kmer')
@@ -31,7 +35,7 @@ parser.add_argument('--stride', default=None, metavar='int', type=Positive(int),
 parser.add_argument('--version', nargs=0, action=display_version_and_exit,
                     metavar=__version__, help='Display version information.')
 parser.add_argument('model', action=FileExists,
-                    help='File to read python model description from')
+                    help='Python source file to read model description from')
 
 NFEATURE = 4
 

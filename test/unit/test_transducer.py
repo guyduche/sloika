@@ -17,7 +17,6 @@ class TransducerTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(self):
-        print('* Decode 2D transducer')
         np.random.seed(0xdeadbeef)
         self.n = 7
         self.gap = -5.0

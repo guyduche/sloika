@@ -10,7 +10,7 @@ stages:
     - release
 
 before_script:
-    - make checkout
+    - make ciCheckout
 
 wheel:
     stage: build
@@ -79,6 +79,14 @@ acceptance_trusty:
     stage: test
     script:
         - make acceptanceTestFromScratch
+
+workflow:
+    stage: test
+    before_script:
+        - make ciCheckout
+        - make cleanDevEnv
+    script:
+        - make workflow
 
 dev_env_and_style:
     stage: test

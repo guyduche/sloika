@@ -30,7 +30,7 @@ def trim_ends_and_filter(ev, trim, min_length, chunk_len):
     if len(ev) < sum(trim) + chunk_len or len(ev) < min_length:
         return None
     else:
-        return sloika.util.trim_array(ev, trim)
+        return sloika.util.trim_array(ev, *trim)
 
 
 def chunkify(ev, chunk_len, kmer_len, use_scaled, normalisation):
@@ -131,34 +131,23 @@ def chunk_worker(fn, section, chunk_len, kmer_len, min_length, trim, use_scaled,
     return chunkify(ev, chunk_len, kmer_len, use_scaled, normalisation)
 
 
-def init_chunk_remap_worker(model, fasta, kmer_len):
+def init_chunk_remap_worker(model):
     import pickle
     # Import within worker to avoid initialising GPU in main thread
     import sloika.features
     import sloika.transducer
-    global calc_post, kmer_to_state, references
+    global calc_post
     with open(model, 'rb') as fh:
         calc_post = pickle.load(fh)
 
-    references = dict()
-    with open(fasta, 'r') as fh:
-        for ref in SeqIO.parse(fh, 'fasta'):
-            refseq = str(ref.seq)
-            if 'N' not in refseq:
-                if sys.version_info.major == 3:
-                    references[ref.id] = refseq.encode('utf-8')
-                else:
-                    references[ref.id] = refseq
 
-    kmer_to_state = bio.kmer_mapping(kmer_len, alphabet=b'ACGT')
-
-
-def remap(read_ref, ev, min_prob, transducer, kmer_len, prior, slip):
+def remap(read_ref, ev, min_prob, kmer_len, prior, slip):
     inMat = sloika.features.from_events(ev, tag='')
     inMat = np.expand_dims(inMat, axis=1)
-    post = sloika.decode.prepare_post(calc_post(inMat), min_prob=min_prob, drop_bad=(not transducer))
+    post = sloika.decode.prepare_post(calc_post(inMat), min_prob=min_prob, drop_bad=False)
 
     kmers = np.array(bio.seq_to_kmers(read_ref, kmer_len))
+    kmer_to_state = bio.kmer_mapping(kmer_len, alphabet=b'ACGT')
     seq = [kmer_to_state[k] + 1 for k in kmers]
     prior0 = None if prior[0] is None else sloika.util.geometric_prior(len(seq), prior[0])
     prior1 = None if prior[1] is None else sloika.util.geometric_prior(len(seq), prior[1], rev=True)
@@ -173,12 +162,15 @@ def remap(read_ref, ev, min_prob, transducer, kmer_len, prior, slip):
     return (score, ev, path, seq)
 
 
-def chunk_remap_worker(fn, trim, min_prob, transducer, kmer_len, prior, slip, chunk_len, use_scaled,
-                       normalisation, min_length, section, segmentation):
+def chunk_remap_worker(fn, trim, min_prob, kmer_len, prior, slip, chunk_len, use_scaled,
+                       normalisation, min_length, section, segmentation, references):
     try:
         with fast5.Reader(fn) as f5:
-            ev = f5.get_section_events(section, analysis=segmentation)
             sn = f5.filename_short
+            try:
+                ev = f5.get_section_events(section, analysis=segmentation)
+            except ValueError:
+                ev = f5.get_basecall_data(section)
     except Exception as e:
         sys.stderr.write('Failure reading events from {}.\n{}\n'.format(fn, repr(e)))
         return None
@@ -194,7 +186,7 @@ def chunk_remap_worker(fn, trim, min_prob, transducer, kmer_len, prior, slip, ch
         sys.stderr.write('{} is too short.\n'.format(fn))
         return None
 
-    (score, ev, path, seq) = remap(read_ref, ev, min_prob, transducer, kmer_len, prior, slip)
+    (score, ev, path, seq) = remap(read_ref, ev, min_prob, kmer_len, prior, slip)
     (chunks, labels, bad_ev) = chunkify(ev, chunk_len, kmer_len, use_scaled, normalisation)
 
     return sn + '.fast5', score, len(ev), path, seq, chunks, labels, bad_ev

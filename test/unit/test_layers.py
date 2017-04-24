@@ -51,7 +51,6 @@ class ANNTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(self):
-        print('* Layers')
         np.random.seed(0xdeadbeef)
         self._NSTEP = 25
         self._NFEATURES = 3
@@ -312,10 +311,6 @@ class LayerTest(with_metaclass(abc.ABCMeta, object)):
             self.layer = nn.Recurrent(12, 64)
     """
 
-    @classmethod
-    def setUpClass(cls):
-        print("* LayerTest: " + cls.__name__)
-
     _INPUTS = None  # List of input matrices for testing the layer's run method
     _PARAMS = None  # List of names for the learned parameters of the layer
 
@@ -458,3 +453,23 @@ class GenmutTest(LayerTest, unittest.TestCase):
 
     def setUp(self):
         self.layer = nn.Genmut(12, 64)
+
+
+class ConvolutionTest(LayerTest, unittest.TestCase):
+    _INPUTS = [np.random.uniform(size=(100, 20, 12))]
+    _PARAMS = ['W', 'b']
+
+    def setUp(self):
+        self.layer = nn.Convolution(12, 32, 11, 5, has_bias=True)
+
+
+class MaxPoolTest(LayerTest, unittest.TestCase):
+    _INPUTS = [np.random.uniform(size=(100, 20, 12))]
+    _PARAMS = []
+
+    def setUp(self):
+        self.layer = nn.MaxPool(12, 5, 5)
+
+    @unittest.skip('No params to get or set')
+    def test_004_get_set_params(self):
+        pass

@@ -4,13 +4,14 @@ from __future__ import absolute_import
 from future import standard_library
 standard_library.install_aliases()
 from builtins import *
-import pickle
+
 from multiprocessing import Process
 try:
     # Python 3.3 or later
     from multiprocessing import SimpleQueue
 except ImportError:
     from multiprocessing.queues import SimpleQueue
+import pickle
 import shutil
 import sys
 import tempfile
@@ -62,8 +63,11 @@ def compile_model(model_file, output_file=None):
     """  Compile network in separate thread
 
     To avoid initialising Theano in main thread, compilation must be done in a
-    separate process.  Where the network is already compiled, a temporary copy
-    is created.
+    separate process. The reason for avoidance is that forking a process after
+    CUDA context is initialised is not supported, so, if this is a multiprocess
+    run, processes must be created before importing theano.sandbox.cuda.
+
+    Where the network is already compiled, a temporary copy is created.
 
     :param model_file: File to read network from
     :param output_file: File to output to.  If None, generate a filename
