@@ -53,7 +53,7 @@ common_parser.add_argument('--l2', default=0.0, metavar='penalty', type=NonNegat
                            help='L2 penalty on parameters')
 common_parser.add_argument('--lrdecay', default=5000, metavar='n', type=Positive(float),
                            help='Learning rate for batch i is adam.rate / (1.0 + i / n)')
-common_parser.add_argument('--min_prob', default=0.0, metavar='p', type=proportion,
+common_parser.add_argument('--min_prob', default=1e-30, metavar='p', type=proportion,
                            help='Minimum probability allowed for training')
 common_parser.add_argument('--niteration', metavar='batches', type=Positive(int), default=50000,
                            help='Maximum number of batches to train for')
