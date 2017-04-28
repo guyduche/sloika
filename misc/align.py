@@ -170,7 +170,10 @@ def summary(acc_dat, name):
         da = gaussian_kde(acc)
         optimization_result = minimize_scalar(lambda x: -da(x), bounds=(0, 1))
         if optimization_result.success:
-            mode = optimization_result.x[0]
+            try:
+                mode = optimization_result.x[0]
+            except IndexError:
+                mode = optimization_result.x
         else:
             sys.stderr.write("Mode computation failed")
             mode = 0
