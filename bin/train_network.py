@@ -240,7 +240,7 @@ if __name__ == '__main__':
         netmodule = imp.load_source('netmodule', args.model)
 
         if args.command == 'events':
-            network = netmodule.network(klen=klen, sd=args.sd)
+            network = netmodule.network(klen=klen, sd=args.sd, nfeature=all_chunks.shape[-1])
         else:
             network = netmodule.network(klen=klen, sd=args.sd,
                                         nfeature=all_chunks.shape[-1],
@@ -266,26 +266,16 @@ if __name__ == '__main__':
     for i in range(args.niteration):
         learning_rate = args.adam.rate / (1.0 + i / args.lrdecay)
 
-        if args.command == "events":
-            chunk_len = np.random.randint(min_chunk, max_chunk + 1)
-        else:
-            chunk_len = np.random.randint(min_chunk, max_chunk + 1)
-            chunk_len = chunk_len - (chunk_len % args.stride)
+        chunk_len = np.random.randint(min_chunk, max_chunk + 1)
+        chunk_len = chunk_len - (chunk_len % args.stride)
 
         batch_size = int(args.batch_size * float(max_chunk) / chunk_len)
 
-        if args.command == "events":
-            start = np.random.randint(data_chunk - chunk_len + 1)
-        else:
-            start = np.random.randint(data_chunk - chunk_len + 1)
-            start = start - (start % args.stride)
+        start = np.random.randint(data_chunk - chunk_len + 1)
+        start = start - (start % args.stride)
 
-        if args.command == "events":
-            label_lb = start
-            label_ub = start + chunk_len
-        else:
-            label_lb = start // args.stride
-            label_ub = (start + chunk_len) // args.stride
+        label_lb = start // args.stride
+        label_ub = (start + chunk_len) // args.stride
 
         idx = np.sort(np.random.choice(len(all_chunks), size=min(batch_size, max_batch_size),
                                        replace=False, p=all_weights))
