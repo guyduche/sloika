@@ -41,8 +41,16 @@ def softplus(x):
     return relu(x) + softplus_neg
 
 
+def elu(x):
+    """  Exponential Linear Unit
+         See https://arxiv.org/pdf/1511.07289.pdf
+    """
+    return T.switch(x > 0, x, T.expm1(x))
+
+
 def exp(x):
     return T.exp(x)
+
 
 #  Bounded and monotonic
 
