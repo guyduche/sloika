@@ -168,7 +168,12 @@ def summary(acc_dat, name):
 
     if len(acc) > 1:
         da = gaussian_kde(acc)
-        mode = minimize_scalar(lambda x: -da(x), bounds=(0, 1)).x[0]
+        optimization_result = minimize_scalar(lambda x: -da(x), bounds=(0, 1))
+        if optimization_result.success:
+            mode = optimization_result.x[0]
+        else:
+            sys.stderr.write("Mode computation failed")
+            mode = 0
     else:
         mode = acc[0]
 
