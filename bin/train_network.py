@@ -86,6 +86,7 @@ parser_ev = subparsers.add_parser('events', parents=[common_parser], help='Train
                                   formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser_ev.add_argument('--drop', default=20, metavar='events', type=NonNegative(int),
                        help='Number of events to drop from start and end of chunk before evaluating loss')
+parser_ev.add_argument('--stride', default=1, choices=[1], help=argparse.SUPPRESS)
 
 parser_raw = subparsers.add_parser('raw', parents=[common_parser], help='Train from raw signal',
                                    formatter_class=argparse.ArgumentDefaultsHelpFormatter)
