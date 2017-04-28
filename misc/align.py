@@ -5,6 +5,7 @@ from __future__ import absolute_import
 from future import standard_library
 standard_library.install_aliases()
 from builtins import *
+
 import argparse
 import csv
 from collections import OrderedDict
@@ -202,6 +203,7 @@ if __name__ == '__main__':
     matplotlib.use(args.mpl_backend)
     import matplotlib.pyplot as plt
 
+    exit_code = 0
     for fn in args.files:
         try:
             prefix, suffix = os.path.splitext(fn)
@@ -239,4 +241,6 @@ if __name__ == '__main__':
         except:
             sys.stderr.write("{}: something went wrong, skipping\n\n".format(fn))
             sys.stderr.write("Traceback:\n\n{}\n\n".format(traceback.format_exc()))
-            continue
+            exit_code = 1
+
+    sys.exit(exit_code)
