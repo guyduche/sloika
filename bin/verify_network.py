@@ -82,7 +82,7 @@ if __name__ == '__main__':
         if args.stride is None:
             out_length = ntime
         else:
-            out_length = int(np.ceil(float(ntime / args.stride)))
+            out_length = int(np.ceil(float(ntime) / args.stride))
         lbls = np.zeros((out_length, nbatch), dtype='i4')
         try:
             sys.stderr.write("Input of shape [{}, {}, {}]...  ".format(ntime, nbatch, args.nfeature))

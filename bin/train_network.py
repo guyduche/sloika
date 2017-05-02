@@ -194,7 +194,7 @@ if __name__ == '__main__':
     max_batch_size = (all_weights > 0).sum()
 
     #  Model stride is forced by training data
-    training_stride = all_chunks.shape[1] // all_labels.shape[1]
+    training_stride = int(np.ceil(float(all_chunks.shape[1]) / all_labels.shape[1]))
     log.write('* Stride is {}\n.'.format(training_stride))
 
     # check chunk_len_range args
