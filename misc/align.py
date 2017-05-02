@@ -168,7 +168,7 @@ def summary(acc_dat, name):
 
     if len(acc) > 1:
         da = gaussian_kde(acc)
-        optimization_result = minimize_scalar(lambda x: -da(x), bounds=(0, 1))
+        optimization_result = minimize_scalar(lambda x: -da(x), bounds=(0, 1), method='Bounded')
         if optimization_result.success:
             try:
                 mode = optimization_result.x[0]
