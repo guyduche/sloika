@@ -48,7 +48,7 @@ echo "# 4. Train a new model"
 # see TODO: link to wiki
 #export THEANO_FLAGS=openmp=True,floatX=float32,warn_float64=warn,optimizer=fast_run,device=gpu0,lib.cnmem=0.4
 TRAIN_DIR=$WORK_DIR/training
-$SLOIKA_ROOT/bin/train_network.py raw --overwrite --batch 50 --stride 5 --niteration 1 $SLOIKA_ROOT/models/baseline_raw_gru.py $TRAIN_DIR batch_remapped.hdf5
+$SLOIKA_ROOT/bin/train_network.py raw --overwrite --batch 50 --niteration 1 $SLOIKA_ROOT/models/baseline_raw_gru.py $TRAIN_DIR batch_remapped.hdf5
 
 
 # We exit here as the remaining steps are a work in progress
