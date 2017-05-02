@@ -15,10 +15,6 @@ def linear(x):
     return x
 
 
-def softplus(x):
-    return T.nnet.softplus(x)
-
-
 def relu(x):
     return T.nnet.relu(x)
 
@@ -28,8 +24,33 @@ def relu_smooth(x):
     return T.square(y) - 2.0 * y + x + T.abs_(x)
 
 
+def softplus(x):
+    """  Softplus function log(1 + exp(x))
+
+        Calculated in a way stable to large and small values of x.  The version
+        of this routine in theano.tensor.nnet clips the range of x, potential
+        causing NaN's to occur in the softmax (all inputs clipped to zero).
+
+        x >=0  -->  x + log1p(exp(-x))
+        x < 0  -->  log1p(exp(x))
+
+        This is equivalent to relu(x) + log1p(exp(-|x|))
+    """
+    absx = T.abs_(x)
+    softplus_neg = T.log1p(T.exp(-absx))
+    return relu(x) + softplus_neg
+
+
+def elu(x):
+    """  Exponential Linear Unit
+         See https://arxiv.org/pdf/1511.07289.pdf
+    """
+    return T.switch(x > 0, x, T.expm1(x))
+
+
 def exp(x):
     return T.exp(x)
+
 
 #  Bounded and monotonic
 

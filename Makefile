@@ -15,6 +15,9 @@ deps:
 	apt-get update
 	apt-get install -y \
 	    python-virtualenv python-pip python-setuptools ont-ca-certs git \
-	    libblas3 libblas-dev python-dev python3-dev lsb-release
+	    libblas3 libblas-dev python-dev python3-dev lsb-release bwa
 
-include Makefile.res
+.PHONY: workflow
+workflow:
+	${inDevEnv} $${SCRIPTS_DIR}/workflow.sh
+	${inEnv} if [[ ! -e $${BUILD_DIR}/workflow/training/model_final.pkl ]]; then exit 1; fi

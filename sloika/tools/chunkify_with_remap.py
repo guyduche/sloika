@@ -13,9 +13,6 @@ import sys
 import time
 import numpy as np
 
-from untangled import bio
-from untangled.cmdargs import (AutoBool, FileExists, Maybe, NonNegative,
-                               proportion, Positive, Vector, FileAbsent)
 from untangled import fast5
 from untangled.iterators import imap_mp
 
@@ -31,27 +28,7 @@ def create_output_strand_file(output_strand_list_entries, output_file_name):
             sl.write('\t'.join([str(x) for x in strand_data]) + '\n')
 
 
-def chunkify_with_remap_main(argv, parser):
-    parser.add_argument('--compile', default=None, type=Maybe(str),
-                        help='File output compiled model')
-    parser.add_argument('--min_prob', metavar='proportion', default=1e-5,
-                        type=proportion, help='Minimum allowed probabiility for basecalls')
-    parser.add_argument('--output_strand_list', default="strand_output_list.txt",
-                        help='strand summary output file')
-    parser.add_argument('--prior', nargs=2, metavar=('start', 'end'), default=(25.0, 25.0),
-                        type=Maybe(NonNegative(float)), help='Mean of start and end positions')
-    parser.add_argument('--segmentation', default=fast5.__default_segmentation_analysis__,
-                        metavar='location', help='Location of segmentation information')
-    parser.add_argument('--slip', default=5.0, type=Maybe(NonNegative(float)),
-                        help='Slip penalty')
-    parser.add_argument('--transducer', default=True, action=AutoBool,
-                        help='Model is transducer')
-
-    parser.add_argument('model', action=FileExists, help='Pickled model file')
-    parser.add_argument('references', action=FileExists,
-                        help='Reference sequences in fasta format')
-
-    args = parser.parse_args(argv)
+def chunkify_with_remap_main(args):
 
     if not args.overwrite:
         if os.path.exists(args.output):
@@ -64,11 +41,16 @@ def chunkify_with_remap_main(argv, parser):
     fast5_files = fast5.iterate_fast5(args.input_folder, paths=True, limit=args.limit,
                                       strand_list=args.input_strand_list)
 
+    references = util.fasta_file_to_dict(args.references)
+
     print('* Processing data using', args.jobs, 'threads')
 
-    kwarg_names = ['trim', 'min_prob', 'transducer', 'kmer_len', 'min_length',
+    kwarg_names = ['trim', 'min_prob', 'kmer_len', 'min_length',
                    'prior', 'slip', 'chunk_len', 'use_scaled', 'normalisation',
                    'section', 'segmentation']
+    kwargs = util.get_kwargs(args, kwarg_names)
+    kwargs['references'] = references
+
     i = 0
     compiled_file = helpers.compile_model(args.model, args.compile)
     output_strand_list_entries = []
@@ -76,9 +58,8 @@ def chunkify_with_remap_main(argv, parser):
     chunk_list = []
     label_list = []
     for res in imap_mp(batch.chunk_remap_worker, fast5_files, threads=args.jobs,
-                       fix_kwargs=util.get_kwargs(args, kwarg_names),
-                       unordered=True, init=batch.init_chunk_remap_worker,
-                       initargs=[compiled_file, args.references, args.kmer_len]):
+                       fix_kwargs=kwargs, unordered=True, init=batch.init_chunk_remap_worker,
+                       initargs=[compiled_file]):
         if res is not None:
             i = util.progress_report(i)
 
@@ -99,7 +80,16 @@ def chunkify_with_remap_main(argv, parser):
         sys.exit(1)
     else:
         print('\n* Creating HDF5 file')
-        util.create_hdf5(args, chunk_list, label_list, bad_list)
+        hdf5_attributes = {
+            'chunk': args.chunk_len,
+            'input_type': 'events',
+            'kmer': args.kmer_len,
+            'normalisation': args.normalisation,
+            'scaled': args.use_scaled,
+            'section': args.section,
+            'trim': args.trim,
+        }
+        util.create_labelled_chunks_hdf5(args.output, args.blanks, hdf5_attributes, chunk_list, label_list, bad_list)
 
         print('\n* Creating output strand file')
         create_output_strand_file(output_strand_list_entries, args.output_strand_list)

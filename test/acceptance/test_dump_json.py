@@ -5,79 +5,81 @@ from future import standard_library
 standard_library.install_aliases()
 from builtins import *
 
+import json
 from nose_parameterized import parameterized
 import os
-import shutil
 import sys
-import tempfile
 import unittest
 
-from util import run_cmd, maybe_create_dir, zeroth_line_starts_with, last_line_starts_with
+import util
+
+
+def is_valid_json(s):
+    try:
+        json.loads(s)
+        return True
+    except ValueError:
+        return False
 
 
 class AcceptanceTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(self):
-        self.test_directory = os.path.splitext(__file__)[0]
-        self.test_name = os.path.basename(self.test_directory)
+        test_directory = os.path.splitext(__file__)[0]
+        testset_name = os.path.basename(test_directory)
+
+        self.testset_work_dir = os.path.join(os.environ["ACCTEST_WORK_DIR"], testset_name)
+
+        self.data_dir = os.path.join(os.environ["DATA_DIR"], testset_name)
+
         self.script = os.path.join(os.environ["BIN_DIR"], "dump_json.py")
 
-        self.work_dir = os.path.join(os.environ["ACCTEST_WORK_DIR"], self.test_name)
-        maybe_create_dir(self.work_dir)
-
-        self.data_dir = os.path.join(os.environ["DATA_DIR"], self.test_name)
+    def work_dir(self, test_name):
+        directory = os.path.join(self.testset_work_dir, test_name)
+        util.maybe_create_dir(directory)
+        return directory
 
     def test_usage(self):
         cmd = [self.script]
-        run_cmd(self, cmd).return_code(2).stderr(zeroth_line_starts_with(u"usage"))
+        util.run_cmd(self, cmd).expect_exit_code(2).expect_stderr(util.zeroth_line_starts_with(u"usage"))
 
     @parameterized.expand([
-        [[], "model_py{}.json"],
-        [["--params"], "model_py{}.json"],
-        [["--no-params"], "model_without_params_py{}.json"]
+        [[]],
+        [["--params"]],
+        [["--no-params"]],
     ])
-    def test_dump_to_stdout(self, options, reference_dump_file_name_template):
+    def test_dump_to_stdout(self, options):
         model_file = os.path.join(self.data_dir, "model.pkl")
         self.assertTrue(os.path.exists(model_file))
-
-        reference_dump_path = os.path.join(
-            self.data_dir, reference_dump_file_name_template.format(sys.version_info.major))
-        self.assertTrue(os.path.exists(reference_dump_path))
-
-        reference_dump = open(reference_dump_path, 'r').read().splitlines()
 
         cmd = [self.script, model_file] + options
-        run_cmd(self, cmd).return_code(0).stdoutEquals(reference_dump)
+        util.run_cmd(self, cmd).expect_exit_code(0).expect_stdout(lambda o: is_valid_json('\n'.join(o)))
 
     @parameterized.expand([
-        [[], "model_py{}.json"],
-        [["--params"], "model_py{}.json"],
-        [["--no-params"], "model_without_params_py{}.json"]
+        [[], "0"],
+        [["--params"], "1"],
+        [["--no-params"], "2"],
     ])
-    def test_dump_to_a_file(self, options, reference_dump_file_name_template):
+    def test_dump_to_a_file(self, options, subdir):
+        test_work_dir = self.work_dir(os.path.join("test_dump_to_a_file", subdir))
+
         model_file = os.path.join(self.data_dir, "model.pkl")
         self.assertTrue(os.path.exists(model_file))
 
-        reference_dump_path = os.path.join(
-            self.data_dir, reference_dump_file_name_template.format(sys.version_info.major))
-        self.assertTrue(os.path.exists(reference_dump_path))
+        output_file = os.path.join(test_work_dir, "output.json")
+        open(output_file, "w").close()
 
-        reference_dump = open(reference_dump_path, 'r').read().splitlines()
+        cmd = [self.script, model_file, "--out_file", output_file] + options
+        error_message = "RuntimeError: File/path for 'out_file' exists, {}".format(output_file)
+        util.run_cmd(self, cmd).expect_exit_code(1).expect_stderr(util.last_line_starts_with(error_message))
 
-        with tempfile.NamedTemporaryFile(dir=self.work_dir, suffix=".json", delete=False) as fh:
-            out_file = fh.name
+        os.remove(output_file)
 
-        cmd = [self.script, model_file, "--out_file", out_file] + options
-        error_message = "RuntimeError: File/path for 'out_file' exists, {}".format(out_file)
-        run_cmd(self, cmd).return_code(1).stderr(last_line_starts_with(error_message))
+        info_message = "Writing to file:  {}".format(output_file)
+        util.run_cmd(self, cmd).expect_exit_code(0).expect_stdout(lambda o: o == [info_message])
 
-        os.remove(out_file)
+        self.assertTrue(os.path.exists(output_file))
+        dump = open(output_file, 'r').read()
 
-        info_message = "Writing to file:  {}".format(out_file)
-        run_cmd(self, cmd).return_code(0).stdout(lambda o: o == [info_message])
-
-        self.assertTrue(os.path.exists(out_file))
-        dump = open(out_file, 'r').read().splitlines()
-
-        self.assertEqual(dump, reference_dump)
+        self.assertTrue(is_valid_json(dump))

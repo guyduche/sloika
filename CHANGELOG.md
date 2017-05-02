@@ -1,3 +1,33 @@
+Release 1.2
+===========
+
+* Can train and basecall off raw data
+  * Examples in `models/` directory use temporal convolution to extract features from the raw signal
+  * Training data may be labelled from events or remapped on the fly using a pretrained raw data model
+  * The interfaces for most scripts have changed to support raw data:
+    * `./bin/basecall_network` and `./bin/train_network.py` provide `raw` and `events` routes
+    * `./bin/chunkify.py` provides `identity`, `remap`, `raw_identity` and `raw_remap` routes
+* `./bin/basecall_network.py` may be used via `./bin/basecall_network` entry point that sets up its environment
+* Full builds are performed on CI only for `master`, `release` and branches with names having `ci_` prefix
+* Layers:
+  * All layers now have `insize` and `size` attributes; models pickled with previous versions of Sloika will not be unpicklabe in Sloika 1.2
+  * Added `Convolution` and `MaxPool` layers
+* Improvements to `pekarnya.py`:
+  * Updated database schema
+  * Runs are marked with time stamps and git commits
+  * Uniquely generated output directories facilitate restart of failed jobs
+* New script `./bin/extract_reference.py` for extraction of references from a directory of fast5 files
+
+
+### Minor changes
+
+* Minimum required numpy version bumped to 1.9.0
+* `verify_network.py` tests network execution on random inputs
+* `align.py` outputs reference coordinates
+* `align.py` fixed under python3
+* Randomly choosing chunk size during training is now the default
+
+
 Release 1.1 brown bag 3
 =======================
 

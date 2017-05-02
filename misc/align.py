@@ -5,6 +5,7 @@ from __future__ import absolute_import
 from future import standard_library
 standard_library.install_aliases()
 from builtins import *
+
 import argparse
 import csv
 from collections import OrderedDict
@@ -43,6 +44,9 @@ STRAND = {0 : '+',
 QUANTILES = [5, 25, 50, 75, 95]
 
 
+WRITE_MODE = 'w' if sys.version_info.major == 3 else 'wb'
+
+
 def call_bwa_mem(fin, fout, genome, clargs=''):
     """Call bwa aligner using the subprocess module
 
@@ -74,8 +78,10 @@ def samacc(sam, min_coverage=0.6):
     :min_coverage: alignments are filtered by coverage
 
     :returns: list of row dictionaries with keys:
-        name1: reference name
-        name2: query name
+        reference: reference name
+        query: query name
+        reference_start: first base of reference match
+        reference_end: last base of reference match
         strand: + or -
         match: number of matches
         mismatch: number of mismatches
@@ -106,9 +112,11 @@ def samacc(sam, min_coverage=0.6):
             correct = alnlen - mismatch
 
             row = OrderedDict([
-                ('name1', ref_name[read.reference_id]),
-                ('name2', read.qname),
+                ('reference', ref_name[read.reference_id]),
+                ('query', read.qname),
                 ('strand', STRAND[read.flag]),
+                ('reference_start', read.reference_start),
+                ('reference_end', read.reference_end),
                 ('match', bins[0]),
                 ('mismatch', mismatch),
                 ('insertion', bins[1]),
@@ -158,15 +166,26 @@ def summary(acc_dat, name):
     acc = np.array([r['accuracy'] for r in acc_dat])
     mean = acc.mean()
 
-    da = gaussian_kde(acc)
-    mode = minimize_scalar(lambda x: -da(x), bounds=(0, 1)).x[0]
+    if len(acc) > 1:
+        da = gaussian_kde(acc)
+        optimization_result = minimize_scalar(lambda x: -da(x), bounds=(0, 1), method='Bounded')
+        if optimization_result.success:
+            try:
+                mode = optimization_result.x[0]
+            except IndexError:
+                mode = optimization_result.x
+        else:
+            sys.stderr.write("Mode computation failed")
+            mode = 0
+    else:
+        mode = acc[0]
 
     qstring1 = ''.join(['{:<11}'.format('Q' + str(q)) for q in QUANTILES]).strip()
     qstring2 = '    '.join(['{:.5f}'.format(v) for v in np.percentile(acc, QUANTILES)])
 
     a90 = (acc > 0.9).mean()
     n_gt_90 = (acc > 0.9).sum()
-    nmapped = len(set([r['name2'] for r in acc_dat]))
+    nmapped = len(set([r['query'] for r in acc_dat]))
 
     res = """Summary report for {}:
     Number of mapped reads:  {}
@@ -192,6 +211,7 @@ if __name__ == '__main__':
     matplotlib.use(args.mpl_backend)
     import matplotlib.pyplot as plt
 
+    exit_code = 0
     for fn in args.files:
         try:
             prefix, suffix = os.path.splitext(fn)
@@ -203,12 +223,16 @@ if __name__ == '__main__':
             # align sequences to reference
             sys.stdout.write("Aligning {}...\n".format(fn))
             bwa_output = call_bwa_mem(fn, samfile, args.reference, args.bwa_mem_args)
-            sys.stdout.write(bwa_output)
+            try:
+                assert "bwa" in bwa_output
+                sys.stdout.write(bwa_output)
+            except:
+                sys.stdout.write(bwa.output.decode(sys.stdout.encoding))
 
             # compile accuracy metrics
             acc_dat = samacc(samfile, min_coverage=args.coverage)
             if len(acc_dat) > 0:
-                with open(samaccfile, 'w') as fs:
+                with open(samaccfile, WRITE_MODE) as fs:
                     fields = list(acc_dat[0].keys())
                     writer = csv.DictWriter(fs, fieldnames=fields, delimiter=' ')
                     writer.writeheader()
@@ -220,9 +244,11 @@ if __name__ == '__main__':
             if f is not None:
                 f.savefig(graphfile)
             sys.stdout.write('\n' + report + '\n')
-            with open(summaryfile, 'w') as fs:
+            with open(summaryfile, WRITE_MODE) as fs:
                 fs.writelines(report)
         except:
             sys.stderr.write("{}: something went wrong, skipping\n\n".format(fn))
             sys.stderr.write("Traceback:\n\n{}\n\n".format(traceback.format_exc()))
-            continue
+            exit_code = 1
+
+    sys.exit(exit_code)
