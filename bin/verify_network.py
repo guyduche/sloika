@@ -32,8 +32,10 @@ parser.add_argument('--nfeature', default=4, metavar='number', type=Positive(int
                     help='Number of features to input to network')
 parser.add_argument('--sd', default=0.5, metavar='value', type=Positive(float),
                     help='Standard deviation to initialise with')
-parser.add_argument('--stride', default=None, metavar='int', type=Positive(int),
+parser.add_argument('--stride', default=1, metavar='int', type=Positive(int),
                     help='Stride of model or None for no stride')
+parser.add_argument('--winlen', default=3, type=Positive(int),
+                    help='Length of window over data')
 parser.add_argument('--version', nargs=0, action=display_version_and_exit,
                     metavar=__version__, help='Display version information.')
 parser.add_argument('model', action=FileExists,
@@ -61,15 +63,12 @@ if __name__ == '__main__':
 
     try:
         netmodule = imp.load_source('netmodule', args.model)
-        if args.stride is None:
-            network = netmodule.network(nfeature=args.nfeature, klen=args.kmer, sd=args.sd)
-        else:
-            network = netmodule.network(nfeature=args.nfeature, klen=args.kmer, sd=args.sd, stride=args.stride)
+        network = netmodule.network(nfeature=args.nfeature, klen=args.kmer, sd=args.sd, 
+                                    stride=args.stride, winlen=args.winlen)
         fg = wrap_network(network)
     except:
         sys.stderr.write('Compilation of model {} failed\n'.format(args.model))
         raise
-        exit(1)
 
     nparam = sum([p.get_value().size for p in network.params()])
     sys.stderr.write('Compilation of model {} succeeded\n'.format(os.path.basename(args.model)))
@@ -79,10 +78,7 @@ if __name__ == '__main__':
         ntime = np.random.randint(10, 100)
         nbatch = np.random.randint(2, 10)
         x = np.random.normal(size=(ntime, nbatch, args.nfeature)).astype(th.config.floatX)
-        if args.stride is None:
-            out_length = ntime
-        else:
-            out_length = int(np.ceil(float(ntime) / args.stride))
+        out_length = int(np.ceil(float(ntime) / args.stride))
         lbls = np.zeros((out_length, nbatch), dtype='i4')
         try:
             sys.stderr.write("Input of shape [{}, {}, {}]...  ".format(ntime, nbatch, args.nfeature))

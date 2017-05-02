@@ -8,8 +8,8 @@ def network(klen, sd, nfeature=1, winlen=11, stride=2, size=64):
     :param sd: Standard Deviation of initialisation noise
     :param nfeature: Number of features per time-step
     :param winlen: Length of convolution window over data
-    :param stride: stride over data
-    :param size: sizes of hidden recurrent layers
+    :param stride: Stride over data
+    :param size: Sizes of hidden recurrent layers
 
     :returns: a `class`:layer.Layer:
     """
