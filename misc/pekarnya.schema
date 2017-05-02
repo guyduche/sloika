@@ -1,11 +1,14 @@
 CREATE TABLE runs(
     model text not NULL,
-    output_directory text unique not NULL,
+    output_prefix text not NULL,
+    output_directory text unique default NULL,
     training_data text not NULL,
     status integer default 0,
     runid integer primary key, 
     priority integer default 10, 
-    sloika_commit test default NULL, 
+    sloika_commit text default NULL, 
     validation_data text default NULL,
     transducer integer default 1,
-    training_parameters text default NULL);
+    training_parameters text default NULL,
+    training_start text default NULL,
+    training_end text default NULL);

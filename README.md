@@ -23,3 +23,7 @@ For this step to function development environment needs to be set up, and make d
 # Running unit and acceptance tests in CI mode
 
 Please refer to gitlab script for the up-to-date make commands.
+
+# Note on `THEANO_FLAGS`
+Please refer to https://wiki/display/RES/Theano+flags for guidance on setting the `THEANO_FLAGS` environmental variables.  Getting these wrong may severely impact performance.
+

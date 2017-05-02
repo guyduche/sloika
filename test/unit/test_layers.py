@@ -51,7 +51,6 @@ class ANNTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(self):
-        print('* Layers')
         np.random.seed(0xdeadbeef)
         self._NSTEP = 25
         self._NFEATURES = 3
@@ -253,7 +252,7 @@ class ANNTest(unittest.TestCase):
 
     def test_016_window(self):
         _WINLEN = 3
-        network = nn.Window(_WINLEN)
+        network = nn.Window(self._NFEATURES, _WINLEN)
         f = network.compile()
         res = f(self.x)
         #  Window is now 'SAME' not 'VALID'. Trim
@@ -281,7 +280,7 @@ class ANNTest(unittest.TestCase):
         res = f(self.res)
 
     def test_018_studentise(self):
-        network = nn.Studentise()
+        network = nn.Studentise(self._NFEATURES)
         f = network.compile()
         res = f(self.x)
 
@@ -289,7 +288,7 @@ class ANNTest(unittest.TestCase):
         np.testing.assert_almost_equal(np.std(res, axis=(0, 1)), 1.0, decimal=4)
 
     def test_019_identity(self):
-        network = nn.Identity()
+        network = nn.Identity(self._NFEATURES)
         f = network.compile()
         res = f(self.res)
 
@@ -311,10 +310,6 @@ class LayerTest(with_metaclass(abc.ABCMeta, object)):
         def setUp(self):
             self.layer = nn.Recurrent(12, 64)
     """
-
-    @classmethod
-    def setUpClass(cls):
-        print("* LayerTest: " + cls.__name__)
 
     _INPUTS = None  # List of input matrices for testing the layer's run method
     _PARAMS = None  # List of names for the learned parameters of the layer
@@ -351,8 +346,14 @@ class LayerTest(with_metaclass(abc.ABCMeta, object)):
         p1 = {p: np.array(v) for (p, v) in list(p1.items())}
         self.assertTrue(all([np.allclose(p0[k], p1[k]) for k in self._PARAMS]))
 
-    def test_005_params(self):
+    def test_005_should_have_params_method(self):
         plist = self.layer.params()
+
+    def test_006_should_have_insize_property(self):
+        insize = self.layer.insize
+
+    def test_007_should_have_size_property(self):
+        size = self.layer.size
 
 
 class RecurrentTest(LayerTest, unittest.TestCase):
@@ -452,3 +453,23 @@ class GenmutTest(LayerTest, unittest.TestCase):
 
     def setUp(self):
         self.layer = nn.Genmut(12, 64)
+
+
+class ConvolutionTest(LayerTest, unittest.TestCase):
+    _INPUTS = [np.random.uniform(size=(100, 20, 12))]
+    _PARAMS = ['W', 'b']
+
+    def setUp(self):
+        self.layer = nn.Convolution(12, 32, 11, 5, has_bias=True)
+
+
+class MaxPoolTest(LayerTest, unittest.TestCase):
+    _INPUTS = [np.random.uniform(size=(100, 20, 12))]
+    _PARAMS = []
+
+    def setUp(self):
+        self.layer = nn.MaxPool(12, 5, 5)
+
+    @unittest.skip('No params to get or set')
+    def test_004_get_set_params(self):
+        pass

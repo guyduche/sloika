@@ -4,6 +4,7 @@ from __future__ import absolute_import
 from future import standard_library
 standard_library.install_aliases()
 from builtins import *
+
 import h5py
 import numpy as np
 import numpy.lib.recfunctions as nprf
@@ -11,25 +12,25 @@ import sys
 
 from Bio import SeqIO
 
+from untangled import bio, fast5, maths
+
 # NB: qualified imports here due to a name clash
 import sloika.decode
 import sloika.util
 
-from untangled import bio, fast5
 
+TRIM_OPEN_PORE_LOCAL_VAR_METHODS = frozenset(['mad', 'std'])
 
-default_normalisation = 'per-read'
+DEFAULT_NORMALISATION = 'per-read'
 
-available_normalisations = set(['none', 'per-read', 'per-chunk'])
+AVAILABLE_NORMALISATIONS = frozenset(['none', 'per-read', 'per-chunk'])
 
 
 def trim_ends_and_filter(ev, trim, min_length, chunk_len):
     if len(ev) < sum(trim) + chunk_len or len(ev) < min_length:
         return None
     else:
-        begin = trim[0]
-        end = None if trim[1] == 0 else -trim[1]
-        return ev[begin : end]
+        return sloika.util.trim_array(ev, *trim)
 
 
 def chunkify(ev, chunk_len, kmer_len, use_scaled, normalisation):
@@ -118,7 +119,8 @@ def chunk_worker(fn, section, chunk_len, kmer_len, min_length, trim, use_scaled,
     try:
         with fast5.Reader(fn) as f5:
             ev, _ = f5.get_any_mapping_data(section)
-    except:
+    except Exception as e:
+        sys.stderr.write('Failed to get mapping data from {}.\n{}\n'.format(fn, repr(e)))
         return None
 
     ev = trim_ends_and_filter(ev, trim, min_length, chunk_len)
@@ -129,34 +131,23 @@ def chunk_worker(fn, section, chunk_len, kmer_len, min_length, trim, use_scaled,
     return chunkify(ev, chunk_len, kmer_len, use_scaled, normalisation)
 
 
-def init_chunk_remap_worker(model, fasta, kmer_len):
+def init_chunk_remap_worker(model):
     import pickle
     # Import within worker to avoid initialising GPU in main thread
     import sloika.features
     import sloika.transducer
-    global calc_post, kmer_to_state, references
+    global calc_post
     with open(model, 'rb') as fh:
         calc_post = pickle.load(fh)
 
-    references = dict()
-    with open(fasta, 'r') as fh:
-        for ref in SeqIO.parse(fh, 'fasta'):
-            refseq = str(ref.seq)
-            if 'N' not in refseq:
-                if sys.version_info.major == 3:
-                    references[ref.id] = refseq.encode('utf-8')
-                else:
-                    references[ref.id] = refseq
 
-    kmer_to_state = bio.kmer_mapping(kmer_len, alphabet=b'ACGT')
-
-
-def remap(read_ref, ev, min_prob, transducer, kmer_len, prior, slip):
+def remap(read_ref, ev, min_prob, kmer_len, prior, slip):
     inMat = sloika.features.from_events(ev, tag='')
     inMat = np.expand_dims(inMat, axis=1)
-    post = sloika.decode.prepare_post(calc_post(inMat), min_prob=min_prob, drop_bad=(not transducer))
+    post = sloika.decode.prepare_post(calc_post(inMat), min_prob=min_prob, drop_bad=False)
 
     kmers = np.array(bio.seq_to_kmers(read_ref, kmer_len))
+    kmer_to_state = bio.kmer_mapping(kmer_len, alphabet=b'ACGT')
     seq = [kmer_to_state[k] + 1 for k in kmers]
     prior0 = None if prior[0] is None else sloika.util.geometric_prior(len(seq), prior[0])
     prior1 = None if prior[1] is None else sloika.util.geometric_prior(len(seq), prior[1], rev=True)
@@ -171,20 +162,23 @@ def remap(read_ref, ev, min_prob, transducer, kmer_len, prior, slip):
     return (score, ev, path, seq)
 
 
-def chunk_remap_worker(fn, trim, min_prob, transducer, kmer_len, prior, slip, chunk_len, use_scaled,
-                       normalisation, min_length, section, segmentation):
+def chunk_remap_worker(fn, trim, min_prob, kmer_len, prior, slip, chunk_len, use_scaled,
+                       normalisation, min_length, section, segmentation, references):
     try:
         with fast5.Reader(fn) as f5:
-            ev = f5.get_section_events(section, analysis=segmentation)
             sn = f5.filename_short
-    except:
-        sys.stderr.write('Failure reading events from {}.\n'.format(fn))
+            try:
+                ev = f5.get_section_events(section, analysis=segmentation)
+            except ValueError:
+                ev = f5.get_basecall_data(section)
+    except Exception as e:
+        sys.stderr.write('Failure reading events from {}.\n{}\n'.format(fn, repr(e)))
         return None
 
     try:
         read_ref = references[sn]
-    except:
-        sys.stderr.write('No reference found for {}.\n'.format(fn))
+    except Exception as e:
+        sys.stderr.write('No reference found for {}.\n{}\n'.format(fn, repr(e)))
         return None
 
     ev = trim_ends_and_filter(ev, trim, min_length, chunk_len)
@@ -192,7 +186,37 @@ def chunk_remap_worker(fn, trim, min_prob, transducer, kmer_len, prior, slip, ch
         sys.stderr.write('{} is too short.\n'.format(fn))
         return None
 
-    (score, ev, path, seq) = remap(read_ref, ev, min_prob, transducer, kmer_len, prior, slip)
+    (score, ev, path, seq) = remap(read_ref, ev, min_prob, kmer_len, prior, slip)
     (chunks, labels, bad_ev) = chunkify(ev, chunk_len, kmer_len, use_scaled, normalisation)
 
     return sn + '.fast5', score, len(ev), path, seq, chunks, labels, bad_ev
+
+
+# TODO: this is a hack, find a nicer way
+def trim_open_pore(signal, max_op_fraction=0.3, var_method='mad', window_size=100):
+    """Locate raw read in signal by thresholding local variance
+
+    :param signal: raw data containing a read
+    :param max_op_fraction: (float) Maximum expected fraction of signal that
+        consists of open pore. Higher values will find smaller reads at the
+        cost of slightly truncating longer reads.
+    :param var_method: ('std' | 'mad') method used to compute the local
+        variation. std: standard deviation, mad: Median Absolute Deviation
+    :param window_size: size of patches used to estimate local variance
+    """
+    assert var_method in TRIM_OPEN_PORE_LOCAL_VAR_METHODS, "var_method not understood: {}".format(var_method)
+
+    ml = len(signal) // window_size
+    ub = ml * window_size
+
+    if var_method == 'std':
+        local_var = signal[:ub].reshape((ml, window_size)).std(1)
+    if var_method == 'mad':
+        sig_chunks = signal[:ub].reshape((ml, window_size))
+        local_var = maths.mad(sig_chunks, axis=1)
+
+    probably_read = (local_var > np.percentile(local_var, 100 * max_op_fraction))
+    ix = np.arange(local_var.shape[0])[probably_read]
+    start = ix.min() * window_size
+    end = (ix.max() + 1) * window_size
+    return signal[start:end]
