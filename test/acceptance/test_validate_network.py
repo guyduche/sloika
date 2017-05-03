@@ -19,7 +19,7 @@ class AcceptanceTest(unittest.TestCase):
 
         self.testset_work_dir = os.path.join(os.environ["ACCTEST_WORK_DIR"], testset_name)
 
-        self.script = os.path.join(os.environ["BIN_DIR"], "verify_network.py")
+        self.script = os.path.join(os.environ["BIN_DIR"], "validate_network.py")
 
     def test_usage(self):
         cmd = [self.script]

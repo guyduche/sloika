@@ -86,14 +86,11 @@ parser_ev = subparsers.add_parser('events', parents=[common_parser], help='Train
                                   formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser_ev.add_argument('--drop', default=20, metavar='events', type=NonNegative(int),
                        help='Number of events to drop from start and end of chunk before evaluating loss')
-parser_ev.set_defaults(stride=1)
 
 parser_raw = subparsers.add_parser('raw', parents=[common_parser], help='Train from raw signal',
                                    formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser_raw.add_argument('--drop', default=20, metavar='samples', type=NonNegative(int),
                         help='Number of labels to drop from start and end of chunk before evaluating loss')
-parser_raw.add_argument('--stride', default=1, type=Positive(int),
-                        help='Length of stride over data')
 parser_raw.add_argument('--winlen', default=11, type=Positive(int),
                         help='Length of window over data')
 
@@ -196,6 +193,10 @@ if __name__ == '__main__':
     all_weights /= np.sum(all_weights)
     max_batch_size = (all_weights > 0).sum()
 
+    #  Model stride is forced by training data
+    training_stride = int(np.ceil(float(all_chunks.shape[1]) / all_labels.shape[1]))
+    log.write('* Stride is {}.\n'.format(training_stride))
+
     # check chunk_len_range args
     data_chunk = all_chunks.shape[1]
     if args.chunk_len_range[0] is None:
@@ -245,7 +246,7 @@ if __name__ == '__main__':
         else:
             network = netmodule.network(klen=klen, sd=args.sd,
                                         nfeature=all_chunks.shape[-1],
-                                        winlen=args.winlen, stride=args.stride)
+                                        winlen=args.winlen, stride=training_stride)
     elif model_ext == '.pkl':
         with open(args.model, 'rb') as fh:
             network = pickle.load(fh)
@@ -268,15 +269,15 @@ if __name__ == '__main__':
         learning_rate = args.adam.rate / (1.0 + i / args.lrdecay)
 
         chunk_len = np.random.randint(min_chunk, max_chunk + 1)
-        chunk_len = chunk_len - (chunk_len % args.stride)
+        chunk_len = chunk_len - (chunk_len % training_stride)
 
         batch_size = int(args.batch_size * float(max_chunk) / chunk_len)
 
         start = np.random.randint(data_chunk - chunk_len + 1)
-        start = start - (start % args.stride)
+        start = start - (start % training_stride)
 
-        label_lb = start // args.stride
-        label_ub = (start + chunk_len) // args.stride
+        label_lb = start // training_stride
+        label_ub = (start + chunk_len) // training_stride
 
         idx = np.sort(np.random.choice(len(all_chunks), size=min(batch_size, max_batch_size),
                                        replace=False, p=all_weights))

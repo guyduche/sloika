@@ -104,10 +104,10 @@ class AcceptanceTest(unittest.TestCase):
         self.assertTrue(os.path.exists(os.path.join(output_directory, "model.py")))
 
     @parameterized.expand([
-        [2, "small_ch3000_lt0.825_simple2.hdf5", "0"],
-        [5, "small_ch3000_lt0.582_simple5.hdf5", "1"],
+        ["small_ch3000_lt0.825_simple2.hdf5", "0"],
+        ["small_ch3000_lt0.582_simple5.hdf5", "1"],
     ])
-    def test_baseline_raw_gru_training(self, stride, hdf5_file_name, subdir):
+    def test_baseline_raw_gru_training(self, hdf5_file_name, subdir):
         test_work_dir = self.work_dir(os.path.join("test_baseline_raw_gru_training", subdir))
 
         model = os.path.join(self.models_dir, "baseline_raw_gru.py")
@@ -121,7 +121,7 @@ class AcceptanceTest(unittest.TestCase):
         self.assertTrue(os.path.exists(hdf5_file))
 
         train_cmd = [self.script, "raw", "--batch_size", "50", "--niteration", "1", "--save_every", "1",
-                     "--lrdecay", "1000", "--winlen", "11", "--stride", str(stride),
+                     "--lrdecay", "1000", "--winlen", "11",
                      "--chunk_len_range", "0.1", "0.1", model, output_directory, hdf5_file]
 
         util.run_cmd(self, train_cmd).expect_exit_code(0)
