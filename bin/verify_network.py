@@ -42,7 +42,6 @@ parser.add_argument('model', action=FileExists,
                     help='Python source file to read model description from')
 
 
-
 def wrap_network(network):
     x = T.tensor3()
     labels = T.imatrix()
@@ -63,7 +62,7 @@ if __name__ == '__main__':
 
     try:
         netmodule = imp.load_source('netmodule', args.model)
-        network = netmodule.network(nfeature=args.nfeature, klen=args.kmer, sd=args.sd, 
+        network = netmodule.network(nfeature=args.nfeature, klen=args.kmer, sd=args.sd,
                                     stride=args.stride, winlen=args.winlen)
         fg = wrap_network(network)
     except:
