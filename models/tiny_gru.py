@@ -1,17 +1,20 @@
 import sloika.module_tools as smt
 
 
-def network(klen, sd, nfeature=4, winlen=3, size=4):
+def network(klen, sd, nfeature=4, winlen=3, stride=1, size=4):
     """ Create standard Nanonet with GRU units
 
     :param klen: Length of kmer
     :param sd: Standard Deviation of initialisation noise
     :param nfeature: Number of features per time-step
     :param winlen: Length of window over data
-    :param size: size of hidden recurrent layers
+    :param stride: Stride over data
+    :param size: Size of hidden recurrent layers
 
     :returns: a `class`:layer.Layer:
     """
+    assert stride == 1, "Model only supports stride of 1"
+
     _prn = smt.partial(smt._rn, sd=sd)
     nstate = smt.nstate(klen)
     gru_act = smt.tanh

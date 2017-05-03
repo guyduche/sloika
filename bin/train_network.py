@@ -40,7 +40,7 @@ common_parser.add_argument('--adam', nargs=3, metavar=('rate', 'decay1', 'decay2
                                                              NonNegative(float)), action=ParseToNamedTuple,
                            help='Parameters for Exponential Decay Adaptive Momementum')
 common_parser.add_argument('--bad', default=True, action=AutoBool,
-                           help='Use bad events as a separate state')
+                           help='Force blocks marked as bad to be stays')
 common_parser.add_argument('--batch_size', default=100, metavar='chunks', type=Positive(int),
                            help='Number of chunks to run in parallel')
 common_parser.add_argument('--chunk_len_range', nargs=2, metavar=('min', 'max'),
@@ -86,6 +86,8 @@ parser_ev = subparsers.add_parser('events', parents=[common_parser], help='Train
                                   formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser_ev.add_argument('--drop', default=20, metavar='events', type=NonNegative(int),
                        help='Number of events to drop from start and end of chunk before evaluating loss')
+parser_ev.add_argument('--winlen', default=3, type=Positive(int),
+                       help='Length of window over data')
 
 parser_raw = subparsers.add_parser('raw', parents=[common_parser], help='Train from raw signal',
                                    formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -241,12 +243,9 @@ if __name__ == '__main__':
             klen = h5.attrs['kmer']
         netmodule = imp.load_source('netmodule', args.model)
 
-        if args.command == 'events':
-            network = netmodule.network(klen=klen, sd=args.sd, nfeature=all_chunks.shape[-1])
-        else:
-            network = netmodule.network(klen=klen, sd=args.sd,
-                                        nfeature=all_chunks.shape[-1],
-                                        winlen=args.winlen, stride=training_stride)
+        network = netmodule.network(klen=klen, sd=args.sd,
+                                    nfeature=all_chunks.shape[-1],
+                                    winlen=args.winlen, stride=training_stride)
     elif model_ext == '.pkl':
         with open(args.model, 'rb') as fh:
             network = pickle.load(fh)
@@ -281,11 +280,11 @@ if __name__ == '__main__':
 
         idx = np.sort(np.random.choice(len(all_chunks), size=min(batch_size, max_batch_size),
                                        replace=False, p=all_weights))
-        events = np.ascontiguousarray(all_chunks[idx, start : start + chunk_len].transpose((1, 0, 2)))
+        indata = np.ascontiguousarray(all_chunks[idx, start : start + chunk_len].transpose((1, 0, 2)))
         labels = np.ascontiguousarray(all_labels[idx, label_lb : label_ub].transpose())
         weights = label_weights[labels]
 
-        fval, batch_acc = fg(events, labels, weights, learning_rate)
+        fval, batch_acc = fg(indata, labels, weights, learning_rate)
         fval = float(fval)
         nev = np.size(labels)
         total_ev += nev
