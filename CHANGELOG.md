@@ -28,6 +28,14 @@ Release 1.2
 * Randomly choosing chunk size during training is now the default
 
 
+Release 1.1 brown bag 3
+=======================
+
+Addresses the following issue:
+* Make Sloika 1.1 avoid h5py version 2.7.0. This version works in Dev environment, but we are unable to import it on CI nodes
+    https://github.com/h5py/h5py/issues/803
+
+
 Release 1.1 brown bag 2
 =======================
 
