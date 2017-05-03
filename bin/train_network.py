@@ -284,7 +284,7 @@ if __name__ == '__main__':
         labels = np.ascontiguousarray(all_labels[idx, label_lb : label_ub].transpose())
         weights = label_weights[labels]
 
-        fval, batch_acc = fg(events, labels, weights, learning_rate)
+        fval, batch_acc = fg(indata, labels, weights, learning_rate)
         fval = float(fval)
         nev = np.size(labels)
         total_ev += nev
