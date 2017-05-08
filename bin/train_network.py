@@ -102,7 +102,7 @@ parser_raw.add_argument('--winlen', default=11, type=Positive(int),
 
 class ExponentialSmoother(object):
     def __init__(self, factor, val=0.0, weight=1e-30):
-        assert factor >= 0.0 and factor <=1.0, "Smoothing factor was {}, should be between 0.0 and 1.0.\n".format(factor)
+        assert 0.0 <= factor <=1.0, "Smoothing factor was {}, should be between 0.0 and 1.0.\n".format(factor)
         self.factor = factor
         self.val = val
         self.weight = weight
