@@ -69,7 +69,7 @@ common_parser.add_argument('--sd', default=0.5, metavar='value', type=Positive(f
                            help='Standard deviation to initialise with')
 common_parser.add_argument('--seed', default=None, metavar='integer', type=Positive(int),
                            help='Set random number seed')
-common_parser.add_argument('--smooth', default=0.8, metavar='factor', type=proportion,
+common_parser.add_argument('--smooth', default=0.45, metavar='factor', type=proportion,
                            help='Smoothing factor for reporting progress')
 common_parser.add_argument('--transducer', default=True, action=AutoBool,
                            help='Train a transducer based model')
@@ -112,8 +112,8 @@ class ExponentialSmoother(object):
         return self.val / self.weight
 
     def update(self, val, weight=1.0):
-        self.val = self.factor * self.val + val
-        self.weight = self.factor * self.weight + weight
+        self.val = self.factor * self.val + (1.0 - self.factor) * val
+        self.weight = self.factor * self.weight + (1.0 - self.factor) * weight
 
 
 
