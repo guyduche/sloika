@@ -128,7 +128,7 @@ def interpolate_labels(mapping_table, att, alphabet):
     return interp
 
 
-def labels_from_mapping_table(kmer_array, kmer_len, index_from=1, alphabet):
+def labels_from_mapping_table(kmer_array, kmer_len, index_from=1, alphabet="ACGT"):
     """Extract shortened kmers from an array of kmers
 
     :param kmer_array: a numpy array of kmers
