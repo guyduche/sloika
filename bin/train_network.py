@@ -111,7 +111,7 @@ class ExponentialSmoother(object):
     def value(self):
         return self.val / self.weight
 
-    def update(self, val, weight):
+    def update(self, val, weight=1.0):
         self.val = self.factor * self.val + val
         self.weight = self.factor * self.weight + weight
 
@@ -308,8 +308,8 @@ if __name__ == '__main__':
         fval = float(fval)
         nev = np.size(labels)
         total_ev += nev
-        score_smoothed.update(fval, 1.0)
-        acc_smoothed.update(batch_acc, 1.0)
+        score_smoothed.update(fval)
+        acc_smoothed.update(batch_acc)
 
         if (i + 1) % args.save_every == 0:
             save_model(network, args.output, (i + 1) // args.save_every)
