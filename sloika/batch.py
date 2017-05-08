@@ -33,7 +33,7 @@ def trim_ends_and_filter(ev, trim, min_length, chunk_len):
         return sloika.util.trim_array(ev, *trim)
 
 
-def chunkify(ev, chunk_len, kmer_len, use_scaled, normalisation):
+def chunkify(ev, chunk_len, kmer_len, use_scaled, normalisation, alphabet):
     assert len(ev) >= chunk_len
 
     ml = len(ev) // chunk_len
@@ -76,7 +76,7 @@ def chunkify(ev, chunk_len, kmer_len, use_scaled, normalisation):
     # Use rightmost middle kmer
     kl = (model_kmer_len - kmer_len + 1) // 2
     ku = kl + kmer_len
-    kmer_to_state = bio.kmer_mapping(kmer_len, alphabet=b'ACGT')
+    kmer_to_state = bio.kmer_mapping(kmer_len, alphabet=bytes(alphabet))
     new_labels = 1 + np.array([kmer_to_state[k[kl : ku]] for k in ev['kmer']], dtype=np.int32)
 
     new_labels = new_labels.reshape(ml, chunk_len)
@@ -95,7 +95,7 @@ def chunkify(ev, chunk_len, kmer_len, use_scaled, normalisation):
 
 
 def chunk_worker(fn, section, chunk_len, kmer_len, min_length, trim, use_scaled,
-                 normalisation):
+                 normalisation, alphabet):
     """ Chunkifies data for training
 
     :param fn: A filename to read from
@@ -128,7 +128,7 @@ def chunk_worker(fn, section, chunk_len, kmer_len, min_length, trim, use_scaled,
         sys.stderr.write('{} is too short.\n'.format(fn))
         return None
 
-    return chunkify(ev, chunk_len, kmer_len, use_scaled, normalisation)
+    return chunkify(ev, chunk_len, kmer_len, use_scaled, normalisation, alphabet)
 
 
 def init_chunk_remap_worker(model):
@@ -141,13 +141,13 @@ def init_chunk_remap_worker(model):
         calc_post = pickle.load(fh)
 
 
-def remap(read_ref, ev, min_prob, kmer_len, prior, slip):
+def remap(read_ref, ev, min_prob, kmer_len, prior, slip, alphabet):
     inMat = sloika.features.from_events(ev, tag='')
     inMat = np.expand_dims(inMat, axis=1)
     post = sloika.decode.prepare_post(calc_post(inMat), min_prob=min_prob, drop_bad=False)
 
     kmers = np.array(bio.seq_to_kmers(read_ref, kmer_len))
-    kmer_to_state = bio.kmer_mapping(kmer_len, alphabet=b'ACGT')
+    kmer_to_state = bio.kmer_mapping(kmer_len, alphabet=bytes(alphabet))
     seq = [kmer_to_state[k] + 1 for k in kmers]
     prior0 = None if prior[0] is None else sloika.util.geometric_prior(len(seq), prior[0])
     prior1 = None if prior[1] is None else sloika.util.geometric_prior(len(seq), prior[1], rev=True)
@@ -163,7 +163,7 @@ def remap(read_ref, ev, min_prob, kmer_len, prior, slip):
 
 
 def chunk_remap_worker(fn, trim, min_prob, kmer_len, prior, slip, chunk_len, use_scaled,
-                       normalisation, min_length, section, segmentation, references):
+                       normalisation, min_length, section, segmentation, references, alphabet):
     try:
         with fast5.Reader(fn) as f5:
             sn = f5.filename_short
@@ -186,8 +186,8 @@ def chunk_remap_worker(fn, trim, min_prob, kmer_len, prior, slip, chunk_len, use
         sys.stderr.write('{} is too short.\n'.format(fn))
         return None
 
-    (score, ev, path, seq) = remap(read_ref, ev, min_prob, kmer_len, prior, slip)
-    (chunks, labels, bad_ev) = chunkify(ev, chunk_len, kmer_len, use_scaled, normalisation)
+    (score, ev, path, seq) = remap(read_ref, ev, min_prob, kmer_len, prior, slip, alphabet)
+    (chunks, labels, bad_ev) = chunkify(ev, chunk_len, kmer_len, use_scaled, normalisation, alphabet)
 
     return sn + '.fast5', score, len(ev), path, seq, chunks, labels, bad_ev
 

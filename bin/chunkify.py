@@ -25,6 +25,8 @@ parser = argparse.ArgumentParser(description=program_description,
                                  formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
 common_parser = argparse.ArgumentParser(add_help=False)
+common_parser.add_argument('--alphabet', default="ACGT",
+                           help='Alphabet of the sequences')
 common_parser.add_argument('--input_strand_list', default=None, action=FileExists,
                            help='Strand summary file containing subset')
 common_parser.add_argument('--jobs', default=1, metavar='n', type=Positive(int),

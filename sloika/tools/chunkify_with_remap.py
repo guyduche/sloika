@@ -47,7 +47,7 @@ def chunkify_with_remap_main(args):
 
     kwarg_names = ['trim', 'min_prob', 'kmer_len', 'min_length',
                    'prior', 'slip', 'chunk_len', 'use_scaled', 'normalisation',
-                   'section', 'segmentation']
+                   'section', 'segmentation', 'alphabet']
     kwargs = util.get_kwargs(args, kwarg_names)
     kwargs['references'] = references
 
@@ -88,6 +88,7 @@ def chunkify_with_remap_main(args):
             'scaled': args.use_scaled,
             'section': args.section,
             'trim': args.trim,
+            'alphabet': args.alphabet,
         }
         util.create_labelled_chunks_hdf5(args.output, args.blanks, hdf5_attributes, chunk_list, label_list, bad_list)
 

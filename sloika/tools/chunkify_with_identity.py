@@ -29,7 +29,7 @@ def chunkify_with_identity_main(args):
 
     print('* Processing data using', args.jobs, 'threads')
 
-    kwarg_names = ['section', 'chunk_len', 'kmer_len', 'min_length', 'trim', 'use_scaled', 'normalisation']
+    kwarg_names = ['section', 'chunk_len', 'kmer_len', 'min_length', 'trim', 'use_scaled', 'normalisation', 'alphabet']
     i = 0
     bad_list = []
     chunk_list = []
@@ -58,5 +58,6 @@ def chunkify_with_identity_main(args):
             'scaled': args.use_scaled,
             'section': args.section,
             'trim': args.trim,
+            'alphabet': args.alphabet,
         }
         util.create_labelled_chunks_hdf5(args.output, args.blanks, hdf5_attributes, chunk_list, label_list, bad_list)
