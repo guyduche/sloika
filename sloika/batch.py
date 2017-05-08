@@ -76,7 +76,7 @@ def chunkify(ev, chunk_len, kmer_len, use_scaled, normalisation, alphabet):
     # Use rightmost middle kmer
     kl = (model_kmer_len - kmer_len + 1) // 2
     ku = kl + kmer_len
-    kmer_to_state = bio.kmer_mapping(kmer_len, alphabet=bytes(alphabet))
+    kmer_to_state = bio.kmer_mapping(kmer_len, alphabet=alphabet)
     new_labels = 1 + np.array([kmer_to_state[k[kl : ku]] for k in ev['kmer']], dtype=np.int32)
 
     new_labels = new_labels.reshape(ml, chunk_len)
@@ -147,7 +147,7 @@ def remap(read_ref, ev, min_prob, kmer_len, prior, slip, alphabet):
     post = sloika.decode.prepare_post(calc_post(inMat), min_prob=min_prob, drop_bad=False)
 
     kmers = np.array(bio.seq_to_kmers(read_ref, kmer_len))
-    kmer_to_state = bio.kmer_mapping(kmer_len, alphabet=bytes(alphabet))
+    kmer_to_state = bio.kmer_mapping(kmer_len, alphabet=alphabet)
     seq = [kmer_to_state[k] + 1 for k in kmers]
     prior0 = None if prior[0] is None else sloika.util.geometric_prior(len(seq), prior[0])
     prior1 = None if prior[1] is None else sloika.util.geometric_prior(len(seq), prior[1], rev=True)

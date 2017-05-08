@@ -121,7 +121,7 @@ def interpolate_labels(mapping_table, att, alphabet):
         (mapping_table, att) could be returned by f5file.get_any_mapping_data()
     """
     def interp(t, k=5):
-        mapping = bio.kmer_mapping(k, alphabet=bytes(alphabet))
+        mapping = bio.kmer_mapping(k, alphabet=alphabet)
         pos = interpolate_pos(mapping_table, att)(t, k)
         return np.array([mapping[att['reference'][i: i + k]] for i in pos]) + 1
 
@@ -145,7 +145,7 @@ def labels_from_mapping_table(kmer_array, kmer_len, index_from=1, alphabet="ACGT
     extracted = np.chararray(kmer_array.shape, kmer_len, buffer=kmer_array.data,
                              offset=offset, strides=kmer_array.strides)
 
-    kmer_to_state = bio.kmer_mapping(kmer_len, alphabet=bytes(alphabet))
+    kmer_to_state = bio.kmer_mapping(kmer_len, alphabet=alphabet)
     labels = np.array(list(map(lambda k: kmer_to_state[k], extracted.flat))) + index_from
 
     return labels.reshape(kmer_array.shape).astype('i4')
@@ -275,7 +275,7 @@ def raw_remap(ref, signal, min_prob, kmer_len, prior, slip, alphabet):
     post = sloika.decode.prepare_post(batch.calc_post(inMat), min_prob=min_prob, drop_bad=False)
 
     kmers = np.array(bio.seq_to_kmers(ref, kmer_len))
-    kmer_to_state = bio.kmer_mapping(kmer_len, alphabet=bytes(alphabet))
+    kmer_to_state = bio.kmer_mapping(kmer_len, alphabet=alphabet)
     seq = [kmer_to_state[k] + 1 for k in kmers]
     prior0 = None if prior[0] is None else sloika.util.geometric_prior(len(seq), prior[0])
     prior1 = None if prior[1] is None else sloika.util.geometric_prior(len(seq), prior[1], rev=True)
