@@ -2,7 +2,7 @@
 #  Yaml CI config for Gitlab See. http://docs.gitlab.com/ce/ci/yaml/README.html
 #
 
-image: git.oxfordnanolabs.local:4567/algorithm/sloika_docker:16.04-latest
+image: git.oxfordnanolabs.local:4567/algorithm/sloika_docker:14.04-latest
 
 stages:
     - build
