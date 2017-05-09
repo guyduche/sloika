@@ -1,11 +1,4 @@
-#!/usr/bin/env python
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
-from future import standard_library
-standard_library.install_aliases()
-from builtins import *
-
+#!/usr/bin/env python3
 import argparse
 import csv
 from collections import OrderedDict
@@ -43,8 +36,6 @@ STRAND = {0 : '+',
 
 QUANTILES = [5, 25, 50, 75, 95]
 
-
-WRITE_MODE = 'w' if sys.version_info.major == 3 else 'wb'
 
 
 def call_bwa_mem(fin, fout, genome, clargs=''):
@@ -232,7 +223,7 @@ if __name__ == '__main__':
             # compile accuracy metrics
             acc_dat = samacc(samfile, min_coverage=args.coverage)
             if len(acc_dat) > 0:
-                with open(samaccfile, WRITE_MODE) as fs:
+                with open(samaccfile, 'w') as fs:
                     fields = list(acc_dat[0].keys())
                     writer = csv.DictWriter(fs, fieldnames=fields, delimiter=' ')
                     writer.writeheader()
@@ -244,7 +235,7 @@ if __name__ == '__main__':
             if f is not None:
                 f.savefig(graphfile)
             sys.stdout.write('\n' + report + '\n')
-            with open(summaryfile, WRITE_MODE) as fs:
+            with open(summaryfile, 'w') as fs:
                 fs.writelines(report)
         except:
             sys.stderr.write("{}: something went wrong, skipping\n\n".format(fn))

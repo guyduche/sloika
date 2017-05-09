@@ -98,7 +98,7 @@ pip_install_dot:
     before_script:
         - apt-get install -y virtualenv python2.7 python-dev python3-dev
         - virtualenv --python=python2.7 hoho
-        - source hoho/bin/activate && pip install numpy cython future
+        - source hoho/bin/activate && pip install numpy cython
     script:
         - source hoho/bin/activate && pip install . --trusted-host pypi.oxfordnanolabs.local --index-url https://pypi.oxfordnanolabs.local/simple/
 

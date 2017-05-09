@@ -1,11 +1,4 @@
-#!/usr/bin/env python
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
-from future import standard_library
-standard_library.install_aliases()
-from builtins import *
-
+#!/usr/bin/env python3
 import argparse
 import json
 import numpy as np
@@ -45,16 +38,12 @@ class CustomEncoder(json.JSONEncoder):
 if __name__ == "__main__":
     args = parser.parse_args()
     with open(args.model, 'rb') as fh:
-        if sys.version_info.major == 3:
-            model = pickle.load(fh, encoding='latin1')
-        else:
-            model = pickle.load(fh)
+        model = pickle.load(fh, encoding='latin1')
 
     json_out = model.json(args.params)
 
     if args.out_file is not None:
-        mode = 'w' if sys.version_info.major == 3 else 'wb'
-        with open(args.out_file, mode) as f:
+        with open(args.out_file, 'w') as f:
             print("Writing to file: ", args.out_file)
             json.dump(json_out, f, indent=4, cls=CustomEncoder)
     else:

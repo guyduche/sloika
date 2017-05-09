@@ -1,10 +1,3 @@
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
-from future import standard_library
-standard_library.install_aliases()
-from builtins import *
-
 import h5py
 from nose_parameterized import parameterized
 import os
@@ -41,20 +34,14 @@ class AcceptanceTest(unittest.TestCase):
 
     def test_usage(self):
         cmd = [self.script]
-        if sys.version_info.major == 3:
-            msg = "train_network.py: error: the following arguments are required: command"
-        else:
-            msg = "train_network.py: error: too few arguments"
+        msg = "train_network.py: error: the following arguments are required: command"
         util.run_cmd(self, cmd).expect_exit_code(2).expect_stderr(util.last_line_starts_with(msg))
 
     @parameterized.expand(known_commands)
     def test_commands_usage(self, command_name):
         cmd = [self.script, command_name]
-        if sys.version_info.major == 3:
-            msg = "train_network.py {}: error: the following arguments are required: model, output, input".format(
+        msg = "train_network.py {}: error: the following arguments are required: model, output, input".format(
                 command_name)
-        else:
-            msg = "train_network.py {}: error: too few arguments".format(command_name)
         util.run_cmd(self, cmd).expect_exit_code(2).expect_stderr(util.last_line_starts_with(msg))
 
     @parameterized.expand([

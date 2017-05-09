@@ -1,9 +1,3 @@
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
-from future import standard_library
-standard_library.install_aliases()
-from builtins import *
 import abc
 import pickle
 import json
@@ -17,7 +11,6 @@ import theano.tensor as T
 from sloika import activation
 from sloika.config import sloika_dtype
 import sloika.layers as nn
-from future.utils import with_metaclass
 
 
 def rvs(dim):
@@ -295,7 +288,7 @@ class ANNTest(unittest.TestCase):
         np.testing.assert_almost_equal(res, self.res)
 
 
-class LayerTest(with_metaclass(abc.ABCMeta, object)):
+class LayerTest(metaclass=abc.ABCMeta):
     """Mixin abstract class for testing basic layer functionality
     Writing a TestCase for a new layer is easy, for example:
 
