@@ -56,6 +56,7 @@ workflow:
         - make ciCheckout
         - make cleanDevEnvPy3
     script:
+        - apt-get install -y bwa
         - make workflow
 
 dev_env_and_style:
