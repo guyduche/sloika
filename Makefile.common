@@ -108,11 +108,11 @@ wheelPy3: cleanTmpEnvWithDepsPy3
 
 .PHONY: cleanTmpEnvWithWheelInstalled
 cleanTmpEnvWithWheelInstalled: cleanTmpEnv
-	${inTmpEnv} ${pipInstall} ${whlFile}
+	${inTmpEnv} ${pipInstall} --find-links=dist/ "sloika==${projectVersion}"
 
 .PHONY: cleanTmpEnvWithWheelInstalledPy3
 cleanTmpEnvWithWheelInstalledPy3: cleanTmpEnvPy3
-	${inTmpEnvPy3} ${pipInstall} ${whlFilePy3}
+	${inTmpEnvPy3} ${pipInstall} --find-links=dist/ "sloika==${projectVersion}"
 
 
 .PHONY: autopep8
