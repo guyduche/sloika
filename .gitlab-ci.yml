@@ -58,6 +58,10 @@ workflow:
     script:
         - apt-get install -y bwa
         - make workflow
+    only:
+        - release
+        - master
+        - /^ci_*/
 
 dev_env_and_style:
     stage: test
