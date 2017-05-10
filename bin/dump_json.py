@@ -4,6 +4,7 @@ import json
 import numpy as np
 import pickle
 import sys
+import warnings
 
 from untangled.cmdargs import AutoBool, FileExists, FileAbsent
 
@@ -37,8 +38,13 @@ class CustomEncoder(json.JSONEncoder):
 
 if __name__ == "__main__":
     args = parser.parse_args()
-    with open(args.model, 'rb') as fh:
-        model = pickle.load(fh, encoding='latin1')
+    try:
+        with open(args.model, 'rb') as fh:
+            model = pickle.load(fh)
+    except UnicodeDecodeError:
+        with open(args.model, 'rb') as fh:
+            model = pickle.load(fh, encoding='latin1')
+            warnings.warn("Support for python 2 pickles will be dropped: {}".format(args.model))
 
     json_out = model.json(args.params)
 

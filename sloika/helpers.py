@@ -4,6 +4,7 @@ import pickle
 import shutil
 import sys
 import tempfile
+import warnings
 
 
 def _compile_model(outqueue, model_file, output_file=None):
@@ -29,8 +30,13 @@ def _compile_model(outqueue, model_file, output_file=None):
             output_file = fh.name
 
     sys.setrecursionlimit(10000)
-    with open(model_file, 'rb') as fh:
-        network = pickle.load(fh, encoding='latin1')
+    try:
+        with open(model_file, 'rb') as fh:
+            network = pickle.load(fh)
+    except UnicodeDecodeError:
+        with open(model_file, 'rb') as fh:
+            network = pickle.load(fh, encoding='latin1')
+            warnings.warn("Support for python 2 pickles will be dropped: {}".format(model_file))
     if isinstance(network, layers.Layer):
         #  File contains network to compile
         with open(output_file, 'wb') as fh:
