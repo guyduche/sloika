@@ -227,7 +227,7 @@ if __name__ == '__main__':
                 assert "bwa" in bwa_output
                 sys.stdout.write(bwa_output)
             except:
-                sys.stdout.write(bwa.output.decode(sys.stdout.encoding))
+                sys.stdout.write(bwa_output.decode(sys.stdout.encoding))
 
             # compile accuracy metrics
             acc_dat = samacc(samfile, min_coverage=args.coverage)
