@@ -20,4 +20,4 @@ deps:
 .PHONY: workflow
 workflow:
 	${inDevEnvPy3} $${SCRIPTS_DIR}/workflow.sh
-	${inEnvPy3} if [[ ! -e $${BUILD_DIR}/workflow/training/model_final.pkl ]]; then exit 1; fi
+	${inEnv} if [[ ! -e $${BUILD_DIR}/workflow/training/model_final.pkl ]]; then exit 1; fi
