@@ -40,7 +40,7 @@ def chunkify_with_remap_main(args):
 
     kwarg_names = ['trim', 'min_prob', 'kmer_len', 'min_length',
                    'prior', 'slip', 'chunk_len', 'use_scaled', 'normalisation',
-                   'section', 'segmentation', 'alphabet']
+                   'section', 'segmentation']
     kwargs = util.get_kwargs(args, kwarg_names)
     kwargs['references'] = references
 
@@ -52,7 +52,7 @@ def chunkify_with_remap_main(args):
     label_list = []
     for res in imap_mp(batch.chunk_remap_worker, fast5_files, threads=args.jobs,
                        fix_kwargs=kwargs, unordered=True, init=batch.init_chunk_remap_worker,
-                       initargs=[compiled_file]):
+                       initargs=[compiled_file, args.kmer_len, args.alphabet]):
         if res is not None:
             i = util.progress_report(i)
 

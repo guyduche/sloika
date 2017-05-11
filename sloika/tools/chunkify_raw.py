@@ -106,7 +106,7 @@ def interpolate_pos(mapping_table, att):
     return interp
 
 
-def interpolate_labels(mapping_table, att, alphabet):
+def interpolate_labels(mapping_table, att):
     """Return a function: time -> reference kmer by interpolating mapping
 
     :param mapping_table: mapping table with fields start, length, seq_pos and kmer
@@ -114,14 +114,13 @@ def interpolate_labels(mapping_table, att, alphabet):
         (mapping_table, att) could be returned by f5file.get_any_mapping_data()
     """
     def interp(t, k=5):
-        mapping = bio.kmer_mapping(k, alphabet=alphabet)
         pos = interpolate_pos(mapping_table, att)(t, k)
-        return np.array([mapping[att['reference'][i: i + k]] for i in pos]) + 1
+        return np.array([batch.kmer_to_state[att['reference'][i: i + k]] for i in pos]) + 1
 
     return interp
 
 
-def labels_from_mapping_table(kmer_array, kmer_len, index_from=1, alphabet="ACGT"):
+def labels_from_mapping_table(kmer_array, kmer_len, index_from=1):
     """Extract shortened kmers from an array of kmers
 
     :param kmer_array: a numpy array of kmers
@@ -138,8 +137,7 @@ def labels_from_mapping_table(kmer_array, kmer_len, index_from=1, alphabet="ACGT
     extracted = np.chararray(kmer_array.shape, kmer_len, buffer=kmer_array.data,
                              offset=offset, strides=kmer_array.strides)
 
-    kmer_to_state = bio.kmer_mapping(kmer_len, alphabet=alphabet)
-    labels = np.array(list(map(lambda k: kmer_to_state[k], extracted.flat))) + index_from
+    labels = np.array(list(map(lambda k: batch.kmer_to_state[k], extracted.flat))) + index_from
 
     return labels.reshape(kmer_array.shape).astype('i4')
 
@@ -164,7 +162,7 @@ def index_of_previous_non_zero(input_array):
 
 
 def raw_chunkify(signal, mapping_table, chunk_len, kmer_len, normalisation,
-                 downsample_factor, interpolation, mapping_attrs=None, alphabet="ACGT"):
+                 downsample_factor, interpolation, mapping_attrs=None):
     """ Generate labelled data chunks from raw signal and mapping table
     """
     assert len(signal) >= chunk_len
@@ -189,11 +187,11 @@ def raw_chunkify(signal, mapping_table, chunk_len, kmer_len, normalisation,
     if interpolation:
         block_midpoints = np.arange(0, ub, downsample_factor)
         pos = interpolate_pos(mapping_table, mapping_attrs)(block_midpoints, kmer_len)
-        sig_labels = interpolate_labels(mapping_table, mapping_attrs)(block_midpoints, kmer_len, alphabet)
+        sig_labels = interpolate_labels(mapping_table, mapping_attrs)(block_midpoints, kmer_len)
         sig_labels[np.ediff1d(pos, to_begin=1) == 0] = 0
         sig_labels = sig_labels.reshape((ml, -1))
     else:
-        all_labels = labels_from_mapping_table(mapping_table['kmer'], kmer_len, alphabet)
+        all_labels = labels_from_mapping_table(mapping_table['kmer'], kmer_len)
         labels = all_labels[mapping_table['move'] > 0]
         all_starts = mapping_table['start'][index_of_previous_non_zero(mapping_table['move'])]
         starts = all_starts[mapping_table['move'] > 0]
@@ -213,7 +211,7 @@ def raw_chunkify(signal, mapping_table, chunk_len, kmer_len, normalisation,
 
 
 def raw_chunk_worker(fn, chunk_len, kmer_len, min_length, trim, normalisation,
-                     downsample_factor, interpolation=False, alphabet="ACGT"):
+                     downsample_factor, interpolation=False):
     """ Worker for creating labelled features from raw data
 
     :param fn: A filename to read from.
@@ -259,7 +257,7 @@ def raw_chunk_worker(fn, chunk_len, kmer_len, min_length, trim, normalisation,
             np.ascontiguousarray(sig_bad))
 
 
-def raw_remap(ref, signal, min_prob, kmer_len, prior, slip, alphabet):
+def raw_remap(ref, signal, min_prob, kmer_len, prior, slip):
     """ Map raw signal to reference sequence using transducer model"""
     from sloika import config  # local import to avoid CUDA init in main thread
 
@@ -268,8 +266,7 @@ def raw_remap(ref, signal, min_prob, kmer_len, prior, slip, alphabet):
     post = sloika.decode.prepare_post(batch.calc_post(inMat), min_prob=min_prob, drop_bad=False)
 
     kmers = np.array(bio.seq_to_kmers(ref, kmer_len))
-    kmer_to_state = bio.kmer_mapping(kmer_len, alphabet=alphabet)
-    seq = [kmer_to_state[k] + 1 for k in kmers]
+    seq = [batch.kmer_to_state[k] + 1 for k in kmers]
     prior0 = None if prior[0] is None else sloika.util.geometric_prior(len(seq), prior[0])
     prior1 = None if prior[1] is None else sloika.util.geometric_prior(len(seq), prior[1], rev=True)
 
@@ -302,7 +299,7 @@ def raw_remap(ref, signal, min_prob, kmer_len, prior, slip, alphabet):
 
 def raw_chunk_remap_worker(fn, trim, min_prob, kmer_len, min_length,
                            prior, slip, chunk_len, normalisation, downsample_factor,
-                           interpolation, open_pore_fraction, references, alphabet):
+                           interpolation, open_pore_fraction, references):
     """ Worker function for `chunkify raw_remap` remapping reads using raw signal"""
     try:
         with fast5.Reader(fn) as f5:
@@ -326,7 +323,7 @@ def raw_chunk_remap_worker(fn, trim, min_prob, kmer_len, min_length,
         return None
 
     try:
-        (score, mapping_table, path, seq) = raw_remap(read_ref, signal, min_prob, kmer_len, prior, slip, alphabet)
+        (score, mapping_table, path, seq) = raw_remap(read_ref, signal, min_prob, kmer_len, prior, slip)
     except Exception as e:
         sys.stderr.write("Failure remapping read {}.\n{}\n".format(sn, repr(e)))
         return None
@@ -356,13 +353,14 @@ def raw_chunkify_with_identity_main(args):
 
     print('* Processing data using', args.jobs, 'threads')
 
-    kwarg_names = ['chunk_len', 'kmer_len', 'min_length', 'trim', 'normalisation', 'downsample_factor', 'interpolation', 'alphabet']
+    kwarg_names = ['chunk_len', 'kmer_len', 'min_length', 'trim', 'normalisation', 'downsample_factor', 'interpolation']
     i = 0
     bad_list = []
     chunk_list = []
     label_list = []
     for res in imap_mp(raw_chunk_worker, fast5_files, threads=args.jobs,
-                       unordered=True, fix_kwargs=util.get_kwargs(args, kwarg_names)):
+                       unordered=True, fix_kwargs=util.get_kwargs(args, kwarg_names),
+                       init=batch.init_chunk_identity_worker, initargs=[args.kmer_len, args.alphabet]):
         if res is not None:
             i = util.progress_report(i)
 
@@ -423,7 +421,7 @@ def raw_chunkify_with_remap_main(args):
 
     kwarg_names = ['trim', 'min_prob', 'kmer_len', 'min_length',
                    'prior', 'slip', 'chunk_len', 'normalisation', 'downsample_factor',
-                   'interpolation', 'open_pore_fraction', 'alphabet']
+                   'interpolation', 'open_pore_fraction']
     kwargs = util.get_kwargs(args, kwarg_names)
     kwargs['references'] = references
 
@@ -435,7 +433,7 @@ def raw_chunkify_with_remap_main(args):
     label_list = []
     for res in imap_mp(raw_chunk_remap_worker, fast5_files, threads=args.jobs,
                        fix_kwargs=kwargs, unordered=True, init=batch.init_chunk_remap_worker,
-                       initargs=[compiled_file]):
+                       initargs=[compiled_file, args.kmer_len, args.alphabet]):
         if res is not None:
             i = util.progress_report(i)
 

@@ -22,13 +22,14 @@ def chunkify_with_identity_main(args):
 
     print('* Processing data using', args.jobs, 'threads')
 
-    kwarg_names = ['section', 'chunk_len', 'kmer_len', 'min_length', 'trim', 'use_scaled', 'normalisation', 'alphabet']
+    kwarg_names = ['section', 'chunk_len', 'kmer_len', 'min_length', 'trim', 'use_scaled', 'normalisation']
     i = 0
     bad_list = []
     chunk_list = []
     label_list = []
     for res in imap_mp(batch.chunk_worker, fast5_files, threads=args.jobs,
-                       unordered=True, fix_kwargs=util.get_kwargs(args, kwarg_names)):
+                       unordered=True, fix_kwargs=util.get_kwargs(args, kwarg_names),
+                       init=batch.init_chunk_identity_worker, initargs=[args.kmer_len, args.alphabet]):
         if res is not None:
             i = util.progress_report(i)
 
