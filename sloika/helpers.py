@@ -1,20 +1,10 @@
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
-from future import standard_library
-standard_library.install_aliases()
-from builtins import *
-
 from multiprocessing import Process
-try:
-    # Python 3.3 or later
-    from multiprocessing import SimpleQueue
-except ImportError:
-    from multiprocessing.queues import SimpleQueue
+from multiprocessing import SimpleQueue
 import pickle
 import shutil
 import sys
 import tempfile
+import warnings
 
 
 def _compile_model(outqueue, model_file, output_file=None):
@@ -40,11 +30,13 @@ def _compile_model(outqueue, model_file, output_file=None):
             output_file = fh.name
 
     sys.setrecursionlimit(10000)
-    with open(model_file, 'rb') as fh:
-        if sys.version_info.major == 3:
-            network = pickle.load(fh, encoding='latin1')
-        else:
+    try:
+        with open(model_file, 'rb') as fh:
             network = pickle.load(fh)
+    except UnicodeDecodeError:
+        with open(model_file, 'rb') as fh:
+            network = pickle.load(fh, encoding='latin1')
+            warnings.warn("Support for python 2 pickles will be dropped: {}".format(model_file))
     if isinstance(network, layers.Layer):
         #  File contains network to compile
         with open(output_file, 'wb') as fh:

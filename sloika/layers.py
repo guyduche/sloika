@@ -1,9 +1,3 @@
-from __future__ import division
-from __future__ import print_function
-from __future__ import absolute_import
-from future import standard_library
-standard_library.install_aliases()
-from builtins import *
 import abc
 from collections import OrderedDict
 import theano as th
@@ -14,7 +8,7 @@ from sloika import activation, conv
 from sloika.config import sloika_dtype
 from sloika.variables import NBASE, nkmer
 from functools import reduce
-from future.utils import with_metaclass
+
 
 """  Convention: inMat row major (C ordering) as (time, batch, state)
 """
@@ -35,7 +29,7 @@ def _extract(x, shape=None):
     return xv.tolist()
 
 
-class Layer(with_metaclass(abc.ABCMeta, object)):
+class Layer(metaclass=abc.ABCMeta):
 
     def compile(self):
         x = T.tensor3()

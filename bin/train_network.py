@@ -1,11 +1,4 @@
-#!/usr/bin/env python
-from __future__ import division
-from __future__ import print_function
-from __future__ import absolute_import
-from future import standard_library
-standard_library.install_aliases()
-from builtins import *
-
+#!/usr/bin/env python3
 import argparse
 import pickle
 import h5py
@@ -69,6 +62,8 @@ common_parser.add_argument('--sd', default=0.5, metavar='value', type=Positive(f
                            help='Standard deviation to initialise with')
 common_parser.add_argument('--seed', default=None, metavar='integer', type=Positive(int),
                            help='Set random number seed')
+common_parser.add_argument('--smooth', default=0.45, metavar='factor', type=proportion,
+                           help='Smoothing factor for reporting progress')
 common_parser.add_argument('--transducer', default=True, action=AutoBool,
                            help='Train a transducer based model')
 common_parser.add_argument('--version', nargs=0, action=display_version_and_exit, metavar=__version__,
@@ -96,6 +91,23 @@ parser_raw.add_argument('--drop', default=20, metavar='samples', type=NonNegativ
                         help='Number of labels to drop from start and end of chunk before evaluating loss')
 parser_raw.add_argument('--winlen', default=11, type=Positive(int),
                         help='Length of window over data')
+
+
+class ExponentialSmoother(object):
+    def __init__(self, factor, val=0.0, weight=1e-30):
+        assert 0.0 <= factor <=1.0, "Smoothing factor was {}, should be between 0.0 and 1.0.\n".format(factor)
+        self.factor = factor
+        self.val = val
+        self.weight = weight
+
+    @property
+    def value(self):
+        return self.val / self.weight
+
+    def update(self, val, weight=1.0):
+        self.val = self.factor * self.val + (1.0 - self.factor) * val
+        self.weight = self.factor * self.weight + (1.0 - self.factor) * weight
+
 
 
 def remove_blanks(labels):
@@ -153,10 +165,7 @@ class Logger(object):
             sys.stdout.write(message)
             sys.stdout.flush()
         try:
-            if sys.version_info.major == 3:
-                self.fh.write(message.encode('utf-8'))
-            else:
-                self.fh.write(message)
+            self.fh.write(message.encode('utf-8'))
         except IOError as e:
             print("Failed to write to log\n Message: {}\n Error: {}".format(message, repr(e)))
 
@@ -257,9 +266,8 @@ if __name__ == '__main__':
     fg = wrap_network(network, min_prob=args.min_prob, l2=args.l2, drop=args.drop)
 
     total_ev = 0
-    score = wscore = 0.0
-    acc = wacc = 0.0
-    SMOOTH = 0.8
+    score_smoothed = ExponentialSmoother(args.smooth)
+    acc_smoothed = ExponentialSmoother(args.smooth)
 
     log.write('* Dumping initial model\n')
     save_model(network, args.output, 0)
@@ -290,10 +298,8 @@ if __name__ == '__main__':
         fval = float(fval)
         nev = np.size(labels)
         total_ev += nev
-        score = fval + SMOOTH * score
-        acc = batch_acc + SMOOTH * acc
-        wscore = 1.0 + SMOOTH * wscore
-        wacc = 1.0 + SMOOTH * wacc
+        score_smoothed.update(fval)
+        acc_smoothed.update(batch_acc)
 
         if (i + 1) % args.save_every == 0:
             save_model(network, args.output, (i + 1) // args.save_every)
@@ -305,7 +311,7 @@ if __name__ == '__main__':
             tn = time.time()
             dt = tn - t0
             t = ' {:5d} {:5.3f}  {:5.2f}%  {:5.2f}s ({:.2f} kev/s)\n'
-            log.write(t.format((i + 1) // 50, score / wscore, 100.0 * acc / wacc, dt, total_ev / 1000.0 / dt))
+            log.write(t.format((i + 1) // 50, score_smoothed.value, 100.0 * acc_smoothed.value, dt, total_ev / 1000.0 / dt))
             total_ev = 0
             t0 = tn
 
