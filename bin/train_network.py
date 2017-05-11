@@ -95,7 +95,7 @@ parser_raw.add_argument('--winlen', default=11, type=Positive(int),
 
 class ExponentialSmoother(object):
     def __init__(self, factor, val=0.0, weight=1e-30):
-        assert 0.0 <= factor <=1.0, "Smoothing factor was {}, should be between 0.0 and 1.0.\n".format(factor)
+        assert 0.0 <= factor <= 1.0, "Smoothing factor was {}, should be between 0.0 and 1.0.\n".format(factor)
         self.factor = factor
         self.val = val
         self.weight = weight
@@ -107,7 +107,6 @@ class ExponentialSmoother(object):
     def update(self, val, weight=1.0):
         self.val = self.factor * self.val + (1.0 - self.factor) * val
         self.weight = self.factor * self.weight + (1.0 - self.factor) * weight
-
 
 
 def remove_blanks(labels):
@@ -311,7 +310,8 @@ if __name__ == '__main__':
             tn = time.time()
             dt = tn - t0
             t = ' {:5d} {:5.3f}  {:5.2f}%  {:5.2f}s ({:.2f} kev/s)\n'
-            log.write(t.format((i + 1) // 50, score_smoothed.value, 100.0 * acc_smoothed.value, dt, total_ev / 1000.0 / dt))
+            log.write(t.format((i + 1) // 50, score_smoothed.value,
+                      100.0 * acc_smoothed.value, dt, total_ev / 1000.0 / dt))
             total_ev = 0
             t0 = tn
 

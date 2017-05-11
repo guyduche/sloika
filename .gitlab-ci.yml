@@ -15,15 +15,19 @@ before_script:
 wheel:
     stage: build
     script:
-        - make wheelPy3
+        - make wheel
     artifacts:
         paths:
             - dist/*.whl
+    only:
+        - release
+        - master
+        - /^ci_*/
 
 unit_xenial:
     stage: test
     script:
-        - make unitTestFromScratchPy3
+        - make unitTestFromScratch
     only:
         - release
         - master
@@ -32,8 +36,20 @@ unit_xenial:
 acceptance_xenial:
     stage: test
     script:
-        - make acceptanceTestFromScratchPy3
+        - make acceptanceTestFromScratch
     only:
+        - release
+        - master
+        - /^ci_*/
+
+
+test:
+    image: git.oxfordnanolabs.local:4567/algorithm/sloika_docker:14.04-latest
+    stage: test
+    script:
+        - make cleanDevEnv
+        - make
+    except:
         - release
         - master
         - /^ci_*/
@@ -42,19 +58,28 @@ unit_trusty:
     image: git.oxfordnanolabs.local:4567/algorithm/sloika_docker:14.04-latest
     stage: test
     script:
-        - make unitTestFromScratchPy3
+        - make unitTestFromScratch
+    only:
+        - release
+        - master
+        - /^ci_*/
 
 acceptance_trusty:
     image: git.oxfordnanolabs.local:4567/algorithm/sloika_docker:14.04-latest
     stage: test
     script:
-        - make acceptanceTestFromScratchPy3
+        - make acceptanceTestFromScratch
+    only:
+        - release
+        - master
+        - /^ci_*/
+
 
 workflow:
     stage: test
     before_script:
         - make ciCheckout
-        - make cleanDevEnvPy3
+        - make cleanDevEnv
     script:
         - apt-get install -y bwa
         - make workflow
@@ -62,11 +87,6 @@ workflow:
         - release
         - master
         - /^ci_*/
-
-dev_env_and_style:
-    stage: test
-    script:
-        - make cleanDevEnvPy3
 
 pip_install_dot:
     stage: test
@@ -76,6 +96,10 @@ pip_install_dot:
         - source hoho/bin/activate && pip install pip --upgrade && pip install numpy cython
     script:
         - source hoho/bin/activate && pip install . --trusted-host pypi.oxfordnanolabs.local --index-url https://pypi.oxfordnanolabs.local/simple/
+    only:
+        - release
+        - master
+        - /^ci_*/
 
 wheel_upload:
     stage: release
