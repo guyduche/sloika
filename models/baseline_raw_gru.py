@@ -13,7 +13,7 @@ def network(klen, sd, nbase=4, nfeature=1, winlen=11, stride=2, size=64):
 
     :returns: a `class`:layer.Layer:
     """
-    _prn = smt.partial(smt._rn, sd=sd)
+    _prn = smt.partial(smt.truncated_normal, sd=sd)
     nstate = smt.nstate(klen, base=nbase)
     gru_act = smt.tanh
     ff_act = smt.tanh

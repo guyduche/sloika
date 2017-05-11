@@ -348,6 +348,9 @@ class LayerTest(metaclass=abc.ABCMeta):
     def test_007_should_have_size_property(self):
         size = self.layer.size
 
+    def test_008_should_have_name_property(self):
+        name = self.layer.name
+
 
 class RecurrentTest(LayerTest, unittest.TestCase):
     _INPUTS = [np.zeros((10, 20, 12)),
