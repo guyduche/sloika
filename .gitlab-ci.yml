@@ -38,17 +38,37 @@ acceptance_xenial:
         - master
         - /^ci_*/
 
+
+test_trusty:
+    image: git.oxfordnanolabs.local:4567/algorithm/sloika_docker:14.04-latest
+    stage: test
+    script:
+        - make
+    except:
+        - release
+        - master
+        - /^ci_*/
+
 unit_trusty:
     image: git.oxfordnanolabs.local:4567/algorithm/sloika_docker:14.04-latest
     stage: test
     script:
         - make unitTestFromScratch
+    only:
+        - release
+        - master
+        - /^ci_*/
 
 acceptance_trusty:
     image: git.oxfordnanolabs.local:4567/algorithm/sloika_docker:14.04-latest
     stage: test
     script:
         - make acceptanceTestFromScratch
+    only:
+        - release
+        - master
+        - /^ci_*/
+
 
 workflow:
     stage: test
