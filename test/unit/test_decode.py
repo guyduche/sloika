@@ -239,3 +239,20 @@ class TestDecode(unittest.TestCase):
         score, path = decode.viterbi(self.post3, 3, skip_pen=3.0)
         self.assertAlmostEqual(score, -11.936803444063674)
         self.assertEqual(path, [49, 7, 31, 63, 63])
+
+
+class TestDecodeModifiedBases(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(self):
+        self.bases = "AGGTCOGGTOOCC"
+        self.seq = [13, 64, 0, 67, 85, 0, 48, 0, 0, 113, 64, 0, 100, 0, 0, 122, 0, 107]
+        post = np.random.uniform(size=(len(self.seq), 126))
+        post = 0.01 * post
+        post[range(len(self.seq)), self.seq] = 1
+        post /= post.sum(1, keepdims=True)
+        self.post = post
+
+    def test_viterbi(self):
+        score, path = decode.viterbi(self.post, 3, skip_pen=5.0, nbase=5)
+        self.assertEqual(path, [x - 1 for x in self.seq if x])
