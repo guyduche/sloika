@@ -5,14 +5,14 @@ bin:=${pwd}bin/
 nproc:=$(shell nproc)
 
 # set this to nothing to get system environment
-envCmd?=source $${DEV_VIRTUALENV_DIR}/bin/activate &&
-envCmdPy3?=source $${DEV_VIRTUALENV_DIR_PY3}/bin/activate &&
+envCmdPy2?=source $${DEV_VIRTUALENV_DIR}/bin/activate &&
+envCmd?=source $${DEV_VIRTUALENV_DIR_PY3}/bin/activate &&
 
 pipInstall:=pip install --trusted-host pypi.oxfordnanolabs.local --index-url https://pypi.oxfordnanolabs.local/simple/
-inTmpEnv:=source environment && source $${TMP_VIRTUALENV_DIR}/bin/activate &&
-inTmpEnvPy3:=source environment && source $${TMP_VIRTUALENV_DIR_PY3}/bin/activate &&
+inTmpEnvPy2:=source environment && source $${TMP_VIRTUALENV_DIR}/bin/activate &&
+inTmpEnv:=source environment && source $${TMP_VIRTUALENV_DIR_PY3}/bin/activate &&
+inDevEnvPy2:=source environment && ${envCmdPy2}
 inDevEnv:=source environment && ${envCmd}
-inDevEnvPy3:=source environment && ${envCmdPy3}
 inEnv:=source environment &&
 
 
@@ -23,7 +23,7 @@ default: testInEnv
 test: testNoEnv
 
 .PHONY: testInEnv
-testInEnv: unitTestPy3 acceptanceTestPy3
+testInEnv: unitTest acceptanceTest
 
 .PHONY: testNoEnv
 testNoEnv: unitTestNoEnv acceptanceTestNoEnv
@@ -35,48 +35,48 @@ testNoEnv: unitTestNoEnv acceptanceTestNoEnv
 pyTestArgs?=-n auto
 unitset?=
 unitTestCmd:=${pipInstall} -r test/unit/requirements.txt && cd test/unit && py.test ${pyTestArgs} -v -s --fulltrace ${unitset}
-.PHONY: unitTest unitTestFromScratch
+.PHONY: unitTestPy2 unitTestFromScratchPy2
+unitTestPy2:
+	${inDevEnvPy2} ${unitTestCmd}
 unitTest:
 	${inDevEnv} ${unitTestCmd}
-unitTestPy3:
-	${inDevEnvPy3} ${unitTestCmd}
+unitTestFromScratchPy2: cleanTmpEnvWithWheelInstalledPy2
+	${inTmpEnvPy2} ${unitTestCmd}
 unitTestFromScratch: cleanTmpEnvWithWheelInstalled
 	${inTmpEnv} ${unitTestCmd}
-unitTestFromScratchPy3: cleanTmpEnvWithWheelInstalledPy3
-	${inTmpEnvPy3} ${unitTestCmd}
 unitTestNoEnv:
 	${unitTestCmd}
 
 accset?=
 acceptanceTestCmd:=${pipInstall} -r test/acceptance/requirements.txt && cd test/acceptance && py.test ${pyTestArgs} -v -s --fulltrace ${accset}
-.PHONY: acceptanceTest acceptanceTestFromScratch
+.PHONY: acceptanceTestPy2 acceptanceTestFromScratchPy2
+acceptanceTestPy2:
+	${inDevEnvPy2} ${acceptanceTestCmd}
 acceptanceTest:
 	${inDevEnv} ${acceptanceTestCmd}
-acceptanceTestPy3:
-	${inDevEnvPy3} ${acceptanceTestCmd}
+acceptanceTestFromScratchPy2: cleanTmpEnvWithWheelInstalledPy2
+	${inTmpEnvPy2} ${acceptanceTestCmd}
 acceptanceTestFromScratch: cleanTmpEnvWithWheelInstalled
 	${inTmpEnv} ${acceptanceTestCmd}
-acceptanceTestFromScratchPy3: cleanTmpEnvWithWheelInstalledPy3
-	${inTmpEnvPy3} ${acceptanceTestCmd}
 acceptanceTestNoEnv:
 	${acceptanceTestCmd}
 
 
-.PHONY: cleanDevEnv
-cleanDevEnv: cleanVirtualenv
+.PHONY: cleanDevEnvPy2
+cleanDevEnvPy2: cleanVirtualenvPy2
 	./setup-dev-env.sh
 
-.PHONY: cleanDevEnvPy3
-cleanDevEnvPy3: cleanVirtualenvPy3
+.PHONY: cleanDevEnv
+cleanDevEnv: cleanVirtualenv
 	PY3=True ./setup-dev-env.sh
 
-.PHONY: cleanVirtualenv
-cleanVirtualenv:
+.PHONY: cleanVirtualenvPy2
+cleanVirtualenvPy2:
 	${inEnv} rm -rf $${DEV_VIRTUALENV_DIR}
 	./setup-virtualenv.sh
 
-.PHONY: cleanVirtualenvPy3
-cleanVirtualenvPy3:
+.PHONY: cleanVirtualenv
+cleanVirtualenv:
 	${inEnv} rm -rf $${DEV_VIRTUALENV_DIR_PY3}
 	PY3=True ./setup-virtualenv.sh
 
@@ -89,69 +89,69 @@ ciCheckout:
 	rm -rf data
 	for i in 1 2 3 4 5; do git submodule update --init && break || sleep 9; done
 
+.PHONY: cleanTmpEnvPy2
+cleanTmpEnvPy2:
+	source environment && rm -rf $${TMP_VIRTUALENV_DIR} && virtualenv $${TMP_VIRTUALENV_DIR}
+	${inTmpEnvPy2} pip install pip --upgrade
+
 .PHONY: cleanTmpEnv
 cleanTmpEnv:
-	source environment && rm -rf $${TMP_VIRTUALENV_DIR} && virtualenv $${TMP_VIRTUALENV_DIR}
+	source environment && rm -rf $${TMP_VIRTUALENV_DIR_PY3} && virtualenv -p python3 $${TMP_VIRTUALENV_DIR_PY3}
 	${inTmpEnv} pip install pip --upgrade
 
-.PHONY: cleanTmpEnvPy3
-cleanTmpEnvPy3:
-	source environment && rm -rf $${TMP_VIRTUALENV_DIR_PY3} && virtualenv -p python3 $${TMP_VIRTUALENV_DIR_PY3}
-	${inTmpEnvPy3} pip install pip --upgrade
+.PHONY: cleanTmpEnvWithDepsPy2
+cleanTmpEnvWithDepsPy2: cleanTmpEnvPy2
+	${inTmpEnvPy2} ${pipInstall} -r scripts/requirements.txt && \
+	            ${pipInstall} -r requirements.txt
 
 .PHONY: cleanTmpEnvWithDeps
 cleanTmpEnvWithDeps: cleanTmpEnv
 	${inTmpEnv} ${pipInstall} -r scripts/requirements.txt && \
-	            ${pipInstall} -r requirements.txt
-
-.PHONY: cleanTmpEnvWithDepsPy3
-cleanTmpEnvWithDepsPy3: cleanTmpEnvPy3
-	${inTmpEnvPy3} ${pipInstall} -r scripts/requirements.txt && \
 	               ${pipInstall} -r requirements.txt
+
+.PHONY: wheelPy2
+wheelPy2: cleanTmpEnvWithDepsPy2
+	${inTmpEnvPy2} python setup.py bdist_wheel
+	ls -l dist/*.whl
 
 .PHONY: wheel
 wheel: cleanTmpEnvWithDeps
 	${inTmpEnv} python setup.py bdist_wheel
 	ls -l dist/*.whl
 
-.PHONY: wheelPy3
-wheelPy3: cleanTmpEnvWithDepsPy3
-	${inTmpEnvPy3} python setup.py bdist_wheel
-	ls -l dist/*.whl
+.PHONY: cleanTmpEnvWithWheelInstalledPy2
+cleanTmpEnvWithWheelInstalledPy2: cleanTmpEnvPy2
+	${inTmpEnvPy2} ${pipInstall} --find-links=dist/ "sloika==${projectVersion}"
 
 .PHONY: cleanTmpEnvWithWheelInstalled
 cleanTmpEnvWithWheelInstalled: cleanTmpEnv
 	${inTmpEnv} ${pipInstall} --find-links=dist/ "sloika==${projectVersion}"
 
-.PHONY: cleanTmpEnvWithWheelInstalledPy3
-cleanTmpEnvWithWheelInstalledPy3: cleanTmpEnvPy3
-	${inTmpEnvPy3} ${pipInstall} --find-links=dist/ "sloika==${projectVersion}"
-
 
 .PHONY: autopep8
 autopep8:
-	${inDevEnv} autopep8 --ignore E203 -i --max-line-length=120 ${pyFiles}
+	${inDevEnvPy2} autopep8 --ignore E203 -i --max-line-length=120 ${pyFiles}
 
 .PHONY: pep8
 pep8:
-	${inDevEnv} pep8 --ignore E203,E402 --max-line-length=120 ${pyFiles}
+	${inDevEnvPy2} pep8 --ignore E203,E402 --max-line-length=120 ${pyFiles}
 
 
 cmd?=echo "Set 'cmd' to command to run in dev env"
-.PHONY: runInDevEnv
-runInDevEnv:
-	@${inDevEnv} ${cmd}
+.PHONY: runInDevEnvPy2
+runInDevEnvPy2:
+	@${inDevEnvPy2} ${cmd}
+.PHONY: runInTmpEnvPy2
+runInTmpEnvPy2:
+	@${inTmpEnvPy2} ${cmd}
 .PHONY: runInTmpEnv
 runInTmpEnv:
 	@${inTmpEnv} ${cmd}
-.PHONY: runInTmpEnvPy3
-runInTmpEnvPy3:
-	@${inTmpEnvPy3} ${cmd}
 
 .PHONY: deb
-deb: clean cleanTmpEnv
+deb: clean cleanTmpEnvPy2
 	lsb_release  # must be installed for this target to work
-	${inTmpEnv} ${pipInstall} -r scripts/requirements.txt && \
+	${inTmpEnvPy2} ${pipInstall} -r scripts/requirements.txt && \
 	            ${pipInstall} -r requirements.txt && \
 	            python setup.py --command-packages=stdeb.command sdist_dsc --debian-version 1~`lsb_release -cs` bdist_deb
 	ls -l deb_dist/*.deb
@@ -176,11 +176,11 @@ debDeps: deps
 	    python-stdeb dpkg-dev fakeroot lintian
 
 .PHONY: python-future
-python-future: cleanTmpEnv
+python-future: cleanTmpEnvPy2
 	mkdir -p deb_dist build
 	cat requirements.txt | grep future > build/python-future.txt
-	${inTmpEnv} pip install py2deb
-	${inTmpEnv} py2deb -r deb_dist --name-prefix=python -- -r build/python-future.txt
+	${inTmpEnvPy2} pip install py2deb
+	${inTmpEnvPy2} py2deb -r deb_dist --name-prefix=python -- -r build/python-future.txt
 	ls -l deb_dist/*.deb
 	dpkg --info deb_dist/python-future*.deb
 
