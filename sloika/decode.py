@@ -36,7 +36,7 @@ def prepare_post(post, min_prob=1e-5, drop_bad=False):
     return min_prob + (1.0 - min_prob) * post
 
 
-def viterbi(post, klen, skip_pen=0.0, log=False):
+def viterbi(post, klen, skip_pen=0.0, log=False, nbase=4):
     """  Viterbi decoding of a kmer transducer
 
     :param post: A 2d :class:`ndarray`
@@ -48,10 +48,10 @@ def viterbi(post, klen, skip_pen=0.0, log=False):
     _ETA = 1e-10
     nev, nst = post.shape
     assert klen >= 3, "Kmer not long enough to apply Viterbi with skips"
-    nkmer = sv.nkmer(klen)
-    assert sv.nstate(klen, transducer=True) == nst
-    nstep = sv.NBASE
-    nskip = sv.NBASE ** 2
+    nkmer = sv.nkmer(klen, base=nbase)
+    assert sv.nstate(klen, transducer=True, base=nbase) == nst
+    nstep = nbase
+    nskip = nbase ** 2
 
     lpost = np.log(post + _ETA) if not log else post
     vscore = lpost[0][1:].copy()
