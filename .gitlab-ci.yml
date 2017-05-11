@@ -19,6 +19,10 @@ wheel:
     artifacts:
         paths:
             - dist/*.whl
+    only:
+        - release
+        - master
+        - /^ci_*/
 
 unit_xenial:
     stage: test
@@ -39,10 +43,11 @@ acceptance_xenial:
         - /^ci_*/
 
 
-test_trusty:
+test:
     image: git.oxfordnanolabs.local:4567/algorithm/sloika_docker:14.04-latest
     stage: test
     script:
+        - make cleanDevEnv
         - make
     except:
         - release
