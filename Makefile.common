@@ -16,8 +16,11 @@ inDevEnvPy3:=source environment && ${envCmdPy3}
 inEnv:=source environment &&
 
 
-.PHONY: test
-test: unitTest acceptanceTest
+.PHONY: default
+default: testInEnv
+
+.PHONY: testInEnv
+testInEnv: unitTest acceptanceTest
 
 #
 # TODO(semen): do not install unit and acctest deps into the same env where wheel is
