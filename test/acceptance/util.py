@@ -1,10 +1,3 @@
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
-from future import standard_library
-standard_library.install_aliases()
-from builtins import *
-
 import itertools
 import os
 from subprocess import Popen, PIPE
@@ -86,9 +79,8 @@ def run_cmd(test_case, cmd, cwd=None):
     stdout, stderr = proc.communicate(None)
 
     exit_code = proc.returncode
-    if sys.version_info.major == 3:
-        stdout = stdout.decode('UTF-8')
-        stderr = stderr.decode('UTF-8')
+    stdout = stdout.decode('UTF-8')
+    stderr = stderr.decode('UTF-8')
 
     return Result(test_case, cmd, cwd, exit_code, stdout, stderr)
 

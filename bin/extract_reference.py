@@ -1,16 +1,6 @@
-#!/usr/bin/env python
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
-from future import standard_library
-standard_library.install_aliases()
-from builtins import *
-
+#!/usr/bin/env python3
 from Bio import SeqIO
-try:
-    from StringIO import StringIO
-except:
-    from io import StringIO
+from io import StringIO
 import argparse
 import os
 import sys
@@ -69,8 +59,7 @@ def main(argv):
 
     i = 0
     kwarg_names = ['section']
-    mode = 'w' if sys.version_info.major == 3 else 'wb'
-    with open(args.output, mode) as file_handle:
+    with open(args.output, 'w') as file_handle:
         for res in imap_mp(reference_extraction_worker, fast5_files, threads=args.jobs, unordered=True,
                            fix_kwargs=util.get_kwargs(args, kwarg_names)):
             if res is not None:

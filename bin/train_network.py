@@ -1,11 +1,4 @@
-#!/usr/bin/env python
-from __future__ import division
-from __future__ import print_function
-from __future__ import absolute_import
-from future import standard_library
-standard_library.install_aliases()
-from builtins import *
-
+#!/usr/bin/env python3
 import argparse
 import pickle
 import h5py
@@ -171,10 +164,7 @@ class Logger(object):
             sys.stdout.write(message)
             sys.stdout.flush()
         try:
-            if sys.version_info.major == 3:
-                self.fh.write(message.encode('utf-8'))
-            else:
-                self.fh.write(message)
+            self.fh.write(message.encode('utf-8'))
         except IOError as e:
             print("Failed to write to log\n Message: {}\n Error: {}".format(message, repr(e)))
 
