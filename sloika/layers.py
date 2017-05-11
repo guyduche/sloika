@@ -35,17 +35,17 @@ class Layer(metaclass=abc.ABCMeta):
         x = T.tensor3()
         return th.function([th.In(x, borrow=True)], th.Out(self.run(x), borrow=True))
 
-    @abc.abstractproperty
+    @property
     def insize(self):
-        return
+        return self._insize
 
-    @abc.abstractproperty
+    @property
     def size(self):
-        return
+        return self._size
 
-    @abc.abstractproperty
+    @property
     def name(self):
-        return
+        return self._name
 
     @abc.abstractmethod
     def params(self):
@@ -95,16 +95,8 @@ class Identity(Layer):
         self._name = name
 
     @property
-    def insize(self):
-        return self._insize
-
-    @property
     def size(self):
         return self.insize
-
-    @property
-    def name(self):
-        return self._name
 
     def params(self):
         return []
@@ -140,18 +132,6 @@ class FeedForward(Layer):
         self._size = size
         self._name = name
         self.fun = fun
-
-    @property
-    def insize(self):
-        return self._insize
-
-    @property
-    def size(self):
-        return self._size
-
-    @property
-    def name(self):
-        return self._name
 
     def params(self):
         return [self.W, self.b] if self.has_bias else [self.W]
@@ -191,16 +171,8 @@ class Studentise(Layer):
         self._name = name
 
     @property
-    def insize(self):
-        return self._insize
-
-    @property
     def size(self):
         return self.insize
-
-    @property
-    def name(self):
-        return self._name
 
     def params(self):
         return []
@@ -230,16 +202,8 @@ class NormaliseL1(Layer):
         self._name = name
 
     @property
-    def insize(self):
-        return self._insize
-
-    @property
     def size(self):
         return self.insize
-
-    @property
-    def name(self):
-        return self._name
 
     def params(self):
         return []
@@ -274,18 +238,6 @@ class SoftmaxTheano(Layer):
         self._insize = insize
         self._size = size
         self._name = name
-
-    @property
-    def insize(self):
-        return self._insize
-
-    @property
-    def size(self):
-        return self._size
-
-    @property
-    def name(self):
-        return self._name
 
     def params(self):
         return [self.W, self.b] if self.has_bias else [self.W]
@@ -333,18 +285,6 @@ class Softmax(Layer):
         self._size = size
         self._name = name
 
-    @property
-    def insize(self):
-        return self._insize
-
-    @property
-    def size(self):
-        return self._size
-
-    @property
-    def name(self):
-        return self._name
-
     def params(self):
         return [self.W, self.b] if self.has_bias else [self.W]
 
@@ -389,16 +329,8 @@ class Window(Layer):
         self._name = name
 
     @property
-    def insize(self):
-        return self._insize
-
-    @property
     def size(self):
         return self.w * self.insize
-
-    @property
-    def name(self):
-        return self._name
 
     def params(self):
         return []
@@ -458,18 +390,6 @@ class Convolution(Layer):
                            np.sqrt(fanin + fanout))
         self.b = th.shared(has_bias * init(size))
 
-    @property
-    def insize(self):
-        return self._insize
-
-    @property
-    def size(self):
-        return self._size
-
-    @property
-    def name(self):
-        return self._name
-
     def params(self):
         return [self.W, self.b] if self.has_bias else [self.W]
 
@@ -523,16 +443,8 @@ class MaxPool(Layer):
         self.padding = conv.calculate_padding(padding_mode, pool_size)
 
     @property
-    def insize(self):
-        return self._insize
-
-    @property
     def size(self):
         return self.insize
-
-    @property
-    def name(self):
-        return self._name
 
     def params(self):
         return []
@@ -576,18 +488,6 @@ class Recurrent(RNN):
         self._insize = insize
         self._size = size
         self._name = name
-
-    @property
-    def insize(self):
-        return self._insize
-
-    @property
-    def size(self):
-        return self._size
-
-    @property
-    def name(self):
-        return self._name
 
     def params(self):
         return [self.iW, self.sW, self.b] if self.has_bias else [self.iW, self.sW]
@@ -653,16 +553,8 @@ class Scrn(RNN):
         self.slow_size = slow_size
 
     @property
-    def insize(self):
-        return self._insize
-
-    @property
     def size(self):
         return self.fast_size + self.slow_size
-
-    @property
-    def name(self):
-        return self._name
 
     def params(self):
         return [self.isW, self.sfW, self.ifW, self.ffW]
@@ -746,18 +638,6 @@ class Lstm(RNN):
         self.p = th.shared(has_peep * init((3, size)) / np.sqrt(size))
         self.iW = th.shared(init((4 * size, insize)) / np.sqrt(insize + size))
         self.sW = th.shared(init((4 * size, size)) / np.sqrt(size + size))
-
-    @property
-    def insize(self):
-        return self._insize
-
-    @property
-    def size(self):
-        return self._size
-
-    @property
-    def name(self):
-        return self._name
 
     def params(self):
         params = [self.iW, self.sW]
@@ -859,18 +739,6 @@ class LstmCIFG(RNN):
         self.iW = th.shared(init((3 * size, insize)) / np.sqrt(insize + size))
         self.sW = th.shared(init((3 * size, size)) / np.sqrt(size + size))
 
-    @property
-    def insize(self):
-        return self._insize
-
-    @property
-    def size(self):
-        return self._size
-
-    @property
-    def name(self):
-        return self._name
-
     def params(self):
         params = [self.iW, self.sW]
         if self.has_bias:
@@ -967,18 +835,6 @@ class LstmO(RNN):
         self.iW = th.shared(init((3 * size, insize)) / np.sqrt(insize + size))
         self.sW = th.shared(init((3 * size, size)) / np.sqrt(size + size))
 
-    @property
-    def insize(self):
-        return self._insize
-
-    @property
-    def size(self):
-        return self._size
-
-    @property
-    def name(self):
-        return self._name
-
     def params(self):
         params = [self.iW, self.sW]
         if self.has_bias:
@@ -1054,18 +910,6 @@ class Forget(RNN):
         self.iW = th.shared(init((2 * size, insize)) / np.sqrt(insize + size))
         self.sW = th.shared(init((2 * size, size)) / np.sqrt(size + size))
 
-    @property
-    def insize(self):
-        return self._insize
-
-    @property
-    def size(self):
-        return self._size
-
-    @property
-    def name(self):
-        return self._name
-
     def params(self):
         params = [self.iW, self.sW]
         if self.has_bias:
@@ -1131,18 +975,6 @@ class Gru(RNN):
         self.iW = th.shared(init((3 * size, insize)) / np.sqrt(insize + size))
         self.sW = th.shared(init((2 * size, size)) / np.sqrt(size + size))
         self.sW2 = th.shared(init((size, size)) / np.sqrt(size + size))
-
-    @property
-    def insize(self):
-        return self._insize
-
-    @property
-    def size(self):
-        return self._size
-
-    @property
-    def name(self):
-        return self._name
 
     def params(self):
         params = [self.iW, self.sW, self.sW2]
@@ -1231,18 +1063,6 @@ class Mut1(RNN):
         self.W_xr = th.shared(init((size, insize)) / np.sqrt(insize + size))
         self.W_hr = th.shared(init((size, size)) / np.sqrt(size + size))
         self.W_hh = th.shared(init((size, size)) / np.sqrt(size + size))
-
-    @property
-    def insize(self):
-        return self._insize
-
-    @property
-    def size(self):
-        return self._size
-
-    @property
-    def name(self):
-        return self._name
 
     def params(self):
         params = [self.W_xu, self.W_xz, self.W_xr, self.W_hr, self.W_hh]
@@ -1343,18 +1163,6 @@ class Mut2(RNN):
         self.W_hr = th.shared(init((size, size)) / np.sqrt(size + size))
         self.W_hh = th.shared(init((size, size)) / np.sqrt(size + size))
         self.W_xh = th.shared(init((size, insize)) / np.sqrt(size + size))
-
-    @property
-    def insize(self):
-        return self._insize
-
-    @property
-    def size(self):
-        return self._size
-
-    @property
-    def name(self):
-        return self._name
 
     def params(self):
         params = [self.W_xu, self.W_xz, self.W_hz, self.W_hr, self.W_hh, self.W_xh]
@@ -1460,18 +1268,6 @@ class Mut3(RNN):
         self.W_hh = th.shared(init((size, size)) / np.sqrt(size + size))
         self.W_xh = th.shared(init((size, insize)) / np.sqrt(size + size))
 
-    @property
-    def insize(self):
-        return self._insize
-
-    @property
-    def size(self):
-        return self._size
-
-    @property
-    def name(self):
-        return self._name
-
     def params(self):
         params = [self.W_xu, self.W_xz, self.W_hz, self.W_xr, self.W_hr, self.W_hh, self.W_xh]
         if self.has_bias:
@@ -1575,18 +1371,6 @@ class Genmut(RNN):
         self.sW2 = th.shared(init((size, size)) / np.sqrt(size + size))
         self.b2 = th.shared(has_bias * init(size))
 
-    @property
-    def insize(self):
-        return self._insize
-
-    @property
-    def size(self):
-        return self._size
-
-    @property
-    def name(self):
-        return self._name
-
     def params(self):
         params = [self.xW, self.sW, self.sW2]
         if self.has_bias:
@@ -1652,10 +1436,6 @@ class Reverse(Layer):
     def size(self):
         return self.layer.size
 
-    @property
-    def name(self):
-        return self._name
-
     def params(self):
         return self.layer.params()
 
@@ -1693,10 +1473,6 @@ class Parallel(Layer):
     def size(self):
         return sum(x.size for x in self.layers)
 
-    @property
-    def name(self):
-        return self._name
-
     def params(self):
         return reduce(lambda x, y: x + y.params(), self.layers, [])
 
@@ -1733,10 +1509,6 @@ class Serial(Layer):
     def size(self):
         return self.layers[-1].size
 
-    @property
-    def name(self):
-        return self._name
-
     def params(self):
         return reduce(lambda x, y: x + y.params(), self.layers, [])
 
@@ -1768,10 +1540,6 @@ class Decode(RNN):
         self.rstep = T.constant(NBASE ** (k - 1), dtype='int32')
         self.rskip = T.constant(NBASE ** (k - 2), dtype='int32')
         self._name = name
-
-    @property
-    def name(self):
-        return self._name
 
     def params(self):
         return []
