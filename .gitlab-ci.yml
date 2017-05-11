@@ -71,6 +71,10 @@ pip_install_dot:
         - source hoho/bin/activate && pip install pip --upgrade && pip install numpy cython
     script:
         - source hoho/bin/activate && pip install . --trusted-host pypi.oxfordnanolabs.local --index-url https://pypi.oxfordnanolabs.local/simple/
+    only:
+        - release
+        - master
+        - /^ci_*/
 
 wheel_upload:
     stage: release
