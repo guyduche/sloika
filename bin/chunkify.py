@@ -13,9 +13,11 @@ from sloika.tools.chunkify_with_remap import chunkify_with_remap_main
 from sloika import batch
 
 
-class AsciiBytes(argparse.Action):
-    def __call__(self, parser, namespace, values, option_string=None):
-        setattr(namespace, self.dest, values.encode('ascii'))
+def Bytes(encoding):
+    class BytesAction(argparse.Action):
+        def __call__(self, parser, namespace, values, option_string=None):
+            setattr(namespace, self.dest, values.encode(encoding))
+    return BytesAction
 
 
 program_description = "Prepare data for model training and save to hdf5 file"
@@ -23,7 +25,7 @@ parser = argparse.ArgumentParser(description=program_description,
                                  formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
 common_parser = argparse.ArgumentParser(add_help=False)
-common_parser.add_argument('--alphabet', default=b"ACGT", action=AsciiBytes,
+common_parser.add_argument('--alphabet', default=b"ACGT", action=Bytes('ascii'),
                            help='Alphabet of the sequences')
 common_parser.add_argument('--input_strand_list', default=None, action=FileExists,
                            help='Strand summary file containing subset')
