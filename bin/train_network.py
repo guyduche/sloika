@@ -255,10 +255,10 @@ if __name__ == '__main__':
             klen = h5.attrs['kmer']
             try:
                 alphabet = h5.attrs['alphabet']
-                log.write("* Using alphabet: {}".format(alphabet.decode('ascii')))
+                log.write("* Using alphabet: {}\n".format(alphabet.decode('ascii')))
             except:
                 alphabet = b"ACGT"
-                log.write("* Using default alphabet: ACGT")
+                log.write("* Using default alphabet: ACGT\n")
             nbase = len(alphabet)
         netmodule = imp.load_source('netmodule', args.model)
 
