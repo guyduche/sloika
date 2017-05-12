@@ -3,7 +3,7 @@ import argparse
 import sys
 
 from untangled import fast5
-from untangled.cmdargs import (AutoBool, Bounded, FileExists, Maybe,
+from untangled.cmdargs import (AutoBool, Bounded, Bytes, FileExists, Maybe,
                                NonNegative, Positive, proportion)
 
 import sloika.tools.chunkify_raw
@@ -11,11 +11,6 @@ from sloika.tools.chunkify_raw import raw_chunkify_with_identity_main, raw_chunk
 from sloika.tools.chunkify_with_identity import chunkify_with_identity_main
 from sloika.tools.chunkify_with_remap import chunkify_with_remap_main
 from sloika import batch
-
-
-class Bytes(argparse.Action):
-    def __call__(self, parser, namespace, values, option_string=None):
-        setattr(namespace, self.dest, values.encode('ascii'))
 
 
 program_description = "Prepare data for model training and save to hdf5 file"

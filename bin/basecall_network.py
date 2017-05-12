@@ -6,17 +6,11 @@ import sys
 import time
 
 from untangled import fast5
-from untangled.cmdargs import (AutoBool, FileAbsent, FileExists, Maybe,
+from untangled.cmdargs import (AutoBool, Bytes, FileAbsent, FileExists, Maybe,
                                NonNegative, proportion, Positive, Vector)
 from untangled.iterators import imap_mp
 
 from sloika import basecall, helpers, util
-
-
-
-class Bytes(argparse.Action):
-    def __call__(self, parser, namespace, values, option_string=None):
-        setattr(namespace, self.dest, values.encode('ascii'))
 
 
 # create the top-level parser
