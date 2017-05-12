@@ -34,7 +34,7 @@ def decode_post(post, kmer_len, transducer, bad, min_prob, skip=5.0, trans=None,
     :param trans: baseline transition probabilities for a non-transducer model
     :param skip: skip penalty for transducer model
     :param eta: small constant for avoiding log(0)
-    :param nbase: size of sequence alphabet
+    :param nbase: number of distinct bases
 
     :returns: score, Viterbi path
     """
