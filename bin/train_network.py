@@ -9,6 +9,7 @@ import os
 from shutil import copyfile
 import sys
 import time
+import warnings
 
 import theano as th
 import theano.tensor as T
@@ -19,6 +20,7 @@ from untangled.cmdargs import (AutoBool, display_version_and_exit,
 
 import sloika.module_tools as smt
 from sloika import updates
+from sloika.variables import DEFAULT_ALPHABET
 from sloika.version import __version__
 
 
@@ -257,8 +259,9 @@ if __name__ == '__main__':
                 alphabet = h5.attrs['alphabet']
                 log.write("* Using alphabet: {}\n".format(alphabet.decode('ascii')))
             except:
-                alphabet = b"ACGT"
-                log.write("* Using default alphabet: ACGT\n")
+                alphabet = DEFAULT_ALPHABET
+                log.write("* Using default alphabet: {}\n".format(alphabet.decode('ascii')))
+                warnings.warn("Deprecated hdf5 input file: missing 'alphabet' attribute")
             nbase = len(alphabet)
         netmodule = imp.load_source('netmodule', args.model)
 

@@ -5,7 +5,7 @@ from untangled import bio, fast5
 from untangled.maths import mad
 
 from sloika import util
-from sloika.variables import nstate
+from sloika.variables import nstate, DEFAULT_ALPHABET
 
 
 def init_worker(model):
@@ -51,7 +51,7 @@ def decode_post(post, kmer_len, transducer, bad, min_prob, skip=5.0, trans=None,
 
 
 def events_worker(fast5_file_name, section, segmentation, trim, kmer_len, transducer,
-                  bad, min_prob, alphabet=b'ACGT', skip=5.0, trans=None):
+                  bad, min_prob, alphabet=DEFAULT_ALPHABET, skip=5.0, trans=None):
     """ Worker function for basecall_network.py for basecalling from events
 
     This worker used the global variable `calc_post` which is set by
@@ -85,7 +85,7 @@ def events_worker(fast5_file_name, section, segmentation, trim, kmer_len, transd
 
 
 def raw_worker(fast5_file_name, trim, open_pore_fraction, kmer_len, transducer, bad, min_prob,
-               alphabet=b'ACGT', skip=5.0, trans=None):
+               alphabet=DEFAULT_ALPHABET, skip=5.0, trans=None):
     """ Worker function for basecall_network.py for basecalling from raw data
 
     This worker used the global variable `calc_post` which is set by
@@ -137,7 +137,7 @@ class SeqPrinter(object):
         are not allowed when converting kmers to a sequence
     :param fname: name of output file or None to use sys.stdout
     """
-    def __init__(self, kmer_len, datatype="events", transducer=False, fname=None, alphabet=b'ACGT'):
+    def __init__(self, kmer_len, datatype="events", transducer=False, fname=None, alphabet=DEFAULT_ALPHABET):
         self.kmers = bio.all_kmers(kmer_len, alphabet=alphabet)
         self.transducer = transducer
         self.datatype = datatype

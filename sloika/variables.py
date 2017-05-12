@@ -1,6 +1,9 @@
 NBASE = 4
 
 
+DEFAULT_ALPHABET=b'ACGT'
+
+
 def nkmer(kmer, base=NBASE):
     """  Number of possible kmers of a given length
 
