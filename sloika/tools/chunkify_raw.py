@@ -436,7 +436,7 @@ def raw_chunkify_with_remap_main(args):
                 bad_list.append(bad_ev)
                 strand_data = [read, nblocks, -score / nblocks,
                                np.sum(np.ediff1d(path, to_begin=1) == 0),
-                               len(seq), min(path), max(path)])
+                               len(seq), min(path), max(path)]
                 slfh.write('\t'.join([str(x) for x in strand_data]) + '\n')
 
     if compiled_file != args.compile:
