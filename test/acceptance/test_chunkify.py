@@ -268,7 +268,6 @@ class AcceptanceTest(unittest.TestCase):
             util.last_line_starts_with(u"no chunks were produced"))
 
         self.assertTrue(not os.path.exists(output_file_name))
-        self.assertTrue(not os.path.exists(output_strand_list))
 
     @parameterized.expand([
         [495, 540, 25, 20, 0, "0"],
