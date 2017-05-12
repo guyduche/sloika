@@ -48,10 +48,10 @@ class AcceptanceTest(unittest.TestCase):
         util.run_cmd(self, cmd).expect_exit_code(2).expect_stderr(util.nth_line_starts_with(msg, 1))
 
     @parameterized.expand([
-        [[], (182, 500, 4), -2.8844583, 14.225174, -0.254353493452, "0"],
+        [["--alphabet", "ACGTO"], (182, 500, 4), -2.8844583, 14.225174, -0.254353493452, 2344, "0"],
     ])
     def test_chunkify_with_identity_with_modified_bases(self, options, chunks_shape, min_value, max_value, median_value,
-                                                       subdir):
+                                                        max_label, subdir):
         test_work_dir = self.work_dir(os.path.join("test_chunkify_with_identity_with_modified_bases", subdir))
 
         strand_input_list = os.path.join(self.data_dir, "identity", "na12878_train.txt")
@@ -63,9 +63,7 @@ class AcceptanceTest(unittest.TestCase):
         output_file_name = os.path.join(test_work_dir, "output.hdf5")
         open(output_file_name, "w").close()
 
-        alphabet = "ACGTO"
-        kmer_len = 5
-        cmd = [self.script, "identity", "--alphabet", alphabet, "--chunk_len", "500", "--kmer_len", kmer_len,
+        cmd = [self.script, "identity", "--chunk_len", "500", "--kmer_len", "5",
                "--section", "template", "--input_strand_list", strand_input_list,
                reads_dir, output_file_name] + options
 
@@ -80,7 +78,7 @@ class AcceptanceTest(unittest.TestCase):
             top_level_items.sort()
             self.assertEqual(top_level_items, [u'bad', u'chunks', u'labels', u'weights'])
 
-            self.assertTrue(fh['labels'].max() > (len(alphabet) - 1) ** kmer_len)
+            self.assertEqual(fh['labels'][:].max(), max_label)
 
             self.assertEqual(fh['chunks'].shape, chunks_shape)
             chunks = fh['chunks'][:]

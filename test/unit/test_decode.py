@@ -247,11 +247,9 @@ class TestDecodeModifiedBases(unittest.TestCase):
     def setUpClass(self):
         self.bases = "AGGTCOGGTOOCC"
         self.seq = [13, 64, 0, 67, 85, 0, 48, 0, 0, 113, 64, 0, 100, 0, 0, 122, 0, 107]
-        post = np.random.uniform(size=(len(self.seq), 126))
-        post = 0.01 * post
+        post = np.ones((len(self.seq), 126)) * 0.001
         post[range(len(self.seq)), self.seq] = 1
-        post /= post.sum(1, keepdims=True)
-        self.post = post
+        self.post = post / post.sum(1, keepdims=True)
 
     def test_viterbi(self):
         score, path = decode.viterbi(self.post, 3, skip_pen=5.0, nbase=5)
