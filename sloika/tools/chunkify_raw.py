@@ -422,7 +422,7 @@ def raw_chunkify_with_remap_main(args):
     chunk_list = []
     label_list = []
     with open(args.output_strand_list, 'w') as slfh:
-        slsh.write(u'\t'.join(['filename', 'nblocks', 'score', 'nstay', 'seqlen', 'start', 'end']) + u'\n')
+        slfh.write(u'\t'.join(['filename', 'nblocks', 'score', 'nstay', 'seqlen', 'start', 'end']) + u'\n')
         for res in imap_mp(raw_chunk_remap_worker, fast5_files, threads=args.jobs,
                         fix_kwargs=kwargs, unordered=True, init=batch.init_chunk_remap_worker,
                         initargs=[compiled_file, args.kmer_len, args.alphabet]):
