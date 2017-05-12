@@ -344,7 +344,7 @@ def raw_chunk_remap_worker(fn, trim, min_prob, kmer_len, min_length,
         'ref_start': 0,
     }
     (chunks, labels, bad_ev) = raw_chunkify(signal, mapping_table, chunk_len, kmer_len, normalisation,
-                                            downsample_factor, interpolation, mapping_attrs=None)
+                                            downsample_factor, interpolation, mapping_attrs)
 
     return sn + '.fast5', score, len(mapping_table), path, seq, chunks, labels, bad_ev
 
