@@ -5,7 +5,7 @@ from untangled import bio, fast5
 from untangled.maths import mad
 
 from sloika import util
-from sloika.variables import nstate
+from sloika.variables import nstate, DEFAULT_ALPHABET
 
 
 def init_worker(model):
@@ -22,7 +22,7 @@ def init_worker(model):
         calc_post = pickle.load(fh)
 
 
-def decode_post(post, kmer_len, transducer, bad, min_prob, skip=5.0, trans=None, eta=1e-10):
+def decode_post(post, kmer_len, transducer, bad, min_prob, skip=5.0, trans=None, nbase=4, eta=1e-10):
     """ Decode Viterbi state sequence from posterior matrix
 
     :param post: posterior matrix
@@ -34,22 +34,24 @@ def decode_post(post, kmer_len, transducer, bad, min_prob, skip=5.0, trans=None,
     :param trans: baseline transition probabilities for a non-transducer model
     :param skip: skip penalty for transducer model
     :param eta: small constant for avoiding log(0)
+    :param nbase: number of distinct bases
 
     :returns: score, Viterbi path
     """
     from sloika import decode, olddecode
-    assert post.shape[2] == nstate(kmer_len, transducer=transducer, bad_state=bad)
+    assert post.shape[2] == nstate(kmer_len, transducer=transducer, bad_state=bad, base=nbase)
     post = decode.prepare_post(post, min_prob=min_prob, drop_bad=bad and not transducer)
     if transducer:
-        score, call = decode.viterbi(post, kmer_len, skip_pen=skip)
+        score, call = decode.viterbi(post, kmer_len, skip_pen=skip, nbase=nbase)
     else:
+        assert nbase == 4, "Modified bases not supported by old decoder"
         trans = olddecode.estimate_transitions(post, trans=trans)
         score, call = olddecode.decode_profile(post, trans=np.log(eta + trans), log=False)
     return score, call
 
 
 def events_worker(fast5_file_name, section, segmentation, trim, kmer_len, transducer,
-                  bad, min_prob, skip=5.0, trans=None):
+                  bad, min_prob, alphabet=DEFAULT_ALPHABET, skip=5.0, trans=None):
     """ Worker function for basecall_network.py for basecalling from events
 
     This worker used the global variable `calc_post` which is set by
@@ -77,12 +79,13 @@ def events_worker(fast5_file_name, section, segmentation, trim, kmer_len, transd
         return None
 
     inMat = features.from_events(ev, tag='')[:, None, :]
-    score, call = decode_post(calc_post(inMat), kmer_len, transducer, bad, min_prob, skip, trans)
+    score, call = decode_post(calc_post(inMat), kmer_len, transducer, bad, min_prob, skip, trans, nbase=len(alphabet))
 
     return sn, score, call, inMat.shape[0]
 
 
-def raw_worker(fast5_file_name, trim, open_pore_fraction, kmer_len, transducer, bad, min_prob, skip=5.0, trans=None):
+def raw_worker(fast5_file_name, trim, open_pore_fraction, kmer_len, transducer, bad, min_prob,
+               alphabet=DEFAULT_ALPHABET, skip=5.0, trans=None):
     """ Worker function for basecall_network.py for basecalling from raw data
 
     This worker used the global variable `calc_post` which is set by
@@ -112,7 +115,7 @@ def raw_worker(fast5_file_name, trim, open_pore_fraction, kmer_len, transducer, 
 
     inMat = (signal - np.median(signal)) / mad(signal)
     inMat = inMat[:, None, None].astype(config.sloika_dtype)
-    score, call = decode_post(calc_post(inMat), kmer_len, transducer, bad, min_prob, skip, trans)
+    score, call = decode_post(calc_post(inMat), kmer_len, transducer, bad, min_prob, skip, trans, nbase=len(alphabet))
 
     return sn, score, call, inMat.shape[0]
 
@@ -134,8 +137,8 @@ class SeqPrinter(object):
         are not allowed when converting kmers to a sequence
     :param fname: name of output file or None to use sys.stdout
     """
-    def __init__(self, kmer_len, datatype="events", transducer=False, fname=None):
-        self.kmers = bio.all_kmers(kmer_len)
+    def __init__(self, kmer_len, datatype="events", transducer=False, fname=None, alphabet=DEFAULT_ALPHABET):
+        self.kmers = bio.all_kmers(kmer_len, alphabet=alphabet)
         self.transducer = transducer
         self.datatype = datatype
 

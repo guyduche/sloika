@@ -55,11 +55,12 @@ class AcceptanceTest(unittest.TestCase):
         util.run_cmd(self, cmd).expect_exit_code(0).expect_stdout_equals(expected_output)
 
     @parameterized.expand([
-        [[]],
-        [['--trim', '50', '1']],
+        ["events_model_cpu.pkl", [], "output.txt"],
+        ["events_model_cpu.pkl", ['--trim', '50', '1'], "output.txt"],
+        ["cat_dog_cpu.pkl", ['--alphabet', 'ACGTDO', '--kmer_len', '3'], "output_cat_dog.txt"],
     ])
-    def test_basecall_network_events(self, options):
-        model_file = os.path.join(self.data_dir, "events_model_cpu.pkl")
+    def test_basecall_network_events(self, model, options, output_file):
+        model_file = os.path.join(self.data_dir, model)
         self.assertTrue(os.path.exists(model_file))
 
         test_data_dir = os.path.join(self.data_dir, "events", "dataset2")
@@ -67,7 +68,7 @@ class AcceptanceTest(unittest.TestCase):
         reads_dir = os.path.join(test_data_dir, "reads")
         self.assertTrue(os.path.exists(reads_dir))
 
-        expected_output_file = os.path.join(test_data_dir, "output.txt")
+        expected_output_file = os.path.join(test_data_dir, output_file)
         self.assertTrue(os.path.exists(expected_output_file))
         expected_output = open(expected_output_file, 'r').read().splitlines()
 

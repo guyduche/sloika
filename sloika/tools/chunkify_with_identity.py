@@ -28,7 +28,8 @@ def chunkify_with_identity_main(args):
     chunk_list = []
     label_list = []
     for res in imap_mp(batch.chunk_worker, fast5_files, threads=args.jobs,
-                       unordered=True, fix_kwargs=util.get_kwargs(args, kwarg_names)):
+                       unordered=True, fix_kwargs=util.get_kwargs(args, kwarg_names),
+                       init=batch.init_chunk_identity_worker, initargs=[args.kmer_len, args.alphabet]):
         if res is not None:
             i = util.progress_report(i)
 
@@ -51,5 +52,6 @@ def chunkify_with_identity_main(args):
             'scaled': args.use_scaled,
             'section': args.section,
             'trim': args.trim,
+            'alphabet': args.alphabet,
         }
         util.create_labelled_chunks_hdf5(args.output, args.blanks, hdf5_attributes, chunk_list, label_list, bad_list)

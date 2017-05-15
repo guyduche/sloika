@@ -69,7 +69,6 @@ def chunkify(ev, chunk_len, kmer_len, use_scaled, normalisation):
     # Use rightmost middle kmer
     kl = (model_kmer_len - kmer_len + 1) // 2
     ku = kl + kmer_len
-    kmer_to_state = bio.kmer_mapping(kmer_len, alphabet=b'ACGT')
     new_labels = 1 + np.array([kmer_to_state[k[kl : ku]] for k in ev['kmer']], dtype=np.int32)
 
     new_labels = new_labels.reshape(ml, chunk_len)
@@ -124,12 +123,18 @@ def chunk_worker(fn, section, chunk_len, kmer_len, min_length, trim, use_scaled,
     return chunkify(ev, chunk_len, kmer_len, use_scaled, normalisation)
 
 
-def init_chunk_remap_worker(model):
+def init_chunk_identity_worker(kmer_len, alphabet):
+    global kmer_to_state
+    kmer_to_state = bio.kmer_mapping(kmer_len, alphabet=alphabet)
+
+
+def init_chunk_remap_worker(model, kmer_len, alphabet):
     import pickle
     # Import within worker to avoid initialising GPU in main thread
     import sloika.features
     import sloika.transducer
-    global calc_post
+    global calc_post, kmer_to_state
+    kmer_to_state = bio.kmer_mapping(kmer_len, alphabet=alphabet)
     with open(model, 'rb') as fh:
         calc_post = pickle.load(fh)
 
@@ -140,7 +145,6 @@ def remap(read_ref, ev, min_prob, kmer_len, prior, slip):
     post = sloika.decode.prepare_post(calc_post(inMat), min_prob=min_prob, drop_bad=False)
 
     kmers = np.array(bio.seq_to_kmers(read_ref, kmer_len))
-    kmer_to_state = bio.kmer_mapping(kmer_len, alphabet=b'ACGT')
     seq = [kmer_to_state[k] + 1 for k in kmers]
     prior0 = None if prior[0] is None else sloika.util.geometric_prior(len(seq), prior[0])
     prior1 = None if prior[1] is None else sloika.util.geometric_prior(len(seq), prior[1], rev=True)

@@ -9,6 +9,7 @@ import os
 from shutil import copyfile
 import sys
 import time
+import warnings
 
 import theano as th
 import theano.tensor as T
@@ -19,9 +20,12 @@ from untangled.cmdargs import (AutoBool, display_version_and_exit,
 
 import sloika.module_tools as smt
 from sloika import updates
+from sloika.variables import DEFAULT_ALPHABET
 from sloika.version import __version__
 
+
 logging.getLogger("theano.gof.compilelock").setLevel(logging.WARNING)
+
 
 # This is here, not in main to allow documentation to be built
 parser = argparse.ArgumentParser(
@@ -251,9 +255,17 @@ if __name__ == '__main__':
     if model_ext == '.py':
         with h5py.File(args.input, 'r') as h5:
             klen = h5.attrs['kmer']
+            try:
+                alphabet = h5.attrs['alphabet']
+                log.write("* Using alphabet: {}\n".format(alphabet.decode('ascii')))
+            except:
+                alphabet = DEFAULT_ALPHABET
+                log.write("* Using default alphabet: {}\n".format(alphabet.decode('ascii')))
+                warnings.warn("Deprecated hdf5 input file: missing 'alphabet' attribute")
+            nbase = len(alphabet)
         netmodule = imp.load_source('netmodule', args.model)
 
-        network = netmodule.network(klen=klen, sd=args.sd,
+        network = netmodule.network(klen=klen, sd=args.sd, nbase=nbase,
                                     nfeature=all_chunks.shape[-1],
                                     winlen=args.winlen, stride=training_stride)
     elif model_ext == '.pkl':

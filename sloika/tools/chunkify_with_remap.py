@@ -52,7 +52,7 @@ def chunkify_with_remap_main(args):
     label_list = []
     for res in imap_mp(batch.chunk_remap_worker, fast5_files, threads=args.jobs,
                        fix_kwargs=kwargs, unordered=True, init=batch.init_chunk_remap_worker,
-                       initargs=[compiled_file]):
+                       initargs=[compiled_file, args.kmer_len, args.alphabet]):
         if res is not None:
             i = util.progress_report(i)
 
@@ -81,6 +81,7 @@ def chunkify_with_remap_main(args):
             'scaled': args.use_scaled,
             'section': args.section,
             'trim': args.trim,
+            'alphabet': args.alphabet,
         }
         util.create_labelled_chunks_hdf5(args.output, args.blanks, hdf5_attributes, chunk_list, label_list, bad_list)
 

@@ -1,7 +1,7 @@
 import sloika.module_tools as smt
 
 
-def network(klen, sd, nfeature=4, winlen=3, stride=1, size=64):
+def network(klen, sd, nbase=4, nfeature=4, winlen=3, stride=1, size=64):
     """ Create standard Nanonet with GRU units
 
     :param klen: Length of kmer
@@ -15,7 +15,7 @@ def network(klen, sd, nfeature=4, winlen=3, stride=1, size=64):
     """
     assert stride == 1, "Model only supports stride of 1"
     _prn = smt.partial(smt.truncated_normal, sd=sd)
-    nstate = smt.nstate(klen)
+    nstate = smt.nstate(klen, base=nbase)
     gru_act = smt.tanh
     ff_act = smt.tanh
 

@@ -3,7 +3,7 @@ import argparse
 import sys
 
 from untangled import fast5
-from untangled.cmdargs import (AutoBool, Bounded, FileExists, Maybe,
+from untangled.cmdargs import (AutoBool, Bounded, ByteString, FileExists, Maybe,
                                NonNegative, Positive, proportion)
 
 import sloika.tools.chunkify_raw
@@ -18,6 +18,8 @@ parser = argparse.ArgumentParser(description=program_description,
                                  formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
 common_parser = argparse.ArgumentParser(add_help=False)
+common_parser.add_argument('--alphabet', default=b"ACGT", action=ByteString,
+                           help='Alphabet of the sequences')
 common_parser.add_argument('--input_strand_list', default=None, action=FileExists,
                            help='Strand summary file containing subset')
 common_parser.add_argument('--jobs', default=1, metavar='n', type=Positive(int),

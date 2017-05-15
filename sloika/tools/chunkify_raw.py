@@ -114,9 +114,8 @@ def interpolate_labels(mapping_table, att):
         (mapping_table, att) could be returned by f5file.get_any_mapping_data()
     """
     def interp(t, k=5):
-        mapping = bio.kmer_mapping(k)
         pos = interpolate_pos(mapping_table, att)(t, k)
-        return np.array([mapping[att['reference'][i: i + k]] for i in pos]) + 1
+        return np.array([batch.kmer_to_state[att['reference'][i: i + k]] for i in pos]) + 1
 
     return interp
 
@@ -138,8 +137,7 @@ def labels_from_mapping_table(kmer_array, kmer_len, index_from=1):
     extracted = np.chararray(kmer_array.shape, kmer_len, buffer=kmer_array.data,
                              offset=offset, strides=kmer_array.strides)
 
-    kmer_to_state = bio.kmer_mapping(kmer_len, alphabet=b'ACGT')
-    labels = np.array(list(map(lambda k: kmer_to_state[k], extracted.flat))) + index_from
+    labels = np.array(list(map(lambda k: batch.kmer_to_state[k], extracted.flat))) + index_from
 
     return labels.reshape(kmer_array.shape).astype('i4')
 
@@ -268,8 +266,7 @@ def raw_remap(ref, signal, min_prob, kmer_len, prior, slip):
     post = sloika.decode.prepare_post(batch.calc_post(inMat), min_prob=min_prob, drop_bad=False)
 
     kmers = np.array(bio.seq_to_kmers(ref, kmer_len))
-    kmer_to_state = bio.kmer_mapping(kmer_len, alphabet=b'ACGT')
-    seq = [kmer_to_state[k] + 1 for k in kmers]
+    seq = [batch.kmer_to_state[k] + 1 for k in kmers]
     prior0 = None if prior[0] is None else sloika.util.geometric_prior(len(seq), prior[0])
     prior1 = None if prior[1] is None else sloika.util.geometric_prior(len(seq), prior[1], rev=True)
 
@@ -362,7 +359,8 @@ def raw_chunkify_with_identity_main(args):
     chunk_list = []
     label_list = []
     for res in imap_mp(raw_chunk_worker, fast5_files, threads=args.jobs,
-                       unordered=True, fix_kwargs=util.get_kwargs(args, kwarg_names)):
+                       unordered=True, fix_kwargs=util.get_kwargs(args, kwarg_names),
+                       init=batch.init_chunk_identity_worker, initargs=[args.kmer_len, args.alphabet]):
         if res is not None:
             i = util.progress_report(i)
 
@@ -386,6 +384,7 @@ def raw_chunkify_with_identity_main(args):
             'normalisation': args.normalisation,
             'section': 'template',
             'trim': args.trim,
+            'alphabet': args.alphabet,
         }
         blanks_per_chunk = np.concatenate([(l == 0).mean(1) for l in label_list])
         blanks = np.percentile(blanks_per_chunk, args.blanks_percentile)
@@ -434,7 +433,7 @@ def raw_chunkify_with_remap_main(args):
     label_list = []
     for res in imap_mp(raw_chunk_remap_worker, fast5_files, threads=args.jobs,
                        fix_kwargs=kwargs, unordered=True, init=batch.init_chunk_remap_worker,
-                       initargs=[compiled_file]):
+                       initargs=[compiled_file, args.kmer_len, args.alphabet]):
         if res is not None:
             i = util.progress_report(i)
 
@@ -464,6 +463,7 @@ def raw_chunkify_with_remap_main(args):
             'normalisation': args.normalisation,
             'section': 'template',
             'trim': args.trim,
+            'alphabet': args.alphabet,
         }
         blanks_per_chunk = np.concatenate([(l == 0).mean(1) for l in label_list])
         blanks = np.percentile(blanks_per_chunk, args.blanks_percentile)
