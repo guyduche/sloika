@@ -1490,7 +1490,7 @@ class Parallel(Layer):
 class Residual(Layer):
     """ Wraps a layer with a residual connection
 
-    :param layer: A :class:`layer` to wrap
+    :param layer: A :class:`Layer` to wrap
     :param name: Name for layer
     """
 
