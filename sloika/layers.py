@@ -1487,6 +1487,40 @@ class Parallel(Layer):
         return T.concatenate([x.run(inMat) for x in self.layers], axis=2)
 
 
+class Residual(Layer):
+    """ Wraps a layer with a residual connection
+
+    :param layer: A :class:`layer` to wrap
+    :param name: Name for layer
+    """
+
+    def __init__(self, layer, name='Residual'):
+        assert layer.insize == layer.size, "Residual connections only supported when input and output sizes are equal"
+        self.layer = layer
+        self._name = name
+
+    @property
+    def insize(self):
+        return self.layer.insize
+
+    @property
+    def size(self):
+        return self.layer.size
+
+    def params(self):
+        return self.layer.params
+
+    def json(self, params=False):
+        return OrderedDict([('type', "residual"),
+                            ('sublayer', self.layer.json(params))])
+
+    def set_params(self, values):
+        return
+
+    def run(self, inMat):
+        return inMat + self.layer.run(inMat)
+
+
 class Serial(Layer):
     """ Run multiple layers serially: output of a layer is the input for the next layer
 
