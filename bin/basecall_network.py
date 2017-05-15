@@ -6,7 +6,7 @@ import sys
 import time
 
 from untangled import fast5
-from untangled.cmdargs import (AutoBool, Bytes, FileAbsent, FileExists, Maybe,
+from untangled.cmdargs import (AutoBool, ByteString, FileAbsent, FileExists, Maybe,
                                NonNegative, proportion, Positive, Vector)
 from untangled.iterators import imap_mp
 
@@ -21,7 +21,7 @@ parser = argparse.ArgumentParser(
 
 # common command line arguments to all subcommands
 common_parser = argparse.ArgumentParser(add_help=False)
-common_parser.add_argument('--alphabet', default=b"ACGT", action=Bytes,
+common_parser.add_argument('--alphabet', default=b"ACGT", action=ByteString,
                            help='Alphabet of the sequences')
 common_parser.add_argument('--compile', default=None, action=FileAbsent,
                            help='File output compiled model')
