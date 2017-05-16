@@ -245,7 +245,7 @@ def raw_chunk_worker(fn, chunk_len, kmer_len, min_length, trim, normalisation,
         sys.stderr.write('Failed to properly register raw signal and mapping table in {}.\n{}\n'.format(fn, repr(e)))
         return None
 
-    if len(mapped_signal) < min(chunk_len, min_length):
+    if len(mapped_signal) < max(chunk_len, min_length):
         sys.stderr.write('{} is too short.\n'.format(fn))
         return None
 
@@ -318,7 +318,7 @@ def raw_chunk_remap_worker(fn, trim, min_prob, kmer_len, min_length,
     signal = batch.trim_open_pore(signal, open_pore_fraction)
     signal = util.trim_array(signal, *trim)
 
-    if len(signal) < min(chunk_len, min_length):
+    if len(signal) < max(chunk_len, min_length):
         sys.stderr.write('{} is too short.\n'.format(fn))
         return None
 
