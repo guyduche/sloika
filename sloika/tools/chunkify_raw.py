@@ -391,16 +391,6 @@ def raw_chunkify_with_identity_main(args):
         util.create_labelled_chunks_hdf5(args.output, blanks, hdf5_attributes, chunk_list, label_list, bad_list)
 
 
-def create_output_strand_file(output_strand_list_entries, output_file_name):
-    """ Helper function for `chunkify.py raw_remap` writing read statistics to csv file
-    """
-    output_strand_list_entries.sort()
-    with open(output_file_name, "w") as sl:
-        sl.write(u'\t'.join(['filename', 'nblocks', 'score', 'nstay', 'seqlen', 'start', 'end']) + u'\n')
-        for strand_data in output_strand_list_entries:
-            sl.write('\t'.join([str(x) for x in strand_data]) + '\n')
-
-
 def raw_chunkify_with_remap_main(args):
     """ Main function for `chunkify.py raw_remap` producing batch file for model training
     """
@@ -431,20 +421,23 @@ def raw_chunkify_with_remap_main(args):
     bad_list = []
     chunk_list = []
     label_list = []
-    for res in imap_mp(raw_chunk_remap_worker, fast5_files, threads=args.jobs,
-                       fix_kwargs=kwargs, unordered=True, init=batch.init_chunk_remap_worker,
-                       initargs=[compiled_file, args.kmer_len, args.alphabet]):
-        if res is not None:
-            i = util.progress_report(i)
+    with open(args.output_strand_list, 'w') as slfh:
+        slfh.write(u'\t'.join(['filename', 'nblocks', 'score', 'nstay', 'seqlen', 'start', 'end']) + u'\n')
+        for res in imap_mp(raw_chunk_remap_worker, fast5_files, threads=args.jobs,
+                        fix_kwargs=kwargs, unordered=True, init=batch.init_chunk_remap_worker,
+                        initargs=[compiled_file, args.kmer_len, args.alphabet]):
+            if res is not None:
+                i = util.progress_report(i)
 
-            read, score, nblocks, path, seq, chunks, labels, bad_ev = res
+                read, score, nblocks, path, seq, chunks, labels, bad_ev = res
 
-            chunk_list.append(chunks)
-            label_list.append(labels)
-            bad_list.append(bad_ev)
-            output_strand_list_entries.append([read, nblocks, -score / nblocks,
-                                               np.sum(np.ediff1d(path, to_begin=1) == 0),
-                                               len(seq), min(path), max(path)])
+                chunk_list.append(chunks)
+                label_list.append(labels)
+                bad_list.append(bad_ev)
+                strand_data = [read, nblocks, -score / nblocks,
+                               np.sum(np.ediff1d(path, to_begin=1) == 0),
+                               len(seq), min(path), max(path)]
+                slfh.write('\t'.join([str(x) for x in strand_data]) + '\n')
 
     if compiled_file != args.compile:
         os.remove(compiled_file)
@@ -468,6 +461,3 @@ def raw_chunkify_with_remap_main(args):
         blanks_per_chunk = np.concatenate([(l == 0).mean(1) for l in label_list])
         blanks = np.percentile(blanks_per_chunk, args.blanks_percentile)
         util.create_labelled_chunks_hdf5(args.output, blanks, hdf5_attributes, chunk_list, label_list, bad_list)
-
-        print('\n* Creating output strand file')
-        create_output_strand_file(output_strand_list_entries, args.output_strand_list)
