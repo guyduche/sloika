@@ -74,7 +74,7 @@ if __name__ == '__main__':
 
     sys.stdout.write('\nLoading pickled model:  {}\n'.format(args.model))
     with open(args.model, 'rb') as fi:
-        net = pickle.load(fi)
+        net = pickle.load(fi, encoding='latin1')
 
     shared_vars = get_var_names(net)
 
