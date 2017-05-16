@@ -52,7 +52,7 @@ def progress_report(i):
     i += 1
     sys.stderr.write('.')
     if i % 50 == 0:
-        print('{:8d}'.format(i))
+        sys.stderr.write('{:8d}\n'.format(i))
     return i
 
 
