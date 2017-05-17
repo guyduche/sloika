@@ -43,7 +43,6 @@ STRAND = {0 : '+',
 QUANTILES = [5, 25, 50, 75, 95]
 
 
-
 def call_bwa_mem(fin, fout, genome, clargs=''):
     """Call bwa aligner using the subprocess module
 
