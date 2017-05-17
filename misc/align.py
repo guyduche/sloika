@@ -17,16 +17,18 @@ from untangled.cmdargs import proportion, AutoBool, FileExists
 parser = argparse.ArgumentParser(
     description='Align reads to reference and output accuracy statistics',
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-parser.add_argument('--coverage', metavar='proportion', default=0.6, type=proportion,
-                    help='Minimum coverage')
+
 # TODO: add several named commonly used values for bwa_mem_args
 parser.add_argument('--bwa_mem_args', metavar='args', default='-t 16 -A 1 -B 2 -O 2 -E 1',
                     help="Command line arguments to pass to bwa mem")
-parser.add_argument('--mpl_backend', default="Agg", help="Matplotlib backend to use")
+parser.add_argument('--coverage', metavar='proportion', default=0.6, type=proportion,
+                    help='Minimum coverage')
 parser.add_argument('--figure_format', default="png",
                     help="Figure file format. Must be compatible with matplotlib backend.")
 parser.add_argument('--fill', default=True, action=AutoBool,
                     help='Fill basecall quality histogram with color')
+parser.add_argument('--mpl_backend', default="Agg", help="Matplotlib backend to use")
+
 parser.add_argument('reference', action=FileExists,
                     help="Reference sequence to align against")
 parser.add_argument('files', metavar='input', nargs='+',
