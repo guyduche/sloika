@@ -11,7 +11,7 @@ from scipy.optimize import minimize_scalar
 import subprocess
 import sys
 import traceback
-from untangled.cmdargs import proportion, FileExists
+from untangled.cmdargs import proportion, AutoBool, FileExists
 
 
 parser = argparse.ArgumentParser(
@@ -25,6 +25,8 @@ parser.add_argument('--bwa_mem_args', metavar='args', default='-t 16 -A 1 -B 2 -
 parser.add_argument('--mpl_backend', default="Agg", help="Matplotlib backend to use")
 parser.add_argument('--figure_format', default="png",
                     help="Figure file format. Must be compatible with matplotlib backend.")
+parser.add_argument('--fill', default=True, action=AutoBool,
+                    help='Fill basecall quality histogram with color')
 parser.add_argument('reference', action=FileExists,
                     help="Reference sequence to align against")
 parser.add_argument('files', metavar='input', nargs='+',
@@ -120,7 +122,7 @@ def samacc(sam, min_coverage=0.6):
     return res
 
 
-def acc_plot(acc, mode, title="Test"):
+def acc_plot(acc, mode, fill, title="Test"):
     """Plot accuracy histogram
 
     :param acc_dat: list of row dictionaries of basecall accuracy data
@@ -130,7 +132,7 @@ def acc_plot(acc, mode, title="Test"):
     """
     f = plt.figure()
     ax = f.add_subplot(111)
-    ax.hist(acc, bins=np.arange(0.65, 1.0, 0.01))
+    ax.hist(acc, bins=np.arange(0.65, 1.0, 0.01), fill=fill)
     ax.set_xlim(0.65, 1)
     _, ymax = ax.get_ylim()
     ax.plot([mode, mode], [0, ymax], 'r--')
@@ -140,7 +142,7 @@ def acc_plot(acc, mode, title="Test"):
     return f, ax
 
 
-def summary(acc_dat, name):
+def summary(acc_dat, name, fill):
     """Crate summary report and plots for accuracy statistics
 
     :param acc_dat: list of row dictionaries of read accuracy metrics
@@ -190,7 +192,7 @@ def summary(acc_dat, name):
 """.format(name, nmapped, mean, mode, qstring1, qstring2, a90, n_gt_90)
 
     title = "{} (n = {})".format(name, nmapped)
-    f, ax = acc_plot(acc, mode, title)
+    f, ax = acc_plot(acc, mode, fill, title)
     return res, f, ax
 
 
@@ -231,7 +233,7 @@ if __name__ == '__main__':
                         writer.writerow(row)
 
             # write summary file and plot
-            report, f, ax = summary(acc_dat, name=fn)
+            report, f, ax = summary(acc_dat, fn, args.fill)
             if f is not None:
                 f.savefig(graphfile)
             sys.stdout.write('\n' + report + '\n')
