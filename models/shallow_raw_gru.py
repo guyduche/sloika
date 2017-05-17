@@ -1,18 +1,17 @@
-from sloika.module_tools import *
+import sloika.module_tools as smt
 
 
-def network(klen, sd, nfeature, winlen, stride):
+def network(klen, sd, nfeature, winlen, stride, size=128):
 
-    n = 128
-    fun = tanh
-    init = partial(truncated_normal, sd=sd)
+    fun = smt.tanh
+    init = smt.partial(smt._rn, sd=sd)
 
-    return Serial([Convolution(nfeature, n, winlen, stride, init=init, has_bias=True, fun=fun),
+    return smt.Serial([smt.Convolution(nfeature, size, winlen, stride, init=init, has_bias=True, fun=fun),
 
-                   Gru(n, n, init=init, has_bias=True, fun=fun),
+                       smt.Gru(size, size, init=init, has_bias=True, fun=fun),
 
-                   Reverse(Gru(n, n, init=init, has_bias=True, fun=fun)),
+                       smt.Reverse(smt.Gru(size, size, init=init, has_bias=True, fun=fun)),
 
-                   Softmax(n, nstate(klen), init=init, has_bias=True)
+                       smt.Softmax(size, smt.nstate(klen), init=init, has_bias=True)
 
-                   ])
+                      ])
