@@ -154,8 +154,8 @@ def summary(acc_dat, data_set_name, fill):
     :returns: (report string, figure handle, axes handle)
     """
     if len(acc_dat) == 0:
-        res = """Summary report for {}:
-    No sequences mapped
+        res = """*** Summary report for {} ***
+No sequences mapped
 """.format(data_set_name)
         return res, None, None
 
@@ -183,15 +183,15 @@ def summary(acc_dat, data_set_name, fill):
     n_gt_90 = (acc > 0.9).sum()
     nmapped = len(set([r['query'] for r in acc_dat]))
 
-    res = """Summary report for {}:
-    Number of mapped reads:  {}
-    Mean accuracy:  {:.5f}
-    Mode accuracy:  {:.5f}
-    Accuracy quantiles:
-      {}
-      {}
-    Proportion with accuracy >90%:  {:.5f}
-    Number with accuracy >90%:  {}
+    res = """*** Summary report for {} ***
+Number of mapped reads:  {}
+Mean accuracy:  {:.5f}
+Mode accuracy:  {:.5f}
+Accuracy quantiles:
+  {}
+  {}
+Proportion with accuracy >90%:  {:.5f}
+Number with accuracy >90%:  {}
 """.format(data_set_name, nmapped, mean, mode, qstring1, qstring2, a90, n_gt_90)
 
     plot_title = "{} (n = {})".format(data_set_name, nmapped)
