@@ -2,7 +2,7 @@ DEFAULT_ALPHABET=b'ACGT'
 DEFAULT_NBASE=len(DEFAULT_ALPHABET)
 
 
-def nkmer(kmer, nbase=NBASE):
+def nkmer(kmer, nbase=DEFAULT_NBASE):
     """  Number of possible kmers of a given length
 
     :param kmer: Length of kmer
