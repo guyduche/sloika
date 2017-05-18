@@ -211,7 +211,7 @@ if __name__ == '__main__':
 
     #  Model stride is forced by training data
     training_stride = int(np.ceil(float(all_chunks.shape[1]) / all_labels.shape[1]))
-    log.write('* Stride is {}.\n'.format(training_stride))
+    log.write('* Stride is {}\n'.format(training_stride))
 
     # check chunk_len_range args
     data_chunk = all_chunks.shape[1]

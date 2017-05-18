@@ -11,20 +11,26 @@ from scipy.optimize import minimize_scalar
 import subprocess
 import sys
 import traceback
-from untangled.cmdargs import proportion, FileExists
+from untangled.cmdargs import proportion, AutoBool, FileExists
 
 
 parser = argparse.ArgumentParser(
     description='Align reads to reference and output accuracy statistics',
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-parser.add_argument('--coverage', metavar='proportion', default=0.6, type=proportion,
-                    help='Minimum coverage')
+
 # TODO: add several named commonly used values for bwa_mem_args
 parser.add_argument('--bwa_mem_args', metavar='args', default='-t 16 -A 1 -B 2 -O 2 -E 1',
                     help="Command line arguments to pass to bwa mem")
-parser.add_argument('--mpl_backend', default="Agg", help="Matplotlib backend to use")
+parser.add_argument('--coverage', metavar='proportion', default=0.6, type=proportion,
+                    help='Minimum coverage')
+parser.add_argument('--data_set_name', default=None,
+                    help="Data set name. If not set file name is used.")
 parser.add_argument('--figure_format', default="png",
                     help="Figure file format. Must be compatible with matplotlib backend.")
+parser.add_argument('--fill', default=True, action=AutoBool,
+                    help='Fill basecall quality histogram with color')
+parser.add_argument('--mpl_backend', default="Agg", help="Matplotlib backend to use")
+
 parser.add_argument('reference', action=FileExists,
                     help="Reference sequence to align against")
 parser.add_argument('files', metavar='input', nargs='+',
@@ -35,7 +41,6 @@ STRAND = {0 : '+',
           16 : '-'}
 
 QUANTILES = [5, 25, 50, 75, 95]
-
 
 
 def call_bwa_mem(fin, fout, genome, clargs=''):
@@ -120,7 +125,7 @@ def samacc(sam, min_coverage=0.6):
     return res
 
 
-def acc_plot(acc, mode, title="Test"):
+def acc_plot(acc, mode, fill, title):
     """Plot accuracy histogram
 
     :param acc_dat: list of row dictionaries of basecall accuracy data
@@ -130,7 +135,7 @@ def acc_plot(acc, mode, title="Test"):
     """
     f = plt.figure()
     ax = f.add_subplot(111)
-    ax.hist(acc, bins=np.arange(0.65, 1.0, 0.01))
+    ax.hist(acc, bins=np.arange(0.65, 1.0, 0.01), fill=fill)
     ax.set_xlim(0.65, 1)
     _, ymax = ax.get_ylim()
     ax.plot([mode, mode], [0, ymax], 'r--')
@@ -140,18 +145,17 @@ def acc_plot(acc, mode, title="Test"):
     return f, ax
 
 
-def summary(acc_dat, name):
+def summary(acc_dat, data_set_name, fill):
     """Crate summary report and plots for accuracy statistics
 
     :param acc_dat: list of row dictionaries of read accuracy metrics
-    :param name: name for the data set
 
     :returns: (report string, figure handle, axes handle)
     """
     if len(acc_dat) == 0:
-        res = """Summary report for {}:
-    No sequences mapped
-""".format(name)
+        res = """*** Summary report for {} ***
+No sequences mapped
+""".format(data_set_name)
         return res, None, None
 
     acc = np.array([r['accuracy'] for r in acc_dat])
@@ -178,19 +182,19 @@ def summary(acc_dat, name):
     n_gt_90 = (acc > 0.9).sum()
     nmapped = len(set([r['query'] for r in acc_dat]))
 
-    res = """Summary report for {}:
-    Number of mapped reads:  {}
-    Mean accuracy:  {:.5f}
-    Mode accuracy:  {:.5f}
-    Accuracy quantiles:
-      {}
-      {}
-    Proportion with accuracy >90%:  {:.5f}
-    Number with accuracy >90%:  {}
-""".format(name, nmapped, mean, mode, qstring1, qstring2, a90, n_gt_90)
+    res = """*** Summary report for {} ***
+Number of mapped reads:  {}
+Mean accuracy:  {:.5f}
+Mode accuracy:  {:.5f}
+Accuracy quantiles:
+  {}
+  {}
+Proportion with accuracy >90%:  {:.5f}
+Number with accuracy >90%:  {}
+""".format(data_set_name, nmapped, mean, mode, qstring1, qstring2, a90, n_gt_90)
 
-    title = "{} (n = {})".format(name, nmapped)
-    f, ax = acc_plot(acc, mode, title)
+    plot_title = "{} (n = {})".format(data_set_name, nmapped)
+    f, ax = acc_plot(acc, mode, fill, plot_title)
     return res, f, ax
 
 
@@ -231,7 +235,8 @@ if __name__ == '__main__':
                         writer.writerow(row)
 
             # write summary file and plot
-            report, f, ax = summary(acc_dat, name=fn)
+            data_set_name = fn if args.data_set_name is None else args.data_set_name
+            report, f, ax = summary(acc_dat, data_set_name, args.fill)
             if f is not None:
                 f.savefig(graphfile)
             sys.stdout.write('\n' + report + '\n')
