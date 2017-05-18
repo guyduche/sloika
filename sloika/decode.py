@@ -48,8 +48,8 @@ def viterbi(post, klen, skip_pen=0.0, log=False, nbase=4):
     _ETA = 1e-10
     nev, nst = post.shape
     assert klen >= 3, "Kmer not long enough to apply Viterbi with skips"
-    nkmer = sv.nkmer(klen, base=nbase)
-    assert sv.nstate(klen, transducer=True, base=nbase) == nst
+    nkmer = sv.nkmer(klen, nbase=nbase)
+    assert sv.nstate(klen, transducer=True, nbase=nbase) == nst
     nstep = nbase
     nskip = nbase ** 2
 

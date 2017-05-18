@@ -1,7 +1,7 @@
 import sloika.module_tools as smt
 
 
-def network(klen, sd, nbase=4, nfeature=1, winlen=11, stride=2, size=64):
+def network(klen, sd, nbase=smt.DEFAULT_NBASE, nfeature=1, winlen=11, stride=2, size=64):
     """ Create fat Nanonet with GRUs and convolution input layer
 
     :param klen: Length of kmer
@@ -14,7 +14,7 @@ def network(klen, sd, nbase=4, nfeature=1, winlen=11, stride=2, size=64):
     :returns: a `class`:layer.Layer:
     """
     _prn = smt.partial(smt.truncated_normal, sd=sd)
-    nstate = smt.nstate(klen, base=nbase)
+    nstate = smt.nstate(klen, nbase=nbase)
     gru_act = smt.tanh
     ff_act = smt.tanh
 

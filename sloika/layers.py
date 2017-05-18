@@ -6,14 +6,14 @@ import numpy as np
 
 from sloika import activation, conv
 from sloika.config import sloika_dtype
-from sloika.variables import NBASE, nkmer
+from sloika.variables import DEFAULT_NBASE, nkmer
 from functools import reduce
 
 
 """  Convention: inMat row major (C ordering) as (time, batch, state)
 """
-_NSTEP = NBASE
-_NSKIP = NBASE * NBASE
+_NSTEP = DEFAULT_NBASE
+_NSKIP = DEFAULT_NBASE * DEFAULT_NBASE
 _FORGET_BIAS = 2.0
 _INDENT = ' ' * 4
 
@@ -1567,12 +1567,12 @@ class Decode(RNN):
     """
 
     def __init__(self, k, name='ForwardsViterbi'):
-        self._NBASE = T.constant(NBASE, dtype='int32')
+        self._NBASE = T.constant(DEFAULT_NBASE, dtype='int32')
         self._NSTEP = T.constant(_NSTEP, dtype='int32')
         self._NSKIP = T.constant(_NSKIP, dtype='int32')
         self.size = T.constant(nkmer(k), dtype='int32')
-        self.rstep = T.constant(NBASE ** (k - 1), dtype='int32')
-        self.rskip = T.constant(NBASE ** (k - 2), dtype='int32')
+        self.rstep = T.constant(DEFAULT_NBASE ** (k - 1), dtype='int32')
+        self.rskip = T.constant(DEFAULT_NBASE ** (k - 2), dtype='int32')
         self._name = name
 
     def params(self):
