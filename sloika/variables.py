@@ -23,4 +23,4 @@ def nstate(kmer, transducer=True, bad_state=True, nbase=DEFAULT_NBASE):
 
     :returns: Number of states
     """
-    return nkmer(kmer, nbase=base) + (transducer or bad_state)
+    return nkmer(kmer, nbase=nbase) + (transducer or bad_state)
