@@ -39,7 +39,7 @@ def decode_post(post, kmer_len, transducer, bad, min_prob, skip=5.0, trans=None,
     :returns: score, Viterbi path
     """
     from sloika import decode, olddecode
-    assert post.shape[2] == nstate(kmer_len, transducer=transducer, bad_state=bad, base=nbase)
+    assert post.shape[2] == nstate(kmer_len, transducer=transducer, bad_state=bad, nbase=nbase)
     post = decode.prepare_post(post, min_prob=min_prob, drop_bad=bad and not transducer)
     if transducer:
         score, call = decode.viterbi(post, kmer_len, skip_pen=skip, nbase=nbase)
