@@ -79,8 +79,13 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     sys.stdout.write('\nLoading pickled model:  {}\n'.format(args.model))
-    with open(args.model, 'rb') as fi:
-        net = pickle.load(fi)
+    try:
+        with open(args.model, 'rb') as fh:
+            net = pickle.load(fh)
+    except UnicodeDecodeError:
+        with open(args.model, 'rb') as fh:
+            net = pickle.load(fh, encoding='latin1')
+            warnings.warn("Support for python 2 pickles will be dropped: {}".format(model_file))
 
     shared_vars = get_var_names(net)
 

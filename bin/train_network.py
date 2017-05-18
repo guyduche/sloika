@@ -24,6 +24,7 @@ from untangled.cmdargs import (AutoBool, display_version_and_exit,
                                FileExists, Maybe, NonNegative, ParseToNamedTuple,
                                Positive, proportion)
 
+import sloika.module_tools as smt
 from sloika import updates
 from sloika.version import __version__
 
@@ -119,10 +120,11 @@ def wrap_network(network, min_prob=0.0, l2=0.0, drop=0):
 
     loss_per_event, _ = th.map(T.nnet.categorical_crossentropy, sequences=[post, labels])
     loss = penalty + T.mean((weights * loss_per_event)[ldrop : udrop])
-    ncorrect = T.sum(T.eq(T.argmax(post, axis=2), labels)[ldrop : udrop])
+    correct = T.eq(T.argmax(post, axis=2), labels)[ldrop : udrop]
+    acc = T.mean(correct, dtype=smt.sloika_dtype, acc_dtype=smt.sloika_dtype)
     update_dict = updates.adam(network, loss, rate, (args.adam.decay1, args.adam.decay2))
 
-    fg = th.function([x, labels, weights, rate], [loss, ncorrect], updates=update_dict)
+    fg = th.function([x, labels, weights, rate], [loss, acc], updates=update_dict)
     return fg
 
 
@@ -284,13 +286,12 @@ if __name__ == '__main__':
         labels = np.ascontiguousarray(all_labels[idx, label_lb : label_ub].transpose())
         weights = label_weights[labels]
 
-        fval, ncorr = fg(events, labels, weights, learning_rate)
+        fval, batch_acc = fg(events, labels, weights, learning_rate)
         fval = float(fval)
-        ncorr = float(ncorr)
         nev = np.size(labels)
         total_ev += nev
         score = fval + SMOOTH * score
-        acc = (ncorr / nev) + SMOOTH * acc
+        acc = batch_acc + SMOOTH * acc
         wscore = 1.0 + SMOOTH * wscore
         wacc = 1.0 + SMOOTH * wacc
 

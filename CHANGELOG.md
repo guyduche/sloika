@@ -1,3 +1,11 @@
+Release 1.2 brown bag 1
+=======================
+
+* Bug fixes to chunkify from raw data
+* Take the `--drop` into account when reporting label accuracy during training
+* Added a promising wide and shallow model `./models/shallow_raw_gru.py`
+
+
 Release 1.2
 ===========
 
