@@ -1,7 +1,7 @@
 from sloika.module_tools import *
 
 
-def network(klen, sd, nbase, nfeature, winlen, stride):
+def network(klen, sd, nbase=4, nfeature=1, winlen=11, stride=2):
 
     n = 128
     k = 110
