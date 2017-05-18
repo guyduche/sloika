@@ -14,4 +14,4 @@ def network(klen, sd, nfeature=1, winlen=11, stride=5, size=128):
 
                        smt.Softmax(size, smt.nstate(klen), init=init, has_bias=True)
 
-                      ])
+                       ])
