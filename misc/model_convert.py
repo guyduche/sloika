@@ -7,6 +7,7 @@ from sloika.layers import Layer
 from theano.tensor.sharedvar import TensorSharedVariable
 from theano.sandbox.cuda.var import CudaNdarraySharedVariable
 import theano as th
+import warnings
 
 parser = argparse.ArgumentParser(
     'Converts pickled sloika model between CPU and GPU (CUDA) versions.',
