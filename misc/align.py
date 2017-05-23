@@ -107,6 +107,8 @@ def samacc(sam, min_coverage=0.6):
             mismatch = tags['NM']
             correct = alnlen - mismatch
             readlen = bins[0] + bins[1]
+            perr = float(mismatch) / readlen
+            pmatch = 1.0 - perr
 
             row = OrderedDict([
                 ('reference', ref_name[read.reference_id]),
@@ -121,7 +123,8 @@ def samacc(sam, min_coverage=0.6):
                 ('coverage', coverage),
                 ('id', float(correct) / float(bins[0])),
                 ('accuracy', float(correct) / alnlen),
-                ('iscore', -np.log2(float(mismatch) / readlen) * readlen)
+                ('information', bins[0] * (2.0 + perr * np.log2(perr / 3.0)
+                                           + pmatch * np.log2(pmatch)))
             ])
             res.append(row)
     return res
@@ -161,7 +164,7 @@ No sequences mapped
         return res, None, None
 
     acc = np.array([r['accuracy'] for r in acc_dat])
-    iscore = np.array([r['iscore'] for r in acc_dat])
+    iscore = np.array([r['information'] for r in acc_dat])
     mean = acc.mean()
 
     if len(acc) > 1:
