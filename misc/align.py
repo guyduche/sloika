@@ -107,7 +107,7 @@ def samacc(sam, min_coverage=0.6):
             mismatch = tags['NM']
             correct = alnlen - mismatch
             readlen = bins[0] + bins[1]
-            perr = float(mismatch) / readlen
+            perr = min(0.75, float(mismatch) / readlen)
             pmatch = 1.0 - perr
 
             row = OrderedDict([
