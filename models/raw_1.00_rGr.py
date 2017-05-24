@@ -18,6 +18,6 @@ def network(klen, sd, nbase=DEFAULT_NBASE, nfeature=1, winlen=11, stride=2):
 
                    Reverse(Gru(l, m, init=init, has_bias=True, fun=fun)),
 
-                   Softmax(m, nstate(klen, base=nbase), init=init, has_bias=True)
+                   Softmax(m, nstate(klen, nbase=nbase), init=init, has_bias=True)
 
                    ])
