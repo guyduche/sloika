@@ -164,7 +164,7 @@ No sequences mapped
         return res, None, None
 
     acc = np.array([r['accuracy'] for r in acc_dat])
-    iscore = np.array([r['information'] for r in acc_dat])
+    ciscore = np.array([r['information'] for r in acc_dat])
     mean = acc.mean()
 
     if len(acc) > 1:
@@ -197,8 +197,8 @@ Accuracy quantiles:
   {}
 Proportion with accuracy >90%:  {:.5f}
 Number with accuracy >90%:  {}
-Iscore (Mbits): {:.5f}
-""".format(data_set_name, nmapped, mean, mode, qstring1, qstring2, a90, n_gt_90, sum(iscore) / 1e6)
+CIscore (Mbits): {:.5f}
+""".format(data_set_name, nmapped, mean, mode, qstring1, qstring2, a90, n_gt_90, sum(ciscore) / 1e6)
     plot_title = "{} (n = {})".format(data_set_name, nmapped)
     f, ax = acc_plot(acc, mode, fill, plot_title)
     return res, f, ax
