@@ -106,6 +106,9 @@ def samacc(sam, min_coverage=0.6):
             alnlen = np.sum(bins[:3])
             mismatch = tags['NM']
             correct = alnlen - mismatch
+            readlen = bins[0] + bins[1]
+            perr = min(0.75, float(mismatch) / readlen)
+            pmatch = 1.0 - perr
 
             row = OrderedDict([
                 ('reference', ref_name[read.reference_id]),
@@ -120,6 +123,8 @@ def samacc(sam, min_coverage=0.6):
                 ('coverage', coverage),
                 ('id', float(correct) / float(bins[0])),
                 ('accuracy', float(correct) / alnlen),
+                ('information', bins[0] * (2.0 + perr * np.log2(perr / 3.0)
+                                           + pmatch * np.log2(pmatch)))
             ])
             res.append(row)
     return res
@@ -159,6 +164,7 @@ No sequences mapped
         return res, None, None
 
     acc = np.array([r['accuracy'] for r in acc_dat])
+    ciscore = np.array([r['information'] for r in acc_dat])
     mean = acc.mean()
 
     if len(acc) > 1:
@@ -191,8 +197,8 @@ Accuracy quantiles:
   {}
 Proportion with accuracy >90%:  {:.5f}
 Number with accuracy >90%:  {}
-""".format(data_set_name, nmapped, mean, mode, qstring1, qstring2, a90, n_gt_90)
-
+CIscore (Mbits): {:.5f}
+""".format(data_set_name, nmapped, mean, mode, qstring1, qstring2, a90, n_gt_90, sum(ciscore) / 1e6)
     plot_title = "{} (n = {})".format(data_set_name, nmapped)
     f, ax = acc_plot(acc, mode, fill, plot_title)
     return res, f, ax
