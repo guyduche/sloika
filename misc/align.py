@@ -110,6 +110,10 @@ def samacc(sam, min_coverage=0.6):
             perr = min(0.75, float(mismatch) / readlen)
             pmatch = 1.0 - perr
 
+            entropy = pmatch * np.log2(pmatch)
+            if mismatch > 0:
+                entropy += perr * np.log2(perr / 3.0)
+
             row = OrderedDict([
                 ('reference', ref_name[read.reference_id]),
                 ('query', read.qname),
@@ -123,8 +127,7 @@ def samacc(sam, min_coverage=0.6):
                 ('coverage', coverage),
                 ('id', float(correct) / float(bins[0])),
                 ('accuracy', float(correct) / alnlen),
-                ('information', bins[0] * (2.0 + perr * np.log2(perr / 3.0)
-                                           + pmatch * np.log2(pmatch)))
+                ('information', bins[0] * (2.0 + entropy))
             ])
             res.append(row)
     return res
