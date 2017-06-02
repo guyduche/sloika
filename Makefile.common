@@ -7,7 +7,7 @@ nproc:=$(shell nproc)
 # set this to nothing to get system environment
 envCmd?=source $${DEV_VIRTUALENV_DIR}/bin/activate &&
 
-pipInstall:=pip install --trusted-host pypi.oxfordnanolabs.local --index-url https://pypi.oxfordnanolabs.local/simple/
+pipInstall:=pip install
 inTmpEnv:=source environment && source $${TMP_VIRTUALENV_DIR}/bin/activate &&
 inDevEnv:=source environment && ${envCmd}
 inEnv:=source environment &&
