@@ -10,9 +10,11 @@ SLOIKA_ROOT=$(git rev-parse --show-toplevel)
 WORK_DIR=$SLOIKA_ROOT/build/workflow
 mkdir -p $WORK_DIR && cd $WORK_DIR
 
-READ_DIR=$SLOIKA_ROOT/data/test_workflow/reads
-REFERENCE=$SLOIKA_ROOT/data/test_chunkify/identity/reference.fa
-MODEL=$SLOIKA_ROOT/data/test_basecall_network/raw_model_1pt2_cpu.pkl
+
+# Fill these in as needed
+READ_DIR=/path/to/directory/of/single/read/fast5s
+REFERENCE=/path/to/reference/genome.fa
+MODEL=/path/to/trained/model.pkl
 
 
 echo "# 1. Basecall with existing model"
