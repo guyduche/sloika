@@ -1,9 +1,3 @@
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
-from future import standard_library
-standard_library.install_aliases()
-from builtins import *
 import glob
 import os
 import numpy as np
@@ -46,5 +40,5 @@ class AcceptanceTest(unittest.TestCase):
     @parameterized.expand(raw_model_files)
     def test_sequence_raw(self, model_file):
         stride = str(np.random.randint(1, 10))
-        cmd = [self.script, "--kmer", "5", "--stride", stride, model_file]
+        cmd = [self.script, "--kmer", "5", "--nfeature", "1", "--stride", stride, model_file]
         util.run_cmd(self, cmd).expect_exit_code(0)

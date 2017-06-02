@@ -1,10 +1,4 @@
-#!/usr/bin/env python
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
-from future import standard_library
-standard_library.install_aliases()
-from builtins import *
+#!/usr/bin/env python3
 import argparse
 import pickle
 import sys
@@ -13,6 +7,7 @@ from sloika.layers import Layer
 from theano.tensor.sharedvar import TensorSharedVariable
 from theano.sandbox.cuda.var import CudaNdarraySharedVariable
 import theano as th
+import warnings
 
 parser = argparse.ArgumentParser(
     'Converts pickled sloika model between CPU and GPU (CUDA) versions.',
@@ -85,7 +80,7 @@ if __name__ == '__main__':
     except UnicodeDecodeError:
         with open(args.model, 'rb') as fh:
             net = pickle.load(fh, encoding='latin1')
-            warnings.warn("Support for python 2 pickles will be dropped: {}".format(model_file))
+            warnings.warn("Support for python 2 pickles will be dropped: {}".format(args.model))
 
     shared_vars = get_var_names(net)
 

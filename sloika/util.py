@@ -1,10 +1,3 @@
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
-from future import standard_library
-standard_library.install_aliases()
-from builtins import *
-
 from Bio import SeqIO
 import h5py
 import numpy as np
@@ -113,8 +106,6 @@ def fasta_file_to_dict(fasta_file_name):
         for ref in SeqIO.parse(fh, 'fasta'):
             refseq = str(ref.seq)
             if 'N' not in refseq and len(refseq) > 0:
-                if sys.version_info.major == 3:
-                    references[ref.id] = refseq.encode('utf-8')
-                else:
-                    references[ref.id] = refseq
+                references[ref.id] = refseq.encode('utf-8')
+
     return references

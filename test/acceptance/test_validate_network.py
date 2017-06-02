@@ -1,9 +1,3 @@
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
-from future import standard_library
-standard_library.install_aliases()
-from builtins import *
 import unittest
 import os
 
@@ -19,7 +13,7 @@ class AcceptanceTest(unittest.TestCase):
 
         self.testset_work_dir = os.path.join(os.environ["ACCTEST_WORK_DIR"], testset_name)
 
-        self.script = os.path.join(os.environ["BIN_DIR"], "verify_network.py")
+        self.script = os.path.join(os.environ["BIN_DIR"], "validate_network.py")
 
     def test_usage(self):
         cmd = [self.script]

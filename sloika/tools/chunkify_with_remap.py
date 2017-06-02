@@ -1,10 +1,3 @@
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
-from future import standard_library
-standard_library.install_aliases()
-from builtins import *
-
 import argparse
 import pickle
 import os
@@ -17,15 +10,6 @@ from untangled import fast5
 from untangled.iterators import imap_mp
 
 from sloika import helpers, batch, util
-
-
-def create_output_strand_file(output_strand_list_entries, output_file_name):
-    output_strand_list_entries.sort()
-
-    with open(output_file_name, "w") as sl:
-        sl.write(u'\t'.join(['filename', 'nev', 'score', 'nstay', 'seqlen', 'start', 'end']) + u'\n')
-        for strand_data in output_strand_list_entries:
-            sl.write('\t'.join([str(x) for x in strand_data]) + '\n')
 
 
 def chunkify_with_remap_main(args):
@@ -57,20 +41,22 @@ def chunkify_with_remap_main(args):
     bad_list = []
     chunk_list = []
     label_list = []
-    for res in imap_mp(batch.chunk_remap_worker, fast5_files, threads=args.jobs,
-                       fix_kwargs=kwargs, unordered=True, init=batch.init_chunk_remap_worker,
-                       initargs=[compiled_file]):
-        if res is not None:
-            i = util.progress_report(i)
+    with open(args.output_strand_list, 'w') as slfh:
+        slfh.write(u'\t'.join(['filename', 'nev', 'score', 'nstay', 'seqlen', 'start', 'end']) + u'\n')
+        for res in imap_mp(batch.chunk_remap_worker, fast5_files, threads=args.jobs,
+                        fix_kwargs=kwargs, unordered=True, init=batch.init_chunk_remap_worker,
+                        initargs=[compiled_file, args.kmer_len, args.alphabet]):
+            if res is not None:
+                i = util.progress_report(i)
 
-            read, score, nev, path, seq, chunks, labels, bad_ev = res
+                read, score, nev, path, seq, chunks, labels, bad_ev = res
 
-            chunk_list.append(chunks)
-            label_list.append(labels)
-            bad_list.append(bad_ev)
-            output_strand_list_entries.append([read, nev, -score / nev,
-                                               np.sum(np.ediff1d(path, to_begin=1) == 0),
-                                               len(seq), min(path), max(path)])
+                chunk_list.append(chunks)
+                label_list.append(labels)
+                bad_list.append(bad_ev)
+                strand_data = [read, nev, -score / nev, np.sum(np.ediff1d(path, to_begin=1) == 0),
+                               len(seq), min(path), max(path)]
+                slfh.write('\t'.join([str(x) for x in strand_data]) + '\n')
 
     if compiled_file != args.compile:
         os.remove(compiled_file)
@@ -88,8 +74,6 @@ def chunkify_with_remap_main(args):
             'scaled': args.use_scaled,
             'section': args.section,
             'trim': args.trim,
+            'alphabet': args.alphabet,
         }
         util.create_labelled_chunks_hdf5(args.output, args.blanks, hdf5_attributes, chunk_list, label_list, bad_list)
-
-        print('\n* Creating output strand file')
-        create_output_strand_file(output_strand_list_entries, args.output_strand_list)

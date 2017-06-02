@@ -1,11 +1,4 @@
-#!/usr/bin/env python
-from __future__ import division
-from __future__ import print_function
-from __future__ import absolute_import
-from future import standard_library
-standard_library.install_aliases()
-from builtins import *
-
+#!/usr/bin/env python3
 import argparse
 import pickle
 import h5py
@@ -16,6 +9,7 @@ import os
 from shutil import copyfile
 import sys
 import time
+import warnings
 
 import theano as th
 import theano.tensor as T
@@ -26,9 +20,12 @@ from untangled.cmdargs import (AutoBool, display_version_and_exit,
 
 import sloika.module_tools as smt
 from sloika import updates
+from sloika.variables import DEFAULT_ALPHABET
 from sloika.version import __version__
 
+
 logging.getLogger("theano.gof.compilelock").setLevel(logging.WARNING)
+
 
 # This is here, not in main to allow documentation to be built
 parser = argparse.ArgumentParser(
@@ -41,7 +38,7 @@ common_parser.add_argument('--adam', nargs=3, metavar=('rate', 'decay1', 'decay2
                                                              NonNegative(float)), action=ParseToNamedTuple,
                            help='Parameters for Exponential Decay Adaptive Momementum')
 common_parser.add_argument('--bad', default=True, action=AutoBool,
-                           help='Use bad events as a separate state')
+                           help='Force blocks marked as bad to be stays')
 common_parser.add_argument('--batch_size', default=100, metavar='chunks', type=Positive(int),
                            help='Number of chunks to run in parallel')
 common_parser.add_argument('--chunk_len_range', nargs=2, metavar=('min', 'max'),
@@ -69,6 +66,8 @@ common_parser.add_argument('--sd', default=0.5, metavar='value', type=Positive(f
                            help='Standard deviation to initialise with')
 common_parser.add_argument('--seed', default=None, metavar='integer', type=Positive(int),
                            help='Set random number seed')
+common_parser.add_argument('--smooth', default=0.45, metavar='factor', type=proportion,
+                           help='Smoothing factor for reporting progress')
 common_parser.add_argument('--transducer', default=True, action=AutoBool,
                            help='Train a transducer based model')
 common_parser.add_argument('--version', nargs=0, action=display_version_and_exit, metavar=__version__,
@@ -87,16 +86,31 @@ parser_ev = subparsers.add_parser('events', parents=[common_parser], help='Train
                                   formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser_ev.add_argument('--drop', default=20, metavar='events', type=NonNegative(int),
                        help='Number of events to drop from start and end of chunk before evaluating loss')
-parser_ev.set_defaults(stride=1)
+parser_ev.add_argument('--winlen', default=3, type=Positive(int),
+                       help='Length of window over data')
 
 parser_raw = subparsers.add_parser('raw', parents=[common_parser], help='Train from raw signal',
                                    formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser_raw.add_argument('--drop', default=20, metavar='samples', type=NonNegative(int),
                         help='Number of labels to drop from start and end of chunk before evaluating loss')
-parser_raw.add_argument('--stride', default=1, type=Positive(int),
-                        help='Length of stride over data')
 parser_raw.add_argument('--winlen', default=11, type=Positive(int),
                         help='Length of window over data')
+
+
+class ExponentialSmoother(object):
+    def __init__(self, factor, val=0.0, weight=1e-30):
+        assert 0.0 <= factor <= 1.0, "Smoothing factor was {}, should be between 0.0 and 1.0.\n".format(factor)
+        self.factor = factor
+        self.val = val
+        self.weight = weight
+
+    @property
+    def value(self):
+        return self.val / self.weight
+
+    def update(self, val, weight=1.0):
+        self.val = self.factor * self.val + (1.0 - self.factor) * val
+        self.weight = self.factor * self.weight + (1.0 - self.factor) * weight
 
 
 def remove_blanks(labels):
@@ -154,10 +168,7 @@ class Logger(object):
             sys.stdout.write(message)
             sys.stdout.flush()
         try:
-            if sys.version_info.major == 3:
-                self.fh.write(message.encode('utf-8'))
-            else:
-                self.fh.write(message)
+            self.fh.write(message.encode('utf-8'))
         except IOError as e:
             print("Failed to write to log\n Message: {}\n Error: {}".format(message, repr(e)))
 
@@ -197,6 +208,10 @@ if __name__ == '__main__':
     all_weights = all_weights.astype('float64')
     all_weights /= np.sum(all_weights)
     max_batch_size = (all_weights > 0).sum()
+
+    #  Model stride is forced by training data
+    training_stride = int(np.ceil(float(all_chunks.shape[1]) / all_labels.shape[1]))
+    log.write('* Stride is {}\n'.format(training_stride))
 
     # check chunk_len_range args
     data_chunk = all_chunks.shape[1]
@@ -240,14 +255,19 @@ if __name__ == '__main__':
     if model_ext == '.py':
         with h5py.File(args.input, 'r') as h5:
             klen = h5.attrs['kmer']
+            try:
+                alphabet = h5.attrs['alphabet']
+                log.write("* Using alphabet: {}\n".format(alphabet.decode('ascii')))
+            except:
+                alphabet = DEFAULT_ALPHABET
+                log.write("* Using default alphabet: {}\n".format(alphabet.decode('ascii')))
+                warnings.warn("Deprecated hdf5 input file: missing 'alphabet' attribute")
+            nbase = len(alphabet)
         netmodule = imp.load_source('netmodule', args.model)
 
-        if args.command == 'events':
-            network = netmodule.network(klen=klen, sd=args.sd, nfeature=all_chunks.shape[-1])
-        else:
-            network = netmodule.network(klen=klen, sd=args.sd,
-                                        nfeature=all_chunks.shape[-1],
-                                        winlen=args.winlen, stride=args.stride)
+        network = netmodule.network(klen=klen, sd=args.sd, nbase=nbase,
+                                    nfeature=all_chunks.shape[-1],
+                                    winlen=args.winlen, stride=training_stride)
     elif model_ext == '.pkl':
         with open(args.model, 'rb') as fh:
             network = pickle.load(fh)
@@ -257,9 +277,8 @@ if __name__ == '__main__':
     fg = wrap_network(network, min_prob=args.min_prob, l2=args.l2, drop=args.drop)
 
     total_ev = 0
-    score = wscore = 0.0
-    acc = wacc = 0.0
-    SMOOTH = 0.8
+    score_smoothed = ExponentialSmoother(args.smooth)
+    acc_smoothed = ExponentialSmoother(args.smooth)
 
     log.write('* Dumping initial model\n')
     save_model(network, args.output, 0)
@@ -270,30 +289,28 @@ if __name__ == '__main__':
         learning_rate = args.adam.rate / (1.0 + i / args.lrdecay)
 
         chunk_len = np.random.randint(min_chunk, max_chunk + 1)
-        chunk_len = chunk_len - (chunk_len % args.stride)
+        chunk_len = chunk_len - (chunk_len % training_stride)
 
         batch_size = int(args.batch_size * float(max_chunk) / chunk_len)
 
         start = np.random.randint(data_chunk - chunk_len + 1)
-        start = start - (start % args.stride)
+        start = start - (start % training_stride)
 
-        label_lb = start // args.stride
-        label_ub = (start + chunk_len) // args.stride
+        label_lb = start // training_stride
+        label_ub = (start + chunk_len) // training_stride
 
         idx = np.sort(np.random.choice(len(all_chunks), size=min(batch_size, max_batch_size),
                                        replace=False, p=all_weights))
-        events = np.ascontiguousarray(all_chunks[idx, start : start + chunk_len].transpose((1, 0, 2)))
+        indata = np.ascontiguousarray(all_chunks[idx, start : start + chunk_len].transpose((1, 0, 2)))
         labels = np.ascontiguousarray(all_labels[idx, label_lb : label_ub].transpose())
         weights = label_weights[labels]
 
-        fval, batch_acc = fg(events, labels, weights, learning_rate)
+        fval, batch_acc = fg(indata, labels, weights, learning_rate)
         fval = float(fval)
         nev = np.size(labels)
         total_ev += nev
-        score = fval + SMOOTH * score
-        acc = batch_acc + SMOOTH * acc
-        wscore = 1.0 + SMOOTH * wscore
-        wacc = 1.0 + SMOOTH * wacc
+        score_smoothed.update(fval)
+        acc_smoothed.update(batch_acc)
 
         if (i + 1) % args.save_every == 0:
             save_model(network, args.output, (i + 1) // args.save_every)
@@ -305,7 +322,8 @@ if __name__ == '__main__':
             tn = time.time()
             dt = tn - t0
             t = ' {:5d} {:5.3f}  {:5.2f}%  {:5.2f}s ({:.2f} kev/s)\n'
-            log.write(t.format((i + 1) // 50, score / wscore, 100.0 * acc / wacc, dt, total_ev / 1000.0 / dt))
+            log.write(t.format((i + 1) // 50, score_smoothed.value,
+                      100.0 * acc_smoothed.value, dt, total_ev / 1000.0 / dt))
             total_ev = 0
             t0 = tn
 

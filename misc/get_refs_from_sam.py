@@ -1,11 +1,4 @@
-#!/usr/bin/env python
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
-from future import standard_library
-standard_library.install_aliases()
-from builtins import *
-
+#!/usr/bin/env python3
 import argparse
 from Bio import SeqIO
 from collections import OrderedDict
@@ -36,8 +29,6 @@ parser.add_argument('input', metavar='input.sam',
 STRAND = {0: '+',
           16: '-'}
 
-
-WRITE_MODE = 'w' if sys.version_info.major == 3 else 'wb'
 
 
 def trim_fast5_extension(fn):
@@ -94,6 +85,6 @@ if __name__ == '__main__':
 
     if args.output_strand_list is not None:
         sys.stderr.write("* Writing strand-list\n")
-        with open(args.output_strand_list, WRITE_MODE) as f:
+        with open(args.output_strand_list, 'w') as f:
             f.write('filename\n')
             f.write('\n'.join(strand_list))

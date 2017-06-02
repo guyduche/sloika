@@ -1,7 +1,7 @@
 #!/bin/bash -eu
 
 export PROJECT_VERSION_MAJOR=1
-export PROJECT_VERSION_MINOR=2
+export PROJECT_VERSION_MINOR=3
 
 if hash git 2>/dev/null; then
     export PROJECT_VERSION_PATCH=$(git rev-list --count HEAD)

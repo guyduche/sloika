@@ -1,10 +1,3 @@
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
-from future import standard_library
-standard_library.install_aliases()
-from builtins import *
-
 from distutils import dir_util
 import h5py
 from nose_parameterized import parameterized
@@ -53,6 +46,47 @@ class AcceptanceTest(unittest.TestCase):
         cmd = [self.script, "hehe"]
         msg = u"chunkify.py: error: argument command: invalid choice:"
         util.run_cmd(self, cmd).expect_exit_code(2).expect_stderr(util.nth_line_starts_with(msg, 1))
+
+    @parameterized.expand([
+        [["--alphabet", "ACGTO"], (182, 500, 4), -2.8844583, 14.225174, -0.254353493452, 2344, "0"],
+    ])
+    def test_chunkify_with_identity_with_modified_bases(self, options, chunks_shape, min_value, max_value, median_value,
+                                                        max_label, subdir):
+        test_work_dir = self.work_dir(os.path.join("test_chunkify_with_identity_with_modified_bases", subdir))
+
+        strand_input_list = os.path.join(self.data_dir, "identity", "na12878_train.txt")
+        self.assertTrue(os.path.exists(strand_input_list))
+
+        reads_dir = os.path.join(self.data_dir, "identity", "reads")
+        self.assertTrue(os.path.exists(reads_dir))
+
+        output_file_name = os.path.join(test_work_dir, "output.hdf5")
+        open(output_file_name, "w").close()
+
+        cmd = [self.script, "identity", "--chunk_len", "500", "--kmer_len", "5",
+               "--section", "template", "--input_strand_list", strand_input_list,
+               reads_dir, output_file_name] + options
+
+        util.run_cmd(self, cmd).expect_exit_code(1)
+
+        util.run_cmd(self, cmd + ['--overwrite']).expect_exit_code(0)
+
+        with h5py.File(output_file_name, 'r') as fh:
+            top_level_items = []
+            for item in fh:
+                top_level_items.append(item)
+            top_level_items.sort()
+            self.assertEqual(top_level_items, [u'bad', u'chunks', u'labels', u'weights'])
+
+            self.assertEqual(fh['labels'][:].max(), max_label)
+
+            self.assertEqual(fh['chunks'].shape, chunks_shape)
+            chunks = fh['chunks'][:]
+            self.assertClose(chunks.min(), min_value)
+            self.assertClose(chunks.max(), max_value)
+            self.assertClose(np.median(chunks), median_value)
+
+        os.remove(output_file_name)
 
     @parameterized.expand([
         [[], (182, 500, 4), -2.8844583, 14.225174, -0.254353493452, "0"],
@@ -234,7 +268,6 @@ class AcceptanceTest(unittest.TestCase):
             util.last_line_starts_with(u"no chunks were produced"))
 
         self.assertTrue(not os.path.exists(output_file_name))
-        self.assertTrue(not os.path.exists(output_strand_list))
 
     @parameterized.expand([
         [495, 540, 25, 20, 0, "0"],
@@ -279,7 +312,6 @@ class AcceptanceTest(unittest.TestCase):
             expectation.expect_stderr(util.last_line_starts_with(u"no chunks were produced"))
 
             self.assertTrue(not os.path.exists(output_file_name))
-            self.assertTrue(not os.path.exists(output_strand_list))
 
     @parameterized.expand([
         [300, 360, 40, 20, 0, "0"],

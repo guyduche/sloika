@@ -2,7 +2,7 @@
 #  Yaml CI config for Gitlab See. http://docs.gitlab.com/ce/ci/yaml/README.html
 #
 
-image: git.oxfordnanolabs.local:4567/algorithm/sloika_docker:16.04-latest
+image: git.oxfordnanolabs.local:4567/algorithm/sloika_docker:14.04-latest
 
 stages:
     - build
@@ -16,14 +16,6 @@ wheel:
     stage: build
     script:
         - make wheel
-    artifacts:
-        paths:
-            - dist/*.whl
-
-wheel_py3:
-    stage: build
-    script:
-        - make wheelPy3
     artifacts:
         paths:
             - dist/*.whl
@@ -50,20 +42,14 @@ acceptance_xenial:
         - master
         - /^ci_*/
 
-unit_xenial_py3:
-    stage: test
-    script:
-        - make unitTestFromScratchPy3
-    only:
-        - release
-        - master
-        - /^ci_*/
 
-acceptance_xenial_py3:
+test:
+    image: git.oxfordnanolabs.local:4567/algorithm/sloika_docker:14.04-latest
     stage: test
     script:
-        - make acceptanceTestFromScratchPy3
-    only:
+        - make cleanDevEnv
+        - make
+    except:
         - release
         - master
         - /^ci_*/
@@ -73,12 +59,21 @@ unit_trusty:
     stage: test
     script:
         - make unitTestFromScratch
+    only:
+        - release
+        - master
+        - /^ci_*/
 
 acceptance_trusty:
     image: git.oxfordnanolabs.local:4567/algorithm/sloika_docker:14.04-latest
     stage: test
     script:
         - make acceptanceTestFromScratch
+    only:
+        - release
+        - master
+        - /^ci_*/
+
 
 workflow:
     stage: test
@@ -86,21 +81,25 @@ workflow:
         - make ciCheckout
         - make cleanDevEnv
     script:
+        - apt-get install -y bwa
         - make workflow
-
-dev_env_and_style:
-    stage: test
-    script:
-        - make cleanDevEnv
+    only:
+        - release
+        - master
+        - /^ci_*/
 
 pip_install_dot:
     stage: test
     before_script:
-        - apt-get install -y virtualenv python2.7 python-dev python3-dev
-        - virtualenv --python=python2.7 hoho
-        - source hoho/bin/activate && pip install numpy cython future
+        - apt-get install -y python-virtualenv python2.7 python3 python-dev python3-dev
+        - virtualenv --python=python3 hoho
+        - source hoho/bin/activate && pip install pip --upgrade && pip install numpy cython
     script:
         - source hoho/bin/activate && pip install . --trusted-host pypi.oxfordnanolabs.local --index-url https://pypi.oxfordnanolabs.local/simple/
+    only:
+        - release
+        - master
+        - /^ci_*/
 
 wheel_upload:
     stage: release

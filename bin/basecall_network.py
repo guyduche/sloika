@@ -1,11 +1,4 @@
-#!/usr/bin/env python
-from __future__ import division
-from __future__ import print_function
-from __future__ import absolute_import
-from future import standard_library
-standard_library.install_aliases()
-from builtins import *
-
+#!/usr/bin/env python3
 import argparse
 import os
 import pickle
@@ -13,7 +6,7 @@ import sys
 import time
 
 from untangled import fast5
-from untangled.cmdargs import (AutoBool, FileAbsent, FileExists, Maybe,
+from untangled.cmdargs import (AutoBool, ByteString, FileAbsent, FileExists, Maybe,
                                NonNegative, proportion, Positive, Vector)
 from untangled.iterators import imap_mp
 
@@ -28,6 +21,8 @@ parser = argparse.ArgumentParser(
 
 # common command line arguments to all subcommands
 common_parser = argparse.ArgumentParser(add_help=False)
+common_parser.add_argument('--alphabet', default=b"ACGT", action=ByteString,
+                           help='Alphabet of the sequences')
 common_parser.add_argument('--compile', default=None, action=FileAbsent,
                            help='File output compiled model')
 common_parser.add_argument('--input_strand_list', default=None, action=FileExists,
@@ -89,14 +84,14 @@ if __name__ == '__main__':
 
     basecall_worker = getattr(basecall, args.command + "_worker")
     if args.command == "events":
-        kwarg_names = ['section', 'segmentation', 'trim', 'kmer_len', 'transducer', 'bad', 'min_prob', 'skip', 'trans']
+        kwarg_names = ['section', 'segmentation', 'trim', 'kmer_len', 'transducer', 'bad', 'min_prob', 'skip', 'trans', 'alphabet']
     else:
-        kwarg_names = ['trim', 'open_pore_fraction', 'kmer_len', 'transducer', 'bad', 'min_prob', 'skip', 'trans']
+        kwarg_names = ['trim', 'open_pore_fraction', 'kmer_len', 'transducer', 'bad', 'min_prob', 'skip', 'trans', 'alphabet']
 
     compiled_file = helpers.compile_model(args.model, args.compile)
 
     seq_printer = basecall.SeqPrinter(args.kmer_len, datatype=args.datatype,
-                                      transducer=args.transducer)
+                                      transducer=args.transducer, alphabet=args.alphabet.decode('ascii'))
 
     files = fast5.iterate_fast5(args.input_folder, paths=True, limit=args.limit,
                                 strand_list=args.input_strand_list)

@@ -1,9 +1,3 @@
-from __future__ import division
-from __future__ import print_function
-from __future__ import absolute_import
-from future import standard_library
-standard_library.install_aliases()
-from builtins import *
 import abc
 from collections import OrderedDict
 import theano as th
@@ -12,14 +6,14 @@ import numpy as np
 
 from sloika import activation, conv
 from sloika.config import sloika_dtype
-from sloika.variables import NBASE, nkmer
+from sloika.variables import DEFAULT_NBASE, nkmer
 from functools import reduce
-from future.utils import with_metaclass
+
 
 """  Convention: inMat row major (C ordering) as (time, batch, state)
 """
-_NSTEP = NBASE
-_NSKIP = NBASE * NBASE
+_NSTEP = DEFAULT_NBASE
+_NSKIP = DEFAULT_NBASE * DEFAULT_NBASE
 _FORGET_BIAS = 2.0
 _INDENT = ' ' * 4
 
@@ -35,19 +29,23 @@ def _extract(x, shape=None):
     return xv.tolist()
 
 
-class Layer(with_metaclass(abc.ABCMeta, object)):
+class Layer(metaclass=abc.ABCMeta):
 
     def compile(self):
         x = T.tensor3()
         return th.function([th.In(x, borrow=True)], th.Out(self.run(x), borrow=True))
 
-    @abc.abstractproperty
+    @property
     def insize(self):
-        return
+        return self._insize
 
-    @abc.abstractproperty
+    @property
     def size(self):
-        return
+        return self._size
+
+    @property
+    def name(self):
+        return self._name
 
     @abc.abstractmethod
     def params(self):
@@ -92,12 +90,9 @@ class RNN(Layer):
 
 class Identity(Layer):
 
-    def __init__(self, insize):
+    def __init__(self, insize, name="Identity"):
         self._insize = insize
-
-    @property
-    def insize(self):
-        return self._insize
+        self._name = name
 
     @property
     def size(self):
@@ -125,24 +120,18 @@ class FeedForward(Layer):
     :param init: function to initialise tensors with
     :param has_bias: Whether layer has bias
     :param fun: The activation function.
+    :param name: Name for layer
     """
 
     def __init__(self, insize, size, init=zeros, has_bias=False,
-                 fun=activation.tanh):
+                 fun=activation.tanh, name="Feed-forward"):
         self.has_bias = has_bias
         self.b = th.shared(has_bias * init(size))
         self.W = th.shared(init((size, insize)) / np.sqrt(size + insize))
         self._insize = insize
         self._size = size
+        self._name = name
         self.fun = fun
-
-    @property
-    def insize(self):
-        return self._insize
-
-    @property
-    def size(self):
-        return self._size
 
     def params(self):
         return [self.W, self.b] if self.has_bias else [self.W]
@@ -173,15 +162,13 @@ class Studentise(Layer):
     """ Normal all features in batch
 
     :param epsilon: Stabilsation layer
+    :param name: Name for layer
     """
 
-    def __init__(self, insize, epsilon=1e-4):
+    def __init__(self, insize, epsilon=1e-4, name="Studentise"):
         self.epsilon = epsilon
         self._insize = insize
-
-    @property
-    def insize(self):
-        return self._insize
+        self._name = name
 
     @property
     def size(self):
@@ -206,15 +193,13 @@ class NormaliseL1(Layer):
     """ Normal all features in batch
 
     :param epsilon: Stabilsation layer
+    :param name: Name for layer
     """
 
-    def __init__(self, insize, epsilon=1e-4):
+    def __init__(self, insize, epsilon=1e-4, name="Normalise"):
         self.epsilon = epsilon
         self._insize = insize
-
-    @property
-    def insize(self):
-        return self._insize
+        self._name = name
 
     @property
     def size(self):
@@ -243,22 +228,16 @@ class SoftmaxTheano(Layer):
     :param size: Layer size
     :param init: function to initialise tensors with
     :param has_bias: Whether layer has bias
+    :param name: Name for layer
     """
 
-    def __init__(self, insize, size, init=zeros, has_bias=False):
+    def __init__(self, insize, size, init=zeros, has_bias=False, name="Softmax"):
         self.has_bias = has_bias
         self.b = th.shared(has_bias * init(size))
         self.W = th.shared(init((size, insize)) / np.sqrt(insize + size))
         self._insize = insize
         self._size = size
-
-    @property
-    def insize(self):
-        return self._insize
-
-    @property
-    def size(self):
-        return self._size
+        self._name = name
 
     def params(self):
         return [self.W, self.b] if self.has_bias else [self.W]
@@ -295,22 +274,16 @@ class Softmax(Layer):
     :param size: Layer size
     :param init: function to initialise tensors with
     :param has_bias: Whether layer has bias
+    :param name: Name for layer
     """
 
-    def __init__(self, insize, size, init=zeros, has_bias=False):
+    def __init__(self, insize, size, init=zeros, has_bias=False, name="Softmax"):
         self.has_bias = has_bias
         self.b = th.shared(has_bias * init(size))
         self.W = th.shared(init((size, insize)) / np.sqrt(size + insize))
         self._insize = insize
         self._size = size
-
-    @property
-    def insize(self):
-        return self._insize
-
-    @property
-    def size(self):
-        return self._size
+        self._name = name
 
     def params(self):
         return [self.W, self.b] if self.has_bias else [self.W]
@@ -345,17 +318,15 @@ class Window(Layer):
     """  Create a sliding window over input
 
     :param w: Size of window
+    :param name: Name for layer
     """
 
-    def __init__(self, insize, w):
+    def __init__(self, insize, w, name="Window"):
         assert w > 0, "Window size must be positive"
         assert w % 2 == 1, 'Window size should be odd'
         self.w = w
         self._insize = insize
-
-    @property
-    def insize(self):
-        return self._insize
+        self._name = name
 
     @property
     def size(self):
@@ -396,12 +367,15 @@ class Convolution(Layer):
     :param padding_mode: str, int or (int, int)
         Controls the padding applied to the input. See conv.calculate_padding
         for available modes. Default: 'same'
+    :param name: Name for layer
     """
 
     def __init__(self, insize, size, winlen, stride=1, init=zeros,
-                 has_bias=False, fun=activation.tanh, padding_mode='same'):
+                 has_bias=False, fun=activation.tanh, padding_mode='same',
+                 name="Convolution"):
         self._insize = insize
         self._size = size
+        self._name = name
         self.winlen = winlen
         self.stride = stride
         self.fun = fun
@@ -415,14 +389,6 @@ class Convolution(Layer):
         self.W = th.shared(init((size, insize, winlen)) /
                            np.sqrt(fanin + fanout))
         self.b = th.shared(has_bias * init(size))
-
-    @property
-    def insize(self):
-        return self._insize
-
-    @property
-    def size(self):
-        return self._size
 
     def params(self):
         return [self.W, self.b] if self.has_bias else [self.W]
@@ -463,19 +429,18 @@ class MaxPool(Layer):
     :param padding_mode: str, int or (int, int)
         Controls the padding applied to the input. See conv.calculate_padding
         for available modes. Default: 'same'
+    :param name: Name for layer
     """
 
-    def __init__(self, insize, pool_size, stride, fun=activation.linear, padding_mode='same'):
+    def __init__(self, insize, pool_size, stride, fun=activation.linear,
+                 padding_mode='same', name="MaxPooling"):
         self._insize = insize
+        self._name = name
         self.pool_size = pool_size
         self.stride = stride
         self.fun = fun
         self.padding_mode = padding_mode
         self.padding = conv.calculate_padding(padding_mode, pool_size)
-
-    @property
-    def insize(self):
-        return self._insize
 
     @property
     def size(self):
@@ -510,10 +475,11 @@ class Recurrent(RNN):
     :param init: function to initialise tensors with
     :param has_bias: Whether layer has bias
     :param fun: The activation function.
+    :param name: Name for layer
     """
 
     def __init__(self, insize, size, init=zeros, has_bias=False,
-                 fun=activation.tanh):
+                 fun=activation.tanh, name="Recurrent"):
         self.has_bias = has_bias
         self.b = th.shared(has_bias * init(size))
         self.iW = th.shared(init((size, insize)) / np.sqrt(insize + size))
@@ -521,14 +487,7 @@ class Recurrent(RNN):
         self.fun = fun
         self._insize = insize
         self._size = size
-
-    @property
-    def insize(self):
-        return self._insize
-
-    @property
-    def size(self):
-        return self._size
+        self._name = name
 
     def params(self):
         return [self.iW, self.sW, self.b] if self.has_bias else [self.iW, self.sW]
@@ -574,10 +533,11 @@ class Scrn(RNN):
     :param alpha: Decay coefficient for memory units
     :param init: function to initialise tensors with
     :param fun: The activation function.  Must accept a numpy array as input.
+    :param name: Name for layer
     """
 
     def __init__(self, insize, fast_size, slow_size, init=zeros, alpha=0.95,
-                 fun=activation.sigmoid):
+                 fun=activation.sigmoid, name="StructurallyConstrainedRNN"):
         # mmW is the (non-learned) memory unit decay matrix
         # the option to learn the entries of this matrix could be added later
         self.alpha = T.constant(alpha)
@@ -588,12 +548,9 @@ class Scrn(RNN):
         self.ffW = th.shared(init((fast_size, fast_size)) / np.sqrt(fast_size + fast_size))
         self.fun = fun
         self._insize = insize
+        self._name = name
         self.fast_size = fast_size
         self.slow_size = slow_size
-
-    @property
-    def insize(self):
-        return self._insize
 
     @property
     def size(self):
@@ -664,12 +621,14 @@ class Lstm(RNN):
     :param fun: The activation function.
     :param gatefun: The activation function for gates.  Generally a monotone
     mapping from (-inf, inf) -> [0, 1]
+    :param name: Name for layer
     """
 
     def __init__(self, insize, size, init=zeros, has_bias=False, has_peep=False,
-                 fun=activation.tanh, gatefun=activation.sigmoid):
+                 fun=activation.tanh, gatefun=activation.sigmoid, name="LSTM"):
         self._size = size
         self._insize = insize
+        self._name = name
         self.has_bias = has_bias
         self.has_peep = has_peep
         self.fun = fun
@@ -679,14 +638,6 @@ class Lstm(RNN):
         self.p = th.shared(has_peep * init((3, size)) / np.sqrt(size))
         self.iW = th.shared(init((4 * size, insize)) / np.sqrt(insize + size))
         self.sW = th.shared(init((4 * size, size)) / np.sqrt(size + size))
-
-    @property
-    def insize(self):
-        return self._insize
-
-    @property
-    def size(self):
-        return self._size
 
     def params(self):
         params = [self.iW, self.sW]
@@ -769,12 +720,15 @@ class LstmCIFG(RNN):
     :param fun: The activation function.  Must accept a numpy array as input.
     :param gatefun: The activation function for gates.  Generally a monotone
     mapping from (-inf, inf) -> [0, 1]
+    :param name: Name for layer
     """
 
     def __init__(self, insize, size, init=zeros, has_bias=False, has_peep=False,
-                 fun=activation.tanh, gatefun=activation.sigmoid):
+                 fun=activation.tanh, gatefun=activation.sigmoid,
+                 name="CoupledLSTM"):
         self._size = size
         self._insize = insize
+        self._name = name
         self.has_bias = has_bias
         self.has_peep = has_peep
         self.fun = fun
@@ -784,14 +738,6 @@ class LstmCIFG(RNN):
         self.p = th.shared(has_peep * init((2, size)) / np.sqrt(size))
         self.iW = th.shared(init((3 * size, insize)) / np.sqrt(insize + size))
         self.sW = th.shared(init((3 * size, size)) / np.sqrt(size + size))
-
-    @property
-    def insize(self):
-        return self._insize
-
-    @property
-    def size(self):
-        return self._size
 
     def params(self):
         params = [self.iW, self.sW]
@@ -870,12 +816,15 @@ class LstmO(RNN):
     :param fun: The activation function.
     :param gatefun: The activation function for gates.  Generally a monotone
     mapping from (-inf, inf) -> [0, 1]
+    :param name: Name for layer
     """
 
     def __init__(self, insize, size, init=zeros, has_bias=False, has_peep=False,
-                 fun=activation.tanh, gatefun=activation.sigmoid):
+                 fun=activation.tanh, gatefun=activation.sigmoid,
+                 name='TransparentLSTM'):
         self._size = size
         self._insize = insize
+        self._name = name
         self.has_bias = has_bias
         self.has_peep = has_peep
         self.fun = fun
@@ -885,14 +834,6 @@ class LstmO(RNN):
         self.p = th.shared(has_peep * init((3, size)) / np.sqrt(size))
         self.iW = th.shared(init((3 * size, insize)) / np.sqrt(insize + size))
         self.sW = th.shared(init((3 * size, size)) / np.sqrt(size + size))
-
-    @property
-    def insize(self):
-        return self._insize
-
-    @property
-    def size(self):
-        return self._size
 
     def params(self):
         params = [self.iW, self.sW]
@@ -952,12 +893,15 @@ class Forget(RNN):
     :param fun: The activation function.
     :param gatefun: The activation function for gates.  Generally a monotone
     mapping from (-inf, inf) -> [0, 1]
+    :param name: Name for layer
     """
 
     def __init__(self, insize, size, init=zeros, has_bias=False,
-                 fun=activation.tanh, gatefun=activation.sigmoid):
+                 fun=activation.tanh, gatefun=activation.sigmoid,
+                 name='ForgetfulRNN'):
         self._size = size
         self._insize = insize
+        self._name = name
         self.has_bias = has_bias
         self.fun = fun
         self.gatefun
@@ -965,14 +909,6 @@ class Forget(RNN):
         self.b = th.shared(has_bias * (init(2 * size) + np.repeat([_FORGET_BIAS, 0], size).astype(sloika_dtype)))
         self.iW = th.shared(init((2 * size, insize)) / np.sqrt(insize + size))
         self.sW = th.shared(init((2 * size, size)) / np.sqrt(size + size))
-
-    @property
-    def insize(self):
-        return self._insize
-
-    @property
-    def size(self):
-        return self._size
 
     def params(self):
         params = [self.iW, self.sW]
@@ -1023,12 +959,14 @@ class Gru(RNN):
     :param fun: The activation function.
     :param gatefun: The activation function for gates.  Generally a monotone
     mapping from (-inf, inf) -> [0, 1]
+    :param name: Name for layer
     """
 
     def __init__(self, insize, size, init=zeros, has_bias=False,
-                 fun=activation.tanh, gatefun=activation.sigmoid):
+                 fun=activation.tanh, gatefun=activation.sigmoid, name='GRU'):
         self._size = size
         self._insize = insize
+        self._name = name
         self.has_bias = has_bias
         self.fun = fun
         self.gatefun = gatefun
@@ -1037,14 +975,6 @@ class Gru(RNN):
         self.iW = th.shared(init((3 * size, insize)) / np.sqrt(insize + size))
         self.sW = th.shared(init((2 * size, size)) / np.sqrt(size + size))
         self.sW2 = th.shared(init((size, size)) / np.sqrt(size + size))
-
-    @property
-    def insize(self):
-        return self._insize
-
-    @property
-    def size(self):
-        return self._size
 
     def params(self):
         params = [self.iW, self.sW, self.sW2]
@@ -1112,12 +1042,14 @@ class Mut1(RNN):
     :param fun: The activation function.
     :param gatefun: The activation function for gates.  Generally a monotone
         mapping from (-inf, inf) -> [0, 1]
+    :param name: Name for layer
     """
 
     def __init__(self, insize, size, init=zeros, has_bias=False,
-                 fun=activation.tanh, gatefun=activation.sigmoid):
+                 fun=activation.tanh, gatefun=activation.sigmoid, name='MUT1'):
         self._size = size
         self._insize = insize
+        self._name = name
         self.has_bias = has_bias
         self.fun = fun
         self.gatefun = gatefun
@@ -1131,14 +1063,6 @@ class Mut1(RNN):
         self.W_xr = th.shared(init((size, insize)) / np.sqrt(insize + size))
         self.W_hr = th.shared(init((size, size)) / np.sqrt(size + size))
         self.W_hh = th.shared(init((size, size)) / np.sqrt(size + size))
-
-    @property
-    def insize(self):
-        return self._insize
-
-    @property
-    def size(self):
-        return self._size
 
     def params(self):
         params = [self.W_xu, self.W_xz, self.W_xr, self.W_hr, self.W_hh]
@@ -1217,12 +1141,14 @@ class Mut2(RNN):
     :param fun: The activation function.  Must accept a numpy array as input.
     :param gatefun: The activation function for gates.  Generally a monotone
         mapping from (-inf, inf) -> [0, 1]
+    :param name: Name for layer
     """
 
     def __init__(self, insize, size, init=zeros, has_bias=False,
-                 fun=activation.tanh, gatefun=activation.sigmoid):
+                 fun=activation.tanh, gatefun=activation.sigmoid, name='MUT2'):
         self._size = size
         self._insize = insize
+        self._name = name
         self.has_bias = has_bias
         self.fun = fun
         self.gatefun = gatefun
@@ -1237,14 +1163,6 @@ class Mut2(RNN):
         self.W_hr = th.shared(init((size, size)) / np.sqrt(size + size))
         self.W_hh = th.shared(init((size, size)) / np.sqrt(size + size))
         self.W_xh = th.shared(init((size, insize)) / np.sqrt(size + size))
-
-    @property
-    def insize(self):
-        return self._insize
-
-    @property
-    def size(self):
-        return self._size
 
     def params(self):
         params = [self.W_xu, self.W_xz, self.W_hz, self.W_hr, self.W_hh, self.W_xh]
@@ -1326,12 +1244,14 @@ class Mut3(RNN):
     :param fun: The activation function.  Must accept a numpy array as input.
     :param gatefun: The activation function for gates.  Generally a monotone
         mapping from (-inf, inf) -> [0, 1]
+    :param name: Name for layer
     """
 
     def __init__(self, insize, size, init=zeros, has_bias=False,
-                 fun=activation.tanh, gatefun=activation.sigmoid, embed="learn"):
+                 fun=activation.tanh, gatefun=activation.sigmoid, name='MUT3'):
         self._size = size
         self._insize = insize
+        self._name = name
         self.has_bias = has_bias
         self.fun = fun
         self.gatefun = gatefun
@@ -1347,14 +1267,6 @@ class Mut3(RNN):
         self.W_hr = th.shared(init((size, size)) / np.sqrt(size + size))
         self.W_hh = th.shared(init((size, size)) / np.sqrt(size + size))
         self.W_xh = th.shared(init((size, insize)) / np.sqrt(size + size))
-
-    @property
-    def insize(self):
-        return self._insize
-
-    @property
-    def size(self):
-        return self._size
 
     def params(self):
         params = [self.W_xu, self.W_xz, self.W_hz, self.W_xr, self.W_hr, self.W_hh, self.W_xh]
@@ -1440,12 +1352,15 @@ class Genmut(RNN):
     :param fun: The activation function.
     :param gatefun: The activation function for gates.  Generally a monotone
         mapping from (-inf, inf) -> [0, 1]
+    :param name: Name for layer
     """
 
     def __init__(self, insize, size, init=zeros, has_bias=False,
-                 fun=activation.tanh, gatefun=activation.sigmoid):
+                 fun=activation.tanh, gatefun=activation.sigmoid,
+                 name='GeneralisedMUT1'):
         self._size = size
         self._insize = insize
+        self._name = name
         self.has_bias = has_bias
         self.fun = fun
         self.gatefun = gatefun
@@ -1455,14 +1370,6 @@ class Genmut(RNN):
         self.sW = th.shared(init((3 * size, size)) / np.sqrt(size + size))
         self.sW2 = th.shared(init((size, size)) / np.sqrt(size + size))
         self.b2 = th.shared(has_bias * init(size))
-
-    @property
-    def insize(self):
-        return self._insize
-
-    @property
-    def size(self):
-        return self._size
 
     def params(self):
         params = [self.xW, self.sW, self.sW2]
@@ -1512,10 +1419,14 @@ class Genmut(RNN):
 
 class Reverse(Layer):
     """  Runs a recurrent layer in reverse time (backwards)
+
+    :param layer: A :class:`layer` to reverse
+    :param name: Name for layer
     """
 
-    def __init__(self, layer):
+    def __init__(self, layer, name='Reverse'):
         self.layer = layer
+        self._name = name
 
     @property
     def insize(self):
@@ -1541,11 +1452,15 @@ class Reverse(Layer):
 
 class Parallel(Layer):
     """ Run multiple layers in parallel (all have same input and outputs are concatenated)
+
+    :param layers: A list of :class:`layer` to run in parallel
+    :param name: Name for layer
     """
 
-    def __init__(self, layers):
+    def __init__(self, layers, name='Parallel'):
         assert len(layers) > 0, "A Parallel layer cannot be empty"
         self.layers = layers
+        self._name = name
         insize = self.layers[0].insize
         is_consistent = all(x.insize == self.insize for x in self.layers)
         assert is_consistent, "Parallel layer has inconsistent sizes"
@@ -1572,13 +1487,51 @@ class Parallel(Layer):
         return T.concatenate([x.run(inMat) for x in self.layers], axis=2)
 
 
-class Serial(Layer):
-    """ Run multiple layers serially: output of a layer is the input for the next layer
+class Residual(Layer):
+    """ Wraps a layer with a residual connection
+
+    :param layer: A :class:`Layer` to wrap
+    :param name: Name for layer
     """
 
-    def __init__(self, layers):
+    def __init__(self, layer, name='Residual'):
+        assert layer.insize == layer.size, "Residual connections only supported when input and output sizes are equal"
+        self.layer = layer
+        self._name = name
+
+    @property
+    def insize(self):
+        return self.layer.insize
+
+    @property
+    def size(self):
+        return self.layer.size
+
+    def params(self):
+        return self.layer.params
+
+    def json(self, params=False):
+        return OrderedDict([('type', "residual"),
+                            ('sublayer', self.layer.json(params))])
+
+    def set_params(self, values):
+        return
+
+    def run(self, inMat):
+        return inMat + self.layer.run(inMat)
+
+
+class Serial(Layer):
+    """ Run multiple layers serially: output of a layer is the input for the next layer
+
+    :param layers: A list of :class:`layer` to run in series
+    :param name: Name for layer
+    """
+
+    def __init__(self, layers, name='Serial'):
         assert len(layers) > 0, "A Serial layer cannot be empty"
         self.layers = layers
+        self._name = name
         is_consistent = all(x.size == y.insize for x, y in zip(layers, layers[1:]))
         assert is_consistent, "Serial layer has inconistent sizes"
 
@@ -1609,15 +1562,18 @@ class Serial(Layer):
 
 class Decode(RNN):
     """ Forward pass of a Viterbi decoder
+
+    :param name: Name for layer
     """
 
-    def __init__(self, k):
-        self._NBASE = T.constant(NBASE, dtype='int32')
+    def __init__(self, k, name='ForwardsViterbi'):
+        self._NBASE = T.constant(DEFAULT_NBASE, dtype='int32')
         self._NSTEP = T.constant(_NSTEP, dtype='int32')
         self._NSKIP = T.constant(_NSKIP, dtype='int32')
         self.size = T.constant(nkmer(k), dtype='int32')
-        self.rstep = T.constant(NBASE ** (k - 1), dtype='int32')
-        self.rskip = T.constant(NBASE ** (k - 2), dtype='int32')
+        self.rstep = T.constant(DEFAULT_NBASE ** (k - 1), dtype='int32')
+        self.rskip = T.constant(DEFAULT_NBASE ** (k - 2), dtype='int32')
+        self._name = name
 
     def params(self):
         return []
@@ -1663,7 +1619,11 @@ class Decode(RNN):
         return out[:, :, self.size]
 
 
-def birnn(layer1, layer2):
+def birnn(forward, backward, name='BiRNN'):
     """  Creates a bidirectional RNN from two RNNs
+
+    :param forward: A :class:`layer` to run forwards
+    :param backward: A :class:`layer` to run backwards
+    :param name: Name for layer
     """
-    return Parallel([layer1, Reverse(layer2)])
+    return Parallel([forward, Reverse(backward)], name=name)
