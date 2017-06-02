@@ -5,6 +5,13 @@ Release 2.0
 * Open-source project
 
 
+Release 1.2 brown bag 1
+=======================
+
+* Bug fixes to chunkify from raw data
+* Take the `--drop` into account when reporting label accuracy during training
+
+
 Release 1.2
 ===========
 
