@@ -105,17 +105,6 @@ def score(post, seq, full=False):
     return forwards(post, seq, full=full)
 
 
-def refine(post, seq):
-    """  Iterative refinement of a sequence
-
-    :param post: A 2D :class:`ndarray`
-    :param seq: Initial sequence to map against
-
-    :returns:
-    """
-    pass
-
-
 def forwards(post, seq, full=False):
     """ The forwards score for sequence
 
