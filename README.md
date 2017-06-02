@@ -24,7 +24,7 @@ To use Theano effectively, A typical set of Theano flags might look like:
 ```bash
 export THEANO_FLAGS=openmp=True,floatX=float32,warn_float64=warn,optimizer=fast_run,device=gpu0,scan.allow_gc=False,lib.cnmem=0.3
 ```
-The Theano flags used for the tests are defined in the `environment` file.
+The Theano flags used for the tests are defined in the `environment` file; you can edit these to test your configuration.
 
 | Flag                | Description |
 |---------------------|-------------|
