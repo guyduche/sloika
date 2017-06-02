@@ -17,7 +17,7 @@ def all_kmers(length, alphabet='ACGT'):
 
     :returns: a list of strings. kmers are sorted by the ordering of the *alphabet*.
     """
-    if sys.version_info[0] == 3 and isinstance(alphabet, bytes):
+    if isinstance(alphabet, bytes):
         alphabet = alphabet.decode('utf-8')
         return [''.join(x).encode('utf-8') for x in product(alphabet, repeat=length)]
     else:
