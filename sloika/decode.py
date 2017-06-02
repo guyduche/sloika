@@ -139,17 +139,6 @@ def forwards(post, seq, full=False):
     return score + (np.log(fwd[-1]) if full else 0.0)
 
 
-def backwards(post, seq):
-    """ The backwards score for sequence
-
-    :param post: A 2D :class:`ndarray`
-    :param seq: Sequence to map against
-
-    :returns: score
-    """
-    pass
-
-
 def forwards_transpose(post, seq, skip_prob=0.0):
     """ Forwards score but computed through sequence
 
