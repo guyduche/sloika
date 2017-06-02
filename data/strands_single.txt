@@ -1,0 +1,2 @@
+filename
+read03.fast5

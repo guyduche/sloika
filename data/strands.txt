@@ -1,0 +1,4 @@
+filename
+read03.fast5
+read16.fast5
+read27.fast5

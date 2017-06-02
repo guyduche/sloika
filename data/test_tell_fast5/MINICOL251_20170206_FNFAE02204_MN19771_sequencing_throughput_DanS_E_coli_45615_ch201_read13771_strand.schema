@@ -1,0 +1,368 @@
+HDF5 "$F$" {
+GROUP "/" {
+   ATTRIBUTE "file_version" {
+      DATATYPE  H5T_IEEE_F64LE
+      DATASPACE  SCALAR
+   }
+   GROUP "Raw" {
+      GROUP "Reads" {
+         GROUP "Read_$R$" {
+            ATTRIBUTE "duration" {
+               DATATYPE  H5T_STD_U32LE
+               DATASPACE  SCALAR
+            }
+            ATTRIBUTE "median_before" {
+               DATATYPE  H5T_IEEE_F64LE
+               DATASPACE  SCALAR
+            }
+            ATTRIBUTE "read_id" {
+               DATATYPE  H5T_STRING {
+                  STRSIZE $S$;
+                  STRPAD H5T_STR_NULLTERM;
+                  CSET H5T_CSET_ASCII;
+                  CTYPE H5T_C_S1;
+               }
+               DATASPACE  SCALAR
+            }
+            ATTRIBUTE "read_number" {
+               DATATYPE  H5T_STD_U32LE
+               DATASPACE  SCALAR
+            }
+            ATTRIBUTE "start_mux" {
+               DATATYPE  H5T_STD_U32LE
+               DATASPACE  SCALAR
+            }
+            ATTRIBUTE "start_time" {
+               DATATYPE  H5T_STD_U64LE
+               DATASPACE  SCALAR
+            }
+            DATASET "Signal" {
+               DATATYPE  H5T_STD_I16LE
+               DATASPACE  SIMPLE { ( $N$ ) / ( H5S_UNLIMITED ) }
+            }
+         }
+      }
+   }
+   GROUP "UniqueGlobalKey" {
+      GROUP "channel_id" {
+         ATTRIBUTE "channel_number" {
+            DATATYPE  H5T_STRING {
+               STRSIZE $S$;
+               STRPAD H5T_STR_NULLTERM;
+               CSET H5T_CSET_ASCII;
+               CTYPE H5T_C_S1;
+            }
+            DATASPACE  SCALAR
+         }
+         ATTRIBUTE "digitisation" {
+            DATATYPE  H5T_IEEE_F64LE
+            DATASPACE  SCALAR
+         }
+         ATTRIBUTE "offset" {
+            DATATYPE  H5T_IEEE_F64LE
+            DATASPACE  SCALAR
+         }
+         ATTRIBUTE "range" {
+            DATATYPE  H5T_IEEE_F64LE
+            DATASPACE  SCALAR
+         }
+         ATTRIBUTE "sampling_rate" {
+            DATATYPE  H5T_IEEE_F64LE
+            DATASPACE  SCALAR
+         }
+      }
+      GROUP "context_tags" {
+         ATTRIBUTE "department" {
+            DATATYPE  H5T_STRING {
+               STRSIZE $S$;
+               STRPAD H5T_STR_NULLTERM;
+               CSET H5T_CSET_ASCII;
+               CTYPE H5T_C_S1;
+            }
+            DATASPACE  SCALAR
+         }
+         ATTRIBUTE "experiment_type" {
+            DATATYPE  H5T_STRING {
+               STRSIZE $S$;
+               STRPAD H5T_STR_NULLTERM;
+               CSET H5T_CSET_ASCII;
+               CTYPE H5T_C_S1;
+            }
+            DATASPACE  SCALAR
+         }
+         ATTRIBUTE "filename" {
+            DATATYPE  H5T_STRING {
+               STRSIZE $S$;
+               STRPAD H5T_STR_NULLTERM;
+               CSET H5T_CSET_ASCII;
+               CTYPE H5T_C_S1;
+            }
+            DATASPACE  SCALAR
+         }
+         ATTRIBUTE "sample_frequency" {
+            DATATYPE  H5T_STRING {
+               STRSIZE $S$;
+               STRPAD H5T_STR_NULLTERM;
+               CSET H5T_CSET_ASCII;
+               CTYPE H5T_C_S1;
+            }
+            DATASPACE  SCALAR
+         }
+         ATTRIBUTE "user_filename_input" {
+            DATATYPE  H5T_STRING {
+               STRSIZE $S$;
+               STRPAD H5T_STR_NULLTERM;
+               CSET H5T_CSET_ASCII;
+               CTYPE H5T_C_S1;
+            }
+            DATASPACE  SCALAR
+         }
+      }
+      GROUP "tracking_id" {
+         ATTRIBUTE "asic_id" {
+            DATATYPE  H5T_STRING {
+               STRSIZE $S$;
+               STRPAD H5T_STR_NULLTERM;
+               CSET H5T_CSET_ASCII;
+               CTYPE H5T_C_S1;
+            }
+            DATASPACE  SCALAR
+         }
+         ATTRIBUTE "asic_id_eeprom" {
+            DATATYPE  H5T_STRING {
+               STRSIZE $S$;
+               STRPAD H5T_STR_NULLTERM;
+               CSET H5T_CSET_ASCII;
+               CTYPE H5T_C_S1;
+            }
+            DATASPACE  SCALAR
+         }
+         ATTRIBUTE "asic_temp" {
+            DATATYPE  H5T_STRING {
+               STRSIZE $S$;
+               STRPAD H5T_STR_NULLTERM;
+               CSET H5T_CSET_ASCII;
+               CTYPE H5T_C_S1;
+            }
+            DATASPACE  SCALAR
+         }
+         ATTRIBUTE "auto_update" {
+            DATATYPE  H5T_STRING {
+               STRSIZE $S$;
+               STRPAD H5T_STR_NULLTERM;
+               CSET H5T_CSET_ASCII;
+               CTYPE H5T_C_S1;
+            }
+            DATASPACE  SCALAR
+         }
+         ATTRIBUTE "auto_update_source" {
+            DATATYPE  H5T_STRING {
+               STRSIZE $S$;
+               STRPAD H5T_STR_NULLTERM;
+               CSET H5T_CSET_ASCII;
+               CTYPE H5T_C_S1;
+            }
+            DATASPACE  SCALAR
+         }
+         ATTRIBUTE "bream_core_version" {
+            DATATYPE  H5T_STRING {
+               STRSIZE $S$;
+               STRPAD H5T_STR_NULLTERM;
+               CSET H5T_CSET_ASCII;
+               CTYPE H5T_C_S1;
+            }
+            DATASPACE  SCALAR
+         }
+         ATTRIBUTE "bream_is_standard" {
+            DATATYPE  H5T_STRING {
+               STRSIZE $S$;
+               STRPAD H5T_STR_NULLTERM;
+               CSET H5T_CSET_ASCII;
+               CTYPE H5T_C_S1;
+            }
+            DATASPACE  SCALAR
+         }
+         ATTRIBUTE "bream_nc_version" {
+            DATATYPE  H5T_STRING {
+               STRSIZE $S$;
+               STRPAD H5T_STR_NULLTERM;
+               CSET H5T_CSET_ASCII;
+               CTYPE H5T_C_S1;
+            }
+            DATASPACE  SCALAR
+         }
+         ATTRIBUTE "bream_ont_version" {
+            DATATYPE  H5T_STRING {
+               STRSIZE $S$;
+               STRPAD H5T_STR_NULLTERM;
+               CSET H5T_CSET_ASCII;
+               CTYPE H5T_C_S1;
+            }
+            DATASPACE  SCALAR
+         }
+         ATTRIBUTE "bream_prod_version" {
+            DATATYPE  H5T_STRING {
+               STRSIZE $S$;
+               STRPAD H5T_STR_NULLTERM;
+               CSET H5T_CSET_ASCII;
+               CTYPE H5T_C_S1;
+            }
+            DATASPACE  SCALAR
+         }
+         ATTRIBUTE "bream_rnd_version" {
+            DATATYPE  H5T_STRING {
+               STRSIZE $S$;
+               STRPAD H5T_STR_NULLTERM;
+               CSET H5T_CSET_ASCII;
+               CTYPE H5T_C_S1;
+            }
+            DATASPACE  SCALAR
+         }
+         ATTRIBUTE "device_id" {
+            DATATYPE  H5T_STRING {
+               STRSIZE $S$;
+               STRPAD H5T_STR_NULLTERM;
+               CSET H5T_CSET_ASCII;
+               CTYPE H5T_C_S1;
+            }
+            DATASPACE  SCALAR
+         }
+         ATTRIBUTE "exp_script_name" {
+            DATATYPE  H5T_STRING {
+               STRSIZE $S$;
+               STRPAD H5T_STR_NULLTERM;
+               CSET H5T_CSET_ASCII;
+               CTYPE H5T_C_S1;
+            }
+            DATASPACE  SCALAR
+         }
+         ATTRIBUTE "exp_script_purpose" {
+            DATATYPE  H5T_STRING {
+               STRSIZE $S$;
+               STRPAD H5T_STR_NULLTERM;
+               CSET H5T_CSET_ASCII;
+               CTYPE H5T_C_S1;
+            }
+            DATASPACE  SCALAR
+         }
+         ATTRIBUTE "exp_start_time" {
+            DATATYPE  H5T_STRING {
+               STRSIZE $S$;
+               STRPAD H5T_STR_NULLTERM;
+               CSET H5T_CSET_ASCII;
+               CTYPE H5T_C_S1;
+            }
+            DATASPACE  SCALAR
+         }
+         ATTRIBUTE "flow_cell_id" {
+            DATATYPE  H5T_STRING {
+               STRSIZE $S$;
+               STRPAD H5T_STR_NULLTERM;
+               CSET H5T_CSET_ASCII;
+               CTYPE H5T_C_S1;
+            }
+            DATASPACE  SCALAR
+         }
+         ATTRIBUTE "heatsink_temp" {
+            DATATYPE  H5T_STRING {
+               STRSIZE $S$;
+               STRPAD H5T_STR_NULLTERM;
+               CSET H5T_CSET_ASCII;
+               CTYPE H5T_C_S1;
+            }
+            DATASPACE  SCALAR
+         }
+         ATTRIBUTE "hostname" {
+            DATATYPE  H5T_STRING {
+               STRSIZE $S$;
+               STRPAD H5T_STR_NULLTERM;
+               CSET H5T_CSET_ASCII;
+               CTYPE H5T_C_S1;
+            }
+            DATASPACE  SCALAR
+         }
+         ATTRIBUTE "installation_type" {
+            DATATYPE  H5T_STRING {
+               STRSIZE $S$;
+               STRPAD H5T_STR_NULLTERM;
+               CSET H5T_CSET_ASCII;
+               CTYPE H5T_C_S1;
+            }
+            DATASPACE  SCALAR
+         }
+         ATTRIBUTE "local_firmware_file" {
+            DATATYPE  H5T_STRING {
+               STRSIZE $S$;
+               STRPAD H5T_STR_NULLTERM;
+               CSET H5T_CSET_ASCII;
+               CTYPE H5T_C_S1;
+            }
+            DATASPACE  SCALAR
+         }
+         ATTRIBUTE "operating_system" {
+            DATATYPE  H5T_STRING {
+               STRSIZE $S$;
+               STRPAD H5T_STR_NULLTERM;
+               CSET H5T_CSET_ASCII;
+               CTYPE H5T_C_S1;
+            }
+            DATASPACE  SCALAR
+         }
+         ATTRIBUTE "protocol_run_id" {
+            DATATYPE  H5T_STRING {
+               STRSIZE $S$;
+               STRPAD H5T_STR_NULLTERM;
+               CSET H5T_CSET_ASCII;
+               CTYPE H5T_C_S1;
+            }
+            DATASPACE  SCALAR
+         }
+         ATTRIBUTE "protocols_version" {
+            DATATYPE  H5T_STRING {
+               STRSIZE $S$;
+               STRPAD H5T_STR_NULLTERM;
+               CSET H5T_CSET_ASCII;
+               CTYPE H5T_C_S1;
+            }
+            DATASPACE  SCALAR
+         }
+         ATTRIBUTE "run_id" {
+            DATATYPE  H5T_STRING {
+               STRSIZE $S$;
+               STRPAD H5T_STR_NULLTERM;
+               CSET H5T_CSET_ASCII;
+               CTYPE H5T_C_S1;
+            }
+            DATASPACE  SCALAR
+         }
+         ATTRIBUTE "sample_id" {
+            DATATYPE  H5T_STRING {
+               STRSIZE $S$;
+               STRPAD H5T_STR_NULLTERM;
+               CSET H5T_CSET_ASCII;
+               CTYPE H5T_C_S1;
+            }
+            DATASPACE  SCALAR
+         }
+         ATTRIBUTE "usb_config" {
+            DATATYPE  H5T_STRING {
+               STRSIZE $S$;
+               STRPAD H5T_STR_NULLTERM;
+               CSET H5T_CSET_ASCII;
+               CTYPE H5T_C_S1;
+            }
+            DATASPACE  SCALAR
+         }
+         ATTRIBUTE "version" {
+            DATATYPE  H5T_STRING {
+               STRSIZE $S$;
+               STRPAD H5T_STR_NULLTERM;
+               CSET H5T_CSET_ASCII;
+               CTYPE H5T_C_S1;
+            }
+            DATASPACE  SCALAR
+         }
+      }
+   }
+}
+}
