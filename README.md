@@ -4,9 +4,14 @@ Sloika is ONT research software for training RNN models for basecalling Oxford N
 
     sudo make deps
 
+This will install required system packages on Debian-based Linux distros.
+
 ## Setting up clean development environment
 
     make cleanDevEnv
+    source build/env/bin/activate
+
+This will create and activate a python virtual environment in `build/env`.
 
 ## Running unit tests in development mode
 
