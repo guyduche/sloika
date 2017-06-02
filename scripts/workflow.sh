@@ -41,7 +41,6 @@ $SLOIKA_ROOT/bin/chunkify.py raw_remap --overwrite --input_strand_list to_map.tx
 echo "# 4. Train a new model"
 
 # You may need to adjust these flags for your machine, GPU, and current system load.
-# see TODO: link to wiki
 #
 # Uncomment the following line to train on the GPU:
 #export THEANO_FLAGS=openmp=True,floatX=float32,warn_float64=warn,optimizer=fast_run,device=gpu0,lib.cnmem=0.4
