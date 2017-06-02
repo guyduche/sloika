@@ -36,7 +36,9 @@ def sgd(network, loss, rate, momentum, clip=5.0):
 def adam(network, loss, rate, decay, epsilon=1e-8, clip=5.0, mrate=0.0005):
     """  ADAMski optimiser
 
-    See: https://wiki/display/~tmassingham/2016/08/30/ADAMski
+    Similar to ADAM optimizer but with momentum phased in gradually from 0,
+    as having lower momentum at the start of training seems to be beneficial.
+    See: https://www.cs.toronto.edu/~hinton/absps/guideTR.pdf page 10
 
     :param network: network to optimise
     :param loss: loss function to optimise over
