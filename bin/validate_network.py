@@ -10,7 +10,7 @@ import time
 import theano as th
 import theano.tensor as T
 
-from untangled.cmdargs import (AutoBool, display_version_and_exit, FileExists,
+from sloika.cmdargs import (AutoBool, display_version_and_exit, FileExists,
                                Positive)
 
 from sloika.version import __version__

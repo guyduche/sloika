@@ -11,7 +11,7 @@ from scipy.optimize import minimize_scalar
 import subprocess
 import sys
 import traceback
-from untangled.cmdargs import proportion, AutoBool, FileExists
+from sloika.cmdargs import proportion, AutoBool, FileExists
 
 
 parser = argparse.ArgumentParser(

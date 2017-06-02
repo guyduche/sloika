@@ -5,10 +5,10 @@ import pickle
 import sys
 import time
 
-from untangled import fast5
-from untangled.cmdargs import (AutoBool, ByteString, FileAbsent, FileExists, Maybe,
+from sloika import fast5
+from sloika.cmdargs import (AutoBool, ByteString, FileAbsent, FileExists, Maybe,
                                NonNegative, proportion, Positive, Vector)
-from untangled.iterators import imap_mp
+from sloika.iterators import imap_mp
 
 from sloika import basecall, helpers, util
 

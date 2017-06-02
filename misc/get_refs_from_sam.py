@@ -8,8 +8,8 @@ import sys
 import traceback
 
 from sloika.util import fasta_file_to_dict
-from untangled.bio import reverse_complement
-from untangled.cmdargs import proportion, FileExists
+from sloika.bio import reverse_complement
+from sloika.cmdargs import proportion, FileExists
 
 
 parser = argparse.ArgumentParser(

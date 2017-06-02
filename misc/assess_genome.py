@@ -3,7 +3,7 @@ from Bio import SeqIO
 from collections import Counter, OrderedDict
 import math
 import sys
-from untangled.bio import reverse_complement, reverse_complement_kmers, seq_to_kmers
+from sloika.bio import reverse_complement, reverse_complement_kmers, seq_to_kmers
 
 BASES = ['A', 'C', 'G', 'T']
 kmers = [6, 7, 8, 9, 10]

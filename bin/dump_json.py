@@ -6,7 +6,7 @@ import pickle
 import sys
 import warnings
 
-from untangled.cmdargs import AutoBool, FileExists, FileAbsent
+from sloika.cmdargs import AutoBool, FileExists, FileAbsent
 
 json.encoder.FLOAT_REPR = lambda f: ("%.4f" % f)
 

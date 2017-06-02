@@ -2,8 +2,8 @@
 import argparse
 import sys
 
-from untangled import fast5
-from untangled.cmdargs import (AutoBool, Bounded, ByteString, FileExists, Maybe,
+from sloika import fast5
+from sloika.cmdargs import (AutoBool, Bounded, ByteString, FileExists, Maybe,
                                NonNegative, Positive, proportion)
 
 import sloika.tools.chunkify_raw

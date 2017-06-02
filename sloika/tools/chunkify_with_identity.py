@@ -5,8 +5,8 @@ import numpy as np
 
 from sloika import batch, util
 
-from untangled.iterators import imap_mp
-from untangled import fast5
+from sloika.iterators import imap_mp
+from sloika import fast5
 
 
 def chunkify_with_identity_main(args):

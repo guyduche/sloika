@@ -5,7 +5,7 @@ import sys
 
 from Bio import SeqIO
 
-from untangled import bio, fast5, maths
+from sloika import bio, fast5, maths
 
 # NB: qualified imports here due to a name clash
 import sloika.decode

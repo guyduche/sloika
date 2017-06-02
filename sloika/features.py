@@ -1,6 +1,6 @@
 import numpy as np
 from sloika.config import sloika_dtype
-from untangled.maths import studentise
+from sloika.maths import studentise
 
 
 def from_events(ev, tag='scaled_', normalise=True, nanonet=False):

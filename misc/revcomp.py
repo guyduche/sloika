@@ -2,7 +2,7 @@
 import argparse
 import sys
 from Bio import SeqIO
-from untangled.cmdargs import AutoBool
+from sloika.cmdargs import AutoBool
 
 parser = argparse.ArgumentParser('Reverse complements fasta or fastq files')
 parser.add_argument('--complement', default=True, action=AutoBool, help='Complement input')

@@ -1,8 +1,8 @@
 import numpy as np
 import sys
 
-from untangled import bio, fast5
-from untangled.maths import mad
+from sloika import bio, fast5
+from sloika.maths import mad
 
 from sloika import util
 from sloika.variables import nstate, DEFAULT_ALPHABET

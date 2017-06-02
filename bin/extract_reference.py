@@ -5,9 +5,9 @@ import argparse
 import os
 import sys
 
-from untangled import fast5
-from untangled.cmdargs import (AutoBool, FileExists, Maybe, Positive)
-from untangled.iterators import imap_mp
+from sloika import fast5
+from sloika.cmdargs import (AutoBool, FileExists, Maybe, Positive)
+from sloika.iterators import imap_mp
 
 from sloika import util
 

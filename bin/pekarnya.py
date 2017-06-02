@@ -9,7 +9,7 @@ import tempfile
 import time
 
 import sloika.version
-from untangled.cmdargs import FileExists, Maybe, NonNegative, Positive
+from sloika.cmdargs import FileExists, Maybe, NonNegative, Positive
 
 clargs = None
 

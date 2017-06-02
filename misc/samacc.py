@@ -2,7 +2,7 @@
 import argparse
 import numpy as np
 import pysam
-from untangled.cmdargs import proportion
+from sloika.cmdargs import proportion
 
 
 parser = argparse.ArgumentParser(

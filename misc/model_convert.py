@@ -2,7 +2,7 @@
 import argparse
 import pickle
 import sys
-from untangled.cmdargs import FileExists
+from sloika.cmdargs import FileExists
 from sloika.layers import Layer
 from theano.tensor.sharedvar import TensorSharedVariable
 from theano.sandbox.cuda.var import CudaNdarraySharedVariable

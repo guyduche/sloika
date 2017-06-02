@@ -5,9 +5,9 @@ import sys
 
 import sloika
 from sloika import util, helpers, batch
-from untangled import bio, fast5
-from untangled.iterators import imap_mp
-from untangled.maths import mad
+from sloika import bio, fast5
+from sloika.iterators import imap_mp
+from sloika.maths import mad
 
 
 DEFAULT_NORMALISATION = 'per-read'

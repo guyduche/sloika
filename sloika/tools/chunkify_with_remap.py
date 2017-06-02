@@ -6,8 +6,8 @@ import sys
 import time
 import numpy as np
 
-from untangled import fast5
-from untangled.iterators import imap_mp
+from sloika import fast5
+from sloika.iterators import imap_mp
 
 from sloika import helpers, batch, util
 
