@@ -1,8 +1,5 @@
 #! /bin/bash -eu
 
-# TODO: speed up by compiling model once and reusing it
-# TODO: finish remaining step 5
-
 echo "# Prerequisite: make deps"
 echo "# Prerequisite: make cleanDevEnv"
 
@@ -51,20 +48,3 @@ echo "# 4. Train a new model"
 TRAIN_DIR=$WORK_DIR/training
 $SLOIKA_ROOT/bin/train_network.py raw --overwrite --batch 50 --niteration 1 $SLOIKA_ROOT/models/baseline_raw_gru.py $TRAIN_DIR batch_remapped.hdf5
 
-
-# We exit here as the remaining steps are a work in progress
-exit 0
-
-# 5. Evaluate new model on test data
-
-# compile newly trained model into scrappie
-git clone https://git.oxfordnanolabs.local/algorithm/scrappie.git
-(cd scrappie && git checkout raw)
-scrappie/misc/parse_gru_raw.py $TRAIN_DIR/model_final.pkl > scrappie/src/nanonet_raw.h
-(cd scrappie && mkdir -p test && cd test && cmake .. && make)
-
-# basecall and align to reference
-export OMP_NUM_THREADS=$NPROC
-export OPENBLAS_NUM_THREADS=1
-tail -n +2 test.txt | xargs scrappie/test/scrappie raw > test.fa
-$SLOIKA_ROOT/misc/align.py $REFERENCE test.fa
