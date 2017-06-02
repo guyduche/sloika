@@ -10,8 +10,6 @@ export SCRIPTS_DIR="${ROOT_DIR}/scripts"
 
 export BIN_DIR="${ROOT_DIR}/bin"
 
-export ACCTEST_WORK_DIR="${BUILD_DIR}/acceptance"
-
 export DEV_VIRTUALENV_DIR="${BUILD_DIR}/env"
 
 export DEV_VIRTUALENV_DIR_PY3="${BUILD_DIR}/envPy3"
@@ -28,8 +26,6 @@ export COMMON_THEANO_FLAGS_FOR_TRAINING="floatX=float32,warn_float64=warn,optimi
 # TODO(semen): pass OMP_NUM_THREADS=1 when basecalling
 #
 export COMMON_THEANO_FLAGS_FOR_BASECALLING="device=cpu,floatX=float32,warn_float64=warn"
-
-export THEANO_FLAGS_FOR_ACCTEST="device=cpu,${COMMON_THEANO_FLAGS_FOR_TRAINING}"
 
 export PATH="/usr/local/cuda/bin:${PATH}"
 

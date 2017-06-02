@@ -23,14 +23,11 @@ default: testInEnv
 test: testNoEnv
 
 .PHONY: testInEnv
-testInEnv: unitTest acceptanceTest
+testInEnv: unitTest
 
 .PHONY: testNoEnv
-testNoEnv: unitTestNoEnv acceptanceTestNoEnv
+testNoEnv: unitTestNoEnv
 
-#
-# TODO(semen): do not install unit and acctest deps into the same env where wheel is
-#
 
 pyTestArgs?=-n auto
 unitset?=
@@ -46,20 +43,6 @@ unitTestFromScratch: cleanTmpEnvWithWheelInstalled
 	${inTmpEnv} ${unitTestCmd}
 unitTestNoEnv:
 	${unitTestCmd}
-
-accset?=
-acceptanceTestCmd:=${pipInstall} -r test/acceptance/requirements.txt && cd test/acceptance && py.test ${pyTestArgs} -v -s --fulltrace ${accset}
-.PHONY: acceptanceTestPy2 acceptanceTestFromScratchPy2
-acceptanceTestPy2:
-	${inDevEnvPy2} ${acceptanceTestCmd}
-acceptanceTest:
-	${inDevEnv} ${acceptanceTestCmd}
-acceptanceTestFromScratchPy2: cleanTmpEnvWithWheelInstalledPy2
-	${inTmpEnvPy2} ${acceptanceTestCmd}
-acceptanceTestFromScratch: cleanTmpEnvWithWheelInstalled
-	${inTmpEnv} ${acceptanceTestCmd}
-acceptanceTestNoEnv:
-	${acceptanceTestCmd}
 
 
 .PHONY: cleanDevEnvPy2
