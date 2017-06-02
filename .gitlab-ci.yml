@@ -51,18 +51,6 @@ unit_trusty:
         - master
         - /^ci_*/
 
-workflow:
-    stage: test
-    before_script:
-        - make cleanDevEnv
-    script:
-        - apt-get install -y bwa
-        - make workflow
-    only:
-        - release
-        - master
-        - /^ci_*/
-
 pip_install_dot:
     stage: test
     before_script:
