@@ -1,3 +1,10 @@
+Release 2.0
+===========
+
+* Migrate to python3 in full and stop supporting python2
+* Open-source project
+
+
 Release 1.2 brown bag 1
 =======================
 
