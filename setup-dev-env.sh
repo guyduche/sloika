@@ -2,11 +2,7 @@
 
 source environment
 
-if [ -z ${PY3+x} ]; then
-    VIRTUALENV_DIR="${DEV_VIRTUALENV_DIR}"
-else
-    VIRTUALENV_DIR="${DEV_VIRTUALENV_DIR_PY3}"
-fi
+VIRTUALENV_DIR="${DEV_VIRTUALENV_DIR}"
 
 source ${VIRTUALENV_DIR}/bin/activate
 

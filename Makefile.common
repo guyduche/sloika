@@ -5,13 +5,10 @@ bin:=${pwd}bin/
 nproc:=$(shell nproc)
 
 # set this to nothing to get system environment
-envCmdPy2?=source $${DEV_VIRTUALENV_DIR}/bin/activate &&
-envCmd?=source $${DEV_VIRTUALENV_DIR_PY3}/bin/activate &&
+envCmd?=source $${DEV_VIRTUALENV_DIR}/bin/activate &&
 
 pipInstall:=pip install --trusted-host pypi.oxfordnanolabs.local --index-url https://pypi.oxfordnanolabs.local/simple/
-inTmpEnvPy2:=source environment && source $${TMP_VIRTUALENV_DIR}/bin/activate &&
-inTmpEnv:=source environment && source $${TMP_VIRTUALENV_DIR_PY3}/bin/activate &&
-inDevEnvPy2:=source environment && ${envCmdPy2}
+inTmpEnv:=source environment && source $${TMP_VIRTUALENV_DIR}/bin/activate &&
 inDevEnv:=source environment && ${envCmd}
 inEnv:=source environment &&
 
@@ -32,70 +29,37 @@ testNoEnv: unitTestNoEnv
 pyTestArgs?=-n auto
 unitset?=
 unitTestCmd:=${pipInstall} -r test/unit/requirements.txt && cd test/unit && py.test ${pyTestArgs} -v -s --fulltrace ${unitset}
-.PHONY: unitTestPy2 unitTestFromScratchPy2
-unitTestPy2:
-	${inDevEnvPy2} ${unitTestCmd}
 unitTest:
 	${inDevEnv} ${unitTestCmd}
-unitTestFromScratchPy2: cleanTmpEnvWithWheelInstalledPy2
-	${inTmpEnvPy2} ${unitTestCmd}
 unitTestFromScratch: cleanTmpEnvWithWheelInstalled
 	${inTmpEnv} ${unitTestCmd}
 unitTestNoEnv:
 	${unitTestCmd}
 
 
-.PHONY: cleanDevEnvPy2
-cleanDevEnvPy2: cleanVirtualenvPy2
-	./setup-dev-env.sh
-
 .PHONY: cleanDevEnv
 cleanDevEnv: cleanVirtualenv
-	PY3=True ./setup-dev-env.sh
-
-.PHONY: cleanVirtualenvPy2
-cleanVirtualenvPy2:
-	${inEnv} rm -rf $${DEV_VIRTUALENV_DIR}
-	./setup-virtualenv.sh
+	./setup-dev-env.sh
 
 .PHONY: cleanVirtualenv
 cleanVirtualenv:
-	${inEnv} rm -rf $${DEV_VIRTUALENV_DIR_PY3}
-	PY3=True ./setup-virtualenv.sh
-
-.PHONY: cleanTmpEnvPy2
-cleanTmpEnvPy2:
-	source environment && rm -rf $${TMP_VIRTUALENV_DIR} && virtualenv $${TMP_VIRTUALENV_DIR}
-	${inTmpEnvPy2} pip install pip --upgrade
+	${inEnv} rm -rf $${DEV_VIRTUALENV_DIR}
+	./setup-virtualenv.sh
 
 .PHONY: cleanTmpEnv
 cleanTmpEnv:
-	source environment && rm -rf $${TMP_VIRTUALENV_DIR_PY3} && virtualenv -p python3 $${TMP_VIRTUALENV_DIR_PY3}
+	source environment && rm -rf $${TMP_VIRTUALENV_DIR} && virtualenv -p python3 $${TMP_VIRTUALENV_DIR}
 	${inTmpEnv} pip install pip --upgrade
-
-.PHONY: cleanTmpEnvWithDepsPy2
-cleanTmpEnvWithDepsPy2: cleanTmpEnvPy2
-	${inTmpEnvPy2} ${pipInstall} -r scripts/requirements.txt && \
-	            ${pipInstall} -r requirements.txt
 
 .PHONY: cleanTmpEnvWithDeps
 cleanTmpEnvWithDeps: cleanTmpEnv
 	${inTmpEnv} ${pipInstall} -r scripts/requirements.txt && \
 	               ${pipInstall} -r requirements.txt
 
-.PHONY: wheelPy2
-wheelPy2: cleanTmpEnvWithDepsPy2
-	${inTmpEnvPy2} python setup.py bdist_wheel
-	ls -l dist/*.whl
-
 .PHONY: wheel
 wheel: cleanTmpEnvWithDeps
 	${inTmpEnv} python setup.py bdist_wheel
 	ls -l dist/*.whl
-
-.PHONY: cleanTmpEnvWithWheelInstalledPy2
-cleanTmpEnvWithWheelInstalledPy2: cleanTmpEnvPy2
-	${inTmpEnvPy2} ${pipInstall} --find-links=dist/ "sloika==${projectVersion}"
 
 .PHONY: cleanTmpEnvWithWheelInstalled
 cleanTmpEnvWithWheelInstalled: cleanTmpEnv
@@ -112,23 +76,9 @@ pep8:
 
 
 cmd?=echo "Set 'cmd' to command to run in dev env"
-.PHONY: runInDevEnvPy2
-runInDevEnvPy2:
-	@${inDevEnvPy2} ${cmd}
-.PHONY: runInTmpEnvPy2
-runInTmpEnvPy2:
-	@${inTmpEnvPy2} ${cmd}
 .PHONY: runInTmpEnv
 runInTmpEnv:
 	@${inTmpEnv} ${cmd}
-
-.PHONY: deb
-deb: clean cleanTmpEnvPy2
-	lsb_release  # must be installed for this target to work
-	${inTmpEnvPy2} ${pipInstall} -r scripts/requirements.txt && \
-	            ${pipInstall} -r requirements.txt && \
-	            python setup.py --command-packages=stdeb.command sdist_dsc --debian-version 1~`lsb_release -cs` bdist_deb
-	ls -l deb_dist/*.deb
 
 .PHONY: clean
 clean:
@@ -148,13 +98,4 @@ pullpush:
 debDeps: deps
 	apt-get install -y \
 	    python-stdeb dpkg-dev fakeroot lintian
-
-.PHONY: python-future
-python-future: cleanTmpEnvPy2
-	mkdir -p deb_dist build
-	cat requirements.txt | grep future > build/python-future.txt
-	${inTmpEnvPy2} pip install py2deb
-	${inTmpEnvPy2} py2deb -r deb_dist --name-prefix=python -- -r build/python-future.txt
-	ls -l deb_dist/*.deb
-	dpkg --info deb_dist/python-future*.deb
 

@@ -2,13 +2,8 @@
 
 source environment
 
-if [ -z ${PY3+x} ]; then
-    VIRTUALENV_DIR="${DEV_VIRTUALENV_DIR}"
-    VIRTUALENV_CMD=virtualenv
-else
-    VIRTUALENV_DIR="${DEV_VIRTUALENV_DIR_PY3}"
-    VIRTUALENV_CMD="virtualenv -p python3"
-fi
+VIRTUALENV_DIR="${DEV_VIRTUALENV_DIR}"
+VIRTUALENV_CMD="virtualenv -p python3"
 
 # for fromscratch builds plow through ${VIRTUALENV_DIR} before running this script
 mkdir -p ${VIRTUALENV_DIR}
