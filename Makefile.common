@@ -63,15 +63,6 @@ cleanVirtualenv:
 	${inEnv} rm -rf $${DEV_VIRTUALENV_DIR_PY3}
 	PY3=True ./setup-virtualenv.sh
 
-.PHONY: checkout
-checkout:
-	git submodule update --init
-
-.PHONY: ciCheckout
-ciCheckout:
-	rm -rf data
-	for i in 1 2 3 4 5; do git submodule update --init && break || sleep 9; done
-
 .PHONY: cleanTmpEnvPy2
 cleanTmpEnvPy2:
 	source environment && rm -rf $${TMP_VIRTUALENV_DIR} && virtualenv $${TMP_VIRTUALENV_DIR}

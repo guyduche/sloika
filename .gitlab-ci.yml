@@ -9,9 +9,6 @@ stages:
     - test
     - release
 
-before_script:
-    - make ciCheckout
-
 wheel:
     stage: build
     script:
@@ -57,7 +54,6 @@ unit_trusty:
 workflow:
     stage: test
     before_script:
-        - make ciCheckout
         - make cleanDevEnv
     script:
         - apt-get install -y bwa
