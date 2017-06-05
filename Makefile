@@ -12,8 +12,8 @@ include Makefile.common
 deps:
 	apt-get update
 	apt-get install -y \
-	    python-virtualenv python-pip python-setuptools ont-ca-certs git \
-	    libblas3 libblas-dev python-dev python3-dev lsb-release bwa
+	    python3-virtualenv python3-pip python3-setuptools  git \
+	    libblas3 libblas-dev python3-dev lsb-release virtualenv
 
 .PHONY: workflow
 workflow:
