@@ -29,7 +29,7 @@ echo "# 2. Align reads to reference"
 
 # align.py calls BWA to align the basecalls to the reference
 bwa index $REFERENCE
-$SLOIKA_ROOT/misc/align.py $REFERENCE to_map.fa
+$SLOIKA_ROOT/misc/align.py --reference $REFERENCE to_map.fa
 # This command extracts a reference sequence for each read using coordinates from the SAM file.
 $SLOIKA_ROOT/misc/get_refs_from_sam.py --output_strand_list to_map.txt --pad 50 $REFERENCE to_map.sam | tee to_map_refs.fa
 
@@ -67,4 +67,4 @@ scrappie/misc/parse_gru_raw.py $TRAIN_DIR/model_final.pkl > scrappie/src/nanonet
 export OMP_NUM_THREADS=$NPROC
 export OPENBLAS_NUM_THREADS=1
 tail -n +2 test.txt | xargs scrappie/test/scrappie raw > test.fa
-$SLOIKA_ROOT/misc/align.py $REFERENCE test.fa
+$SLOIKA_ROOT/misc/align.py --reference $REFERENCE test.fa
