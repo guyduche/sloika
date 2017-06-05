@@ -225,7 +225,7 @@ if __name__ == '__main__':
             graphfile = prefix + '.' + args.figure_format
 
             # align sequences to reference
-            if args.reference:
+            if args.reference and not suffix == '.sam':
                 sys.stdout.write("Aligning {}...\n".format(fn))
                 bwa_output = call_bwa_mem(fn, samfile, args.reference, args.bwa_mem_args)
                 try:
