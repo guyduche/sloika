@@ -19,7 +19,7 @@ parser = argparse.ArgumentParser(
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
 # TODO: add several named commonly used values for bwa_mem_args
-parser.add_argument('--bwa_mem_args', metavar='args', default='-t 16 -A 1 -B 2 -O 2 -E 1',
+parser.add_argument('--bwa_mem_args', metavar='args', default='-k14 -W20 -r10 -t 16 -A 1 -B 2 -O 2 -E 1',
                     help="Command line arguments to pass to bwa mem")
 parser.add_argument('--coverage', metavar='proportion', default=0.6, type=proportion,
                     help='Minimum coverage')
@@ -30,9 +30,9 @@ parser.add_argument('--figure_format', default="png",
 parser.add_argument('--fill', default=True, action=AutoBool,
                     help='Fill basecall quality histogram with color')
 parser.add_argument('--mpl_backend', default="Agg", help="Matplotlib backend to use")
-
-parser.add_argument('reference', action=FileExists,
+parser.add_argument('--reference', default=None, action=FileExists,
                     help="Reference sequence to align against")
+
 parser.add_argument('files', metavar='input', nargs='+',
                     help="One or more files containing query sequences")
 
@@ -154,7 +154,7 @@ def acc_plot(acc, mode, fill, title):
 
 
 def summary(acc_dat, data_set_name, fill):
-    """Crate summary report and plots for accuracy statistics
+    """Create summary report and plots for accuracy statistics
 
     :param acc_dat: list of row dictionaries of read accuracy metrics
 
@@ -225,13 +225,14 @@ if __name__ == '__main__':
             graphfile = prefix + '.' + args.figure_format
 
             # align sequences to reference
-            sys.stdout.write("Aligning {}...\n".format(fn))
-            bwa_output = call_bwa_mem(fn, samfile, args.reference, args.bwa_mem_args)
-            try:
-                assert "bwa" in bwa_output
-                sys.stdout.write(bwa_output)
-            except:
-                sys.stdout.write(bwa_output.decode(sys.stdout.encoding))
+            if args.reference:
+                sys.stdout.write("Aligning {}...\n".format(fn))
+                bwa_output = call_bwa_mem(fn, samfile, args.reference, args.bwa_mem_args)
+                try:
+                    assert "bwa" in bwa_output
+                    sys.stdout.write(bwa_output)
+                except:
+                    sys.stdout.write(bwa_output.decode(sys.stdout.encoding))
 
             # compile accuracy metrics
             acc_dat = samacc(samfile, min_coverage=args.coverage)
