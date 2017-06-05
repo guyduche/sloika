@@ -28,7 +28,7 @@ echo "# 2. Align reads to reference"
 
 # align.py calls BWA to align the basecalls to the reference
 bwa index $REFERENCE
-$SLOIKA_ROOT/misc/align.py $REFERENCE to_map.fa
+$SLOIKA_ROOT/misc/align.py --reference $REFERENCE to_map.fa
 # This command extracts a reference sequence for each read using coordinates from the SAM file.
 $SLOIKA_ROOT/misc/get_refs_from_sam.py --output_strand_list to_map.txt --pad 50 $REFERENCE to_map.sam | tee to_map_refs.fa
 
@@ -48,4 +48,3 @@ echo "# 4. Train a new model"
 #export THEANO_FLAGS=openmp=True,floatX=float32,warn_float64=warn,optimizer=fast_run,device=gpu0,lib.cnmem=0.4
 TRAIN_DIR=$WORK_DIR/training
 $SLOIKA_ROOT/bin/train_network.py raw --overwrite --batch 50 --niteration 1 $SLOIKA_ROOT/models/baseline_raw_gru.py $TRAIN_DIR batch_remapped.hdf5
-
