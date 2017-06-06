@@ -31,11 +31,30 @@ package_dir = os.path.join(root_dir, 'sloika')
 setup(
     name='sloika',
     version=version,
-    description='Theano RNN library',
+    description='Neural network model training for Nanopore base calling',
     maintainer='Tim Massingham',
     maintainer_email='tim.massingham@nanoporetech.com',
     url='http://www.nanoporetech.com',
-    long_description="""Something to do with sheep""",
+    long_description="""Sloika is a library to support training and developing new base calling models
+for Oxford Nanopore Technologies' sequencing platforms.
+
+Sloika is built on top of Theano package for computational graphs and is
+compatible with python 3.4 or above.""",
+
+    classifiers=[
+        'Development Status :: 3 - Alpha',
+        'Environment :: Console',
+        'Intended Audience :: Developers',
+        'Intended Audience :: Science/Research',
+        'License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)',
+        'Natural Language :: English',
+        'Operating System :: Unix',
+        'Programming Language :: Python :: 3 :: Only',
+        'Topic :: Scientific/Engineering :: Artificial Intelligence',
+        'Topic :: Scientific/Engineering :: Bio-Informatics',
+        'Topic :: Scientific/Engineering :: Mathematics'
+    ]
+
     packages=find_packages(exclude=["*.test", "*.test.*", "test.*", "test", "bin"]),
     package_data={'configs': 'data/configs/*'},
     exclude_package_data={'': ['*.hdf', '*.c', '*.h']},
@@ -46,4 +65,5 @@ setup(
     dependency_links=[],
     zip_safe=False,
     scripts=[x for x in glob('bin/*.py')],
+
 )
