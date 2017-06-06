@@ -53,7 +53,7 @@ compatible with python 3.4 or above.""",
         'Topic :: Scientific/Engineering :: Artificial Intelligence',
         'Topic :: Scientific/Engineering :: Bio-Informatics',
         'Topic :: Scientific/Engineering :: Mathematics'
-    ]
+    ],
 
     packages=find_packages(exclude=["*.test", "*.test.*", "test.*", "test", "bin"]),
     package_data={'configs': 'data/configs/*'},
